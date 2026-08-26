@@ -15,7 +15,7 @@ function childWriter(projectRoot,stateRoot,iterations=160){
   })
 }
 
-test('M26 concurrent snapshot writers never collide through a shared temporary pathname',async()=>{
+test('concurrent snapshot writers never collide through a shared temporary pathname',async()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-m26-writers-'))
   try{
     const stateRoot=join(root,'state'),runs=await Promise.all(Array.from({length:8},()=>childWriter(root,stateRoot)))
@@ -25,7 +25,7 @@ test('M26 concurrent snapshot writers never collide through a shared temporary p
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M26 runtime instance guard fences distinct owners that share one persistent writer lease',()=>{
+test('runtime instance guard fences distinct owners that share one persistent writer lease',()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-m26-lease-')),lockPath=join(root,'runtime-instance.lock')
   try{
     const first=acquireHiRuntimeInstance('same-project',{}, {lockPath})
@@ -34,7 +34,7 @@ test('M26 runtime instance guard fences distinct owners that share one persisten
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M26 persistent writer lease fences a second live Node process',async()=>{
+test('persistent writer lease fences a second live Node process',async()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-m26-process-lease-')),lockPath=join(root,'runtime-instance.lock')
   try{
     const holderCode=`import {acquireHiRuntimeInstance} from './dist/opencode/instance-guard.js';const l=acquireHiRuntimeInstance('shared-project',{}, {lockPath:process.env.M26_LOCK});console.log('READY');setTimeout(()=>{l.release()},1200)`
@@ -49,7 +49,7 @@ test('M26 persistent writer lease fences a second live Node process',async()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M26 dead-owner runtime lease is quarantined before safe recovery',()=>{
+test('dead-owner runtime lease is quarantined before safe recovery',()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-m26-stale-lease-')),lockPath=join(root,'runtime-instance.lock')
   try{
     writeFileSync(lockPath,JSON.stringify({schema:1,pid:2147483647,token:'dead-owner',started_at:Date.now()-10000})+'\n')

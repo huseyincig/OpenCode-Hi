@@ -45,7 +45,7 @@ async function spawned(h,request=baseRequest()){
   return handle
 }
 
-test('P2 authority evaluator mirrors OpenCode last-match wildcard semantics and fails closed on ask/deny',()=>{
+test('authority evaluator mirrors OpenCode last-match wildcard semantics and fails closed on ask/deny',()=>{
   const request=baseRequest()
   assert.equal(processCommandLine(request),"node -e 'console.log(1)'")
   assert.equal(evaluateProcessSpawnAuthority(request,'/repo',host({bash:{'*':'allow','node *':'deny'},external_directory:{'*':'ask'}})).decision,'DENY')
@@ -53,7 +53,7 @@ test('P2 authority evaluator mirrors OpenCode last-match wildcard semantics and 
   assert.equal(evaluateProcessSpawnAuthority(request,'/repo',host({bash:{'git *':'allow'},external_directory:{'*':'ask'}})).decision,'ASK')
 })
 
-test('P2 external cwd requires explicit external_directory allow and external effects require matching ExternalAction authority',()=>{
+test('external cwd requires explicit external_directory allow and external effects require matching ExternalAction authority',()=>{
   const outside=resolve('/outside'),outsidePattern=outside.replace(/[\\/]$/,'')+sep+'*'
   const external=baseRequest({cwd:outside})
   assert.equal(evaluateProcessSpawnAuthority(external,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask'}})).decision,'ASK')
@@ -65,7 +65,7 @@ test('P2 external cwd requires explicit external_directory allow and external ef
   assert.equal(evaluateProcessSpawnAuthority(authorized,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask'}})).decision,'ALLOW')
 })
 
-test('P2 POSIX launch barrier waits for initial cursor metadata before releasing the requested command',async()=>{
+test('POSIX launch barrier waits for initial cursor metadata before releasing the requested command',async()=>{
   if(process.platform==='win32')return
   const h=harness({initialMeta:false})
   let settled=false
@@ -84,7 +84,7 @@ test('P2 POSIX launch barrier waits for initial cursor metadata before releasing
   assert.deepEqual(ws.sent,['\n'])
 })
 
-test('P2 spawn binds native PID and ticketed websocket URL without raw output in ProcessContract',async()=>{
+test('spawn binds native PID and ticketed websocket URL without raw output in ProcessContract',async()=>{
   const h=harness(),handle=await spawned(h)
   const ws=h.sockets[0]
   assert.match(ws.url,/\/api\/pty\/pty-4100\/connect/)
@@ -93,7 +93,7 @@ test('P2 spawn binds native PID and ticketed websocket URL without raw output in
   assert.equal('stdout' in handle.contract,false);assert.equal('buffer' in handle.contract,false)
 })
 
-test('P2 stdin write uses the live websocket and refuses write after exit',async()=>{
+test('stdin write uses the live websocket and refuses write after exit',async()=>{
   const h=harness(),handle=await spawned(h);const ws=h.sockets[0]
   await h.adapter.write(handle.contract.process_id,'hello\n')
   assert.deepEqual(ws.sent,process.platform==='win32'?['hello\n']:['\n','hello\n'])
@@ -102,7 +102,7 @@ test('P2 stdin write uses the live websocket and refuses write after exit',async
   await assert.rejects(()=>h.adapter.write(handle.contract.process_id,'late'),/Cannot write/)
 })
 
-test('P2 bounded output honors OpenCode absolute cursor metadata, pagination and truncation',async()=>{
+test('bounded output honors OpenCode absolute cursor metadata, pagination and truncation',async()=>{
   const h=harness(),handle=await spawned(h),ws=h.sockets[0],id=handle.contract.process_id
   ws.message('0123456789');ws.message(meta(10));ws.message('abcdefghij')
   await new Promise(r=>setTimeout(r,0))
@@ -132,7 +132,7 @@ test('concurrent owned PTYs keep output cursors and buffers isolated',async()=>{
   assert.equal(oa.text,'alpha-on');assert.equal(ob.text,'beta-onl');assert.doesNotMatch(oa.text,/beta/);assert.doesNotMatch(ob.text,/alpha/)
 })
 
-test('P2 natural exit records nonzero exit code and cleanup is separate from exit',async()=>{
+test('natural exit records nonzero exit code and cleanup is separate from exit',async()=>{
   const h=harness(),handle=await spawned(h),ws=h.sockets[0],id=handle.contract.process_id
   h.exit(handle.host_process_id,7);ws.close()
   const result=await h.adapter.wait(id)
@@ -143,13 +143,13 @@ test('P2 natural exit records nonzero exit code and cleanup is separate from exi
   assert.equal(h.adapter.list().length,0)
 })
 
-test('P2 cleanup refuses to masquerade as kill for a running process',async()=>{
+test('cleanup refuses to masquerade as kill for a running process',async()=>{
   const h=harness(),handle=await spawned(h)
   await assert.rejects(()=>h.adapter.cleanup(handle.contract.process_id),/Refusing cleanup of running process/)
   assert.equal(h.removed.length,0)
 })
 
-test('P2 kill validates PID identity, signals the owned PID, observes exit, then remains separately cleanable',async()=>{
+test('kill validates PID identity, signals the owned PID, observes exit, then remains separately cleanable',async()=>{
   let signalCall
   const h=harness({signal:(pid,signal)=>{signalCall={pid,signal};const info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:143});queueMicrotask(()=>h.sockets[0].close())}})
   const handle=await spawned(h),id=handle.contract.process_id
@@ -183,7 +183,7 @@ test('kill signalling failure does not fabricate TERMINATED semantics on later n
   assert.equal(result.contract.status,'EXITED');assert.equal(result.contract.exit_code,9);assert.equal(result.contract.termination_reason,undefined)
 })
 
-test('P2 stale PID mismatch is fail-closed before signal',async()=>{
+test('stale PID mismatch is fail-closed before signal',async()=>{
   let signals=0
   const h=harness({signal:()=>{signals++}}),handle=await spawned(h)
   h.sessions.get(handle.host_process_id).pid=99999
@@ -191,7 +191,7 @@ test('P2 stale PID mismatch is fail-closed before signal',async()=>{
   assert.equal(signals,0)
 })
 
-test('P2 timeout signals owned PID and resolves as TIMED_OUT only after native exit observation',async()=>{
+test('timeout signals owned PID and resolves as TIMED_OUT only after native exit observation',async()=>{
   let signaled
   const h=harness({signal:(pid,signal)=>{signaled={pid,signal};const info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:143});queueMicrotask(()=>h.sockets[0].close())}})
   const handle=await spawned(h,baseRequest({timeout_ms:50})),result=await h.adapter.wait(handle.contract.process_id)
@@ -199,7 +199,7 @@ test('P2 timeout signals owned PID and resolves as TIMED_OUT only after native e
   assert.equal(result.contract.status,'TIMED_OUT');assert.equal(result.contract.cleanup_state,'CLEANUP_PENDING');assert.ok(result.contract.timeout_at>=result.contract.started_at)
 })
 
-test('P2 spawn never silently executes native permission ask/deny',async()=>{
+test('spawn never silently executes native permission ask/deny',async()=>{
   for(const [decision,expected] of [['ask','ASK'],['deny','DENY']]){
     const h=harness({permission:{bash:{'*':decision},external_directory:{'*':'ask'}}})
     await assert.rejects(()=>h.adapter.spawn(baseRequest()),error=>error instanceof ProcessSpawnPermissionError&&error.decision===expected)
@@ -208,7 +208,7 @@ test('P2 spawn never silently executes native permission ask/deny',async()=>{
 })
 
 
-test('P2/P3 production runtime services own exactly one OpenCodePtyAdapter and docs bind the completed lifecycle claim',async()=>{
+test('production runtime services own exactly one OpenCodePtyAdapter and docs bind the completed lifecycle claim',async()=>{
   const {readFileSync}=await import('node:fs')
   const services=readFileSync(new URL('../src/runtime/application/runtime-services.ts',import.meta.url),'utf8')
   const plugin=readFileSync(new URL('../src/plugin.ts',import.meta.url),'utf8')
@@ -223,7 +223,7 @@ test('P2/P3 production runtime services own exactly one OpenCodePtyAdapter and d
 })
 
 
-test('P2 timeout also refuses stale PID before signalling',async()=>{
+test('timeout also refuses stale PID before signalling',async()=>{
   let signals=0
   const h=harness({signal:()=>{signals++}}),handle=await spawned(h,baseRequest({timeout_ms:50}))
   const pending=h.adapter.wait(handle.contract.process_id)
@@ -235,7 +235,7 @@ test('P2 timeout also refuses stale PID before signalling',async()=>{
 
 
 
-test('P3 spawn binds restart identity to native PTY command normalization rather than the pre-create request',async()=>{
+test('spawn binds restart identity to native PTY command normalization rather than the pre-create request',async()=>{
   const h=harness({nativeArgsSuffix:['-l']}),handle=await spawned(h)
   const fresh=harness();fresh.sessions.set(handle.host_process_id,{...h.sessions.get(handle.host_process_id)})
   // Reuse the same native PTY seam with a fresh adapter to simulate plugin restart.
@@ -251,7 +251,7 @@ test('P3 spawn binds restart identity to native PTY command normalization rather
   assert.equal(result.disposition,'ADOPTED')
   assert.equal(result.contract.pid,handle.contract.pid)
 })
-test('P3 restart reconcile adopts exact native PTY identity and restores live write/read transport',async()=>{
+test('restart reconcile adopts exact native PTY identity and restores live write/read transport',async()=>{
   const h=harness(),handle=await spawned(h),persisted=structuredClone(handle.contract)
   // Simulate a fresh plugin runtime while the OpenCode host retains the PTY.
   const fresh=new OpenCodePtyAdapter({v2:{pty:{
@@ -265,7 +265,7 @@ test('P3 restart reconcile adopts exact native PTY identity and restores live wr
   await fresh.write(persisted.process_id,'after-restart\n');assert.deepEqual(h.sockets.at(-1).sent,['after-restart\n'])
 })
 
-test('P3 restart replay hides the internal POSIX launch marker while preserving pre-restart user output',async()=>{
+test('restart replay hides the internal POSIX launch marker while preserving pre-restart user output',async()=>{
   if(process.platform==='win32')return
   const h=harness(),handle=await spawned(h),persisted=structuredClone(handle.contract),native=h.sessions.get(handle.host_process_id),marker=native.args.find(x=>/^~HI:[a-f0-9]{16}~$/.test(x));assert.ok(marker)
   const replay='READY_BEFORE_RESTART',pty={
@@ -276,21 +276,21 @@ test('P3 restart replay hides the internal POSIX launch marker while preserving 
   const out=await fresh.read(persisted.process_id,{cursor:0,max_chars:64});assert.equal(out.text,replay);assert.doesNotMatch(out.text,/~HI:/);assert.equal(out.start_cursor,marker.length)
 })
 
-test('P3 restart reconcile quarantines same PID with changed command identity and never signals it',async()=>{
+test('restart reconcile quarantines same PID with changed command identity and never signals it',async()=>{
   let signals=0
   const h=harness({signal:()=>{signals++}}),handle=await spawned(h),persisted=structuredClone(handle.contract)
   const native=h.sessions.get(handle.host_process_id);native.command='python3';native.args=['-c','print(1)']
   const result=await h.adapter.reconcile(persisted);assert.equal(result.disposition,'ORPHANED');assert.equal(result.contract.status,'ORPHANED');assert.equal(result.contract.cleanup_state,'QUARANTINED');assert.equal(result.contract.termination_reason,'restart-owner-identity-mismatch');assert.equal(signals,0)
 })
 
-test('P3 restart reconcile quarantines missing live owner and treats missing terminal host record as cleaned',async()=>{
+test('restart reconcile quarantines missing live owner and treats missing terminal host record as cleaned',async()=>{
   const h=harness(),handle=await spawned(h),running=structuredClone(handle.contract);h.sessions.clear()
   const missing=await h.adapter.reconcile(running);assert.equal(missing.disposition,'ORPHANED');assert.equal(missing.contract.termination_reason,'restart-owner-missing')
   const terminal={...running,status:'EXITED',ended_at:Date.now(),exit_code:0,cleanup_state:'CLEANUP_PENDING'}
   const cleaned=await h.adapter.reconcile(terminal);assert.equal(cleaned.disposition,'TERMINAL');assert.equal(cleaned.contract.cleanup_state,'CLEANED')
 })
 
-test('P3 process-local PTY state rejects a cross-Mission process_id collision during restart reconcile',async()=>{
+test('process-local PTY state rejects a cross-Mission process_id collision during restart reconcile',async()=>{
   const h=harness(),handle=await spawned(h),first=structuredClone(handle.contract)
   const fresh=new OpenCodePtyAdapter({v2:{pty:{
     list:async()=>({data:{data:[...h.sessions.values()].map(x=>({...x}))}}),
@@ -307,7 +307,7 @@ test('P3 process-local PTY state rejects a cross-Mission process_id collision du
 })
 
 
-test('M18 stubborn owned process termination escalates after a bounded grace period without losing identity checks',async()=>{
+test('stubborn owned process termination escalates after a bounded grace period without losing identity checks',async()=>{
   const signals=[]
   const h=harness({terminationGraceMs:20,terminationVerifyMs:20,signal:(target,signal)=>{signals.push({target,signal});if(signal==='SIGKILL'){const pid=Math.abs(target),info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:137});queueMicrotask(()=>h.sockets[0].close())}}})
   const handle=await spawned(h),pending=h.adapter.kill(handle.contract.process_id,'SIGTERM')
@@ -320,7 +320,7 @@ test('M18 stubborn owned process termination escalates after a bounded grace per
 })
 
 
-test('M18 timeout escalation remains identity-bound and resolves TIMED_OUT only after forced native exit observation',async()=>{
+test('timeout escalation remains identity-bound and resolves TIMED_OUT only after forced native exit observation',async()=>{
   const signals=[]
   const h=harness({terminationGraceMs:20,terminationVerifyMs:20,signal:(target,signal)=>{signals.push({target,signal});if(signal==='SIGKILL'){const pid=Math.abs(target),info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:137});queueMicrotask(()=>h.sockets[0].close())}}})
   const handle=await spawned(h,baseRequest({timeout_ms:50})),result=await h.adapter.wait(handle.contract.process_id)
@@ -328,7 +328,7 @@ test('M18 timeout escalation remains identity-bound and resolves TIMED_OUT only 
   assert.equal(result.contract.status,'TIMED_OUT');assert.equal(result.contract.termination_reason,'timeout-policy')
 })
 
-test('M18 escalation revalidates process-group identity before SIGKILL and fails closed on drift',async()=>{
+test('escalation revalidates process-group identity before SIGKILL and fails closed on drift',async()=>{
   let observedGroup,signals=[]
   const h=harness({terminationGraceMs:20,terminationVerifyMs:20,processGroup:pid=>observedGroup??pid,signal:(target,signal)=>{signals.push({target,signal})}})
   const handle=await spawned(h);observedGroup=handle.contract.process_group_id

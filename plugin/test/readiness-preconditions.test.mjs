@@ -17,7 +17,7 @@ function addClearance(root,m,observedAt){
   return addEvidence(m,{kind:"source-provenance-evidence",summary:"runtime-bound exploration clearance",scope,source:"exploration-clearance:resolvable:t_clearance",trusted_source_class:"runtime-observation",source_state_hash:state,scope_state_hash:state,outcome:"passed",pass:true,observed_at:observedAt})
 }
 
-test("M14 stale exploration clearance is a mission-visible repo-resolvable readiness precondition",()=>{
+test("stale exploration clearance is a mission-visible repo-resolvable readiness precondition",()=>{
   const root=mkdtempSync(join(tmpdir(),"hi-m14-readiness-"))
   try{
     mkdirSync(join(root,"src"),{recursive:true})

@@ -23,7 +23,7 @@ function observation(taskID){const x={task_id:taskID,executor_version:'hi-playwr
 
 const repoRoot=path.resolve(process.cwd(),'..')
 
-test('M13 browser finding feeds the same visual task/session correction loop and requires fresh attempt proof',async()=>{
+test('browser finding feeds the same visual task/session correction loop and requires fresh attempt proof',async()=>{
   const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
   const browser={health:async()=>({available:true}),inspect:async cx=>observation(cx.task_id),cleanup:async()=>({cleaned:true,reason:'closed'})}
   const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}}))

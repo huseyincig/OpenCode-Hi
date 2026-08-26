@@ -13,12 +13,12 @@ const diagnosis={material:true,message_kind:'mission',task_kind:'diagnosis',scop
 
 function client(){return {app:{log:async()=>{}},provider:{list:async()=>({data:{connected:[],all:[]}})},session:{status:async()=>({data:{}}),children:async()=>({data:[]}),diff:async()=>({data:[]}),todo:async()=>({data:[]}),revert:async()=>({data:{}}),unrevert:async()=>({data:{}})}}}
 
-test('M15 diagnosis is a canonical structured semantic task kind',()=>{
+test('diagnosis is a canonical structured semantic task kind',()=>{
   const parsed=parseSemanticIntentAssessment(diagnosis)
   assert.equal(parsed.task_kind,'diagnosis')
 })
 
-test('M15 diagnosis creates analysis-only mission obligations and remains a valid durable envelope',()=>{
+test('diagnosis creates analysis-only mission obligations and remains a valid durable envelope',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('diag','diagnose only')
   store.applyInitialSemanticAssessment('diag',diagnosis)
   assert.equal(m.identity.intent.taskKind,'diagnosis')
@@ -27,7 +27,7 @@ test('M15 diagnosis creates analysis-only mission obligations and remains a vali
   assert.equal(validateMissionEnvelope(m),true)
 })
 
-test('M15 diagnosis is read-only and local low-risk diagnosis stays parent-direct',()=>{
+test('diagnosis is read-only and local low-risk diagnosis stays parent-direct',()=>{
   const store=new MissionStore(),m=store.start('diag-route','diagnose only');store.applyInitialSemanticAssessment('diag-route',diagnosis)
   const policy=verificationPolicyFor(m.identity.intent),team=minimumTeamFor(m.identity.intent,policy),d=decideSemanticExecution({intent:m.identity.intent,verification:policy,topology:{mode:'adaptive',maxAgents:4,parallelism:2}})
   assert.equal(team.direct,true);assert.deepEqual(team.roles,[])
@@ -35,7 +35,7 @@ test('M15 diagnosis is read-only and local low-risk diagnosis stays parent-direc
   assert.equal(d.topology.mode,'single-agent')
 })
 
-test('M15 diagnosis parent progress requires an evidence-bound falsifiable hypothesis and completes without implementation mutation',async()=>{
+test('diagnosis parent progress requires an evidence-bound falsifiable hypothesis and completes without implementation mutation',async()=>{
   const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({})
   const sid='diag-direct';await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Investigate the root cause only; do not fix it.'}]})
   const assessed=await assessPluginMission(hooks,sid,diagnosis);assert.equal(assessed.task_kind,'diagnosis')
@@ -55,7 +55,7 @@ test('M15 diagnosis parent progress requires an evidence-bound falsifiable hypot
 
 
 
-test('M15 falsified diagnosis hypothesis is retained as evidence-bound history but cannot close analysis',async()=>{
+test('falsified diagnosis hypothesis is retained as evidence-bound history but cannot close analysis',async()=>{
   const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='diag-falsified'
   await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Investigate the root cause only.'}]});await assessPluginMission(hooks,sid,diagnosis)
   await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test packages/core/test/ripgrep.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
@@ -66,7 +66,7 @@ test('M15 falsified diagnosis hypothesis is retained as evidence-bound history b
   await hooks.dispose?.()
 })
 
-test('M15 diagnosis owns root-cause semantics and suppresses redundant intent.debugging methodology activation',()=>{
+test('diagnosis owns root-cause semantics and suppresses redundant intent.debugging methodology activation',()=>{
   const store=new MissionStore(),m=store.start('diag-method','diagnose root cause only')
   store.applyInitialSemanticAssessment('diag-method',{...diagnosis,intent_signals:['intent.debugging']})
   assert.ok(!m.methodology.methodology_needs.some(n=>n.name==='hi-debugging-root-cause'))
@@ -74,7 +74,7 @@ test('M15 diagnosis owns root-cause semantics and suppresses redundant intent.de
   assert.deepEqual(assessed.payload.runtime_suppressed_intent_signals,['intent.debugging'])
 })
 
-test('M15 ordinary bug-fix still requires implementation and verification',()=>{
+test('ordinary bug-fix still requires implementation and verification',()=>{
   const store=new MissionStore(),m=store.start('bug','fix it');store.applyInitialSemanticAssessment('bug',{...diagnosis,task_kind:'bug-fix',required_capabilities:['implementation','verification'],likely_targets:['src/a.ts']})
   assert.ok(m.execution.obligations.some(o=>o.kind==='implementation'))
   assert.ok(m.execution.obligations.some(o=>o.kind==='verification'))

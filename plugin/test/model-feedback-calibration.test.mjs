@@ -15,19 +15,19 @@ function add(m,{id,model='p/a',role='coder',category='standard',status='complete
   if(verification!=='not-observed')m.execution.evidence.items.push({id:`ev-${id}`,kind:'targeted-tests',summary:'canonical proof',scope:[],source:`worker:${id}`,source_session_id:`s-${id}`,source_state_hash:'a'.repeat(64),task_id:taskId,obligation_ids:[],producer_attempt:{worker_id:id,execution_unit_id:`eu:${taskId}`,attempt_id:`eu:${taskId}:g${m.continuation.generation}:a1`,run_id:`worker:${id}:g${m.continuation.generation}:a1`,ordinal:1,generation:m.continuation.generation},observed_at:completed,pass:verification==='passed',outcome:verification})
 }
 
-test('O3 feedback is role/category scoped and bounded to the newest 12 terminal workers',()=>{
+test('feedback is role/category scoped and bounded to the newest 12 terminal workers',()=>{
   const m=mission();for(let i=0;i<14;i++)add(m,{id:`c${i}`,completed:200+i,started:100+i});add(m,{id:'review',role:'qa-reviewer',model:'p/reviewer',completed:999})
   const rows=missionModelFeedbackObservations(m,'coder','standard')
   assert.equal(rows.length,12);assert.ok(rows.every(x=>x.role==='coder'&&x.category==='standard'));assert.equal(rows[0].observed_at,213);assert.equal(rows.at(-1).observed_at,202)
 })
 
-test('O3 derives observed latency and verification outcome without raw payload or permanent reputation',()=>{
+test('derives observed latency and verification outcome without raw payload or permanent reputation',()=>{
   const m=mission();add(m,{id:'a',model:'p/a',started:100,completed:350,verification:'passed'});add(m,{id:'b',model:'p/a',started:400,completed:550,verification:'failed',status:'failed',retry:1})
   const f=deriveMissionModelFeedback(m,'coder','standard')
   assert.equal(f.samples['p/a'],2);assert.equal(f.average_latency_ms['p/a'],200);assert.equal(f.verification_passes['p/a'],1);assert.equal(f.verification_failures['p/a'],1);assert.equal(f.retries['p/a'],1);assert.equal(f.confidence['p/a'],'low');assert.equal(f.window_size,2)
 })
 
-test('O3 sparse success remains telemetry-only and cannot manufacture routing authority',()=>{
+test('sparse success remains telemetry-only and cannot manufacture routing authority',()=>{
   const models=[{id:'p/code',provider:'p',quality:1,cost:50,tags:['coding']},{id:'p/b',provider:'p',quality:100,cost:.01,tags:['balanced']}]
   const m=mission();add(m,{id:'one',model:'p/b'})
   const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f)
@@ -35,7 +35,7 @@ test('O3 sparse success remains telemetry-only and cannot manufacture routing au
   assert.ok(r.reason.includes('cost/quality/feedback are not routing authority'))
 })
 
-test('O3 failed sample plus retry remains observable without changing capability routing',()=>{
+test('failed sample plus retry remains observable without changing capability routing',()=>{
   const models=[{id:'p/code',provider:'p',tags:['coding']},{id:'p/generic',provider:'p',tags:['balanced']}]
   const m=mission();add(m,{id:'bad',model:'p/code',status:'failed',verification:'failed',retry:1})
   const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f)
@@ -43,7 +43,7 @@ test('O3 failed sample plus retry remains observable without changing capability
   assert.equal(r.primary,'p/code');assert.ok(r.reason.includes('cost/quality/feedback are not routing authority'))
 })
 
-test('O3 repeated failures may reach confidence for analysis but still cannot silently reroute',()=>{
+test('repeated failures may reach confidence for analysis but still cannot silently reroute',()=>{
   const models=[{id:'p/code',provider:'p',tags:['coding']},{id:'p/other',provider:'p',tags:['coding']}]
   const m=mission();add(m,{id:'bad1',model:'p/code',status:'failed',verification:'failed'});add(m,{id:'bad2',model:'p/code',status:'failed',verification:'failed',completed:300})
   const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f)
@@ -53,7 +53,7 @@ test('O3 repeated failures may reach confidence for analysis but still cannot si
 })
 
 
-test('O3 fallback failure is attributed to the failed from-model while final success remains with the model that completed',()=>{
+test('fallback failure is attributed to the failed from-model while final success remains with the model that completed',()=>{
   const m=mission()
   add(m,{id:'final',model:'p/robust',verification:'passed'})
   m.execution.workers[0].fallback_history=[{from:'p/cheap',to:'p/robust',reason:'provider failure',phase:'runtime',at:150}]
@@ -66,7 +66,7 @@ test('O3 fallback failure is attributed to the failed from-model while final suc
   assert.equal(f.verification_passes['p/robust'],1)
 })
 
-test('O3 invalidated or wrong-attempt evidence does not become model verification credit',()=>{
+test('invalidated or wrong-attempt evidence does not become model verification credit',()=>{
   const m=mission();add(m,{id:'attempt',model:'p/a',verification:'passed'})
   const item=m.execution.evidence.items.at(-1);item.producer_attempt={...item.producer_attempt,attempt_id:`eu:${item.task_id}:g${m.continuation.generation}:a2`,run_id:`worker:attempt:g${m.continuation.generation}:a2`,ordinal:2}
   const f=deriveMissionModelFeedback(m,'coder','standard')

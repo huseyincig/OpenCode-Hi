@@ -37,7 +37,7 @@ class FakeExecutor{
   list(){return[...this.states.values()].map(x=>structuredClone(x))}
 }
 
-test('P3 Mission execution owns durable ProcessContract registry and schema 10 round-trips it current-only',()=>{
+test('Mission execution owns durable ProcessContract registry and schema 10 round-trips it current-only',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p3-state-')),{m,worker}=mission(root),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,root,()=>host())
   return runtime.spawn(m,{worker_id:worker.id,command:'node',args:['-e','1'],cwd:root}).then(process=>{
     assert.equal(m.execution.processes.length,1);assert.equal(m.execution.processes[0].process_id,process.process_id);assert.equal(validateMissionEnvelope(m),true)
@@ -47,19 +47,19 @@ test('P3 Mission execution owns durable ProcessContract registry and schema 10 r
   })
 })
 
-test('P3 native permission ask uses exact ToolContext-style request once and only exact ephemeral grant reaches spawn',async()=>{
+test('native permission ask uses exact ToolContext-style request once and only exact ephemeral grant reaches spawn',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host('ask'))
   const asks=[];const p=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['-e','1'],cwd:'/repo',ask:async req=>asks.push(req)})
   assert.equal(asks.length,1);assert.equal(asks[0].permission,'bash');assert.deepEqual(asks[0].patterns,[asks[0].pattern]);assert.equal(fake.spawned.length,1);assert.deepEqual(fake.spawned[0].native_permission_grants,[{permission:'bash',pattern:asks[0].pattern}]);assert.equal(p.status,'RUNNING')
 })
 
-test('P3 explicit permission deny never asks and never spawns',async()=>{
+test('explicit permission deny never asks and never spawns',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host('deny'));let asks=0
   await assert.rejects(()=>runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo',ask:async()=>{asks++}}),e=>e instanceof ProcessSpawnPermissionError&&e.decision==='DENY')
   assert.equal(asks,0);assert.equal(fake.spawned.length,0)
 })
 
-test('P3 running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{
+test('running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
   const decision=evaluateIdle(m);assert.equal(decision.decision,'WAIT');assert.equal(decision.reason_code,'waiting-worker')
   // Once the owning worker is quiescent, the process itself remains the WAIT hinge.
@@ -67,31 +67,31 @@ test('P3 running process makes continuation WAIT without reasoning stagnation an
   let settled=false;const pending=runtime.wait(m,p.process_id).then(x=>{settled=true;return x});await new Promise(r=>setTimeout(r,5));assert.equal(settled,false);fake.exit(p.process_id,0);const exited=await pending;assert.equal(exited.status,'EXITED');assert.equal(exited.exit_code,0)
 })
 
-test('P3 bounded process read records hash-bound pending Evidence without persisting raw output',async()=>{
+test('bounded process read records hash-bound pending Evidence without persisting raw output',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
   const out=await runtime.read(m,p.process_id,0,8);assert.equal(out.text,'secret-o');const ev=m.execution.evidence.items.at(-1);assert.equal(ev.kind,'diagnostic-evidence');assert.equal(ev.outcome,'pending');assert.match(ev.source,/^process:/);assert.match(ev.source_state_hash,/^[a-f0-9]{64}$/);assert.doesNotMatch(JSON.stringify(ev),/secret-output/)
 })
 
-test('P3 repeated identical process output is inert and does not mint duplicate evidence/progress',async()=>{
+test('repeated identical process output is inert and does not mint duplicate evidence/progress',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
   const before=m.execution.evidence.items.length;await runtime.read(m,p.process_id,0,8);const once=m.execution.evidence.items.length;await runtime.read(m,p.process_id,0,8);const twice=m.execution.evidence.items.length
   assert.equal(once,before+1);assert.equal(twice,once);assert.equal(m.execution.ledger.filter(e=>e.type==='process.output-observed').length,1);assert.equal(m.execution.ledger.filter(e=>e.type==='process.output-repeat').length,1)
 })
 
-test('P3 STOP terminates and separately cleans all owned running processes and forbids new spawn',async()=>{
+test('STOP terminates and separately cleans all owned running processes and forbids new spawn',async()=>{
   const {store,m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host())
   const a=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['a'],cwd:'/repo'}),b=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['b'],cwd:'/repo'})
   store.stop('s','test-stop');const count=await runtime.stopMission(m);assert.equal(count,2);assert.equal(m.execution.processes.every(p=>p.status==='TERMINATED'&&p.cleanup_state==='CLEANED'),true);assert.deepEqual(new Set(fake.cleaned),new Set([a.process_id,b.process_id]));await assert.rejects(()=>runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'}),/Mission is stopped/)
 })
 
-test('P3 restart reconciliation adopts exact owner identity and quarantines orphan without signalling it',async()=>{
+test('restart reconciliation adopts exact owner identity and quarantines orphan without signalling it',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
   const restored=structuredClone(m),freshFake=new FakeExecutor(),freshRuntime=new ProcessRuntime(freshFake,'/repo',()=>host());await freshRuntime.reconcileRestored([restored]);assert.equal(restored.execution.processes[0].status,'RUNNING');assert.equal(restored.execution.blockers.some(x=>x.startsWith('process-orphan:')),false)
   const orphaned=structuredClone(m),orphanFake=new FakeExecutor();orphanFake.reconcileMode='ORPHANED';const orphanRuntime=new ProcessRuntime(orphanFake,'/repo',()=>host());await orphanRuntime.reconcileRestored([orphaned]);assert.equal(orphaned.execution.processes[0].status,'ORPHANED');assert.equal(orphaned.execution.processes[0].cleanup_state,'QUARANTINED');assert.ok(orphaned.execution.blockers.includes(`process-orphan:${p.process_id}`));const decision=evaluateIdle(orphaned);worker.status='ready';assert.ok(['WAIT','USER_ACTION_REQUIRED'].includes(decision.decision))
 })
 
 
-test('P3 failed process lifecycle operations cannot masquerade as healthy RUNNING WAIT',async()=>{
+test('failed process lifecycle operations cannot masquerade as healthy RUNNING WAIT',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'});worker.status='ready'
   const realKill=fake.kill.bind(fake);fake.kill=async()=>{throw new Error('PTY termination unavailable')}
   await assert.rejects(()=>runtime.kill(m,p.process_id),/termination unavailable/);assert.ok(m.execution.blockers.includes(`process-termination-unverified:${p.process_id}`));let d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason_code,'operational-blocker')
@@ -99,7 +99,7 @@ test('P3 failed process lifecycle operations cannot masquerade as healthy RUNNIN
   fake.cleanup=async()=>{throw new Error('cleanup transport unavailable')};await assert.rejects(()=>runtime.cleanup(m,p.process_id),/cleanup transport unavailable/);assert.ok(m.execution.blockers.includes(`process-cleanup:${p.process_id}`));d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason,`process-cleanup:${p.process_id}`)
 })
 
-test('P3 failed process wait is terminal until a later lifecycle observation changes state',async()=>{
+test('failed process wait is terminal until a later lifecycle observation changes state',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'});worker.status='ready'
   fake.wait=async()=>{throw new Error('PTY wait transport unavailable')};await assert.rejects(()=>runtime.wait(m,p.process_id),/wait transport unavailable/);assert.ok(m.execution.blockers.includes(`process-wait-failed:${p.process_id}`));const d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason,`process-wait-failed:${p.process_id}`)
 })

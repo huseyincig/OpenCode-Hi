@@ -15,7 +15,7 @@ import { startAssessedMission, applyStructuredFollowup } from './helpers/semanti
 // Gap #8 — Native USER STOP integrity
 // ---------------------------------------------------------------------------
 
-test('Gap #8: USER STOP sets user_interrupted=true and stops active mission', () => {
+test('USER STOP sets user_interrupted=true and stops active mission', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'fix the login bug')
   assert.equal(m.identity.status, 'active')
@@ -25,7 +25,7 @@ test('Gap #8: USER STOP sets user_interrupted=true and stops active mission', ()
   assert.equal(m.continuation.user_interrupted, true)
 })
 
-test('Gap #8: late idle event after user stop does NOT auto-resurrect mission', () => {
+test('late idle event after user stop does NOT auto-resurrect mission', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   store.stop('s1', 'user-stop')
@@ -38,7 +38,7 @@ test('Gap #8: late idle event after user stop does NOT auto-resurrect mission', 
 // Gap #9 — Stagnation recovery ladder
 // ---------------------------------------------------------------------------
 
-test('Gap #9: updateProgress increments stagnation only when countStagnation=true AND signature is unchanged', () => {
+test('updateProgress increments stagnation only when countStagnation=true AND signature is unchanged', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   // First updateProgress establishes the baseline signature.
@@ -56,7 +56,7 @@ test('Gap #9: updateProgress increments stagnation only when countStagnation=tru
   assert.equal(m.continuation.stagnation_count, 0)
 })
 
-test('Gap #9: countStagnation=false skips increment even when signature is unchanged', () => {
+test('countStagnation=false skips increment even when signature is unchanged', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   store.updateProgress(m, false)
@@ -70,7 +70,7 @@ test('Gap #9: countStagnation=false skips increment even when signature is uncha
 // Gap #10 — Runtime nudge: small targeted corrective, no plan rebuild
 // ---------------------------------------------------------------------------
 
-test('Gap #10: structured follow-up updates intent without rebuilding task identity', () => {
+test('structured follow-up updates intent without rebuilding task identity', () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque')
   const before = m.identity.intent.scope
@@ -79,7 +79,7 @@ test('Gap #10: structured follow-up updates intent without rebuilding task ident
   assert.equal(m.continuation.continuation_active, false)
 })
 
-test('Gap #10: structured risk-raising follow-up escalates risk and verification', () => {
+test('structured risk-raising follow-up escalates risk and verification', () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque',{risk:'low'})
   assert.equal(m.identity.intent.risk, 'low')
@@ -94,7 +94,7 @@ test('Gap #10: structured risk-raising follow-up escalates risk and verification
 // Gap #11 — Worker dedup fingerprint
 // ---------------------------------------------------------------------------
 
-test('Gap #11: repeated high-risk structured follow-up does not duplicate high-assurance obligation', () => {
+test('repeated high-risk structured follow-up does not duplicate high-assurance obligation', () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque',{risk:'high',required_capabilities:['implementation','security-review','independent-review']})
   const before = m.execution.obligations.filter(o => o.id === 'o-high-assurance').length
@@ -107,7 +107,7 @@ test('Gap #11: repeated high-risk structured follow-up does not duplicate high-a
 // Gap #12 — Permission wait ≠ stagnation
 // ---------------------------------------------------------------------------
 
-test('Gap #12: permission pending is a runtime event tracked separately', () => {
+test('permission pending is a runtime event tracked separately', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   // pending_permissions is an axis separate from stagnation_count.
@@ -127,7 +127,7 @@ test('Gap #12: permission pending is a runtime event tracked separately', () => 
 // Gap #13 — Provider failure ≠ stagnation
 // ---------------------------------------------------------------------------
 
-test('Gap #13: provider failure is isolated from stagnation accounting', () => {
+test('provider failure is isolated from stagnation accounting', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   // Provider failure is handled by recoverRuntimeFailure in task-runtime.
@@ -146,7 +146,7 @@ test('Gap #13: provider failure is isolated from stagnation accounting', () => {
 // Gap #15 — Same-session resume preferred on FIX_REQUIRED
 // ---------------------------------------------------------------------------
 
-test('Gap #15: structured follow-up does not delete current task identity', async () => {
+test('structured follow-up does not delete current task identity', async () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque')
   const before = m.execution.tasks.length
@@ -154,7 +154,7 @@ test('Gap #15: structured follow-up does not delete current task identity', asyn
   assert.equal(m.execution.tasks.length, before, 'amend() must not delete existing tasks')
 })
 
-test('Gap #mission-identity: workers bind to spawning mission even when generation collides', async () => {
+test('workers bind to spawning mission even when generation collides', async () => {
   const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
   const store = new MissionStore()
   const first = store.start('same-session-mission-id', 'fix bug')
@@ -168,7 +168,7 @@ test('Gap #mission-identity: workers bind to spawning mission even when generati
   assert.notEqual(worker.parent_mission_id, second.identity.mission_id)
 })
 
-test('Gap #recovery-runtime: level-2 reasoning correction preserves the exact child session and model', async () => {
+test('level-2 reasoning correction preserves the exact child session and model', async () => {
   const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
   const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
   const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')

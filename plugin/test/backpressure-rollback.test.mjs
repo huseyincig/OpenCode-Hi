@@ -60,7 +60,7 @@ class FakeWorkspaceExecutor{
   async cleanup(lease){this.cleaned.push(lease.lease_id);if(this.failCleanup)throw new Error('synthetic cleanup failure')}
 }
 
-test('M14 accepted queued task binds methodology and durable artifact only after queue admission',async()=>{
+test('accepted queued task binds methodology and durable artifact only after queue admission',async()=>{
   const root=mkdtempSync(join(tmpdir(),'m14-queue-bind-'))
   try{
     const m=mission(root,'m14-queue-bind'),x=runtime(root),active=await x.rt.start(m,{objective:'active',role:'coder',category:'quick',scope:['src/a.ts']})
@@ -72,7 +72,7 @@ test('M14 accepted queued task binds methodology and durable artifact only after
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M14 queue overflow rolls back task worker methodology and artifact side effects atomically',async()=>{
+test('queue overflow rolls back task worker methodology and artifact side effects atomically',async()=>{
   const root=mkdtempSync(join(tmpdir(),'m14-queue-overflow-'))
   try{
     const m=mission(root,'m14-queue-overflow'),x=runtime(root);await fillCapacityAndQueue(x.rt,m)
@@ -84,7 +84,7 @@ test('M14 queue overflow rolls back task worker methodology and artifact side ef
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M14 isolated queue overflow removes cleaned lease and isolation decision before discarding task',async()=>{
+test('isolated queue overflow removes cleaned lease and isolation decision before discarding task',async()=>{
   const root=mkdtempSync(join(tmpdir(),'m14-queue-workspace-clean-'))
   try{
     const executor=new FakeWorkspaceExecutor(),workspace=new WorkspaceRuntime(executor,root),m=mission(root,'m14-ws-clean'),x=runtime(root,{workspaceRuntime:workspace});await fillCapacityAndQueue(x.rt,m)
@@ -95,7 +95,7 @@ test('M14 isolated queue overflow removes cleaned lease and isolation decision b
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M14 isolated queue overflow fails closed with durable blocked ownership when workspace cleanup fails',async()=>{
+test('isolated queue overflow fails closed with durable blocked ownership when workspace cleanup fails',async()=>{
   const root=mkdtempSync(join(tmpdir(),'m14-queue-workspace-fail-'))
   try{
     const executor=new FakeWorkspaceExecutor({failCleanup:true}),workspace=new WorkspaceRuntime(executor,root),m=mission(root,'m14-ws-fail'),x=runtime(root,{workspaceRuntime:workspace});await fillCapacityAndQueue(x.rt,m)
@@ -106,7 +106,7 @@ test('M14 isolated queue overflow fails closed with durable blocked ownership wh
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M14 queued dependency work below the topology ceiling does not block an independently runnable task',async()=>{
+test('queued dependency work below the topology ceiling does not block an independently runnable task',async()=>{
   const root=mkdtempSync(join(tmpdir(),'m14-queue-fairness-'))
   try{
     const m=mission(root,'m14-queue-fairness'),x=runtime(root,{global:8}),dependency=createTask(m,{objective:'unresolved external prerequisite',role:'coder',category:'quick',scope:['src/prereq.ts']})

@@ -118,8 +118,8 @@
       "control": "Duplicate worker result digests and repeated permission event IDs are idempotently ignored instead of reapplying state.",
       "proof_tests": [
         {
-          "file": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
-          "contains": "Q3 duplicate child result callback is idempotently ignored by canonical TaskRuntime"
+          "file": "plugin/test/adversarial-threat-matrix.test.mjs",
+          "contains": "duplicate child result callback is idempotently ignored by canonical TaskRuntime"
         },
         {
           "file": "plugin/test/permission-event-idempotency.test.mjs",
@@ -203,12 +203,12 @@
       "control": "Hi owns PID/cwd/native-command identity, bounded WAIT/read, fail-closed restart reconciliation, explicit STOP termination and separate cleanup; owner mismatch is quarantined and never signalled.",
       "proof_tests": [
         {
-          "file": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
-          "contains": "P3 restart reconciliation adopts exact owner identity and quarantines orphan without signalling it"
+          "file": "plugin/test/process-runtime-lifecycle.test.mjs",
+          "contains": "restart reconciliation adopts exact owner identity and quarantines orphan without signalling it"
         },
         {
-          "file": "plugin/test/p2-opencode-pty-executor.test.mjs",
-          "contains": "P3 restart reconcile quarantines same PID with changed command identity and never signals it"
+          "file": "plugin/test/opencode-pty-executor.test.mjs",
+          "contains": "restart reconcile quarantines same PID with changed command identity and never signals it"
         }
       ],
       "evidence": [
@@ -226,12 +226,12 @@
       "control": "W2/W3 provision only OpenCode builtin worktree workspaces, validate canonical same-repository Git identity, bind every fresh child by exact workspaceID+directory, preserve primary/user-dirty state, verify inside the lease, keep cleanup separate from child abort, and restart adopts or quarantines without recreation. Exact OpenCode 1.18.18 T3 now promotes only the Hi-owned workspace-isolation surface.",
       "proof_tests": [
         {
-          "file": "plugin/test/w2-workspace-executor.test.mjs",
-          "contains": "W2 restart adopts exact lease, quarantines missing owner without recreation"
+          "file": "plugin/test/workspace-executor.test.mjs",
+          "contains": "restart adopts exact lease, quarantines missing owner without recreation"
         },
         {
-          "file": "plugin/test/w3-workspace-real-host-acceptance.test.mjs",
-          "contains": "W3 workspace runtime contract requires live observation and leaves T3 promotion to external receipts"
+          "file": "plugin/test/workspace-real-host-acceptance.test.mjs",
+          "contains": "workspace runtime contract requires live observation and leaves T3 promotion to external receipts"
         }
       ],
       "evidence": [
@@ -257,8 +257,8 @@
           "contains": "TaskRuntime still fails visual methodology preflight before native child spawn when executor health resource is unavailable"
         },
         {
-          "file": "plugin/test/b1-browser-observation-contract.test.mjs",
-          "contains": "B1 observation remains non-Evidence regardless of later B3 browser capability promotion"
+          "file": "plugin/test/browser-observation-contract.test.mjs",
+          "contains": "observation remains non-Evidence regardless of later browser capability promotion"
         }
       ],
       "evidence": [

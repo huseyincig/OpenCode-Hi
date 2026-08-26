@@ -9,7 +9,7 @@ import {ProjectAuthorityStore,applyProjectAuthorityPermissions} from '../dist/ru
 
 function mission(id){return new MissionStore().start(id,'authority hardening probe')}
 
-test('M13 different exact action cannot overwrite an unresolved executing authority slot',()=>{
+test('different exact action cannot overwrite an unresolved executing authority slot',()=>{
   const m=mission('m13-executing')
   beginAuthorizedAction(m,'git push origin main','/repo')
   const first=m.authority.authority.executing.hash
@@ -18,7 +18,7 @@ test('M13 different exact action cannot overwrite an unresolved executing author
   assert.equal(m.authority.authority.executing.hash,first)
 })
 
-test('M13 duplicate pending exact request preserves the original approval TTL',()=>{
+test('duplicate pending exact request preserves the original approval TTL',()=>{
   const m=mission('m13-ttl')
   assert.throws(()=>requireAuthority(m,'git push origin main','/repo'),/approval required/i)
   const decisionCreated=m.authority.human_decision.created_at
@@ -29,7 +29,7 @@ test('M13 duplicate pending exact request preserves the original approval TTL',(
   assert.equal(m.authority.human_decision.created_at,decisionCreated)
 })
 
-test('M13 a different pending exact action conflicts instead of replacing authority identity',()=>{
+test('a different pending exact action conflicts instead of replacing authority identity',()=>{
   const m=mission('m13-pending-conflict')
   assert.throws(()=>requireAuthority(m,'git push origin main','/repo'),/approval required/i)
   const first=m.authority.authority.pending.hash
@@ -40,7 +40,7 @@ test('M13 a different pending exact action conflicts instead of replacing author
   assert.equal(after.length,before.length+1,'durable requested-action obligations remain distinct while transient approval is serialized')
 })
 
-test('M13 malformed persistent native-always authority state fails closed',()=>{
+test('malformed persistent native-always authority state fails closed',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-m13-authority-'))
   try{
     const policy=join(root,'.opencode','hi','policy');mkdirSync(policy,{recursive:true})

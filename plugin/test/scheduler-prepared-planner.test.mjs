@@ -16,7 +16,7 @@ function fixture(){
   return{snapshot:{graph,unitTraits,resolvedResources,capacity:{topology:2,global:2,providers:{p:2},models:{'p/m':2},running:[]}},units:graph.executionUnits}
 }
 
-test('M14 prepared scheduler planner is call-scoped, capacity-variable, and decision-equivalent',()=>{
+test('prepared scheduler planner is call-scoped, capacity-variable, and decision-equivalent',()=>{
   const {snapshot,units}=fixture(),prepared=createSchedulingPlanner(snapshot)
   assert.deepEqual(prepared(),planScheduling(snapshot))
   const oneRunning={...snapshot.capacity,running:[{executionUnitId:units[0].id,provider:'p',model:'p/m'}]}

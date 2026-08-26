@@ -29,7 +29,7 @@ function makeDefaultHiConfig() {
   }
 }
 
-test('Gap #16: model-inventory check reports first 8 model ids, not just count', () => {
+test('model-inventory check reports first 8 model ids, not just count', () => {
   const project = makeProject()
   try {
     const cfg = makeDefaultHiConfig()
@@ -48,7 +48,7 @@ test('Gap #16: model-inventory check reports first 8 model ids, not just count',
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 
-test('Gap #16: model-inventory with empty inventory passes warn', () => {
+test('model-inventory with empty inventory passes warn', () => {
   const project = makeProject()
   try {
     const cfg = makeDefaultHiConfig()
@@ -62,7 +62,7 @@ test('Gap #16: model-inventory with empty inventory passes warn', () => {
 
 
 
-test('M16 model-inventory presentation includes entries beyond eight', () => {
+test('model-inventory presentation includes entries beyond eight', () => {
   const project = makeProject()
   try {
     const cfg = makeDefaultHiConfig()

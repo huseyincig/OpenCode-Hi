@@ -11,7 +11,7 @@ const base={
 }
 function full(h){return `${ownershipContract('child',h.methodologies)}\n\n${workerHandoffText(h)}`}
 
-test('Phase 6 trivial handoff is a task delta instead of repeated methodology/control boilerplate',()=>{
+test('trivial handoff is a task delta instead of repeated methodology/control boilerplate',()=>{
   const h={...base,required_evidence:[],methodologies:[],methodology_exit_requirements:[]},core=workerHandoffText(h),text=full(h)
   assert.ok(text.length<1800,`trivial child handoff regressed to ${text.length} chars`)
   assert.doesNotMatch(core,/Control plane: Hi|HI METHODOLOGIES|METHODOLOGY EXIT REQUIREMENTS|APPROVAL-GATED METHODOLOGIES|BrowserObservation|targeted-test-evidence/)
@@ -21,7 +21,7 @@ test('Phase 6 trivial handoff is a task delta instead of repeated methodology/co
   assert.match(core,/scope_expansions/)
 })
 
-test('Phase 6 evidence-specific handoff keeps exact canonical evidence semantics only when evidence is required',()=>{
+test('evidence-specific handoff keeps exact canonical evidence semantics only when evidence is required',()=>{
   const text=workerHandoffText({...base,required_evidence:['targeted-tests'],methodologies:[],methodology_exit_requirements:[]})
   assert.match(text,/REQUIRED EVIDENCE: targeted-tests/)
   assert.match(text,/Required evidence kinds are canonical IDs/)
@@ -29,7 +29,7 @@ test('Phase 6 evidence-specific handoff keeps exact canonical evidence semantics
   assert.match(text,/never rename or alias them/)
 })
 
-test('Phase 6 methodology and visual proof rules are lazy and task-specific',()=>{
+test('methodology and visual proof rules are lazy and task-specific',()=>{
   const plain=workerHandoffText({...base,required_evidence:['targeted-tests'],methodologies:[],methodology_exit_requirements:[]})
   assert.doesNotMatch(plain,/Methodology exits require|BrowserObservation/)
   const methodology=workerHandoffText({...base,required_evidence:['targeted-tests'],methodologies:['hi-test-driven-development'],methodology_exit_requirements:['hi-test-driven-development: task-success, no-open-issues, targeted-test-evidence']})
@@ -44,7 +44,7 @@ test('Phase 6 methodology and visual proof rules are lazy and task-specific',()=
   assert.match(visual,/Return the WorkerResult directly in assistant text/)
 })
 
-test('Phase 6 reviewer-only finding schema is not paid by ordinary coder handoffs',()=>{
+test('reviewer-only finding schema is not paid by ordinary coder handoffs',()=>{
   const coder=workerHandoffText({...base,required_evidence:[],methodologies:[],methodology_exit_requirements:[]})
   assert.doesNotMatch(coder,/Reviewer findings:/)
   const reviewer=workerHandoffText({...base,required_evidence:['review-evidence'],methodologies:[],methodology_exit_requirements:[],expected_output:{...base.expected_output,findings:true}})

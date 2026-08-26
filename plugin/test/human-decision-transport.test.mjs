@@ -14,7 +14,7 @@ import {authorityProtocolJson} from './helpers/authority.mjs'
 
 function userOutput(text){return{message:{role:'user'},parts:[{type:'text',text}]}}
 
-test('H1 chat transport opens idempotently and awaits one exact bounded response',async()=>{
+test('chat transport opens idempotently and awaits one exact bounded response',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-transport','small task')
   const decision=openHumanDecision(m,{semantic_type:'value_judgment',reason_code:'choose-shape',summary:'Choose the preferred shape',response_schema:{kind:'free-text'}})
   const transport=new ChatHumanDecisionTransport(100)
@@ -27,7 +27,7 @@ test('H1 chat transport opens idempotently and awaits one exact bounded response
   assert.deepEqual(await waiting,{status:'RESPONDED',response})
 })
 
-test('H1 timeout and cancel are transport-only and never resolve canonical HumanDecision state',async()=>{
+test('timeout and cancel are transport-only and never resolve canonical HumanDecision state',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-cancel','small task')
   const decision=openHumanDecision(m,{semantic_type:'operational_action',reason_code:'external-step',summary:'External step required',response_schema:{kind:'external-action'}})
   const transport=new ChatHumanDecisionTransport(5);transport.open(decision)
@@ -38,7 +38,7 @@ test('H1 timeout and cancel are transport-only and never resolve canonical Human
   assert.equal(m.authority.human_decision.status,'OPEN')
 })
 
-test('H1 typed choice rejects invalid chat input and accepts only an exact configured choice',async()=>{
+test('typed choice rejects invalid chat input and accepts only an exact configured choice',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-choice','small task')
   const decision=openHumanDecision(m,{semantic_type:'preference',reason_code:'select-mode',summary:'Select mode',response_schema:{kind:'choice',choices:['safe','fast']}})
   const transport=new ChatHumanDecisionTransport(100)
@@ -50,7 +50,7 @@ test('H1 typed choice rejects invalid chat input and accepts only an exact confi
   const result=await transport.await(decision.decision_id);assert.equal(result.status,'RESPONDED');assert.equal(result.response.value,'safe')
 })
 
-test('H1 authority chat remains canonical hash-bound authority; generic prose cannot become transport approval',async()=>{
+test('authority chat remains canonical hash-bound authority; generic prose cannot become transport approval',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-authority','release task')
   assert.throws(()=>requireAuthority(m,'git push origin main',process.cwd()),/explicit approval required/)
   const decision=m.authority.human_decision,hash=m.authority.authority.pending.hash
@@ -62,7 +62,7 @@ test('H1 authority chat remains canonical hash-bound authority; generic prose ca
 })
 
 
-test('H1 opening a replacement decision cancels the stale waiter for the same Mission only',async()=>{
+test('opening a replacement decision cancels the stale waiter for the same Mission only',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-replace','small task'),transport=new ChatHumanDecisionTransport(100)
   const first=openHumanDecision(m,{semantic_type:'value_judgment',reason_code:'first',summary:'First',response_schema:{kind:'free-text'}});transport.open(first)
   const waiting=transport.await(first.decision_id)
@@ -71,7 +71,7 @@ test('H1 opening a replacement decision cancels the stale waiter for the same Mi
   assert.equal(transport.handle(second.decision_id)?.state,'OPEN')
 })
 
-test('H1 runtime composition owns one ephemeral chat transport and does not persist a second HumanDecision store',()=>{
+test('runtime composition owns one ephemeral chat transport and does not persist a second HumanDecision store',()=>{
   const source=readFileSync(new URL('../src/runtime/application/runtime-services.ts',import.meta.url),'utf8')
   const transportSource=readFileSync(new URL('../src/runtime/human-decision/transport.ts',import.meta.url),'utf8')
   assert.equal((source.match(/new ChatHumanDecisionTransport\(/g)??[]).length,1)
@@ -102,7 +102,7 @@ test('restart reopens persisted semantic decision but never replays stale epheme
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('H1 ephemeral transport retires old terminal entries instead of growing without bound',()=>{
+test('ephemeral transport retires old terminal entries instead of growing without bound',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-bounded-history','small task'),transport=new ChatHumanDecisionTransport(100)
   let firstID,lastID
   for(let i=0;i<200;i++){
@@ -121,7 +121,7 @@ test('stale answer to a replaced HumanDecision cannot resolve the replacement',a
   assert.equal(transport.respond(fresh.decision_id,'x')?.value,'x')
 })
 
-test('H1 transport dispose cancels every open waiter and rejects late replies',async()=>{
+test('transport dispose cancels every open waiter and rejects late replies',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-dispose-transport','small task'),transport=new ChatHumanDecisionTransport(60_000)
   const decision=openHumanDecision(m,{semantic_type:'preference',reason_code:'dispose-choice',summary:'pick',response_schema:{kind:'choice',choices:['safe','fast']}});transport.open(decision)
   const waiting=transport.await(decision.decision_id)
@@ -131,7 +131,7 @@ test('H1 transport dispose cancels every open waiter and rejects late replies',a
   transport.dispose()
 })
 
-test('H1 plugin dispose resolves and stops a waiting-user Mission before clean persistence',async()=>{
+test('plugin dispose resolves and stops a waiting-user Mission before clean persistence',async()=>{
   const {default:HiPlugin}=await import('../dist/plugin.js')
   const {assessPluginMission}=await import('./helpers/semantic.mjs')
   const root=mkdtempSync(join(tmpdir(),'hi-hd-plugin-dispose-'))

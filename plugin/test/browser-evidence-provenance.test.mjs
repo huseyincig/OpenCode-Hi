@@ -28,44 +28,44 @@ function runtime(){const client={session:{abort:async()=>({data:true}),diff:asyn
 function observation(taskID){const x={task_id:taskID,executor_version:'hi-playwright-browser@1',url:'http://127.0.0.1:4173/',action:'inspect',timestamp:Date.now(),document_identity:createHash('sha256').update(`doc:${taskID}`).digest('hex'),dom_summary:'Ready',console_errors:[],network_errors:[],result:'OBSERVED'};return{...x,observation_id:browserObservationId(x)}}
 function surface(f,browserExecutor){return createHiToolSurface({state:{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},openCodeVersion:'1.18.18'},store:f.store,tasks:{},processRuntime:{},browserExecutor,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}}).toolSurface}
 
-test('M13 real Hi browser observation creates pending attempt-bound canonical evidence reference',async()=>{
+test('real Hi browser observation creates pending attempt-bound canonical evidence reference',async()=>{
   const f=fixture('m13-proof-observe'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})})
   const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
   assert.ok(out.evidence_ref);assert.equal(out.observation.task_id,f.task.id)
   const ev=f.m.execution.evidence.items.find(e=>e.id===out.evidence_ref);assert.ok(ev);assert.equal(ev.kind,'browser-evidence');assert.equal(ev.outcome,'pending');assert.equal(ev.task_id,f.task.id);assert.equal(ev.producer_attempt.worker_id,f.worker.id);assert.match(ev.source,/^browser:bo_/)
 })
 
-test('M13 fabricated passed browser evidence without browser observation reference cannot satisfy browser methodology exit',()=>{
+test('fabricated passed browser evidence without browser observation reference cannot satisfy browser methodology exit',()=>{
   const f=fixture('m13-proof-fabricated');runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'browser passed',changed_files:[],evidence:[{kind:'browser-evidence',summary:'claimed pass',scope:['src/view.tsx'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/);assert.equal(methodologyExitCheck(f.m,'hi-browser-testing',{task:f.task,result:f.task.result,projectRoot:process.cwd(),scope:'worker'}).ok,false)
 })
 
-test('M13 passed browser evidence accepts same-task current-attempt real browser observation reference',async()=>{
+test('passed browser evidence accepts same-task current-attempt real browser observation reference',async()=>{
   const f=fixture('m13-proof-valid'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'browser verified',changed_files:[],evidence:[{kind:'browser-evidence',summary:'verified against browser observation',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'DONE');const passed=f.m.execution.evidence.items.find(e=>e.kind==='browser-evidence'&&e.outcome==='passed');assert.ok(passed);assert.deepEqual(passed.evidence_refs,[out.evidence_ref]);assert.match(passed.source_state_hash,/^[a-f0-9]{64}$/);assert.equal(methodologyExitCheck(f.m,'hi-browser-testing',{task:f.task,result:f.task.result,projectRoot:process.cwd(),scope:'worker'}).ok,true)
 })
 
-test('M13 browser observation reference from a prior worker attempt cannot satisfy current browser proof',async()=>{
+test('browser observation reference from a prior worker attempt cannot satisfy current browser proof',async()=>{
   const f=fixture('m13-proof-stale'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}));beginWorkerAttempt(f.task,f.worker)
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale browser proof',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale claim',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/)
 })
 
 
-test('M13 current-attempt browser observation id alias bo_... normalizes to canonical evidence ref',async()=>{
+test('current-attempt browser observation id alias bo_... normalizes to canonical evidence ref',async()=>{
   const f=fixture('m13-proof-bo-alias'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'browser verified via observation id alias',changed_files:[],evidence:[{kind:'browser-evidence',summary:'verified against exact browser observation id',scope:['src/view.tsx'],evidence_refs:[out.observation.observation_id],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'DONE');assert.deepEqual(f.task.result.evidence[0].evidence_refs,[out.evidence_ref]);const normalized=f.m.execution.ledger.find(e=>e.type==='browser.evidence-ref-normalized');assert.ok(normalized);assert.deepEqual(normalized.payload.from,[out.observation.observation_id]);assert.deepEqual(normalized.payload.to,[out.evidence_ref])
 })
 
-test('M13 stale prior-attempt browser observation id alias remains fail-closed',async()=>{
+test('stale prior-attempt browser observation id alias remains fail-closed',async()=>{
   const f=fixture('m13-proof-bo-stale'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}));beginWorkerAttempt(f.task,f.worker)
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale observation-id alias',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale claim',scope:['src/view.tsx'],evidence_refs:[out.observation.observation_id],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/);assert.equal(f.m.execution.ledger.some(e=>e.type==='browser.evidence-ref-normalized'),false)
 })
 
-test('M13 screenshot tool returns canonical ref plus native image attachment instead of a filesystem lookup target',async()=>{
+test('screenshot tool returns canonical ref plus native image attachment instead of a filesystem lookup target',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-browser-attachment-'))
   try{
     const f=fixture('m13-proof-screenshot-attachment'),artifacts=new ContextArtifactStore(root),bytes=new Uint8Array([137,80,78,71,13,10,26,10,7,8,9]),stored=artifacts.addBinary('browser-screenshot',`Browser screenshot for ${f.task.id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${f.task.id}`]})

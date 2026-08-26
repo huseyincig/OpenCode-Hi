@@ -15,7 +15,7 @@ function assessed(store,id='parent') {const m=store.start(id,'opaque');store.app
 function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.20'}}
 function scoped(){return{contextArtifacts:{}}}
 
-test('P3 parent surface exposes bounded process controls and child overrides disable every process control',()=>{
+test('parent surface exposes bounded process controls and child overrides disable every process control',()=>{
   const store=new MissionStore(),calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}},read:async()=>({}),write:async()=>{},wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
@@ -24,7 +24,7 @@ test('P3 parent surface exposes bounded process controls and child overrides dis
   const child=promptToolOverrides(['read','bash']);for(const id of ids)assert.equal(child[id],false,id)
 })
 
-test('P3 semantic user STOP stops mission before process cleanup then workers reconcile',async()=>{
+test('semantic user STOP stops mission before process cleanup then workers reconcile',async()=>{
   const store=new MissionStore(),m=assessed(store,'stop-parent'),order=[]
   store.beginFollowupSemanticAssessment('stop-parent','opaque stop')
   const processRuntime={list:()=>[],spawn:async()=>({}),read:async()=>({}),write:async()=>{},wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{},stopMission:async mission=>{assert.equal(mission.identity.status,'stopped');order.push('process');return 1}}
@@ -36,7 +36,7 @@ test('P3 semantic user STOP stops mission before process cleanup then workers re
   assert.equal(m.identity.status,'stopped');assert.equal(m.continuation.user_interrupted,true);assert.deepEqual(order,['process','tasks']);assert.equal(result.reconciled_workers,2)
 })
 
-test('P3 parent session deletion stops mission and process runtime before worker cancellation',async()=>{
+test('parent session deletion stops mission and process runtime before worker cancellation',async()=>{
   const store=new MissionStore(),m=assessed(store,'deleted-parent'),order=[]
   const processRuntime={stopMission:async mission=>{assert.equal(mission.identity.status,'stopped');order.push('process');return 1}}
   const services={store,background:{},persistence:{save:()=>{order.push('save')}},tasks:{resolveChildCallback:()=>undefined,cancelAll:async()=>{order.push('tasks');return 1}},processRuntime,eventSink:()=>{},scopedStores:{}}
@@ -73,12 +73,12 @@ test('parent idle preserves an existing canonical operational HumanDecision inst
   assert.ok(saves.length>=1)
 })
 
-test('M12 semantic gate separates capability IDs from methodology intent signals',()=>{
+test('semantic gate separates capability IDs from methodology intent signals',()=>{
   const store=new MissionStore(),m=store.start('m12-process-gate','start a development server and keep it running')
   const gate=renderSemanticAssessmentGate(m);assert.match(gate,/interactive-process=persistent/);assert.match(gate,/capability-named signals reject/)
 })
 
-test('M12 bounded command mission cannot escalate into Hi PTY lifecycle without interactive-process capability',async()=>{
+test('bounded command mission cannot escalate into Hi PTY lifecycle without interactive-process capability',async()=>{
   const store=new MissionStore(),m=assessed(store,'m12-bounded'),calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
@@ -86,7 +86,7 @@ test('M12 bounded command mission cannot escalate into Hi PTY lifecycle without 
   assert.match(out,/persistent\/interactive process lifecycle was not selected/i);assert.deepEqual(calls,[])
 })
 
-test('M12 interactive-process intent still fails closed when live native PTY capability is unavailable',async()=>{
+test('interactive-process intent still fails closed when live native PTY capability is unavailable',async()=>{
   const store=new MissionStore(),m=store.start('m12-no-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-no-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
@@ -94,7 +94,7 @@ test('M12 interactive-process intent still fails closed when live native PTY cap
   assert.match(out,/native process lifecycle is unavailable/i);assert.deepEqual(calls,[])
 })
 
-test('M12 interactive-process plus observed native PTY capability admits the existing ProcessRuntime owner',async()=>{
+test('interactive-process plus observed native PTY capability admits the existing ProcessRuntime owner',async()=>{
   const store=new MissionStore(),m=store.start('m12-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_1',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
@@ -102,7 +102,7 @@ test('M12 interactive-process plus observed native PTY capability admits the exi
   assert.equal(out.process_id,'proc_1');assert.equal(calls.length,1);assert.equal(calls[0].command,'node')
 })
 
-test('M24 process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
+test('process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
   const store=new MissionStore(),m=store.start('m24-pty-drift-down','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-down',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'should-not-spawn',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
@@ -110,7 +110,7 @@ test('M24 process spawn reobserves a stale SUPPORTED PTY capability and fails cl
   assert.equal(probes,1);assert.deepEqual(calls,[]);assert.equal(out.status,'USER_ACTION_REQUIRED');assert.equal(out.blocker,'capability-unavailable:process-lifecycle');assert.match(out.detail,/PTY list unavailable|process lifecycle is unavailable/i)
 })
 
-test('M24 process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{
+test('process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{
   const store=new MissionStore(),m=store.start('m24-pty-drift-up','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-up',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({});let probes=0
   m.execution.blockers.push('capability-unavailable:process-lifecycle')
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_recovered',status:'RUNNING'}}}

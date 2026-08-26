@@ -65,7 +65,7 @@ function normalizedAssessmentFromIntent(intent) {
   }
 }
 
-test('Q1 semantic routing replay corpus is closed-shape and matches canonical routing owners', () => {
+test('semantic routing replay corpus is closed-shape and matches canonical routing owners', () => {
   const rows = readJsonl('semantic-routing.jsonl', ['id','intent','expected'], [
     (row, where) => { exactKeys(row.intent, intentKeys, `${where}.intent`); exactKeys(row.expected, routingExpectedKeys, `${where}.expected`) },
   ])
@@ -110,7 +110,7 @@ function buildContinuationState(row) {
   return mission
 }
 
-test('Q1 continuation replay corpus is closed-shape and matches canonical idle decisions', () => {
+test('continuation replay corpus is closed-shape and matches canonical idle decisions', () => {
   const rows = readJsonl('continuation.jsonl', ['id','state','expected'], [
     (row, where) => { exactKeys(row.state, continuationStateKeys, `${where}.state`); exactKeys(row.expected, continuationExpectedKeys, `${where}.expected`) },
   ])
@@ -120,7 +120,7 @@ test('Q1 continuation replay corpus is closed-shape and matches canonical idle d
   }
 })
 
-test('Q1 methodology replay corpus is closed-shape and exercises catalog plus executable skill preflight', () => {
+test('methodology replay corpus is closed-shape and exercises catalog plus executable skill preflight', () => {
   const catalog = builtinMethodologyCatalog()
   const rows = readJsonl('methodology-selection.jsonl', ['id','signal','producer','role','available_resources','permission','expected'], [
     (row, where) => exactKeys(row.expected, methodologyExpectedKeys, `${where}.expected`),
@@ -142,7 +142,7 @@ test('Q1 methodology replay corpus is closed-shape and exercises catalog plus ex
   }
 })
 
-test('Q1 model replay corpus is closed-shape and matches canonical runtime model resolution', () => {
+test('model replay corpus is closed-shape and matches canonical runtime model resolution', () => {
   const rows = readJsonl('model-routing.jsonl', ['id','category','role','available','config','explicit','host_config','feedback','expected'], [
     (row, where) => exactKeys(row.expected, modelExpectedKeys, `${where}.expected`),
   ])
@@ -157,7 +157,7 @@ test('Q1 model replay corpus is closed-shape and matches canonical runtime model
   }
 })
 
-test('Q1 decision replay corpora are tests-only inputs, not runtime configuration', () => {
+test('decision replay corpora are tests-only inputs, not runtime configuration', () => {
   for (const name of ['semantic-routing.jsonl','continuation.jsonl','methodology-selection.jsonl','model-routing.jsonl']) {
     const text = readFileSync(resolve(corpusRoot, name), 'utf8')
     assert.ok(text.endsWith('\n'), `${name} must end with newline`)

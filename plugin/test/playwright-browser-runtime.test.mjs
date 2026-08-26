@@ -35,7 +35,7 @@ function fakePlaywright(){
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const ctx=(id,owner=`owner:${id}:1`,origins=['http://127.0.0.1:4173'])=>({task_id:id,execution_owner_ref:owner,executor_version:'hi-playwright-test',allowed_origins:origins})
 
-test('B3 Playwright adapter is local-scope, task-isolated and emits bounded observations',async()=>{
+test('Playwright adapter is local-scope, task-isolated and emits bounded observations',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   assert.equal((await adapter.health()).available,true)
   const a=await adapter.open(ctx('t1'),'http://127.0.0.1:4173/')
@@ -78,7 +78,7 @@ test('browser snapshot refreshes client-side route state and fails closed on ext
   await adapter.dispose()
 })
 
-test('B3 screenshot bytes are retained by the existing canonical artifact owner before observation succeeds',async()=>{
+test('screenshot bytes are retained by the existing canonical artifact owner before observation succeeds',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-browser-artifact-')),store=new ContextArtifactStore(root),pw=fakePlaywright()
   try{
     const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:(bytes,c)=>{const a=store.addBinary('browser-screenshot',`screenshot ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`}})
@@ -90,7 +90,7 @@ test('B3 screenshot bytes are retained by the existing canonical artifact owner 
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('B3 browser execution custom tools are default-off and only active visual workers may pass the child guard',async()=>{
+test('browser execution custom tools are default-off and only active visual workers may pass the child guard',async()=>{
   const off=promptToolOverrides(['read']);for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)assert.equal(off[id],false,id)
   const on=promptToolOverrides(['read',...HI_BROWSER_EXECUTION_TOOL_IDS]);for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)assert.equal(on[id],undefined,id)
   const store=new MissionStore(process.cwd()),m=store.start('parent-browser','visual test')
@@ -109,7 +109,7 @@ test('B3 browser execution custom tools are default-off and only active visual w
 })
 
 
-test('B3 TaskRuntime admits browser methodology only when runtime health resource is present and exposes bounded browser tools to visual-qa',async()=>{
+test('TaskRuntime admits browser methodology only when runtime health resource is present and exposes bounded browser tools to visual-qa',async()=>{
   const created=[],prompts=[],client={session:{create:async req=>{created.push(req);return{data:{id:'child-browser'}}},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']))
   const store=new MissionStore(process.cwd()),m=store.start('browser-ready','verify local browser')
@@ -147,13 +147,13 @@ test('browser wait bounds fail closed instead of permitting unbounded visual exe
 })
 
 
-test('B3 bounded browser keyboard primitive admits game/navigation keys and rejects arbitrary chords',async()=>{
+test('bounded browser keyboard primitive admits game/navigation keys and rejects arbitrary chords',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module});const c=ctx('t-key')
   await adapter.open(c,'http://127.0.0.1:4173/');const left=await adapter.key(c,{key:'ArrowLeft'});const restart=await adapter.key(c,{key:'R'});assert.equal(left.action,'key');assert.equal(restart.result,'OBSERVED');assert.equal(pw.sessions[0].page.lastKey,'R');await assert.rejects(()=>adapter.key(c,{key:'Control+L'}),/bounded navigation\/action key/);await adapter.close(c)
 })
 
 
-test('M17 bounded viewport primitive records exact responsive dimensions and carries them into screenshots',async()=>{
+test('bounded viewport primitive records exact responsive dimensions and carries them into screenshots',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:()=>`hi-artifact:a_${'a'.repeat(24)}`}),c=ctx('t-viewport')
   await adapter.open(c,'http://127.0.0.1:4173/')
   const mobile=await adapter.viewport(c,{width:390,height:844})

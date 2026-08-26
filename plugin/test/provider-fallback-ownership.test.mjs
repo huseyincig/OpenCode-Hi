@@ -28,7 +28,7 @@ function setup(){
   return{runtime,mission,created,prompts,aborts}
 }
 
-test('M11 rejected prompt mutation is never replayed through a fallback model after child creation',async()=>{
+test('rejected prompt mutation is never replayed through a fallback model after child creation',async()=>{
   const {runtime,mission,created,prompts,aborts}=setup()
   await assert.rejects(()=>runtime.start(mission,{objective:'bounded implementation',role:'coder',category:'standard',scope:['src/a.ts']}),/prompt rejected/)
   assert.equal(created.length,1,'a rejected mutating prompt must not create a second fallback child')

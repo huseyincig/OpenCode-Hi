@@ -21,18 +21,18 @@ function client(prompts=[]){let n=0;return{session:{create:async()=>({data:{id:`
 function mission(id,caps){const store=new MissionStore(),m=store.start(id,'browser backend fixture');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:caps,requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['src/view.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]});m.methodology.methodology_needs.push({name:'hi-browser-testing',signal:'intent.browser',trigger_source:'task-intent',producer:'intent',reason:'browser acceptance',created_at:Date.now()});return m}
 function runtime(prompts,resources=new Set()){return new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>resources)}
 
-test('M13 browser backend policy prefers healthy bounded Playwright and does not infer MCP from server names',()=>{
+test('browser backend policy prefers healthy bounded Playwright and does not infer MCP from server names',()=>{
   assert.deepEqual(resolveBrowserBackend({role:'visual-qa',browserRequested:true,localBrowserAvailable:true,semanticCapabilities:['visual-qa','mcp'],selectedMcpServers:['browser']}),{backend:'bounded-playwright',reason:'healthy-bounded-playwright-default'})
   assert.deepEqual(resolveBrowserBackend({role:'visual-qa',browserRequested:true,localBrowserAvailable:false,semanticCapabilities:['visual-qa'],selectedMcpServers:[]}),{reason:'browser-execution-resource-unavailable'})
 })
 
-test('M13 explicit MCP browser backend requires exact selected MCP and semantic capability',()=>{
+test('explicit MCP browser backend requires exact selected MCP and semantic capability',()=>{
   assert.throws(()=>resolveBrowserBackend({role:'visual-qa',browserRequested:true,requested:'mcp',localBrowserAvailable:false,semanticCapabilities:['visual-qa'],selectedMcpServers:['browser']}),/semantic capability mcp/)
   assert.throws(()=>resolveBrowserBackend({role:'visual-qa',browserRequested:true,requested:'mcp',localBrowserAvailable:false,semanticCapabilities:['visual-qa','mcp'],selectedMcpServers:[]}),/at least one exact selected MCP server/)
   assert.deepEqual(resolveBrowserBackend({role:'visual-qa',browserRequested:true,requested:'mcp',localBrowserAvailable:false,semanticCapabilities:['visual-qa','mcp'],selectedMcpServers:['browser']}),{backend:'mcp',reason:'explicit-task-selected-mcp-browser-backend'})
 })
 
-test('M13 visual task defaults to bounded Playwright and disables unselected MCP servers',async()=>{
+test('visual task defaults to bounded Playwright and disables unselected MCP servers',async()=>{
   const prompts=[],m=mission('m13-local',['visual-qa']),rt=runtime(prompts,new Set(['host-capability:browser-execution']))
   const out=await rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
   const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'bounded-playwright');assert.deepEqual(out.methodologies,['hi-browser-testing','hi-visual-qa'])
@@ -41,7 +41,7 @@ test('M13 visual task defaults to bounded Playwright and disables unselected MCP
   assert.ok(task.constraints.includes('hi-browser-backend:bounded-playwright'))
 })
 
-test('M13 selected MCP backend satisfies browser runtime resource without fabricating local Hi browser tools',async()=>{
+test('selected MCP backend satisfies browser runtime resource without fabricating local Hi browser tools',async()=>{
   const prompts=[],m=mission('m13-mcp',['visual-qa','mcp']),rt=runtime(prompts,new Set())
   const out=await rt.start(m,{objective:'verify UI through configured browser MCP',role:'visual-qa',category:'visual',scope:['src/view.tsx'],mcpServers:['browser'],browserBackend:'mcp'})
   const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'mcp');assert.deepEqual(task.execution_profile.mcp_servers,['browser']);assert.deepEqual(out.methodologies,['hi-browser-testing','hi-visual-qa'])
@@ -51,7 +51,7 @@ test('M13 selected MCP backend satisfies browser runtime resource without fabric
   const worker=m.execution.workers.find(w=>w.id===out.worker_id);assert.ok(worker?.session_id);assert.equal(resolveBrowserExecutionOwner(m,{sessionID:worker.session_id,workerID:worker.id,taskID:task.id}),undefined,'MCP backend must never acquire the local Playwright execution owner')
 })
 
-test('M13 explicit local backend records one durable browser capability blocker and verification environment issue',async()=>{
+test('explicit local backend records one durable browser capability blocker and verification environment issue',async()=>{
   const prompts=[],m=mission('m13-local-missing',['visual-qa']),rt=runtime(prompts,new Set())
   await assert.rejects(()=>rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserBackend:'bounded-playwright',browserAllowedOrigins:['http://127.0.0.1:4173']}),/Required methodology host\/resource capability is unavailable/)
   assert.equal(m.execution.tasks.length,0);assert.equal(prompts.length,0)
@@ -63,7 +63,7 @@ test('M13 explicit local backend records one durable browser capability blocker 
 })
 
 
-test('M13 local visual task can defer origin creation to Hi-owned preview and receives exact preview handoff',async()=>{
+test('local visual task can defer origin creation to Hi-owned preview and receives exact preview handoff',async()=>{
   const prompts=[],m=mission('m13-preview',['visual-qa']),preview=new LocalPreviewManager(repoRoot)
   const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
   const out=await rt.start(m,{objective:'verify local static UI',role:'visual-qa',category:'visual',scope:['src/view.tsx']})

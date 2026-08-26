@@ -9,7 +9,7 @@ const TDD_ASSESSMENT={...R2_ASSESSMENT,scope:'multi-file',dependency_class:'sequ
 
 function lastSemanticLedger(m,type='semantic.assessed'){return [...m.execution.ledger].reverse().find(x=>x.type===type)}
 
-test('M15 explicit do-not-modify-tests authority suppresses a contradictory model-derived TDD signal',()=>{
+test('explicit do-not-modify-tests authority suppresses a contradictory model-derived TDD signal',()=>{
   const store=new MissionStore(),m=store.start('m15-r2',R2_PROMPT)
   store.applyInitialSemanticAssessment('m15-r2',R2_ASSESSMENT)
   assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'||x.signal==='intent.tdd'),false)
@@ -20,7 +20,7 @@ test('M15 explicit do-not-modify-tests authority suppresses a contradictory mode
   assert.ok(payload.runtime_suppressed_intent_signals.includes('intent.tdd'))
 })
 
-test('M15 explicit TDD request is preserved when the user did not forbid test mutation',()=>{
+test('explicit TDD request is preserved when the user did not forbid test mutation',()=>{
   const store=new MissionStore(),m=store.start('m15-real-tdd','Use TDD. Add a failing regression test first, then implement the parser fix and run the targeted tests.')
   store.applyInitialSemanticAssessment('m15-real-tdd',TDD_ASSESSMENT)
   assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'&&x.signal==='intent.tdd'))
@@ -29,7 +29,7 @@ test('M15 explicit TDD request is preserved when the user did not forbid test mu
   assert.ok(!payload.runtime_suppressed_intent_signals.includes('intent.tdd'))
 })
 
-test('M15 a test-verification request without mutation prohibition does not invent runtime suppression',()=>{
+test('a test-verification request without mutation prohibition does not invent runtime suppression',()=>{
   const store=new MissionStore(),m=store.start('m15-test-command','Fix src/a.ts and run npm test. The current regression test fails.')
   store.applyInitialSemanticAssessment('m15-test-command',{...R2_ASSESSMENT,intent_signals:[]})
   const payload=lastSemanticLedger(m)?.payload??{}
@@ -37,7 +37,7 @@ test('M15 a test-verification request without mutation prohibition does not inve
   assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'),false)
 })
 
-test('M15 follow-up no-test-mutation authority removes an already active TDD methodology need',()=>{
+test('follow-up no-test-mutation authority removes an already active TDD methodology need',()=>{
   const store=new MissionStore(),m=store.start('m15-tdd-followup','Use TDD and add the regression test first.')
   store.applyInitialSemanticAssessment('m15-tdd-followup',TDD_ASSESSMENT)
   assert.ok(m.methodology.methodology_needs.some(x=>x.signal==='intent.tdd'))
@@ -47,7 +47,7 @@ test('M15 follow-up no-test-mutation authority removes an already active TDD met
   assert.ok(payload.runtime_suppressed_intent_signals.includes('intent.tdd'))
 })
 
-test('M15 explicit unchanged-test wording suppresses TDD without suppressing verification evidence',()=>{
+test('explicit unchanged-test wording suppresses TDD without suppressing verification evidence',()=>{
   const store=new MissionStore(),m=store.start('m15-unchanged-tests','Fix src/a.ts. Test files must remain unchanged. Run the targeted tests afterwards.')
   store.applyInitialSemanticAssessment('m15-unchanged-tests',R2_ASSESSMENT)
   assert.equal(m.methodology.methodology_needs.some(x=>x.signal==='intent.tdd'),false)

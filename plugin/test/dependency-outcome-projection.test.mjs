@@ -30,7 +30,7 @@ function nativeClient(){
 }
 function runtime(client){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}))}
 
-test('Phase 7 dependency projection binds direct DONE result to exact accepted attempt/digest and excludes worker proof claims',()=>{
+test('dependency projection binds direct DONE result to exact accepted attempt/digest and excludes worker proof claims',()=>{
   const m=mission('dep-projection'),pre=createTask(m,{objective:'define schema',role:'coder',category:'standard',scope:['src/schema.ts']}),worker=done(m,pre,{summary:'Schema exposes User and Session tables.'}),next=createTask(m,{objective:'implement API',role:'coder',category:'standard',dependencies:[pre.id]})
   const [item]=projectDirectDependencyOutcomes(m,next)
   assert.equal(item.task_id,pre.id);assert.equal(item.worker_id,worker.id);assert.equal(item.result_digest,HASH_A);assert.equal(item.generation,m.continuation.generation)
@@ -39,22 +39,22 @@ test('Phase 7 dependency projection binds direct DONE result to exact accepted a
   assert.equal('evidence' in item,false);assert.equal('findings' in item,false);assert.doesNotMatch(JSON.stringify(item),/CLAIM_MUST_NOT_FLOW/)
 })
 
-test('Phase 7 dependency projection is direct-edge only and deterministic across fan-in dependency order',()=>{
+test('dependency projection is direct-edge only and deterministic across fan-in dependency order',()=>{
   const m=mission('dep-direct'),a=createTask(m,{objective:'A',role:'coder',category:'standard'});done(m,a,{summary:'A'});const b=createTask(m,{objective:'B',role:'coder',category:'standard',dependencies:[a.id]});done(m,b,{summary:'B'});const c=createTask(m,{objective:'C',role:'coder',category:'standard',dependencies:[b.id]});assert.deepEqual(projectDirectDependencyOutcomes(m,c).map(x=>x.task_id),[b.id])
   const d=createTask(m,{objective:'D',role:'coder',category:'standard'});done(m,d,{summary:'D'});const join=createTask(m,{objective:'join',role:'coder',category:'standard',dependencies:[d.id,b.id]});assert.deepEqual(projectDirectDependencyOutcomes(m,join).map(x=>x.task_id),[b.id,d.id].sort())
 })
 
-test('Phase 7 dependency renderer keeps valid JSON and preserves every identity while degrading detail to fit budget',()=>{
+test('dependency renderer keeps valid JSON and preserves every identity while degrading detail to fit budget',()=>{
   const m=mission('dep-render'),pre=createTask(m,{objective:'large',role:'coder',category:'standard'});done(m,pre,{summary:'x'.repeat(3000),changed:Array.from({length:32},(_,i)=>`src/file-${i}.ts`)});const next=createTask(m,{objective:'next',role:'coder',category:'standard',dependencies:[pre.id]}),items=projectDirectDependencyOutcomes(m,next)
   const text=renderDirectDependencyOutcomeContext(items,700);assert.ok(text.length<=700);const payload=JSON.parse(text.split('\n').slice(1).join('\n'));assert.equal(payload.kind,'direct-dependency-outcomes');assert.equal(payload.evidence_authority,false);assert.equal(payload.items.length,1);assert.equal(payload.items[0].task_id,pre.id);assert.equal(payload.items[0].result_digest,HASH_A)
 })
 
-test('Phase 7 dependency projection fails closed on completed task without exact accepted-result provenance',()=>{
+test('dependency projection fails closed on completed task without exact accepted-result provenance',()=>{
   const m=mission('dep-corrupt'),pre=createTask(m,{objective:'pre',role:'coder',category:'standard'});const worker=done(m,pre);worker.last_result_digest=undefined;const next=createTask(m,{objective:'next',role:'coder',category:'standard',dependencies:[pre.id]})
   assert.throws(()=>projectDirectDependencyOutcomes(m,next),DependencyOutcomeProjectionError)
 })
 
-test('Phase 7 queued successor receives dependency result produced after queueing, without manual result retrieval or proof leakage',async()=>{
+test('queued successor receives dependency result produced after queueing, without manual result retrieval or proof leakage',async()=>{
   const {client,creates,prompts}=nativeClient(),r=runtime(client),m=mission('dep-late-result');m.execution.execution_mode='parallel'
   const pre=createTask(m,{objective:'derive DB schema',role:'coder',category:'standard',scope:['src/schema.ts']}),preWorker=createWorker(m,pre,'p/code');pre.status='running';preWorker.status='busy';preWorker.attempt=1;preWorker.generation_at_spawn=m.continuation.generation
   const queued=await r.start(m,{objective:'implement API from schema',role:'coder',category:'standard',scope:['src/api.ts'],dependencies:[pre.id],requiredEvidence:[]})
@@ -68,13 +68,13 @@ test('Phase 7 queued successor receives dependency result produced after queuein
   assert.ok(m.execution.ledger.some(e=>e.type==='dependency.outcomes-projected'&&e.task_id===queued.task_id))
 })
 
-test('Phase 7 corrupt completed dependency blocks before any child-session mutation',async()=>{
+test('corrupt completed dependency blocks before any child-session mutation',async()=>{
   const {client,creates,prompts}=nativeClient(),r=runtime(client),m=mission('dep-precreate-block'),pre=createTask(m,{objective:'pre',role:'coder',category:'standard'});done(m,pre);m.execution.workers.find(w=>w.task_id===pre.id).last_result_digest=undefined
   await assert.rejects(()=>r.start(m,{objective:'dependent',role:'coder',category:'standard',dependencies:[pre.id],requiredEvidence:[]}),/accepted result digest is missing or invalid/)
   assert.equal(creates.length,0);assert.equal(prompts.length,0);const blocked=m.execution.tasks.find(t=>t.objective==='dependent');assert.equal(blocked?.status,'blocked');assert.match(blocked?.result?.open_issues?.[0]??'',/^dependency-outcome-unavailable:/)
 })
 
-test('Phase 7 dependency result is revalidated after child-create await and stale provenance is never prompted',async()=>{
+test('dependency result is revalidated after child-create await and stale provenance is never prompted',async()=>{
   let releaseCreate;const creates=[],prompts=[],aborts=[];const createGate=new Promise(resolve=>{releaseCreate=()=>resolve({data:{id:'child-race'}})})
   const client={session:{create:async req=>{creates.push(req);return createGate},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async req=>{aborts.push(req);return{data:true}},diff:async()=>({data:[]})}}
   const r=runtime(client),m=mission('dep-revalidate-race'),pre=createTask(m,{objective:'stable prerequisite',role:'coder',category:'standard'}),preWorker=done(m,pre,{summary:'initial accepted contract'})

@@ -26,11 +26,11 @@ function generated(root){
   return Object.fromEntries(rels.map(rel=>[rel,createHash('sha256').update(readFileSync(join(root,rel))).digest('hex')]))
 }
 
-test('BA12 generator idempotence: identical canonical inputs produce byte-identical projections on second run',()=>{
+test('generator idempotence: identical canonical inputs produce byte-identical projections on second run',()=>{
   const root=fixture();try{run(root);const first=generated(root);run(root);assert.deepEqual(generated(root),first)}finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('BA12 dependency scope: one RoleContract purpose mutation changes only declared role projections',()=>{
+test('dependency scope: one RoleContract purpose mutation changes only declared role projections',()=>{
   const root=fixture();try{
     run(root);const before=generated(root)
     const path=join(root,'data/hi-roles.json'),catalog=JSON.parse(readFileSync(path,'utf8'));catalog.roles.find(r=>r.id==='coder').purpose+=' [BA12 mutation]';writeFileSync(path,JSON.stringify(catalog,null,2)+'\n')
@@ -40,7 +40,7 @@ test('BA12 dependency scope: one RoleContract purpose mutation changes only decl
 })
 
 
-test('BA12 dependency scope: one ConfigOption default mutation changes only config policy projection',()=>{
+test('dependency scope: one ConfigOption default mutation changes only config policy projection',()=>{
   const root=fixture();try{
     run(root);const before=generated(root)
     const path=join(root,'data/hi-config-options.json'),catalog=JSON.parse(readFileSync(path,'utf8'));catalog.options.find(x=>x.path==='parallel.max').default=4;writeFileSync(path,JSON.stringify(catalog,null,2)+'\n')

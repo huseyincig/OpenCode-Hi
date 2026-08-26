@@ -17,7 +17,7 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 const hiRoot=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 const clone=value=>JSON.parse(JSON.stringify(value))
 
-test('M16 does not dispatch a child when its only role-compatible required methodology is denied',async()=>{
+test('does not dispatch a child when its only role-compatible required methodology is denied',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-m16-methodology-deny-'))
   try{
     const host={};projectHiOpenCodeAgents(host,{coder:clone(PACKAGED_HI_AGENTS.coder)})

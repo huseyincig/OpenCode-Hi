@@ -168,7 +168,7 @@
       ],
       "proof_paths": [
         "plugin/test/real-hosted-release-transaction.test.mjs",
-        "plugin/test/r1-npm-oidc-workflow.test.mjs"
+        "plugin/test/npm-oidc-workflow.test.mjs"
       ],
       "canonical_doc": "docs/RELEASE.md"
     },
@@ -186,7 +186,7 @@
       ],
       "proof_paths": [
         "plugin/test/human-decision-contract.test.mjs",
-        "plugin/test/h1-human-decision-transport.test.mjs"
+        "plugin/test/human-decision-transport.test.mjs"
       ],
       "canonical_doc": "docs/HUMAN-DECISIONS.md"
     },
@@ -208,7 +208,7 @@
       "proof_paths": [
         "plugin/test/context-survival-hardening.test.mjs",
         "plugin/test/context-budget-estimator.test.mjs",
-        "plugin/test/c1-mission-runtime-projection.test.mjs"
+        "plugin/test/mission-runtime-projection.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
@@ -301,7 +301,7 @@
       ],
       "proof_paths": [
         "plugin/test/process-contract.test.mjs",
-        "plugin/test/p2-opencode-pty-executor.test.mjs"
+        "plugin/test/opencode-pty-executor.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
     },
@@ -318,8 +318,8 @@
         "plugin/src/opencode/open-code-workspace-adapter.ts"
       ],
       "proof_paths": [
-        "plugin/test/w1-workspace-contract.test.mjs",
-        "plugin/test/w2-workspace-executor.test.mjs"
+        "plugin/test/workspace-contract.test.mjs",
+        "plugin/test/workspace-executor.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
     },
@@ -338,8 +338,8 @@
         "plugin/src/runtime/application/hi-tool-surface.ts"
       ],
       "proof_paths": [
-        "plugin/test/b1-browser-observation-contract.test.mjs",
-        "plugin/test/b3-playwright-browser-runtime.test.mjs",
+        "plugin/test/browser-observation-contract.test.mjs",
+        "plugin/test/playwright-browser-runtime.test.mjs",
         "plugin/test/browser-backend-policy.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
@@ -358,7 +358,7 @@
         "plugin/src/plugin.ts"
       ],
       "proof_paths": [
-        "plugin/test/a6-host-port-typing.test.mjs"
+        "plugin/test/host-port-boundary.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
     },

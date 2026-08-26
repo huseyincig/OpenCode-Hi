@@ -36,7 +36,7 @@ test('local preview reuse refreshes an expanded task scope instead of serving fr
 })
 
 
-test('M18 local preview stop is bounded even when a client leaves an HTTP request incomplete',async()=>{
+test('local preview stop is bounded even when a client leaves an HTTP request incomplete',async()=>{
   const {connect}=await import('node:net')
   const root=mkdtempSync(join(tmpdir(),'hi-preview-stop-bound-'));writeFileSync(join(root,'index.html'),'preview')
   const preview=new LocalPreviewManager(root)

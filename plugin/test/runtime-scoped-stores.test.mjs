@@ -7,7 +7,7 @@ import { createRuntimeScopedStores } from '../dist/runtime/application/runtime-s
 
 const rootSource=file=>readFileSync(new URL(`../src/${file}`,import.meta.url),'utf8')
 
-test('A5 runtime-scoped stores are created once by the application composition service',()=>{
+test('runtime-scoped stores are created once by the application composition service',()=>{
   const services=rootSource('runtime/application/runtime-services.ts')
   const scoped=rootSource('runtime/application/runtime-scoped-stores.ts')
   const task=rootSource('runtime/task/task-runtime.ts')
@@ -27,7 +27,7 @@ test('A5 runtime-scoped stores are created once by the application composition s
   assert.match(tools,/scopedStores\.contextArtifacts\.add/)
 })
 
-test('A5 scoped factory returns stable store identities for one runtime instance',()=>{
+test('scoped factory returns stable store identities for one runtime instance',()=>{
   const project=mkdtempSync(join(tmpdir(),'hi-a5-stores-'))
   const hiRoot=mkdtempSync(join(tmpdir(),'hi-a5-hi-'))
   try{

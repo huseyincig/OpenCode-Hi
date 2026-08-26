@@ -243,7 +243,7 @@ test('§23 safety constraints compose monotonically across host and project laye
 })
 
 
-test('M16 routing model/provider lists preserve more than eight explicit entries', () => {
+test('routing model/provider lists preserve more than eight explicit entries', () => {
   const project=makeProject();try{
     const providers=Array.from({length:12},(_,i)=>'provider-'+String(i+1))
     const denied=Array.from({length:12},(_,i)=>'provider/model-'+String(i+1))

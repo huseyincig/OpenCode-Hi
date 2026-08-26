@@ -9,7 +9,7 @@ import { openCodeHostCapabilityContracts,hostCapabilityByID } from '../dist/cont
 const H=processCommandIdentity({host:'opencode',command:'npm test',cwd:'/repo'})
 const base={process_id:'proc_abc123',mission_id:'m_abc123',task_id:'t_abc123',worker_id:'w_abc123',host:'opencode',command_identity:H,cwd:'/repo',pid:1234,status:'RUNNING',started_at:1000,output_artifact_refs:[],authority_ref:'permission:opencode:bash:allow',cleanup_state:'ACTIVE'}
 
-test('P1 ProcessContract accepts bounded running and terminal lifecycle states',()=>{
+test('ProcessContract accepts bounded running and terminal lifecycle states',()=>{
   assert.equal(isProcessContract(base),true)
   assert.equal(isProcessContract({...base,process_group_id:1234,timeout_at:5000}),true)
   assert.equal(isProcessContract({...base,status:'EXITED',ended_at:2000,exit_code:0,cleanup_state:'CLEANUP_PENDING'}),true)
@@ -20,7 +20,7 @@ test('P1 ProcessContract accepts bounded running and terminal lifecycle states',
   assert.equal(isProcessContract({...base,status:'ORPHANED',ended_at:3000,termination_reason:'restart-owner-unverified',cleanup_state:'QUARANTINED'}),true)
 })
 
-test('P1 command identity is deterministic and binds host cwd and command without persisting raw command',()=>{
+test('command identity is deterministic and binds host cwd and command without persisting raw command',()=>{
   const same=processCommandIdentity({host:'opencode',command:' npm test ',cwd:' /repo '})
   assert.equal(same,H);assert.match(H,/^[a-f0-9]{64}$/)
   assert.notEqual(H,processCommandIdentity({host:'opencode',command:'npm test -- changed',cwd:'/repo'}))
@@ -29,7 +29,7 @@ test('P1 command identity is deterministic and binds host cwd and command withou
   assert.throws(()=>processCommandIdentity({host:'opencode',command:' ',cwd:'/repo'}),/non-empty/)
 })
 
-test('P1 ProcessContract rejects raw or unbounded output fields and malformed identity fields',()=>{
+test('ProcessContract rejects raw or unbounded output fields and malformed identity fields',()=>{
   for(const key of ['stdout','stderr','output','raw_output','buffer'])assert.equal(isProcessContract({...base,[key]:'x'.repeat(10000)}),false,key)
   assert.equal(isProcessContract({...base,command_identity:'npm test'}),false)
   assert.equal(isProcessContract({...base,pid:0}),false)
@@ -40,7 +40,7 @@ test('P1 ProcessContract rejects raw or unbounded output fields and malformed id
   assert.equal(isProcessContract({...base,output_artifact_refs:Array.from({length:65},(_,i)=>`a${i}`)}),false)
 })
 
-test('P1 ProcessContract enforces lifecycle timestamp exit and cleanup coherence',()=>{
+test('ProcessContract enforces lifecycle timestamp exit and cleanup coherence',()=>{
   assert.equal(isProcessContract({...base,ended_at:2000}),false,'RUNNING cannot be ended')
   assert.equal(isProcessContract({...base,exit_code:0}),false,'RUNNING cannot carry exit code')
   assert.equal(isProcessContract({...base,termination_reason:'killed'}),false,'RUNNING cannot be terminal')
@@ -55,7 +55,7 @@ test('P1 ProcessContract enforces lifecycle timestamp exit and cleanup coherence
   assert.equal(isProcessContract({...base,cleanup_state:'CLEANED'}),false,'running process cannot be cleaned')
 })
 
-test('P1 runtime capability requires live process observation while T3 remains external receipt truth',()=>{
+test('runtime capability requires live process observation while T3 remains external receipt truth',()=>{
   const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
   const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all,{processLifecycle:true}),'process-lifecycle')
   assert.equal(capability?.status,'SUPPORTED')

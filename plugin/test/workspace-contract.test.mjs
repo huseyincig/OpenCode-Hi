@@ -13,7 +13,7 @@ const baseline='a'.repeat(40)
 const decision={required:true,reason:'Task has a material write-conflict/isolation requirement.',strategy:'git-worktree',scope:['src/a.ts'],requested_by:'task:t_workspace'}
 const lease={lease_id:'lease_test_1',mission_id:'m_test',task_id:'t_test',repository_root:'/repo',base_ref:'HEAD',workspace_path:'/tmp/repo-hi-worktree',host_workspace_id:'ws_123',branch:'hi/test',created_at:1,status:'ACTIVE',cleanup_state:'ACTIVE',source_baseline:baseline}
 
-test('W1 IsolationDecision is strict and cannot claim required isolation with strategy none',()=>{
+test('IsolationDecision is strict and cannot claim required isolation with strategy none',()=>{
   assert.equal(isIsolationDecisionContract(decision),true)
   assert.equal(isIsolationDecisionContract({...decision,required:false,strategy:'none'}),true)
   assert.equal(isIsolationDecisionContract({...decision,strategy:'none'}),false)
@@ -22,7 +22,7 @@ test('W1 IsolationDecision is strict and cannot claim required isolation with st
   assert.equal(isIsolationDecisionContract({...decision,scope:['src/a.ts','src/a.ts']}),false)
 })
 
-test('W1 WorkspaceLease separates lifecycle from cleanup and binds an exact source baseline',()=>{
+test('WorkspaceLease separates lifecycle from cleanup and binds an exact source baseline',()=>{
   assert.equal(isWorkspaceLeaseContract(lease),true)
   assert.equal(isWorkspaceLeaseContract({...lease,status:'CLOSED',cleanup_state:'CLEANED'}),true)
   assert.equal(isWorkspaceLeaseContract({...lease,status:'ORPHANED',cleanup_state:'QUARANTINED'}),true)
@@ -32,7 +32,7 @@ test('W1 WorkspaceLease separates lifecycle from cleanup and binds an exact sour
   assert.equal(isWorkspaceLeaseContract({...lease,stdout:'no'}),false)
 })
 
-test('W1 Mission execution is the single durable owner and schema 10 round-trips decisions/leases current-only',()=>{
+test('Mission execution is the single durable owner and schema 10 round-trips decisions/leases current-only',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w1-'))
   try{
     const store=new MissionStore(root),m=store.start('w1','bounded workspace contract test')
@@ -53,7 +53,7 @@ test('W1 Mission execution is the single durable owner and schema 10 round-trips
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('W1 lease validator rejects cross-mission unknown-task and duplicate lease ownership',()=>{
+test('lease validator rejects cross-mission unknown-task and duplicate lease ownership',()=>{
   const store=new MissionStore(),m=store.start('w1-invalid','bounded workspace validator test')
   m.identity.semantic_assessment.status='assessed';m.identity.intent.taskKind='implementation'
   const task=createTask(m,{objective:'isolated task',role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:[]})

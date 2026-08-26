@@ -5,7 +5,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {evaluateCompletion} from '../dist/runtime/completion/evaluator.js'
 import {projectControlDecision} from '../dist/runtime/completion/control-projection.js'
 
-test('M08 provisional mission cannot be admitted as complete before semantic assessment',()=>{
+test('provisional mission cannot be admitted as complete before semantic assessment',()=>{
   const store=new MissionStore(),m=store.start('m08-semantic-pending','perform material work')
   const completion=evaluateCompletion(m)
   assert.equal(m.identity.semantic_assessment.status,'pending')
@@ -13,14 +13,14 @@ test('M08 provisional mission cannot be admitted as complete before semantic ass
   assert.ok(completion.reasons.includes('semantic-assessment-pending'))
 })
 
-test('M08 control projection cannot emit DONE while semantic assessment gate is pending',()=>{
+test('control projection cannot emit DONE while semantic assessment gate is pending',()=>{
   const store=new MissionStore(),m=store.start('m08-projection-pending','perform material work')
   const decision=projectControlDecision(m)
   assert.notEqual(decision.action,'DONE')
   assert.equal(decision.completion_ready,false)
 })
 
-test('M08 sticky user STOP cannot be overwritten by a direct completion commit',()=>{
+test('sticky user STOP cannot be overwritten by a direct completion commit',()=>{
   const store=new MissionStore(),m=store.start('m08-sticky-stop','perform material work')
   store.stop(m.identity.session_id,'explicit-user-stop')
   const generation=m.continuation.generation
@@ -31,7 +31,7 @@ test('M08 sticky user STOP cannot be overwritten by a direct completion commit',
   assert.equal(m.execution.ledger.filter(e=>e.type==='mission.completed').length,0)
 })
 
-test('M08 successful terminal completion commit is idempotent',()=>{
+test('successful terminal completion commit is idempotent',()=>{
   const store=new MissionStore(),m=store.start('m08-complete-once','perform material work')
   m.identity.semantic_assessment={status:'assessed',source:'model',assessed_at:Date.now()}
   store.complete(m.identity.session_id)

@@ -21,12 +21,12 @@ import { STORAGE_OWNERSHIP_CATALOG, assertStorageOwnershipCatalog } from '../dis
 import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
-test('Q2 manager remains denied direct repository write authority',()=>{
+test('manager remains denied direct repository write authority',()=>{
   assert.equal(primaryRoleCanDirectImplementation('manager'),false)
   assert.equal(primaryRoleCanDirectImplementation('working-manager'),true)
 })
 
-test('Q2 invalidated pre-mutation evidence cannot satisfy freshness',()=>{
+test('invalidated pre-mutation evidence cannot satisfy freshness',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'q2-fresh','fix',{likely_verification:['targeted-tests']})
   addEvidence(m,{kind:'targeted-tests',summary:'old pass',source:'bash',pass:true,outcome:'passed'})
   assert.equal(m.execution.evidence.fresh,true)
@@ -35,14 +35,14 @@ test('Q2 invalidated pre-mutation evidence cannot satisfy freshness',()=>{
   assert.deepEqual(verificationSatisfied(m),{ok:false,missing:['fresh-evidence']})
 })
 
-test('Q2 explicit user stop dominates idle continuation',()=>{
+test('explicit user stop dominates idle continuation',()=>{
   const store=new MissionStore(),m=store.start('q2-stop','fix')
   m.identity.semantic_assessment.status='assessed';m.continuation.user_interrupted=true
   const d=evaluateIdle(m,Date.now()+1000)
   assert.equal(d.decision,'STOP');assert.equal(d.reason_code,'user-stop')
 })
 
-test('Q2 authority approval is bound to the exact action hash',()=>{
+test('authority approval is bound to the exact action hash',()=>{
   const store=new MissionStore(),m=store.start('q2-auth','push')
   const approved=actionContract('git push','/repo/a')
   m.authority.authority={approved:{hash:approved.hash,approved_at:Date.now()},completed_hashes:[]}
@@ -51,7 +51,7 @@ test('Q2 authority approval is bound to the exact action hash',()=>{
   assert.equal(isAuthorized(m,'npm publish','/repo/a'),false)
 })
 
-test('Q2 open independent-review obligation cannot be represented as independently reviewed',()=>{
+test('open independent-review obligation cannot be represented as independently reviewed',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'q2-review','review',{task_kind:'review',risk:'high',required_capabilities:['review','independent-review'],likely_verification:['review-evidence']})
   m.execution.evidence.fresh=true
   const env=verificationEnvelopeFor(m)
@@ -59,7 +59,7 @@ test('Q2 open independent-review obligation cannot be represented as independent
   assert.ok(verificationSatisfied(m).missing.includes('review-obligation'))
 })
 
-test('Q2 child session cannot invoke Hi control-plane tools',async()=>{
+test('child session cannot invoke Hi control-plane tools',async()=>{
   const store=new MissionStore(),m=store.start('q2-parent','implement')
   m.execution.tasks.push({id:'t',mission_id:m.identity.mission_id,objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
   const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'q2-child',parent_session_id:'q2-parent',parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation}
@@ -69,31 +69,31 @@ test('Q2 child session cannot invoke Hi control-plane tools',async()=>{
   await assert.rejects(()=>hook({sessionID:'q2-child',tool:'hi_status'},{args:{}}),/child workers cannot invoke Hi control-plane tool/)
 })
 
-test('Q2 changed-file ownership path normalization binds absolute project paths to relative scope',()=>{
+test('changed-file ownership path normalization binds absolute project paths to relative scope',()=>{
   const root=mkdtempSync(join(tmpdir(),'q2-normalize-'))
   try{
     assert.equal(normalizeProjectPath(join(root,'src','a.ts'),root),'src/a.ts')
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('Q2 absent host capability is UNSUPPORTED, never optimistic support',()=>{
+test('absent host capability is UNSUPPORTED, never optimistic support',()=>{
   assert.equal(resolveHostCapability({host:'mock',capabilities:{}},'workspace_isolation'),'UNSUPPORTED')
 })
 
 
-test('Q2 completion cannot pass without required evidence',()=>{
+test('completion cannot pass without required evidence',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'q2-completion','verify',{likely_verification:['targeted-tests']})
   const result=verificationSatisfied(m)
   assert.equal(result.ok,false)
   assert.ok(result.missing.includes('targeted-tests'))
 })
 
-test('Q2 explicit native bash deny cannot become allow',()=>{
+test('explicit native bash deny cannot become allow',()=>{
   const result=evaluateProcessSpawnAuthority({mission_id:'m',task_id:'t',worker_id:'w',role:'coder',command:'echo',args:['ok'],cwd:'/repo',authority_ref:'a'},'/repo',{agent:{coder:{permission:{bash:'deny'}}}})
   assert.equal(result.decision,'DENY')
 })
 
-test('Q2 project authority merge cannot widen a native top-level deny',()=>{
+test('project authority merge cannot widen a native top-level deny',()=>{
   const root=mkdtempSync(join(tmpdir(),'q2-authority-monotonic-'))
   try{
     const store=new ProjectAuthorityStore(root);store.grant('git-push')
@@ -103,11 +103,11 @@ test('Q2 project authority merge cannot widen a native top-level deny',()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('Q2 canonical storage owner uniqueness rejects duplicate scope/data-class ownership',()=>{
+test('canonical storage owner uniqueness rejects duplicate scope/data-class ownership',()=>{
   assert.throws(()=>assertStorageOwnershipCatalog([...STORAGE_OWNERSHIP_CATALOG,STORAGE_OWNERSHIP_CATALOG[0]]),/Duplicate canonical storage owner/)
 })
 
-test('Q2 restart persistence rejects unsupported schema instead of loading it',()=>{
+test('restart persistence rejects unsupported schema instead of loading it',()=>{
   const root=mkdtempSync(join(tmpdir(),'q2-schema-'))
   try{
     const persistence=new RuntimePersistence(root);persistence.save([])
@@ -117,7 +117,7 @@ test('Q2 restart persistence rejects unsupported schema instead of loading it',(
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('Q2 routing maxFallbacks has an executable effect',()=>{
+test('routing maxFallbacks has an executable effect',()=>{
   const config=structuredClone(DEFAULT_HI_CONFIG);config.routing.maxFallbacks=0
   const models=[
     {id:'p/a',provider:'p',writeCapable:true,quality:8,cost:1,tags:['balanced']},
@@ -128,7 +128,7 @@ test('Q2 routing maxFallbacks has an executable effect',()=>{
   assert.equal(result.fallbacks.length,0)
 })
 
-test('Q2 absolute path confinement rejects paths outside the project root',()=>{
+test('absolute path confinement rejects paths outside the project root',()=>{
   const root=mkdtempSync(join(tmpdir(),'q2-confine-'))
   try{assert.equal(normalizeProjectPath(join(root,'..','escape.ts'),root),'')}finally{rmSync(root,{recursive:true,force:true})}
 })

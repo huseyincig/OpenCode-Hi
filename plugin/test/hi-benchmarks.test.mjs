@@ -21,7 +21,7 @@ test('minimum-sufficient scenarios reduce waste while multi-agent fan-out remain
 })
 
 
-test('O1 scheduler economics baseline measures every G9 dimension without claiming host latency',()=>{
+test('scheduler economics baseline measures every G9 dimension without claiming host latency',()=>{
   const rows=runSchedulerEconomicsBenchmarks()
   assert.deepEqual(rows.map(x=>x.id),['capacity-saturation','session-reuse','write-conflict'])
   for(const row of rows){assert.equal(row.kind,'DETERMINISTIC_SCHEDULER_SIMULATION');assert.match(row.claimBoundary,/not wall-clock provider latency/);for(const value of Object.values(row.metrics))assert.ok(Number.isFinite(value)&&value>=0)}
@@ -38,7 +38,7 @@ test('O1 scheduler economics baseline measures every G9 dimension without claimi
 })
 
 
-test('M5 recovery ablation removes redundant same-state strategy replay without changing the fresh-state first action',()=>{
+test('recovery ablation removes redundant same-state strategy replay without changing the fresh-state first action',()=>{
   const row=runRecoveryGovernorAblation()
   assert.equal(row.kind,'DETERMINISTIC_RECOVERY_ABLATION')
   assert.equal(row.baseline.redundantActions,1)

@@ -23,7 +23,7 @@ function addFailure(m,id,generation=m.continuation.generation,completed=Date.now
 }
 function route(m,explicit){const feedback=deriveMissionModelFeedback(m,'coder','standard');return{feedback,resolution:resolveModel('standard',inventory,cfg,explicit,'coder',undefined,feedback)}}
 
-test('M14 model feedback survives control-only verification follow-up but decays across material amendment',()=>{
+test('model feedback survives control-only verification follow-up but decays across material amendment',()=>{
   const {store,m}=mission('m14-epoch-amend');addFailure(m,'old-1');addFailure(m,'old-2',m.continuation.generation,Date.now()+1)
   assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','feedback is telemetry and explicit role order remains authoritative')
   applyStructuredFollowup(store,m.identity.session_id,'run one more verifier',{message_kind:'verification',likely_verification:['targeted-tests']})
@@ -33,7 +33,7 @@ test('M14 model feedback survives control-only verification follow-up but decays
   assert.equal(m.execution.workers.filter(w=>w.id.startsWith('old-')).length,2,'historical worker evidence is preserved, not deleted')
 })
 
-test('M14 material constraint decays prior feedback and fresh same-epoch evidence can re-admit it',()=>{
+test('material constraint decays prior feedback and fresh same-epoch evidence can re-admit it',()=>{
   const {store,m}=mission('m14-epoch-constraint');addFailure(m,'old-1');addFailure(m,'old-2',m.continuation.generation,Date.now()+1)
   applyStructuredFollowup(store,m.identity.session_id,'do not touch tests',{message_kind:'constraint'})
   assert.equal(route(m).resolution.primary,'p/a')
@@ -41,7 +41,7 @@ test('M14 material constraint decays prior feedback and fresh same-epoch evidenc
   addFailure(m,'fresh-2',m.continuation.generation,Date.now()+3);assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','fresh feedback may be analyzed without rerouting explicit role order')
 })
 
-test('M14 non-material and stop/resume lifecycle generations do not decay model feedback',()=>{
+test('non-material and stop/resume lifecycle generations do not decay model feedback',()=>{
   const {store,m}=mission('m14-epoch-control');addFailure(m,'old-1');addFailure(m,'old-2',m.continuation.generation,Date.now()+1)
   applyStructuredFollowup(store,m.identity.session_id,'thanks',{material:false,message_kind:'non-material'})
   assert.equal(route(m).resolution.primary,'p/a')
@@ -49,7 +49,7 @@ test('M14 non-material and stop/resume lifecycle generations do not decay model 
   assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','stop/resume preserves feedback telemetry without making it routing authority')
 })
 
-test('M14 unattributed legacy generation fails closed after a material semantic boundary',()=>{
+test('unattributed legacy generation fails closed after a material semantic boundary',()=>{
   const {store,m}=mission('m14-epoch-legacy');addFailure(m,'legacy-1');addFailure(m,'legacy-2',m.continuation.generation,Date.now()+1)
   for(const worker of m.execution.workers)delete worker.generation_at_spawn
   assert.equal(route(m).feedback.confidence['p/a'],'low','legacy generation may participate in telemetry before any material boundary');assert.equal(route(m).resolution.primary,'p/a')
@@ -57,14 +57,14 @@ test('M14 unattributed legacy generation fails closed after a material semantic 
   assert.equal(route(m).feedback.samples['p/a'],undefined);assert.equal(route(m).resolution.primary,'p/a')
 })
 
-test('M14 explicit model authority remains above feedback before and after material decay',()=>{
+test('explicit model authority remains above feedback before and after material decay',()=>{
   const {store,m}=mission('m14-epoch-authority');addFailure(m,'old-1');addFailure(m,'old-2',m.continuation.generation,Date.now()+1)
   assert.equal(route(m,'p/a').resolution.primary,'p/a')
   applyStructuredFollowup(store,m.identity.session_id,'change the implementation contract',{message_kind:'amendment'})
   assert.equal(route(m,'p/a').resolution.primary,'p/a')
 })
 
-test('M14 old READY methodology candidate is inert until fresh observation; history is not wall-clock expired',()=>{
+test('old READY methodology candidate is inert until fresh observation; history is not wall-clock expired',()=>{
   const root=mkdtempSync(join(tmpdir(),'m14-methodology-freshness-'))
   try{
     const observation={key:'reusable-how',procedure:'Apply the reusable project procedure.',trigger:'Reusable project surface changes.',do_not_trigger:'Reusable project surface is untouched.',exit_condition:'Reusable project contract is verified.',evidence:['targeted-tests']}

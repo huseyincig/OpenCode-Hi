@@ -30,7 +30,7 @@ const VISUAL_ASSESSMENT={
   suppressed_intent_signals:[],
 }
 
-test('P0 visual-check canonically implies visual-qa capability when the semantic model omits it',()=>{
+test('visual-check canonically implies visual-qa capability when the semantic model omits it',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('visual-implied-capability','build a local HTML game')
   store.applyInitialSemanticAssessment('visual-implied-capability',parseSemanticIntentAssessment({...VISUAL_ASSESSMENT,required_capabilities:['implementation','verification']}))
   assert.ok(m.identity.intent.requiredCapabilities.includes('visual-qa'),'visual-check must mechanically imply visual-qa capability')
@@ -39,14 +39,14 @@ test('P0 visual-check canonically implies visual-qa capability when the semantic
   assert.match(instruction,/call hi_task_start with role=visual-qa, category=visual/)
 })
 
-test('P0 visual-check activates canonical visual verification methodology before any worker is spawned',()=>{
+test('visual-check activates canonical visual verification methodology before any worker is spawned',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('visual-initial','build a local HTML game')
   store.applyInitialSemanticAssessment('visual-initial',VISUAL_ASSESSMENT)
   const names=new Set(m.methodology.methodology_needs.map(x=>x.name))
   assert.ok(names.has('hi-visual-qa'),'visual-check must activate hi-visual-qa before task start')
 })
 
-test('P0 unchanged verification-pending cannot bypass the hard continuation budget',async()=>{
+test('unchanged verification-pending cannot bypass the hard continuation budget',async()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'verification-loop','implement a UI',{likely_verification:['visual-check'],required_capabilities:['visual-qa']})
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now()
   const host=continuationPort({session:{promptAsync:async()=>({data:{}})}})
@@ -66,7 +66,7 @@ test('P0 unchanged verification-pending cannot bypass the hard continuation budg
   assert.ok(m.continuation.iteration<=m.continuation.continuation_budget)
 })
 
-test('P0 unavailable verifier environment is terminal operational state, not an open-ended RECOVER continuation',()=>{
+test('unavailable verifier environment is terminal operational state, not an open-ended RECOVER continuation',()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'verification-env','fix a UI',{likely_verification:['visual-check'],required_capabilities:['visual-qa']})
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now()
   const obligation=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(obligation)
@@ -78,7 +78,7 @@ test('P0 unavailable verifier environment is terminal operational state, not an 
 })
 
 
-test('P0 dispatch-time model inventory drift becomes terminal capability state',async()=>{
+test('dispatch-time model inventory drift becomes terminal capability state',async()=>{
   const initial=[{id:'p/code',provider:'p',writeCapable:true,tags:['balanced']}],drifted=[{id:'p/other',provider:'p',writeCapable:true,tags:['balanced']}];let calls=0
   const getModels=()=>++calls===1?initial:drifted,client={session:{create:async()=>({data:{id:'unexpected-child'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}}
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({routing:{roleModels:{coder:['p/code']}}}),getModels,()=>({}))

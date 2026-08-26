@@ -61,7 +61,7 @@ test('policy ablation must expose a bounded simulation/ablation claim boundary',
 })
 
 
-test('Phase 7 receipt vocabulary names unavailable-verifier and independent-review scenarios exactly',()=>{
+test('receipt vocabulary names unavailable-verifier and independent-review scenarios exactly',()=>{
   const noRoute=receipt();noRoute.task.scenario_class='verification-route-unavailable';assert.equal(isComparativeBenchmarkReceipt(noRoute),true)
   const review=receipt();review.task.scenario_class='independent-review-required';assert.equal(isComparativeBenchmarkReceipt(review),true)
 })

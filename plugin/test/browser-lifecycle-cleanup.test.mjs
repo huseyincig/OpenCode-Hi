@@ -20,7 +20,7 @@ function fakePlaywright(){
   return{module:{chromium},sessions}
 }
 
-test('M13 exact browser owner cleanup closes only the owned task session',async()=>{
+test('exact browser owner cleanup closes only the owned task session',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   const first=context('t1','m:w1:s1:g1'),second=context('t2','m:w2:s2:g1',['http://127.0.0.1:4174'])
   await adapter.open(first,'http://127.0.0.1:4173/')
@@ -34,7 +34,7 @@ test('M13 exact browser owner cleanup closes only the owned task session',async(
   await adapter.dispose()
 })
 
-test('M13 stale browser owner cleanup cannot close a replacement owner session',async()=>{
+test('stale browser owner cleanup cannot close a replacement owner session',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   const oldOwner=context('same-task','m:w:s-old:g1'),newOwner=context('same-task','m:w:s-new:g2')
   await adapter.open(oldOwner,'http://127.0.0.1:4173/')
@@ -47,7 +47,7 @@ test('M13 stale browser owner cleanup cannot close a replacement owner session',
   await adapter.dispose()
 })
 
-test('M13 TaskRuntime cancel cleans the exact active visual worker browser owner',async()=>{
+test('TaskRuntime cancel cleans the exact active visual worker browser owner',async()=>{
   const prompts=[],client={session:{create:async()=>({data:{id:'child-browser'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const cleanupCalls=[]
   const browserExecutor={
@@ -68,7 +68,7 @@ test('M13 TaskRuntime cancel cleans the exact active visual worker browser owner
 })
 
 
-test('M13 cancelled visual verification task releases open-obligation methodology ownership to its replacement',async()=>{
+test('cancelled visual verification task releases open-obligation methodology ownership to its replacement',async()=>{
   let childN=0
   const prompts=[],client={session:{create:async()=>({data:{id:`child-replacement-${++childN}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const browserExecutor={
@@ -94,7 +94,7 @@ test('M13 cancelled visual verification task releases open-obligation methodolog
 })
 
 
-test('M13 failed visual verification task releases open-obligation methodology ownership to its replacement',async()=>{
+test('failed visual verification task releases open-obligation methodology ownership to its replacement',async()=>{
   let childN=0
   const client={session:{create:async()=>({data:{id:`child-failed-replacement-${++childN}`}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const browserExecutor={health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},cleanup:async()=>({cleaned:true,reason:'cleaned'})}
@@ -113,7 +113,7 @@ test('M13 failed visual verification task releases open-obligation methodology o
 })
 
 
-test('M13 browser cleanup is bounded when Playwright browser.close never settles',async()=>{
+test('browser cleanup is bounded when Playwright browser.close never settles',async()=>{
   const never=new Promise(()=>{})
   const module={chromium:{launch:async()=>{
     const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
@@ -132,7 +132,7 @@ test('M13 browser cleanup is bounded when Playwright browser.close never settles
 })
 
 
-test('M13 TaskRuntime cancel fails closed when exact browser cleanup cannot complete',async()=>{
+test('TaskRuntime cancel fails closed when exact browser cleanup cannot complete',async()=>{
   const prompts=[],client={session:{create:async()=>({data:{id:'child-browser-fail'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const browserExecutor={
     health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},

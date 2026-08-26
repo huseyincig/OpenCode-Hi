@@ -15,7 +15,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 // Gap #28: compaction survival
 // ---------------------------------------------------------------------------
 
-test('Gap #28: persistence round-trip preserves mission state across reload', () => {
+test('persistence round-trip preserves mission state across reload', () => {
   // We exercise the structural invariant: snapshot+restore preserves
   // all the relevant mission fields. Persister integration is tested
   // separately; here we lock the contract the snapshot must respect.
@@ -49,7 +49,7 @@ test('Gap #28: persistence round-trip preserves mission state across reload', ()
 // Gap #29: stagnation recovery ladder
 // ---------------------------------------------------------------------------
 
-test('Gap #29: stagnation recovery rungs distinguish same-worker vs new-worker', () => {
+test('stagnation recovery rungs distinguish same-worker vs new-worker', () => {
   // The recovery ladder specifies: (1) same-worker corrective nudge,
   // (2) stronger variant/model, (3) decompose, (4) re-plan, (5) bounded
   // fresh worker, (6) real unresolved blocker -> USER_ACTION_REQUIRED.
@@ -72,7 +72,7 @@ test('Gap #29: stagnation recovery rungs distinguish same-worker vs new-worker',
 // Gap #30: progress signature is real (not just message activity)
 // ---------------------------------------------------------------------------
 
-test('Gap #30: progress signature updates only when semantic state changes', () => {
+test('progress signature updates only when semantic state changes', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   const sig1 = store.signature(m)
@@ -91,7 +91,7 @@ test('Gap #30: progress signature updates only when semantic state changes', () 
 // Gap #31: parent wake on background child completion
 // ---------------------------------------------------------------------------
 
-test('Gap #31: pending child worker blocks mission completion', () => {
+test('pending child worker blocks mission completion', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   m.execution.workers.push({
@@ -109,7 +109,7 @@ test('Gap #31: pending child worker blocks mission completion', () => {
 // Gap #32: install ownership preserves user-owned config
 // ---------------------------------------------------------------------------
 
-test('Gap #32: user-owned config sections survive schema migration', () => {
+test('user-owned config sections survive schema migration', () => {
   // The install path must NOT overwrite user-owned config fields during
   // an upgrade. roleModels and allowedProviders are user-controlled.
   const userOverrides = {
@@ -132,7 +132,7 @@ test('Gap #32: user-owned config sections survive schema migration', () => {
 // Gap #33: worktree-aware project context
 // ---------------------------------------------------------------------------
 
-test('Gap #33: project context reads worktree when available', () => {
+test('project context reads worktree when available', () => {
   const store = new MissionStore('/fake/dir')
   const m = store.start('s1', 'demo')
   // The store captures directory and project at construction.
@@ -149,7 +149,7 @@ test('Gap #33: project context reads worktree when available', () => {
 // Gap #34: update semantics preserves user-owned values
 // ---------------------------------------------------------------------------
 
-test('Gap #34: update semantics preserves user-owned config across schema bumps', () => {
+test('update semantics preserves user-owned config across schema bumps', () => {
   // We assert: when the resolver merges defaults + user input, the
   // user-provided roleModels is preserved (not overwritten by default).
   const defaults = { routing: { roleModels: { coder: ['default-model'] } } }
@@ -158,7 +158,7 @@ test('Gap #34: update semantics preserves user-owned config across schema bumps'
   assert.deepEqual(merged.routing.roleModels.coder, ['user-model'])
 })
 
-test('Gap #29b: recovery separates alternate plan from bounded fresh worker', async () => {
+test('recovery separates alternate plan from bounded fresh worker', async () => {
   const { recoveryPlan } = await import('../dist/runtime/continuation/recovery.js')
   const s = new MissionStore()
   const m = s.start('recovery-rungs-2', 'fix a difficult bug')

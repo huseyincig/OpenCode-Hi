@@ -11,7 +11,7 @@ import { dispatchContinuation } from '../dist/runtime/continuation/dispatcher.js
 
 const source=rel=>readFileSync(new URL(`../src/${rel}`,import.meta.url),'utf8')
 
-test('A6 generic HostPort expresses Hi host needs without importing OpenCode SDK types',()=>{
+test('generic HostPort expresses Hi host needs without importing OpenCode SDK types',()=>{
   const port=source('runtime/host/port.ts')
   assert.match(port,/export interface HostPort/)
   assert.match(port,/continueSession\(/)
@@ -23,7 +23,7 @@ test('A6 generic HostPort expresses Hi host needs without importing OpenCode SDK
   assert.match(adapter,/sendSyntheticContinuation/)
 })
 
-test('A6 semantic runtime core has no raw OpenCode SDK/client lifecycle dependency',()=>{
+test('semantic runtime core has no raw OpenCode SDK/client lifecycle dependency',()=>{
   for(const rel of ['runtime/task/task-runtime.ts','runtime/task/child-execution-coordinator.ts','runtime/continuation/dispatcher.ts','runtime/application/runtime-services.ts','runtime/application/runtime-event-controller.ts','runtime/process/runtime.ts','runtime/routing/model-resolver.ts']){
     const s=source(rel)
     assert.doesNotMatch(s,/OpenCodeClient|OpenCodePluginContext|NativeOpenCodeAdapter|detectOpenCodeCapabilities|client-adapter|open-code-pty-adapter/,rel)
@@ -32,7 +32,7 @@ test('A6 semantic runtime core has no raw OpenCode SDK/client lifecycle dependen
   assert.match(source('opencode/event-adapter.ts'),/normalizeOpenCodeEvent/)
 })
 
-test('A6 raw host event normalization occurs at OpenCode hook boundary, not semantic controller',()=>{
+test('raw host event normalization occurs at OpenCode hook boundary, not semantic controller',()=>{
   const hooks=source('opencode/open-code-hooks.ts'),controller=source('runtime/application/runtime-event-controller.ts')
   assert.match(hooks,/normalizeOpenCodeEvent/)
   assert.match(hooks,/eventController\.handle\(normalizeOpenCodeEvent\(input\?\.event\?\?input\)\)/)
@@ -40,7 +40,7 @@ test('A6 raw host event normalization occurs at OpenCode hook boundary, not sema
   assert.match(controller,/HostEvent,HostPort/,'semantic controller consumes only the normalized host contract')
 })
 
-test('A6 runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters',()=>{
+test('runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters',()=>{
   const services=source('runtime/application/runtime-services.ts'),plugin=source('plugin.ts')
   assert.match(services,/export interface RuntimeServicePorts/)
   assert.match(services,/childSession:ChildSessionPort/)
@@ -52,7 +52,7 @@ test('A6 runtime composition accepts injected host-semantic executors instead of
   assert.match(plugin,/new PlaywrightBrowserAdapter/)
 })
 
-test('A6 alternate host continuation port preserves Mission continuation semantics without OpenCode shapes',async()=>{
+test('alternate host continuation port preserves Mission continuation semantics without OpenCode shapes',async()=>{
   const sent=[];const host=makeHostPort({continueSession:async(sessionID,text,metadata)=>{sent.push({sessionID,text,metadata});return true}})
   const store=new MissionStore();const m=store.start('alt-session','repair issue');
   const ok=await dispatchContinuation(host,m,'continue safely','alternate-host-test')
@@ -61,7 +61,7 @@ test('A6 alternate host continuation port preserves Mission continuation semanti
   assert.equal(m.execution.ledger.some(e=>e.type==='continuation'),true)
 })
 
-test('A6 alternate host child-session port can execute a Hi task without OpenCode client structure',async()=>{
+test('alternate host child-session port can execute a Hi task without OpenCode client structure',async()=>{
   let creates=0,prompts=0
   const child=makeChildSessionPort({
     create:async()=>({child:{id:`alt-child-${++creates}`},fork:{requested:false,nativeAvailable:false,used:false}}),

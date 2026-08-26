@@ -15,7 +15,7 @@ function runtime(created=[],options={}){
   return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:1,providers:{p:1},models:{'p/code':1}})),process.cwd(),process.cwd(),()=>resolveHiConfig({routing:{roleModels:{coder:['p/code'],visualQa:['p/code']}}}),()=>[{id:'p/code',provider:'p',writeCapable:true,visionCapable:true,tags:['coding','balanced','vision']}],()=>({}),undefined,[],undefined,undefined,()=>resources,undefined,ensure)
 }
 
-test('Phase B ablation: accepted sessionless queued task survives restart as pending work instead of becoming failed/blocked',async()=>{
+test('ablation: accepted sessionless queued task survives restart as pending work instead of becoming failed/blocked',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-ablation','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
   const rt=runtime(),first=await rt.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
@@ -30,7 +30,7 @@ test('Phase B ablation: accepted sessionless queued task survives restart as pen
 })
 
 
-test('Phase B ablation: durable queued recipe rehydrates and dispatches the exact existing Task/Worker identity',async()=>{
+test('ablation: durable queued recipe rehydrates and dispatches the exact existing Task/Worker identity',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-dispatch','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
   const original=runtime(),first=await original.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await original.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
@@ -51,7 +51,7 @@ test('Phase B ablation: durable queued recipe rehydrates and dispatches the exac
 })
 
 
-test('Phase B lifecycle: waiting-user preserves restored queue and active transition wakes the same durable work',async()=>{
+test('lifecycle: waiting-user preserves restored queue and active transition wakes the same durable work',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-human-gate','two streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
   const original=runtime(),first=await original.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await original.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
@@ -65,7 +65,7 @@ test('Phase B lifecycle: waiting-user preserves restored queue and active transi
   assert.equal(next.queueDepth(),0);assert.deepEqual(created,['child-1']);assert.equal(after.execution.tasks[0].status,'running');assert.equal(after.execution.workers[0].status,'busy')
 })
 
-test('Phase B lifecycle: restored bounded-playwright queue waits for live browser resource before child dispatch',async()=>{
+test('lifecycle: restored bounded-playwright queue waits for live browser resource before child dispatch',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-browser-gate','two streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
   const original=runtime(),first=await original.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await original.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
@@ -80,7 +80,7 @@ test('Phase B lifecycle: restored bounded-playwright queue waits for live browse
 })
 
 
-test('Phase B ablation: non-material follow-up does not discard an accepted sessionless queued task',async()=>{
+test('ablation: non-material follow-up does not discard an accepted sessionless queued task',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-nonmaterial','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
   const created=[],rt=runtime(created),first=await rt.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
@@ -98,7 +98,7 @@ test('Phase B ablation: non-material follow-up does not discard an accepted sess
 })
 
 
-test('Phase B safety: material verification follow-up still invalidates a sessionless queued recipe before dispatch',async()=>{
+test('safety: material verification follow-up still invalidates a sessionless queued recipe before dispatch',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-material-followup','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
   const created=[],rt=runtime(created),first=await rt.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})

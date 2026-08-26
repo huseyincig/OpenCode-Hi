@@ -13,7 +13,7 @@ const intent=(patch={})=>({
   requiredCapabilities:['implementation'],requestedExternalActions:[],likelyVerification:['targeted-tests'],likelyTargets:['src/a.ts'],avoid:[],...patch,
 })
 
-test('Phase 2 decision envelope keeps clear local implementation direct and zero-child',()=>{
+test('decision envelope keeps clear local implementation direct and zero-child',()=>{
   const d=decideSemanticExecution({intent:intent(),verification:verification(),primaryMode:'working-manager',topology})
   assert.equal(d.version,1)
   assert.equal(d.executionPath,'DIRECT')
@@ -27,7 +27,7 @@ test('Phase 2 decision envelope keeps clear local implementation direct and zero
   assert.equal(d.providerSurfacePhase,'DIRECT_CONTROL')
 })
 
-test('Phase 2 decision envelope keeps material uncertainty evidence-first without fabricating isolation',()=>{
+test('decision envelope keeps material uncertainty evidence-first without fabricating isolation',()=>{
   const d=decideSemanticExecution({intent:intent({taskKind:'bug-fix',risk:'medium',ambiguity:'resolvable',requiredCapabilities:['implementation','repository-analysis','source-verification']}),verification:verification(),primaryMode:'working-manager',topology})
   assert.equal(d.executionPath,'EVIDENCE')
   assert.equal(d.providerSurfacePhase,'EVIDENCE_CONTROL')
@@ -36,7 +36,7 @@ test('Phase 2 decision envelope keeps material uncertainty evidence-first withou
   assert.equal(d.isolation.intent,'NONE')
 })
 
-test('Phase 2 decision envelope marks multi-stream write isolation only as an exact-task candidate',()=>{
+test('decision envelope marks multi-stream write isolation only as an exact-task candidate',()=>{
   const d=decideSemanticExecution({intent:intent({scope:'multi-stream',dependencyClass:'independent-multi',requiredCapabilities:['implementation','multi-stream-delegation']}),verification:verification(),primaryMode:'working-manager',topology})
   assert.equal(d.executionPath,'PLANNED')
   assert.equal(d.topology.mode,'multi-agent')
@@ -46,7 +46,7 @@ test('Phase 2 decision envelope marks multi-stream write isolation only as an ex
   assert.match(d.isolation.reason.join(' '),/exact-task.*before provisioning/i)
 })
 
-test('Phase 2 decision envelope preserves high-risk fresh-review escalation',()=>{
+test('decision envelope preserves high-risk fresh-review escalation',()=>{
   const d=decideSemanticExecution({intent:intent({risk:'high',requiredCapabilities:['implementation','security-review']}),verification:verification(true),primaryMode:'working-manager',topology})
   assert.equal(d.executionPath,'ESCALATED')
   assert.equal(d.modelClass,'critical')

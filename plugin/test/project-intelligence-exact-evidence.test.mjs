@@ -20,7 +20,7 @@ function fixture(root){
 
 const observation={key:'exact-project-check',procedure:'Run the exact project-native check after changing this surface.',trigger:'The bounded project surface changes.',do_not_trigger:'The bounded project surface is unchanged.',exit_condition:'The exact project-native check passes.',evidence:['targeted-tests']}
 
-test('M20 persists canonical Evidence receipt IDs instead of only evidence-kind labels',()=>{
+test('persists canonical Evidence receipt IDs instead of only evidence-kind labels',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-m20-exact-evidence-'))
   try{
     const {m,worker,evidence}=fixture(root),learning=new ProjectMethodologyLearningStore(root)
@@ -31,7 +31,7 @@ test('M20 persists canonical Evidence receipt IDs instead of only evidence-kind 
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M20 rejects a methodology observation when no claimed kind has a canonical receipt',()=>{
+test('rejects a methodology observation when no claimed kind has a canonical receipt',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-m20-exact-evidence-reject-'))
   try{
     const {m,worker,evidence}=fixture(root),learning=new ProjectMethodologyLearningStore(root)
@@ -41,7 +41,7 @@ test('M20 rejects a methodology observation when no claimed kind has a canonical
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M20 TaskResultReconciler forwards only same-attempt canonical Evidence receipts into project learning',()=>{
+test('TaskResultReconciler forwards only same-attempt canonical Evidence receipts into project learning',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-m20-reconciler-evidence-'))
   try{
     const {m,worker,evidence}=fixture(root);worker.status='busy';worker.completed_at=undefined

@@ -12,14 +12,14 @@ function tool(callID,tool,input,output,{status='completed',metadata,attachments}
 }
 function message(role,parts,id){return{info:{role,id:id??`m-${role}`},parts}}
 
-test('C2 canonical argument ordering and normalized read path produce the same signature',()=>{
+test('canonical argument ordering and normalized read path produce the same signature',()=>{
   const output='x'.repeat(400)
   const a=tool('a','read',{filePath:'./src\\a.ts',offset:1,limit:20},output)
   const b=tool('b','read',{limit:20,offset:1,filePath:'src/a.ts'},output)
   assert.equal(providerToolOutputSignature(a),providerToolOutputSignature(b))
 })
 
-test('C2 keeps latest equivalent read result and compacts only older duplicate provider output',()=>{
+test('keeps latest equivalent read result and compacts only older duplicate provider output',()=>{
   const output='same file content\n'.repeat(50)
   const original=[message('assistant',[tool('old','read',{filePath:'./src/a.ts'},output)],'m1'),message('assistant',[tool('new','read',{filePath:'src/a.ts'},output)],'m2')]
   const snapshot=structuredClone(original),result=pruneDuplicateProviderToolOutputs(original)
@@ -30,12 +30,12 @@ test('C2 keeps latest equivalent read result and compacts only older duplicate p
   assert.ok(result.after_chars<result.before_chars)
 })
 
-test('C2 does not dedupe a file read when observed content changes',()=>{
+test('does not dedupe a file read when observed content changes',()=>{
   const a='a'.repeat(500),b='b'.repeat(500),result=pruneDuplicateProviderToolOutputs([message('assistant',[tool('a','read',{path:'src/a.ts'},a)]),message('assistant',[tool('b','read',{path:'src/a.ts'},b)])])
   assert.deepEqual(result.pruned_call_ids,[])
 })
 
-test('C2 command output requires repository/workspace state identity before pruning',()=>{
+test('command output requires repository/workspace state identity before pruning',()=>{
   const output='status line\n'.repeat(60),input={command:'git status --short',cwd:'./repo',env:{CI:'1'}}
   const none=pruneDuplicateProviderToolOutputs([message('assistant',[tool('a','bash',input,output)]),message('assistant',[tool('b','bash',input,output)])])
   assert.deepEqual(none.pruned_call_ids,[],'same command+args without state identity must fail safe')
@@ -46,7 +46,7 @@ test('C2 command output requires repository/workspace state identity before prun
 })
 
 
-test('C2 unknown/stateful tool classes fail safe without explicit state identity and command signatures do not expose env values',()=>{
+test('unknown/stateful tool classes fail safe without explicit state identity and command signatures do not expose env values',()=>{
   const output='opaque output '.repeat(40)
   const generic=pruneDuplicateProviderToolOutputs([message('assistant',[tool('a','custom-tool',{value:1},output)]),message('assistant',[tool('b','custom-tool',{value:1},output)])])
   assert.deepEqual(generic.pruned_call_ids,[])
@@ -54,7 +54,7 @@ test('C2 unknown/stateful tool classes fail safe without explicit state identity
   assert.ok(sig);assert.doesNotMatch(sig,/do-not-project|SECRET_TOKEN/)
 })
 
-test('C2 never prunes failed/error tool results or completed parts with attachments',()=>{
+test('never prunes failed/error tool results or completed parts with attachments',()=>{
   const output='failure details '.repeat(50)
   const errors=pruneDuplicateProviderToolOutputs([message('assistant',[tool('a','read',{path:'src/a.ts'},output,{status:'error'})]),message('assistant',[tool('b','read',{path:'src/a.ts'},output,{status:'error'})])])
   assert.deepEqual(errors.pruned_call_ids,[])
@@ -62,12 +62,12 @@ test('C2 never prunes failed/error tool results or completed parts with attachme
   assert.deepEqual(attached.pruned_call_ids,[])
 })
 
-test('C2 avoids negative context economics for small duplicate outputs',()=>{
+test('avoids negative context economics for small duplicate outputs',()=>{
   const output='tiny',result=pruneDuplicateProviderToolOutputs([message('assistant',[tool('a','read',{path:'a'},output)]),message('assistant',[tool('b','read',{path:'a'},output)])])
   assert.deepEqual(result.pruned_call_ids,[]);assert.equal(result.after_chars,result.before_chars)
 })
 
-test('C2 messages transform prunes provider projection then appends Hi contract without mutating source messages',async()=>{
+test('messages transform prunes provider projection then appends Hi contract without mutating source messages',async()=>{
   const store=new MissionStore(process.cwd()),bg=new BackgroundRegistry();startAssessedMission(store,'s','opaque task')
   const outputText='duplicate read '.repeat(60)
   const source=[message('user',[{type:'text',text:'opaque task'}],'u1'),message('assistant',[tool('old','read',{filePath:'src/a.ts'},outputText)],'a1'),message('assistant',[tool('new','read',{filePath:'src/a.ts'},outputText)],'a2')]

@@ -11,7 +11,7 @@ import { createOpenCodeHooks } from '../dist/opencode/open-code-hooks.js'
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 
-test('A1 plugin adapter exposes the four composition seams and state-free event controller',()=>{
+test('plugin adapter exposes the four composition seams and state-free event controller',()=>{
   assert.equal(typeof createHostPort,'function')
   assert.equal(typeof createRuntimeServices,'function')
   assert.equal(typeof createHiToolSurface,'function')
@@ -22,7 +22,7 @@ test('A1 plugin adapter exposes the four composition seams and state-free event 
   assert.match(controller,/constructor\(private readonly deps:/,'controller may retain injected collaborators only')
 })
 
-test('A1 plugin.ts is a composition root rather than a second runtime owner',()=>{
+test('plugin.ts is a composition root rather than a second runtime owner',()=>{
   const source=readFileSync(resolve(root,'plugin/src/plugin.ts'),'utf8')
   assert.ok(source.split('\n').length<=50,`plugin.ts remains too concentrated: ${source.split('\n').length} lines`)
   for(const seam of ['createHostPort','createRuntimeServices','createHiToolSurface','createOpenCodeHooks','RuntimeEventController'])assert.ok(source.includes(seam),`missing composition seam ${seam}`)

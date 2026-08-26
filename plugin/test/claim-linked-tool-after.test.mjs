@@ -8,7 +8,7 @@ import {executionAttemptIdentity} from '../dist/contracts/orchestration-core.js'
 import {verificationSatisfied} from '../dist/runtime/verification/policy.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 
-test('M11 tool-after cannot close parent verification from worker evidence owned only by implementation',async()=>{
+test('tool-after cannot close parent verification from worker evidence owned only by implementation',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'m11-claim-link','change src/a.ts then parent verifies',{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation);assert.ok(verification)
   const task=createTask(m,{objective:'edit only',role:'coder',category:'quick',scope:['src/a.ts'],obligationIds:[implementation.id],requiredEvidence:[]}),worker=createWorker(m,task,'opencode-go/deepseek-v4-flash');worker.session_id='child-m11';worker.native_state_hash='a'.repeat(64);worker.attempt=1;worker.generation_at_spawn=m.continuation.generation

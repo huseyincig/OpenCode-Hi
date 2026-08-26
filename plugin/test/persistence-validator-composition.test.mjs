@@ -8,19 +8,19 @@ import { validateMissionEnvelope,validateMissionIdentityState,validateMissionExe
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 
-test('A4 RuntimePersistence delegates Mission validation instead of owning slice rules',()=>{
+test('RuntimePersistence delegates Mission validation instead of owning slice rules',()=>{
   const persistence=readFileSync(join(ROOT,'plugin/src/runtime/state/persistence.ts'),'utf8')
   assert.match(persistence,/validateMissionEnvelope\(mission\)/)
   assert.doesNotMatch(persistence,/validObligation|validMissionTrajectory|isTaskContract|isWorkerContract|isEvidenceItemContract/)
 })
 
-test('A4 Mission validator composes canonical slice and Task DAG validators',()=>{
+test('Mission validator composes canonical slice and Task DAG validators',()=>{
   const source=readFileSync(join(ROOT,'plugin/src/runtime/mission/validators.ts'),'utf8')
   for(const name of ['validateMissionIdentityState','validateMissionExecutionState','validateTaskDAG','validateContinuationState','validateVcsSafetyState','validateAuthorityState','validateReleaseState','validateContextState','validateMethodologyState'])assert.match(source,new RegExp(`${name}\\(`))
   for(const canonical of ['isTaskContract','isWorkerContract','isEvidenceItemContract','isHumanDecisionContract','isAuthorityStateContract'])assert.match(source,new RegExp(canonical))
 })
 
-test('A4 each Mission slice validator fails closed independently',()=>{
+test('each Mission slice validator fails closed independently',()=>{
   const m=new MissionStore().start('a4','opaque')
   assert.equal(validateMissionEnvelope(m),true)
   assert.equal(validateMissionIdentityState({...m.identity,mission_id:3}),false)
@@ -35,7 +35,7 @@ test('A4 each Mission slice validator fails closed independently',()=>{
 })
 
 
-test('A4 required implementation targets persist only as bounded project-relative implementation metadata',()=>{
+test('required implementation targets persist only as bounded project-relative implementation metadata',()=>{
   const store=new MissionStore();store.start('a4-required-targets','Change src/a.ts and src/b.ts. Both are required.')
   const m=store.applyInitialSemanticAssessment('a4-required-targets',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts','src/b.ts'],intent_signals:[],suppressed_intent_signals:[]})
   assert.equal(validateMissionEnvelope(m),true)

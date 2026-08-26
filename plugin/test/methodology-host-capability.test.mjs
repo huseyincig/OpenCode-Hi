@@ -58,7 +58,7 @@ test('TaskRuntime still fails visual methodology preflight before native child s
 })
 
 
-test('M17 accessibility-only visual task receives bounded browser execution when runtime resource is healthy',async()=>{
+test('accessibility-only visual task receives bounded browser execution when runtime resource is healthy',async()=>{
   const created=[],prompts=[],client={session:{create:async req=>{created.push(req);return{data:{id:'child-a11y'}}},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']))
   const store=new MissionStore(repoRoot),m=store.start('accessibility-resource','verify accessible local UI')

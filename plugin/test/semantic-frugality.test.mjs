@@ -14,14 +14,14 @@ const assessment={
   likely_targets:['ripgrep preview truncation code in packages/core'],intent_signals:[],suppressed_intent_signals:[],
 }
 
-test('M10 normalizes semantic target prose before exact changed-file ownership',()=>{
+test('normalizes semantic target prose before exact changed-file ownership',()=>{
   const parsed=parseSemanticIntentAssessment(assessment)
   assert.deepEqual(parsed.likely_targets,['packages/core'])
   const ownership=assessChangedFileOwnership(parsed.likely_targets,['packages/core/src/ripgrep.ts'],[],'control-plane')
   assert.deepEqual(ownership.collateral,[])
 })
 
-test('M10 parent DIRECT path blocks a broader verifier outside the required contract',async()=>{
+test('parent DIRECT path blocks a broader verifier outside the required contract',async()=>{
   const store=new MissionStore(process.cwd())
   store.start('phase2-frugal-parent','Fix packages/core/src/ripgrep.ts and run the targeted test')
   store.applyInitialSemanticAssessment('phase2-frugal-parent',parseSemanticIntentAssessment(assessment))
@@ -33,7 +33,7 @@ test('M10 parent DIRECT path blocks a broader verifier outside the required cont
 })
 
 
-test('M10 parent EVIDENCE path also blocks an unrequired broader verifier',async()=>{
+test('parent EVIDENCE path also blocks an unrequired broader verifier',async()=>{
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-frugal-evidence','Fix packages/core/src/ripgrep.ts and run only the targeted test')
   store.applyInitialSemanticAssessment('phase2-frugal-evidence',parseSemanticIntentAssessment({...assessment,risk:'medium',ambiguity:'resolvable'}))
@@ -44,14 +44,14 @@ test('M10 parent EVIDENCE path also blocks an unrequired broader verifier',async
 })
 
 
-test('M10 completed parent blocks a redundant verifier before native bash',async()=>{
+test('completed parent blocks a redundant verifier before native bash',async()=>{
   const store=new MissionStore(process.cwd()),mission=store.start('phase2-terminal-verifier','fix src/a.ts')
   store.applyInitialSemanticAssessment('phase2-terminal-verifier',parseSemanticIntentAssessment({...assessment,likely_targets:['src/a.ts']}));for(const o of mission.execution.obligations){o.status='closed';o.closedAt=Date.now()}store.complete('phase2-terminal-verifier')
   const before=createToolBeforeHook(store,undefined,process.cwd())
   await assert.rejects(()=>before({sessionID:'phase2-terminal-verifier',tool:'bash'},{args:{command:'bun typecheck'}}),/mission already completed.*additional verifier 'typecheck' is not admitted/i)
 })
 
-test('M10 keeps stronger verification admissible for changed-surface-sanity',async()=>{
+test('keeps stronger verification admissible for changed-surface-sanity',async()=>{
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-frugal-sanity','Make one bounded local change')
   store.applyInitialSemanticAssessment('phase2-frugal-sanity',parseSemanticIntentAssessment({...assessment,likely_verification:['changed-surface-sanity']}))
@@ -60,7 +60,7 @@ test('M10 keeps stronger verification admissible for changed-surface-sanity',asy
   assert.ok(!mission.execution.ledger.some(e=>e.type==='verification.unrequired-command-blocked'))
 })
 
-test('M10 does not apply DIRECT verifier admission to high-risk work',async()=>{
+test('does not apply DIRECT verifier admission to high-risk work',async()=>{
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-frugal-high','Fix a security-sensitive local bug')
   store.applyInitialSemanticAssessment('phase2-frugal-high',parseSemanticIntentAssessment({...assessment,risk:'high'}))
@@ -70,14 +70,14 @@ test('M10 does not apply DIRECT verifier admission to high-risk work',async()=>{
 })
 
 
-test('M10 semantic gate does not invent independent review for deterministic low-risk work',()=>{
+test('semantic gate does not invent independent review for deterministic low-risk work',()=>{
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-review-prior','Fix src/a.ts and stop after the targeted test passes')
   const gate=renderSemanticAssessmentGate(mission)
   assert.match(gate,/independent-review only for explicit user independence or risk\/policy requirement/)
 })
 
-test('M10 runtime projection separates exact obligation IDs from summaries',()=>{
+test('runtime projection separates exact obligation IDs from summaries',()=>{
   const store=new MissionStore(process.cwd())
   store.start('phase2-obligation-id','Fix packages/core/src/ripgrep.ts')
   const mission=store.applyInitialSemanticAssessment('phase2-obligation-id',parseSemanticIntentAssessment({...assessment,likely_targets:['packages/core/src/ripgrep.ts']}))
@@ -87,21 +87,21 @@ test('M10 runtime projection separates exact obligation IDs from summaries',()=>
 })
 
 
-test('M10 repository-analysis capability alone does not manufacture a root-cause obligation',()=>{
+test('repository-analysis capability alone does not manufacture a root-cause obligation',()=>{
   const store=new MissionStore(process.cwd())
   store.start('phase2-repo-read-only-analysis','Fix src/a.ts and run `bun test test/a.test.ts`')
   const mission=store.applyInitialSemanticAssessment('phase2-repo-read-only-analysis',parseSemanticIntentAssessment({...assessment,risk:'medium',ambiguity:'none',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:['src/a.ts']}))
   assert.ok(!mission.execution.obligations.some(o=>o.kind==='analysis'))
 })
 
-test('M10 explicit debugging signal still creates a root-cause obligation',()=>{
+test('explicit debugging signal still creates a root-cause obligation',()=>{
   const store=new MissionStore(process.cwd())
   store.start('phase2-real-debug','Debug and fix src/a.ts')
   const mission=store.applyInitialSemanticAssessment('phase2-real-debug',parseSemanticIntentAssessment({...assessment,risk:'high',ambiguity:'none',required_capabilities:['repository-analysis','implementation','verification'],intent_signals:['intent.debugging'],likely_targets:['src/a.ts']}))
   assert.ok(mission.execution.obligations.some(o=>o.kind==='analysis'))
 })
 
-test('M10 exact user verification ceiling discards inferred broader verifier requirements',async()=>{
+test('exact user verification ceiling discards inferred broader verifier requirements',async()=>{
   const parsed=parseSemanticIntentAssessment({...assessment,likely_verification:['targeted-tests','typecheck'],user_verification:['targeted-tests'],verification_ceiling:true})
   assert.deepEqual(parsed.likely_verification,['targeted-tests'])
   assert.deepEqual(parsed.user_verification,['targeted-tests'])
@@ -114,17 +114,17 @@ test('M10 exact user verification ceiling discards inferred broader verifier req
   await assert.rejects(()=>before({sessionID:'phase2-exact-verification',tool:'bash'},{args:{command:'bun typecheck',timeout:180000}}),/outside the required parent verification contract/)
 })
 
-test('M10 exact verification ceiling requires an explicit user verifier',()=>{
+test('exact verification ceiling requires an explicit user verifier',()=>{
   assert.throws(()=>parseSemanticIntentAssessment({...assessment,verification_ceiling:true,user_verification:[]}),/verification_ceiling requires at least one explicit user_verification kind/)
 })
 
-test('M10 technical verifier extraction is syntax-driven and bounded',()=>{
+test('technical verifier extraction is syntax-driven and bounded',()=>{
   assert.deepEqual(technicalVerificationKinds('Run `bun test test/ripgrep.test.ts` from packages/core and stop when it passes.'),['targeted-tests'])
   assert.deepEqual(technicalVerificationKinds('Use bun typecheck and bun test test/a.test.ts'),['targeted-tests','typecheck'])
   assert.deepEqual(technicalVerificationKinds('Please verify this carefully without naming a command'),[])
 })
 
-test('M10 initial local contract keeps explicit user verifier ahead of inferred broader checks',()=>{
+test('initial local contract keeps explicit user verifier ahead of inferred broader checks',()=>{
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-explicit-user-verifier','Fix src/a.ts. Run `bun test test/a.test.ts` and stop when it passes.')
   assert.deepEqual(mission.identity.intent.likelyVerification,['targeted-tests'])
@@ -136,7 +136,7 @@ test('M10 initial local contract keeps explicit user verifier ahead of inferred 
   assert.equal(assessed?.payload?.technical_verification_ceiling_applied,true)
 })
 
-test('M10 high-risk initial assessment may widen beyond an explicit user verifier',()=>{
+test('high-risk initial assessment may widen beyond an explicit user verifier',()=>{
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-explicit-high','Fix src/auth/token.ts. Run `bun test test/auth.test.ts`.')
   store.applyInitialSemanticAssessment('phase2-explicit-high',parseSemanticIntentAssessment({...assessment,risk:'high',likely_verification:['targeted-tests','typecheck'],user_verification:[],verification_ceiling:false,likely_targets:['src/auth/token.ts']}))

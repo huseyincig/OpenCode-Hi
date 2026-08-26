@@ -5,7 +5,7 @@ import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contra
 
 const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
 
-test('H2 current OpenCode public question API can list/reply/reject but cannot directly open a structured question',()=>{
+test('current OpenCode public question API can list/reply/reject but cannot directly open a structured question',()=>{
   const sdk=readFileSync(new URL('../node_modules/@opencode-ai/sdk/dist/v2/gen/sdk.gen.d.ts',import.meta.url),'utf8')
   const start=sdk.indexOf('export declare class Question extends HeyApiClient')
   const end=sdk.indexOf('export declare class Permission extends HeyApiClient',start)
@@ -21,7 +21,7 @@ test('H2 current OpenCode public question API can list/reply/reject but cannot d
   assert.doesNotMatch(surface,/\bopen\s*</)
 })
 
-test('H2 structured host UI remains unsupported rather than model-mediated or inferred from question events',()=>{
+test('structured host UI remains unsupported rather than model-mediated or inferred from question events',()=>{
   const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all),'structured-human-decision-transport')
   assert.equal(capability?.status,'UNSUPPORTED')
   assert.equal(capability?.verification_level,'OBSERVED')
@@ -31,7 +31,7 @@ test('H2 structured host UI remains unsupported rather than model-mediated or in
   assert.equal(hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')?.status,'UNSUPPORTED')
 })
 
-test('H2 source tree has no fake host UI transport that delegates HumanDecision opening to a model prompt',()=>{
+test('source tree has no fake host UI transport that delegates HumanDecision opening to a model prompt',()=>{
   const transport=readFileSync(new URL('../src/runtime/human-decision/transport.ts',import.meta.url),'utf8')
   const hooks=readFileSync(new URL('../src/opencode/open-code-hooks.ts',import.meta.url),'utf8')
   assert.doesNotMatch(transport,/question\.ask|session\.prompt|browser|WebSocket/i)

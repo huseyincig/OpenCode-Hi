@@ -23,7 +23,7 @@ function localMission(sessionID='phase6-control'){
 }
 function closeImplementation(m){const o=m.execution.obligations.find(x=>x.id==='o-implementation');assert.ok(o);o.status='closed';o.closedAt=Date.now()}
 
-test('Phase 6 control projection exposes exact evidence-owned VERIFY gap without creating state',()=>{
+test('control projection exposes exact evidence-owned VERIFY gap without creating state',()=>{
   const {m}=localMission('phase6-verify');closeImplementation(m)
   const before=JSON.stringify({tasks:m.execution.tasks,workers:m.execution.workers,evidence:m.execution.evidence,context:m.context})
   const decision=projectControlDecision(m)
@@ -38,7 +38,7 @@ test('Phase 6 control projection exposes exact evidence-owned VERIFY gap without
   assert.match(runtime.next_action,/hi_direct_progress/)
 })
 
-test('Phase 6 control projection reports active child work as WAIT and suppresses verification ceremony',()=>{
+test('control projection reports active child work as WAIT and suppresses verification ceremony',()=>{
   const {m}=localMission('phase6-wait');closeImplementation(m)
   const task=createTask(m,{objective:'verify later after implementation',role:'coder',category:'quick',scope:['phase6.txt'],obligationIds:['o-verification']})
   const worker=createWorker(m,task,'host-default');task.status='running';worker.status='busy'
@@ -49,7 +49,7 @@ test('Phase 6 control projection reports active child work as WAIT and suppresse
   assert.deepEqual(decision.missing_evidence,[],'do not invite verification work while canonical execution is active')
 })
 
-test('Phase 6 waiting FIX_REQUIRED task is RECONCILE, not a false WAIT',()=>{
+test('waiting FIX_REQUIRED task is RECONCILE, not a false WAIT',()=>{
   const {m}=localMission('phase6-reconcile');closeImplementation(m)
   addEvidence(m,{kind:'changed-surface-sanity',summary:'current exact host check passed',scope:['phase6.txt'],source:'bash',trusted_source_class:'host-tool-observation',pass:true,outcome:'passed',obligation_ids:['o-verification']})
   const verify=m.execution.obligations.find(x=>x.id==='o-verification');assert.ok(verify);verify.status='closed';verify.closedAt=Date.now()
@@ -60,7 +60,7 @@ test('Phase 6 waiting FIX_REQUIRED task is RECONCILE, not a false WAIT',()=>{
   assert.deepEqual(decision.wait_for,[])
 })
 
-test('Phase 6 host-observed verification moves the same projection from VERIFY to DONE',()=>{
+test('host-observed verification moves the same projection from VERIFY to DONE',()=>{
   const {m}=localMission('phase6-done');closeImplementation(m)
   assert.equal(projectControlDecision(m).action,'VERIFY')
   observeToolAfter(m,'bash',{command:'npm run check'},{stdout:'check passed',metadata:{exit:0}},process.cwd())
@@ -69,7 +69,7 @@ test('Phase 6 host-observed verification moves the same projection from VERIFY t
   assert.deepEqual(decision.missing_evidence,[]);assert.deepEqual(decision.open_obligations,[])
 })
 
-test('Phase 6 hi_task_await returns terminal WorkerResult and canonical mission control decision atomically',async()=>{
+test('hi_task_await returns terminal WorkerResult and canonical mission control decision atomically',async()=>{
   const {store,m}=localMission('phase6-await');closeImplementation(m)
   const tasks={awaitTask:async()=>({status:'completed',terminal:true,changed:true,timed_out:false,task:{result:{status:'DONE',summary:'implementation done',changed_files:['phase6.txt'],evidence:[],open_issues:[],needs_context:[]}}})}
   const processRuntime={stopMission:async()=>0,list:()=>[]}
@@ -83,7 +83,7 @@ test('Phase 6 hi_task_await returns terminal WorkerResult and canonical mission 
 })
 
 
-test('Phase 6 route projection reports no admissible verifier instead of inviting arbitrary rechecks',()=>{
+test('route projection reports no admissible verifier instead of inviting arbitrary rechecks',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p6-no-route-'))
   try{
     writeFileSync(join(root,'package.json'),JSON.stringify({private:true}))
@@ -96,7 +96,7 @@ test('Phase 6 route projection reports no admissible verifier instead of invitin
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('Phase 6 route projection exposes only declared admissible repo-native verification scripts',()=>{
+test('route projection exposes only declared admissible repo-native verification scripts',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p6-route-'))
   try{
     writeFileSync(join(root,'package.json'),JSON.stringify({private:true,scripts:{check:'node scripts/check.mjs'}}))
@@ -111,7 +111,7 @@ test('Phase 6 route projection exposes only declared admissible repo-native veri
 })
 
 
-test('Phase 6 repeated semantic context artifact reuses durable identity and one mission handle',async()=>{
+test('repeated semantic context artifact reuses durable identity and one mission handle',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p6-artifact-reuse-'))
   try{
     const {ContextArtifactStore}=await import('../dist/runtime/context/artifact-store.js')

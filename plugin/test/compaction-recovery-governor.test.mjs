@@ -20,7 +20,7 @@ function controllerFor(store){
   })
 }
 
-test('M09 compaction preserves semantic recovery anti-replay history while resetting context-sensitive stagnation',async()=>{
+test('compaction preserves semantic recovery anti-replay history while resetting context-sensitive stagnation',async()=>{
   const store=new MissionStore(),m=assessed(store,'m09-compaction-parent')
   m.continuation.stagnation_count=1
   const signatureBefore=recoverySemanticSignature(m)

@@ -8,7 +8,7 @@ import { RuntimePersistence,RUNTIME_STATE_SCHEMA } from '../dist/runtime/state/p
 
 const SLICES=['authority','context','continuation','execution','identity','methodology','release','vcs']
 
-test('A3 MissionState persists as exactly eight named slices with no flat compatibility aliases',()=>{
+test('MissionState persists as exactly eight named slices with no flat compatibility aliases',()=>{
   const m=new MissionStore().start('a3-slices','opaque request')
   assert.deepEqual(Object.keys(m).sort(),SLICES)
   for(const key of SLICES)assert.equal(typeof m[key],'object',key)
@@ -22,7 +22,7 @@ test('A3 MissionState persists as exactly eight named slices with no flat compat
   assert.equal(Object.prototype.hasOwnProperty.call(m,'release_chain'),false)
 })
 
-test('A3 RuntimePersistence round-trips only the nested current schema',()=>{
+test('RuntimePersistence round-trips only the nested current schema',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-a3-slices-'))
   try{
     const store=new MissionStore(root),m=store.start('persisted','opaque request')
@@ -35,7 +35,7 @@ test('A3 RuntimePersistence round-trips only the nested current schema',()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('A3 flat Mission envelope is rejected; schema 7 is not migrated or aliased',()=>{
+test('flat Mission envelope is rejected; schema 7 is not migrated or aliased',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-a3-flat-'))
   try{
     const persistence=new RuntimePersistence(root),now=Date.now()

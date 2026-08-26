@@ -25,11 +25,11 @@ function duplicateCases(){
   return[['obligation',obligation],['evidence',evidence],['gate',gate],['context-artifact',context],['temporary-mutation',mutation]]
 }
 
-test('M19 rejects duplicate reference-consumed durable identities inside one Mission',()=>{
+test('rejects duplicate reference-consumed durable identities inside one Mission',()=>{
   for(const [kind,m] of duplicateCases())assert.equal(validateMissionEnvelope(m),false,`${kind} duplicate identity must fail closed`)
 })
 
-test('M19 persistence refuses duplicate canonical evidence identity before replacing runtime state',()=>{
+test('persistence refuses duplicate canonical evidence identity before replacing runtime state',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-m19-durable-id-'))
   try{
     const m=mission();addEvidence(m,{kind:'review-input',summary:'first',scope:['src/a.ts'],source:'m19-persistence',outcome:'pending'});m.execution.evidence.items.push({...structuredClone(m.execution.evidence.items[0]),summary:'ambiguous duplicate'})

@@ -40,7 +40,7 @@ const HOLDOUT=[
   ['safe-literal-push','echo "git push origin main"',false],
 ]
 
-test('Phase 7 holdout separates inert dangerous-looking data from executable destructive carriers',()=>{
+test('holdout separates inert dangerous-looking data from executable destructive carriers',()=>{
   const misses=[]
   for(const [id,command,expected] of HOLDOUT){const actual=restricted(command);if(actual!==expected)misses.push({id,command,expected,actual,decision:evaluateShellCommand(command)})}
   assert.deepEqual(misses,[])
