@@ -224,6 +224,16 @@ export class TaskResultReconciler{
       }
     }
 
+    const requiredVisualProof=worker.role==='visual-qa'&&Boolean(task.execution_profile?.verification_policy?.requiredKinds?.some(kind=>kind==='visual-check'||browserProofKinds.has(kind)))
+    if(effectiveResult.status==='DONE'&&requiredVisualProof){
+      const generation=worker.generation_at_spawn??m.continuation.generation,currentVisualProof=m.execution.evidence.items.some(item=>item.task_id===task.id&&!item.invalidated_at&&browserProofKinds.has(item.kind)&&evidenceVerdictPassed(item.pass,item.outcome)&&item.producer_attempt?.worker_id===worker.id&&item.producer_attempt.ordinal===worker.attempt&&item.producer_attempt.generation===generation)
+      if(!currentVisualProof){
+        const marker=`visual-proof-missing:${task.id}`
+        effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:effectiveResult.summary||'Visual verification executed, but the current attempt did not return an admissible passed visual evidence claim.',open_issues:[...new Set([...effectiveResult.open_issues,marker])],needs_context:[...new Set([...effectiveResult.needs_context,'visual-proof: return evidence.kind="visual-evidence" (or another allowed browser-derived proof kind) with outcome="passed" and evidence_refs naming the current-attempt Hi browser observation evidence refs; BrowserObservation alone is not PASS authority'])]}
+        appendLedger(m,'visual.proof-missing',{task_id:task.id,worker_id:worker.id,payload:{required_kinds:task.execution_profile?.verification_policy?.requiredKinds??[],attempt:worker.attempt,generation,reason:'visual-task-done-without-current-attempt-admitted-proof'}})
+      }
+    }
+
     const explorationClearance=assessExplorationClearance(this.projectRoot,m,task,worker,effectiveResult)
     if(explorationClearance.applicable&&!explorationClearance.admitted&&effectiveResult.status==='DONE'){
       const marker=`exploration-clearance-unsatisfied:${task.id}:${explorationClearance.reason}`

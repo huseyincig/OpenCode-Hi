@@ -40,6 +40,15 @@ test('fabricated passed browser evidence without browser observation reference c
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/);assert.equal(methodologyExitCheck(f.m,'hi-browser-testing',{task:f.task,result:f.task.result,projectRoot:process.cwd(),scope:'worker'}).ok,false)
 })
 
+test('visual DONE without a current-attempt admitted proof stays FIX_REQUIRED even when raw browser observations exist and no methodology remains selected',async()=>{
+  const f=fixture('m13-proof-missing-claim'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+  f.worker.selected_methodologies=[];f.worker.loaded_methodologies=[]
+  runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'browser actions finished',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(f.task.result.status,'FIX_REQUIRED');assert.ok(f.task.result.open_issues.includes(`visual-proof-missing:${f.task.id}`));assert.match(f.task.result.needs_context.join(' '),/visual-evidence/)
+  const observationEvidence=f.m.execution.evidence.items.find(e=>e.id===out.evidence_ref);assert.ok(observationEvidence);assert.equal(observationEvidence.outcome,'pending');assert.equal(f.m.execution.evidence.items.some(e=>e.task_id===f.task.id&&e.outcome==='passed'),false)
+  assert.ok(f.m.execution.ledger.some(e=>e.type==='visual.proof-missing'&&e.task_id===f.task.id&&e.worker_id===f.worker.id))
+})
+
 test('passed browser evidence accepts same-task current-attempt real browser observation reference',async()=>{
   const f=fixture('m13-proof-valid'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'browser verified',changed_files:[],evidence:[{kind:'browser-evidence',summary:'verified against browser observation',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
