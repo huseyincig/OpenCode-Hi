@@ -303,6 +303,11 @@ export class TaskRuntime{
     else for(const worker of pausedQueued){const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)continue;worker.status='cancelled';task.status='cancelled';worker.semantic_pause_revision=undefined;releaseTaskRuntimeReservation(m,worker.id,'CANCEL');this.registry.delete(worker.id);this.#queue=this.#queue.filter(q=>q.worker.id!==worker.id);await this.cleanupWorkspaceForTask(m,task.id);appendLedger(m,'worker.semantic-cancelled-before-start',{task_id:task.id,worker_id:worker.id,payload:{revision:m.identity.semantic_assessment.revision,message_kind:messageKind,reason:'material-followup-invalidated-queued-recipe'}})}
     for(const worker of m.execution.workers.filter(w=>w.semantic_pause_revision===m.identity.semantic_assessment.revision&&w.status==='ready'&&Boolean(w.session_id))){
       const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task||!worker.session_id)continue
+      if(worker.restart_reconcile_pending){
+        const restart=await this.reconcileRestartBeforeResume(m,worker,task)
+        if(restart==='WAIT'){appendLedger(m,'worker.semantic-resume-deferred',{task_id:task.id,worker_id:worker.id,payload:{revision:m.identity.semantic_assessment.revision,reason:'restart-reconciliation:host-truth-pending-or-active'}});continue}
+        if(restart==='TERMINAL'){worker.semantic_pause_revision=undefined;appendLedger(m,'worker.semantic-resume-reconciled-terminal',{task_id:task.id,worker_id:worker.id,payload:{revision:m.identity.semantic_assessment.revision,message_kind:messageKind}});continue}
+      }
       try{this.workspaceBinding(m,task.id)}catch(error){const marker=`workspace-orphan:${task.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];appendLedger(m,'worker.semantic-resume-blocked',{task_id:task.id,worker_id:worker.id,payload:{reason:String(error)}});continue}
       const model=worker.model,resumeAdmission=this.reserveExistingSessionAttempt(m,worker,model)
       if(!resumeAdmission.ok){appendLedger(m,'worker.semantic-resume-deferred',{task_id:task.id,worker_id:worker.id,payload:{revision:m.identity.semantic_assessment.revision,reason:resumeAdmission.reason}});continue}

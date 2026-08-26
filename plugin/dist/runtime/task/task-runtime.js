@@ -818,6 +818,18 @@ export class TaskRuntime {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || !worker.session_id)
                 continue;
+            if (worker.restart_reconcile_pending) {
+                const restart = await this.reconcileRestartBeforeResume(m, worker, task);
+                if (restart === 'WAIT') {
+                    appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: 'restart-reconciliation:host-truth-pending-or-active' } });
+                    continue;
+                }
+                if (restart === 'TERMINAL') {
+                    worker.semantic_pause_revision = undefined;
+                    appendLedger(m, 'worker.semantic-resume-reconciled-terminal', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind } });
+                    continue;
+                }
+            }
             try {
                 this.workspaceBinding(m, task.id);
             }

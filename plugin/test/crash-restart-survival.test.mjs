@@ -230,3 +230,33 @@ test('historical idle attempt with an assistant result quarantines stale semanti
   assert.notEqual(m.execution.tasks[0].result?.summary,'old attempt finished before restart','historical semantic output must not become current-generation task truth')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-historical-result-quarantined'&&e.payload?.assistant_result_present===true&&e.payload?.generation===1&&e.payload?.mission_generation===2))
 })
+
+
+test('semantic resume reconciles a historical idle retained attempt before reserving exactly one current-generation attempt',async()=>{
+  const restored=new MissionStore();restored.restore([historicalRestartState()],true)
+  const m=restored.get('parent-1');assert.ok(m);const worker=m.execution.workers[0],task=m.execution.tasks[0],revision=m.identity.semantic_assessment.revision+1
+  m.identity.semantic_assessment={...m.identity.semantic_assessment,status:'assessed',phase:'followup',revision,source:'host-primary',assessed_at:Date.now()};worker.semantic_pause_revision=revision
+  const assistant={text:JSON.stringify({status:'DONE',summary:'historical result must stay quarantined',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}
+  const {runtime,calls}=restartHarness(m,{status:'idle',assistant})
+  const resumed=await runtime.resumeAfterSemanticAssessment(m,'resume')
+  assert.equal(resumed,1);assert.equal(calls.reads,1);assert.equal(calls.prompts.length,1)
+  assert.equal(worker.session_id,'child-old');assert.equal(worker.attempt,2);assert.equal(worker.generation_at_spawn,2);assert.equal(worker.restart_reconcile_pending,false);assert.equal(worker.status,'busy');assert.equal(worker.semantic_pause_revision,undefined);assert.equal(task.status,'running')
+  assert.equal(m.execution.scheduler.reservations.length,1);const reservation=m.execution.scheduler.reservations[0]
+  assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,2);assert.equal(reservation.attempt.generation,2);assert.equal(reservation.hostExecutionId,'child-old')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-historical-result-quarantined'&&e.payload?.generation===1&&e.payload?.mission_generation===2))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.semantic-resumed'&&e.worker_id===worker.id))
+  assert.ok(!m.execution.ledger.some(e=>e.type==='worker.semantic-resume-deferred'&&e.payload?.reason==='scheduler-not-admitted'))
+})
+
+test('semantic resume leaves a live historical retained attempt quarantined and never opens a duplicate prompt or attempt',async()=>{
+  const restored=new MissionStore();restored.restore([historicalRestartState()],true)
+  const m=restored.get('parent-1');assert.ok(m);const worker=m.execution.workers[0],task=m.execution.tasks[0],revision=m.identity.semantic_assessment.revision+1
+  m.identity.semantic_assessment={...m.identity.semantic_assessment,status:'assessed',phase:'followup',revision,source:'host-primary',assessed_at:Date.now()};worker.semantic_pause_revision=revision
+  const {runtime,calls}=restartHarness(m,{status:'busy',assistant:{text:''}})
+  const resumed=await runtime.resumeAfterSemanticAssessment(m,'resume')
+  assert.equal(resumed,0);assert.equal(calls.reads,0);assert.equal(calls.prompts.length,0)
+  assert.equal(worker.session_id,'child-old');assert.equal(worker.attempt,1);assert.equal(worker.generation_at_spawn,1);assert.equal(worker.restart_reconcile_pending,true);assert.equal(worker.status,'ready');assert.equal(worker.semantic_pause_revision,revision);assert.equal(task.status,'waiting')
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RECONCILING');assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,1)
+  assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconcile-deferred'&&e.payload?.reason==='historical-attempt-host-active'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.semantic-resume-deferred'&&e.payload?.reason==='restart-reconciliation:host-truth-pending-or-active'))
+})
