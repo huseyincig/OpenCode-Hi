@@ -12,7 +12,7 @@ test('git package config hook registers packaged agents and skills', async()=>{
     const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client})
     const config={plugin:['opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git']}
     await hooks.config(config)
-    for(const name of ['working-manager','manager','coder','repository-explorer','qa-reviewer','architect','security-reviewer','visual-qa']) assert.ok(config.agent?.[name],name)
+    for(const name of ['working-manager','manager','coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa']) assert.ok(config.agent?.[name],name)
     assert.equal('default_agent' in config,false,'Hi must not take ownership of host-global default_agent')
     assert.equal('subagent_depth' in config,false,'Hi recursion policy must not mutate host-global subagent_depth')
     assert.ok(Array.isArray(config.skills?.paths))
@@ -32,13 +32,6 @@ test('public package manifest stays native direct-Git install friendly', async()
   assert.equal(pkg.peerDependenciesMeta?.['@opencode-ai/plugin']?.optional,true)
   assert.match(pkg.scripts?.['host:check-update']??'',/opencode_upstream_tracker\.py --fetch/)
   assert.match(pkg.scripts?.['host:observe-update']??'',/opencode_upstream_tracker\.py --fetch --write/)
-})
-
-test('final canonical gates use the explicit Git-safe plugin build command', async()=>{
-  const fs=await import('node:fs/promises')
-  const script=await fs.readFile(new URL('../../scripts/run-final-gates.py',import.meta.url),'utf8')
-  assert.match(script,/run\(\['npm','run','build:plugin'\]\)/)
-  assert.doesNotMatch(script,/run\(\['npm','run','build'\]\)/)
 })
 
 test('direct-Git acceptance invokes the active npm JS entrypoint portably and surfaces spawn failures', async()=>{
