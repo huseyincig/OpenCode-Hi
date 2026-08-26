@@ -1,6 +1,5 @@
 import { projectExecutionSurface } from '../safety/execution-projection.js';
 import { gitCommandParts } from '../safety/command-classifier.js';
-const INTERACTIVE = [/\bssh\b(?!.*\s-[^\n]*T)/i, /\bpasswd\b/i, /\b(?:npm|pnpm|yarn)\s+login\b/i, /\bgh\s+auth\s+login\b/i, /\baz\s+login\b/i, /\bgcloud\s+(?:auth\s+)?login\b/i, /\baws\s+(?:sso\s+login|configure\s+sso|login)\b/i, /\bselect\s+/i];
 const CATASTROPHIC_FILESYSTEM = [
     /(?:^|[;&|]\s*)shred\s+[^;|&]*(?:\/dev\/|\/etc\/|\/home\/|~\/|\$HOME)/i,
     /(?:^|[;&|]\s*)mkfs(?:\.[A-Za-z0-9_-]+)?\s/i,
@@ -50,6 +49,32 @@ function words(text) { return text.trim().split(/\s+/).filter(Boolean); }
 function executableWords(text) { const tokens = words(text); let i = 0; while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))
     i++; return tokens.slice(i); }
 function executableText(text) { return executableWords(text).join(' '); }
+function interactiveAssessment(fragment) {
+    const tokens = executableWords(fragment.text);
+    if (!tokens.length)
+        return false;
+    const command = commandBasename(tokens[0]), args = tokens.slice(1);
+    if (command === 'select' && fragment.dialect === 'posix')
+        return true;
+    if (command === 'ssh')
+        return !args.some(token => /^-[^-]*T/.test(token));
+    if (command === 'passwd')
+        return true;
+    if (['npm', 'pnpm', 'yarn'].includes(command) && args[0]?.toLowerCase() === 'login')
+        return true;
+    if (command === 'gh' && args[0]?.toLowerCase() === 'auth' && args[1]?.toLowerCase() === 'login')
+        return true;
+    if (command === 'az' && args[0]?.toLowerCase() === 'login')
+        return true;
+    if (command === 'gcloud' && ((args[0]?.toLowerCase() === 'login') || (args[0]?.toLowerCase() === 'auth' && args[1]?.toLowerCase() === 'login')))
+        return true;
+    if (command === 'aws') {
+        const a0 = args[0]?.toLowerCase(), a1 = args[1]?.toLowerCase();
+        if (a0 === 'login' || a0 === 'sso' && a1 === 'login' || a0 === 'configure' && a1 === 'sso')
+            return true;
+    }
+    return false;
+}
 function rmAssessment(fragment) {
     const tokens = executableWords(fragment.text);
     if (tokens[0]?.toLowerCase() !== 'rm')
@@ -211,7 +236,7 @@ export function evaluateShellCommand(command) {
         return userAction(c, `bounded execution projection is uncertain (${projection.uncertainty.join(', ')}); potentially destructive execution is not admitted`, 'shell-execution-uncertain');
     for (const fragment of projection.fragments) {
         const text = fragment.text, executable = fragment.dialect === 'posix' ? executableText(text) : text;
-        if (INTERACTIVE.some(r => r.test(text)))
+        if (interactiveAssessment(fragment))
             return { decision: 'USER_ACTION_REQUIRED', command: c, reason: 'interactive credential or terminal flow requires real user interaction', human_decision_type: 'credential_action', reason_code: 'interactive-shell' };
         if (SECRET_SENSITIVE.some(r => r.test(text)) || hasPlaintextSecretFlag(text))
             return { decision: 'USER_ACTION_REQUIRED', command: c, reason: 'plaintext secret-sensitive command requires explicit user action and safer credential handling', human_decision_type: 'credential_action', reason_code: 'secret-sensitive-shell' };

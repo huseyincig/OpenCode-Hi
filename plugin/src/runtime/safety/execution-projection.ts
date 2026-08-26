@@ -71,6 +71,17 @@ function shellTokens(source:string):string[]{
 function stripAssignmentPrefix(tokens:string[]):string[]{let i=0;while(i<tokens.length&&/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))i++;return tokens.slice(i)}
 function simpleExecutableHead(source:string):string|undefined{const re=/\S+/g;for(let match=re.exec(source);match;match=re.exec(source)){const token=match[0];if(/^[A-Za-z_][A-Za-z0-9_]*=/.test(token))continue;return token.toLowerCase()}return undefined}
 function childCapableHead(head:string|undefined):boolean{return Boolean(head&&(CHILD_CAPABLE_HEADS.has(head)||/^python\d+(?:\.\d+)*$/.test(head)))}
+function shellCommandSource(tokens:string[],head:string|undefined):string|undefined{
+  const shell=(head??'').toLowerCase();if(!['sh','bash','zsh','dash'].includes(shell))return
+  const valueOptions=shell==='bash'?new Set(['-O','-o','--init-file','--rcfile']):new Set(['-o'])
+  for(let i=1;i<tokens.length;i++){
+    const token=tokens[i];if(!token||token==='--'||token==='-'||(!token.startsWith('-')&&!token.startsWith('+')))return
+    if(valueOptions.has(token)){i++;continue}
+    if(token.startsWith('--'))continue
+    if(token[0]==='-'&&token.slice(1).includes('c'))return tokens[i+1]
+  }
+  return
+}
 function transparentChild(tokens:string[]):string[]|undefined{
   let i=0
   const wrapper=tokens[i]?.toLowerCase()
@@ -271,7 +282,7 @@ function deriveChildren(text:string,dialect:ExecutionDialect,depth:number,cwdRis
   if(transparent?.length){const child=transparent.join(' ');addFragment(child,dialect,'transparent-wrapper',depth+1,cwdRisk,state);deriveChildren(child,dialect,depth+1,cwdRisk,state)}
   const head=(transparent?.[0]??tokens[0])?.toLowerCase(),args=transparent??tokens
   if(['sh','bash','zsh','dash'].includes(head??'')){
-    const i=args.findIndex((x,index)=>index>0&&x==='-c');if(i>=0&&args[i+1])scanProgram(args[i+1],'posix',depth+1,'shell-wrapper',cwdRisk,state)
+    const child=shellCommandSource(args,head);if(child)scanProgram(child,'posix',depth+1,'shell-wrapper',cwdRisk,state)
   }
   if(['powershell','powershell.exe','pwsh','pwsh.exe'].includes(head??'')){
     const encoded=args.findIndex((x,index)=>index>0&&['-encodedcommand','-enc','-e'].includes(x.toLowerCase()))

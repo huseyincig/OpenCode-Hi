@@ -101,6 +101,26 @@ function simpleExecutableHead(source) { const re = /\S+/g; for (let match = re.e
     return token.toLowerCase();
 } return undefined; }
 function childCapableHead(head) { return Boolean(head && (CHILD_CAPABLE_HEADS.has(head) || /^python\d+(?:\.\d+)*$/.test(head))); }
+function shellCommandSource(tokens, head) {
+    const shell = (head ?? '').toLowerCase();
+    if (!['sh', 'bash', 'zsh', 'dash'].includes(shell))
+        return;
+    const valueOptions = shell === 'bash' ? new Set(['-O', '-o', '--init-file', '--rcfile']) : new Set(['-o']);
+    for (let i = 1; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (!token || token === '--' || token === '-' || (!token.startsWith('-') && !token.startsWith('+')))
+            return;
+        if (valueOptions.has(token)) {
+            i++;
+            continue;
+        }
+        if (token.startsWith('--'))
+            continue;
+        if (token[0] === '-' && token.slice(1).includes('c'))
+            return tokens[i + 1];
+    }
+    return;
+}
 function transparentChild(tokens) {
     let i = 0;
     const wrapper = tokens[i]?.toLowerCase();
@@ -655,9 +675,9 @@ function deriveChildren(text, dialect, depth, cwdRisk, state) {
     }
     const head = (transparent?.[0] ?? tokens[0])?.toLowerCase(), args = transparent ?? tokens;
     if (['sh', 'bash', 'zsh', 'dash'].includes(head ?? '')) {
-        const i = args.findIndex((x, index) => index > 0 && x === '-c');
-        if (i >= 0 && args[i + 1])
-            scanProgram(args[i + 1], 'posix', depth + 1, 'shell-wrapper', cwdRisk, state);
+        const child = shellCommandSource(args, head);
+        if (child)
+            scanProgram(child, 'posix', depth + 1, 'shell-wrapper', cwdRisk, state);
     }
     if (['powershell', 'powershell.exe', 'pwsh', 'pwsh.exe'].includes(head ?? '')) {
         const encoded = args.findIndex((x, index) => index > 0 && ['-encodedcommand', '-enc', '-e'].includes(x.toLowerCase()));

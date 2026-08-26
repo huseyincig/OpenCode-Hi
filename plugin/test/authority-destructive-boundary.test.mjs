@@ -7,7 +7,7 @@ import { privilegedAction,actionContract } from '../dist/runtime/safety/authorit
 import { startAssessedMission } from './helpers/semantic.mjs'
 
 test('credential and destructive shell boundaries use distinct HumanDecision types',()=>{
-  for(const command of ['gh auth login','gcloud auth login','aws sso login','aws configure sso','az login','npm login']){
+  for(const command of ['gh auth login','gcloud auth login','aws sso login','aws configure sso','az login','npm login','select choice in one two; do echo "$choice"; done',"bash -lc 'gh auth login'"]){
     const credential=evaluateShellCommand(command)
     assert.deepEqual({decision:credential.decision,type:credential.human_decision_type,code:credential.reason_code},{decision:'USER_ACTION_REQUIRED',type:'credential_action',code:'interactive-shell'},command)
   }
@@ -27,6 +27,15 @@ test('potentially paid or irreversible supported external effects enter exact Au
     assert.equal(privilegedAction(command),true,command)
     const contract=actionContract(command,'/repo');assert.equal(contract.one_shot,true);assert.equal(contract.target.command,command);assert.equal(contract.target.cwd,'/repo')
   }
+})
+
+test('interactive shell policy classifies executable structure rather than inert argument payloads',()=>{
+  for(const command of [
+    `.venv/bin/python -c "import sqlite3; conn=sqlite3.connect('notes.db'); rows=conn.execute('SELECT id,title FROM notes').fetchall(); print(rows)"`,
+    `python -c "print('gh auth login')"`,
+    `printf '%s\n' 'ssh example.com'`,
+    `node -e "console.log('select choice in one two')"`,
+  ]) assert.equal(evaluateShellCommand(command).decision,'ALLOW',command)
 })
 
 test('bounded local cleanup is not misclassified as catastrophic filesystem destruction',()=>{
