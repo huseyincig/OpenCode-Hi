@@ -90,11 +90,13 @@ test('visual evidence contract survives consumed methodology needs and derives e
   m.methodology.methodology_needs=[] // emulate a prior visual worker consuming the one-shot methodology need
   const rt=runtime(prompts,new Set(['host-capability:browser-execution']))
   const out=await rt.start(m,{objective:'Verify live UI at http://127.0.0.1:5000 and capture screenshots',role:'visual-qa',category:'visual',scope:['templates/index.html'],requiredEvidence:['visual-check']})
-  const task=m.execution.tasks.find(t=>t.id===out.task_id)
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id)
   assert.deepEqual(out.methodologies,[],'browser execution must not depend on a one-shot methodology need remaining unconsumed')
   assert.equal(task.execution_profile.browser_backend,'bounded-playwright')
   assert.deepEqual(task.execution_profile.browser_allowed_origins,['http://127.0.0.1:5000'])
   for(const id of HI_BROWSER_EXECUTION_TOOL_IDS){assert.ok(task.execution_profile.tools.includes(id),id);assert.equal(prompts[0].body.tools[id],undefined,id)}
+  assert.ok(worker?.session_id)
+  assert.equal(resolveBrowserExecutionOwner(m,{sessionID:worker.session_id,workerID:worker.id,taskID:task.id})?.worker.id,worker.id,'bounded Playwright ownership survives after one-shot methodology needs are consumed')
 })
 
 test('embedded external URLs are not auto-admitted as browser origins',()=>{
