@@ -128,7 +128,7 @@ function automaticRecommendation(category, available) {
 }
 function resolution(primary, category, available, config, role, reason, rejected, fallbacks = [], hostVariant, nativePolicySources = [], recoveryCandidates = []) {
     const byId = new Map(available.map(m => [m.id, m])), primaryModel = primary ? byId.get(primary) : undefined, primaryVariant = primary ? chooseVariant(category, primaryModel, config, role, hostVariant) : undefined, fallbackVariants = {};
-    for (const id of fallbacks)
+    for (const id of [...new Set([...fallbacks, ...recoveryCandidates])])
         fallbackVariants[id] = chooseVariant(category, byId.get(id), config, role);
     if (nativePolicySources.length)
         reason.push(`host-provider-policy:${nativePolicySources.join('+')}`);

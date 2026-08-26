@@ -238,6 +238,109 @@ export class TaskRecoveryCoordinator {
             return false;
         }
     }
+    providerRecoveryCandidates(worker) {
+        const attempted = new Set();
+        if (worker.model)
+            attempted.add(worker.model);
+        for (const transition of worker.fallback_history ?? []) {
+            if (transition.from)
+                attempted.add(transition.from);
+            attempted.add(transition.to);
+        }
+        const automatic = worker.requested_model === undefined && (worker.model_selection_reason ?? []).includes('ephemeral automatic selection') ? (worker.recovery_candidates ?? []) : [];
+        return [...new Set([...(worker.fallbacks ?? []), ...automatic].filter(Boolean))].filter(model => !attempted.has(model));
+    }
+    async launchProviderRecoveryCandidate(m, worker, task, model, failedSession, failureKind, reason) {
+        const runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), worker.role);
+        if (!runtimeCandidate.ok) {
+            appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, failure_class: failureKind, phase: 'runtime-policy-revalidation' } });
+            return 'FAILED';
+        }
+        const variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.getProjectPeerView(m));
+        if (!reservation.accepted) {
+            appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, failure_class: failureKind, source: 'scheduler' } });
+            return 'FAILED';
+        }
+        try {
+            this.child.recordModelProjection(worker, model, variant);
+            const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant, this.workspaceBinding?.(m, task.id));
+            if (!child?.id)
+                throw new Error('Runtime fallback child session id missing');
+            const recoverySessionID = String(child.id);
+            worker.session_id = recoverySessionID;
+            const bound = bindTaskRuntimeHost(m, worker.id, recoverySessionID);
+            if (!bound.accepted)
+                throw new Error(`Scheduler host binding failed during runtime fallback: ${bound.reason}`);
+            worker.loaded_methodologies = [];
+            worker.model = model;
+            worker.model_variant = variant;
+            worker.fallback_history = [...(worker.fallback_history ?? []), { from: previous, to: model, variant, reason: `${reason}; failure=${failureKind}`, phase: 'runtime', at: Date.now() }];
+            worker.status = 'busy';
+            worker.runtime_fallback_exhausted = false;
+            worker.runtime_recovery_pending = true;
+            worker.runtime_recovery_attempt = (worker.runtime_recovery_attempt ?? 0) + 1;
+            worker.generation_at_spawn = m.continuation.generation;
+            worker.parent_mission_id = m.identity.mission_id;
+            worker.started_at = Date.now();
+            task.status = 'running';
+            this.registry.set(worker);
+            const resolvedProviderBlockers = new Set((task.result?.open_issues ?? []).filter(issue => issue.startsWith('provider-failure:provider-transport:')));
+            m.execution.blockers = m.execution.blockers.filter(blocker => !resolvedProviderBlockers.has(blocker));
+            recordPreexistingUserBaseline(m, await this.child.captureNativeDiff(worker, 'baseline'));
+            const exitRequirements = worker.selected_methodologies.flatMap(name => { const item = methodologyCatalog(this.projectRoot).find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
+            const prompt = clipText([ownershipContract('child', worker.selected_methodologies), `Hi terminal runtime recovery for existing task ${task.id}.`, `Failure class: ${failureKind}.`, failedSession ? `Previous failed session: ${failedSession}.` : 'Previous provider-terminal session is already quiescent and detached.', `Fallback model: ${model}.`, `Recovery authority: ${reason}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ') || 'none'}`, `METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ') || 'none'}`, worker.selected_methodologies.length ? 'This is a fresh child session. Reload every still-selected methodology through the native skill tool before applying it.' : 'No methodology is selected for this recovery.', 'Preserve already-observed repository changes and bounded evidence, but do not assume the failed session context is present. Inspect only the minimum current state needed to continue the SAME task. Do not restart top-level planning. Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
+            beginWorkerAttempt(task, worker);
+            await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []), worker.attempt_prompt_message_id);
+            appendLedger(m, 'worker.runtime-fallback', { task_id: task.id, worker_id: worker.id, payload: { from: previous, to: model, variant, reason, failure_class: failureKind, attempt: worker.runtime_recovery_attempt, from_session: failedSession, to_session: worker.session_id, session_mode: 'fresh' } });
+            return 'RECOVERED';
+        }
+        catch (nextError) {
+            worker.runtime_recovery_pending = false;
+            let recoveryStopped = true;
+            if (worker.session_id)
+                try {
+                    recoveryStopped = await this.child.abortNativeSession(m, worker.session_id, 'runtime-fallback-failed', worker.id, task.id);
+                }
+                catch {
+                    recoveryStopped = false;
+                }
+            if (recoveryStopped) {
+                releaseTaskRuntimeReservation(m, worker.id);
+                worker.session_id = undefined;
+                worker.status = 'ready';
+                task.status = 'waiting';
+                this.registry.set(worker);
+            }
+            else {
+                const marker = `runtime-fallback-recovery-abort-unavailable:${task.id}:${worker.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                worker.status = 'busy';
+                task.status = 'running';
+                this.registry.set(worker);
+            }
+            appendLedger(m, 'worker.runtime-fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, error: String(nextError), failure_class: failureKind, from_session: failedSession, host_stopped: recoveryStopped } });
+            return recoveryStopped ? 'FAILED' : 'QUARANTINED';
+        }
+    }
+    async resumeBlockedProviderFailure(m, workerID) {
+        const worker = m.execution.workers.find(w => w.id === workerID), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined;
+        if (!worker || !task || m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status !== 'ready' || worker.session_id || worker.last_runtime_failure_kind !== 'provider-transport' || task.result?.status !== 'BLOCKED' || !task.result.open_issues.some(issue => issue.startsWith('provider-failure:provider-transport:')))
+            return false;
+        const candidates = this.providerRecoveryCandidates(worker), previousTaskStatus = task.status;
+        task.status = 'waiting';
+        for (const model of candidates) {
+            const automatic = !(worker.fallbacks ?? []).includes(model), reason = automatic ? 'bounded automatic recovery candidate after host-terminal provider failure' : task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? 'explicit runtime fallback after provider-transport';
+            const result = await this.launchProviderRecoveryCandidate(m, worker, task, model, undefined, 'provider-transport', reason);
+            if (result === 'RECOVERED') {
+                appendLedger(m, 'worker.runtime-fallback.resumed-blocked', { task_id: task.id, worker_id: worker.id, payload: { model, reason } });
+                return true;
+            }
+            if (result === 'QUARANTINED')
+                return false;
+        }
+        task.status = previousTaskStatus;
+        return false;
+    }
     async recoverHostTerminalFailure(m, workerID, error) {
         const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker)
@@ -248,11 +351,12 @@ export class TaskRecoveryCoordinator {
         appendLedger(m, 'worker.failure.classified', { task_id: task?.id, worker_id: worker.id, payload: { kind: failure.kind, stagnation: failure.stagnation, retryable: failure.retryable, reason: failure.reason } });
         // OpenCode owns transient provider retry/backoff and context compaction. Hi may only
         // start an alternate-model child after a host-terminal, retryable provider failure.
-        // Context/tool failures need explicit capability proof before model switching.
+        // Explicit user/host model authority remains fail-closed; ephemeral automatic routing may
+        // consume only its already-bounded recovery candidates after terminal provider failure.
         if (!failure.retryable || failure.kind !== 'provider-transport' || !worker.session_id || !task)
             return 'NOT_RECOVERED';
-        const failedSession = worker.session_id, candidates = worker.fallbacks.filter(x => x && x !== worker.model);
-        appendLedger(m, 'worker.runtime-fallback.host-terminal-confirmed', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, action: 'release-without-abort' } });
+        const failedSession = worker.session_id, candidates = this.providerRecoveryCandidates(worker);
+        appendLedger(m, 'worker.runtime-fallback.host-terminal-confirmed', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, action: 'release-without-abort', candidates } });
         releaseTaskRuntimeReservation(m, worker.id);
         worker.session_id = undefined;
         worker.restart_reconcile_pending = false;
@@ -260,75 +364,12 @@ export class TaskRecoveryCoordinator {
         task.status = 'waiting';
         this.registry.set(worker);
         for (const model of candidates) {
-            const runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), worker.role);
-            if (!runtimeCandidate.ok) {
-                appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, failure_class: failure.kind, phase: 'runtime-policy-revalidation' } });
-                continue;
-            }
-            const variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
-            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.getProjectPeerView(m));
-            if (!reservation.accepted) {
-                appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, failure_class: failure.kind, source: 'scheduler' } });
-                continue;
-            }
-            try {
-                this.child.recordModelProjection(worker, model, variant);
-                const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant, this.workspaceBinding?.(m, task.id));
-                if (!child?.id)
-                    throw new Error('Runtime fallback child session id missing');
-                const recoverySessionID = String(child.id);
-                worker.session_id = recoverySessionID;
-                const bound = bindTaskRuntimeHost(m, worker.id, recoverySessionID);
-                if (!bound.accepted)
-                    throw new Error(`Scheduler host binding failed during runtime fallback: ${bound.reason}`);
-                worker.loaded_methodologies = [];
-                worker.model = model;
-                worker.model_variant = variant;
-                worker.fallback_history = [...(worker.fallback_history ?? []), { from: previous, to: model, variant, reason: `${fallbackReason}; failure=${failure.kind}`, phase: 'runtime', at: Date.now() }];
-                worker.status = 'busy';
-                worker.runtime_recovery_pending = true;
-                worker.runtime_recovery_attempt = (worker.runtime_recovery_attempt ?? 0) + 1;
-                worker.generation_at_spawn = m.continuation.generation;
-                worker.parent_mission_id = m.identity.mission_id;
-                worker.started_at = Date.now();
-                task.status = 'running';
-                this.registry.set(worker);
-                recordPreexistingUserBaseline(m, await this.child.captureNativeDiff(worker, 'baseline'));
-                const exitRequirements = worker.selected_methodologies.flatMap(name => { const item = methodologyCatalog(this.projectRoot).find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
-                const prompt = clipText([ownershipContract('child', worker.selected_methodologies), `Hi terminal runtime recovery for existing task ${task.id}.`, `Failure class: ${failure.kind}.`, `Previous failed session: ${failedSession}.`, `Fallback model: ${model}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ') || 'none'}`, `METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ') || 'none'}`, worker.selected_methodologies.length ? 'This is a fresh child session. Reload every still-selected methodology through the native skill tool before applying it.' : 'No methodology is selected for this recovery.', 'Preserve already-observed repository changes and bounded evidence, but do not assume the failed session context is present. Inspect only the minimum current state needed to continue the SAME task. Do not restart top-level planning. Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
-                beginWorkerAttempt(task, worker);
-                await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []), worker.attempt_prompt_message_id);
-                appendLedger(m, 'worker.runtime-fallback', { task_id: task.id, worker_id: worker.id, payload: { from: previous, to: model, variant, reason: fallbackReason, failure_class: failure.kind, attempt: worker.runtime_recovery_attempt, from_session: failedSession, to_session: worker.session_id, session_mode: 'fresh' } });
+            const automatic = !(worker.fallbacks ?? []).includes(model), reason = automatic ? 'bounded automatic recovery candidate after host-terminal provider failure' : task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
+            const result = await this.launchProviderRecoveryCandidate(m, worker, task, model, failedSession, failure.kind, reason);
+            if (result === 'RECOVERED')
                 return 'RECOVERED';
-            }
-            catch (nextError) {
-                worker.runtime_recovery_pending = false;
-                let recoveryStopped = true;
-                if (worker.session_id)
-                    try {
-                        recoveryStopped = await this.child.abortNativeSession(m, worker.session_id, 'runtime-fallback-failed', worker.id, task.id);
-                    }
-                    catch {
-                        recoveryStopped = false;
-                    }
-                if (recoveryStopped) {
-                    releaseTaskRuntimeReservation(m, worker.id);
-                    worker.session_id = undefined;
-                    worker.status = 'ready';
-                    task.status = 'waiting';
-                    this.registry.set(worker);
-                }
-                else {
-                    const marker = `runtime-fallback-recovery-abort-unavailable:${task.id}:${worker.id}`;
-                    m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
-                    worker.status = 'busy';
-                    task.status = 'running';
-                    this.registry.set(worker);
-                }
-                appendLedger(m, 'worker.runtime-fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, error: String(nextError), failure_class: failure.kind, from_session: failedSession, host_stopped: recoveryStopped } });
-                if (!recoveryStopped)
-                    return 'QUARANTINED';
-            }
+            if (result === 'QUARANTINED')
+                return 'QUARANTINED';
         }
         worker.runtime_fallback_exhausted = true;
         m.continuation.stagnation_count = 0;
@@ -337,7 +378,7 @@ export class TaskRecoveryCoordinator {
         task.status = 'blocked';
         task.updated_at = Date.now();
         task.result = { status: 'BLOCKED', summary: 'Runtime provider/model fallback chain exhausted.', changed_files: [], evidence: [], open_issues: [blocker], needs_context: ['provider/model availability or alternate execution path'] };
-        appendLedger(m, 'worker.runtime-fallback.exhausted', { task_id: task.id, worker_id: worker.id, payload: { failure_class: failure.kind, attempted: [worker.model, ...candidates].filter(Boolean) } });
+        appendLedger(m, 'worker.runtime-fallback.exhausted', { task_id: task.id, worker_id: worker.id, payload: { failure_class: failure.kind, attempted: [...new Set([worker.model, ...(worker.fallback_history ?? []).flatMap(x => [x.from, x.to]), ...candidates].filter(Boolean))] } });
         return 'NOT_RECOVERED';
     }
     fail(m, workerID, error) {

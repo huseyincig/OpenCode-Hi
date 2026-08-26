@@ -52,6 +52,49 @@ test('second provider failure advances to next fallback rather than returning to
   assert.deepEqual(calls.map(x=>x.body.model.modelID),['fallback1','fallback2'])
 })
 
+
+test('automatic selection uses bounded recovery-only candidate after native provider retries become terminal',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['standard capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
+  m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/recovery':'high'}
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'503 Endpoint is unavailable',isRetryable:true,statusCode:503})
+  assert.equal(settled.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/recovery');assert.equal(worker.model_variant,'high');assert.equal(worker.session_id,'recovery-1');assert.equal(calls.length,1)
+  assert.deepEqual(worker.fallbacks,[],'recovery-only candidates stay separate from normal routing fallbacks')
+  assert.match(worker.fallback_history.at(-1).reason,/bounded automatic recovery candidate/);assert.equal(m.execution.blockers.some(x=>x.startsWith('provider-failure:')),false)
+})
+
+test('explicit task model never gains automatic recovery authority from recovery_candidates',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['ephemeral automatic selection'];worker.requested_model='p/primary'
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'503 Endpoint is unavailable',isRetryable:true,statusCode:503})
+  assert.equal(settled.wakeResult,'BLOCKED');assert.equal(calls.length,0);assert.equal(worker.model,'p/primary');assert.ok(m.execution.blockers.some(x=>x.startsWith('provider-failure:provider-transport:')))
+})
+
+test('provider fallback chain never bounces back to an already attempted model',async()=>{
+  const models=[{id:'p/fallback1',provider:'p',writeCapable:true,tags:['coding']},{id:'p/fallback2',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0]
+  assert.equal((await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'503 primary unavailable',isRetryable:true,statusCode:503})).wakeResult,'RUNTIME_FALLBACK')
+  worker.runtime_recovery_pending=false
+  assert.equal((await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'503 fallback one unavailable',isRetryable:true,statusCode:503})).wakeResult,'RUNTIME_FALLBACK')
+  worker.runtime_recovery_pending=false
+  const third=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'503 fallback two unavailable',isRetryable:true,statusCode:503})
+  assert.equal(third.wakeResult,'BLOCKED');assert.equal(worker.model,'p/fallback2');assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/fallback1','p/fallback2'])
+  const exhausted=m.execution.ledger.findLast(e=>e.type==='worker.runtime-fallback.exhausted');assert.ok(exhausted);assert.deepEqual(new Set(exhausted.payload.attempted),new Set(['p/primary','p/fallback1','p/fallback2']))
+})
+
+test('blocked automatic provider failure can resume the same task on its next recovery-only candidate',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.session_id=undefined;worker.status='ready';worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['ephemeral automatic selection'];worker.requested_model=undefined;worker.last_runtime_failure_kind='provider-transport';worker.runtime_fallback_exhausted=true;task.status='blocked';task.result={status:'BLOCKED',summary:'Runtime provider/model fallback chain exhausted.',changed_files:[],evidence:[],open_issues:['provider-failure:provider-transport:p/primary'],needs_context:['provider/model availability or alternate execution path']};m.execution.blockers=['provider-failure:provider-transport:p/primary','unrelated-blocker']
+  const out=await runtime.resume(m,task.id)
+  assert.equal(out.task_id,task.id);assert.equal(out.worker_id,worker.id);assert.equal(out.model,'p/recovery');assert.equal(out.session_id,'recovery-1');assert.equal(task.status,'running');assert.equal(worker.runtime_fallback_exhausted,false);assert.equal(calls.length,1)
+  assert.deepEqual(m.execution.blockers,['unrelated-blocker'],'resume clears only the provider blocker owned by this task')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.runtime-fallback.resumed-blocked'&&e.task_id===task.id))
+})
+
 test('host-terminal fallback never requires or emits a redundant abort mutation',async()=>{
   const {runtime,m,calls,aborts}=setup(async()=>{},false)
   const settled=await runtime.settleHostIdleRuntimeError(m,m.execution.workers[0],{name:'APIError',message:'429 upstream rate limit',isRetryable:true,statusCode:429})

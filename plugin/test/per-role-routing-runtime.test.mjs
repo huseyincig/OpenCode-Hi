@@ -145,3 +145,15 @@ test('read-only Hi child roles do not inherit coder write-capability requirement
   assert.equal(runtimeModelCandidateStatus('p/read-only',inventory,cfgWith({}),{},'coder').ok,false)
   assert.equal(runtimeModelCandidateStatus('p/read-only',inventory,cfgWith({}),{}).ok,false,'legacy/unspecified role stays conservatively write-capable')
 })
+
+test('automatic recovery candidates retain category variant metadata without becoming routing fallbacks',()=>{
+  const inventory=[
+    {id:'p/primary',provider:'p',tags:['reasoning','coding'],variants:['high']},
+    {id:'p/recovery',provider:'p',tags:['reasoning','coding'],variants:['low','high']},
+  ]
+  const r=resolveModel('deep',inventory,cfgWith({}),undefined,'architect',{})
+  assert.equal(r.primary,'p/primary')
+  assert.deepEqual(r.fallbacks,[])
+  assert.deepEqual(r.recoveryCandidates,['p/recovery'])
+  assert.equal(r.fallbackVariants['p/recovery'],'high')
+})

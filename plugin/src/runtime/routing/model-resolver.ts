@@ -81,7 +81,7 @@ function automaticRecommendation(category:Category,available:AvailableModel[]):{
 }
 function resolution(primary:string|undefined,category:Category,available:AvailableModel[],config:HiConfig,role:string|undefined,reason:string[],rejected:Array<{id:string;reason:string}>,fallbacks:string[]=[],hostVariant?:string,nativePolicySources:string[]=[],recoveryCandidates:string[]=[]):ModelResolution{
   const byId=new Map(available.map(m=>[m.id,m])),primaryModel=primary?byId.get(primary):undefined,primaryVariant=primary?chooseVariant(category,primaryModel,config,role,hostVariant):undefined,fallbackVariants:Record<string,string|undefined>={}
-  for(const id of fallbacks)fallbackVariants[id]=chooseVariant(category,byId.get(id),config,role)
+  for(const id of [...new Set([...fallbacks,...recoveryCandidates])])fallbackVariants[id]=chooseVariant(category,byId.get(id),config,role)
   if(nativePolicySources.length)reason.push(`host-provider-policy:${nativePolicySources.join('+')}`)
   const fallbackReasons=fallbacks.map((model,i)=>({model,variant:fallbackVariants[model],reason:`fallback-${i+1}: explicit role-mapping order${fallbackVariants[model]?`; variant=${fallbackVariants[model]}`:''}`}))
   return{primary,primaryVariant,fallbacks,recoveryCandidates:[...new Set(recoveryCandidates.filter(id=>id&&id!==primary))],fallbackVariants,reason,fallbackReasons,rejected}

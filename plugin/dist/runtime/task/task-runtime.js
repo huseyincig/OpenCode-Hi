@@ -694,8 +694,12 @@ export class TaskRuntime {
         const worker = m.execution.workers.find(w => w.id === task.worker_id || w.task_id === task.id);
         if (!worker)
             throw new Error(`Hi task ${taskID} has no worker`);
-        if (!worker.session_id)
+        if (!worker.session_id) {
+            const recovered = await this.#recovery.resumeBlockedProviderFailure(m, worker.id);
+            if (recovered)
+                return { task_id: task.id, worker_id: worker.id, session_id: worker.session_id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: ['provider-terminal-recovery:bounded-automatic-candidate'], readiness: 'READY', preconditions: [] };
             throw new Error(`Hi task ${taskID} has no reusable child session`);
+        }
         if (worker.status !== 'ready' || !task.result || !['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(task.result.status))
             throw new Error(`Hi task ${taskID} is not resumable from status ${task.status}/${task.result?.status ?? 'none'}`);
         return this.start(m, { objective: task.objective, role: task.role, category: task.category, scope: [...task.scope], dependencies: [...task.dependencies], requiredEvidence: [...task.requiredEvidence], obligationIds: [...task.obligation_ids], model: worker.model, modelVariant: worker.model_variant, constraints: [...task.constraints], mcpServers: [...(task.execution_profile?.mcp_servers ?? [])], browserBackend: task.execution_profile?.browser_backend, browserAllowedOrigins: [...(task.execution_profile?.browser_allowed_origins ?? [])], resumeTaskId: task.id });

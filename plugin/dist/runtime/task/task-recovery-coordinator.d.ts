@@ -33,6 +33,9 @@ export declare class TaskRecoveryCoordinator {
         task_id?: string;
     }>;
     recoverStagnation(m: MissionState, level: number, action?: 'same-worker-resume' | 'model-escalation'): Promise<boolean>;
+    private providerRecoveryCandidates;
+    private launchProviderRecoveryCandidate;
+    resumeBlockedProviderFailure(m: MissionState, workerID: string): Promise<boolean>;
     recoverHostTerminalFailure(m: MissionState, workerID: string, error: unknown): Promise<HostTerminalRecoveryDisposition>;
     fail(m: MissionState, workerID: string, error: string): void;
 }
