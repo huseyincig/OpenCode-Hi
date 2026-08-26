@@ -16,6 +16,10 @@ export interface TaskRuntimeSchedulingOverride {workerId:string;model?:string}
 
 export function taskRuntimeSchedulingSnapshot(m:MissionState,scheduler:ConcurrencyPolicySource,override?:TaskRuntimeSchedulingOverride,peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW):SchedulingSnapshot{
   const graph=projectMissionToWorkGraph(m,Date.now()),unitTraits:SchedulingSnapshot['unitTraits']={},resolvedResources:SchedulingSnapshot['resolvedResources']={}
+  if(override){
+    const worker=m.execution.workers.find(item=>item.id===override.workerId),node=worker?graph.nodes.find(item=>item.id===worker.task_id):undefined
+    if(node&&!['running','completed','failed','cancelled','blocked'].includes(node.status))node.status='queued'
+  }
   for(const unit of graph.executionUnits){unitTraits[unit.id]={readOnly:isHiReadOnlyChildRole(unit.role)}}
   for(const worker of m.execution.workers){
     const model=worker.id===override?.workerId?override.model:worker.model,unit=unitID(worker)

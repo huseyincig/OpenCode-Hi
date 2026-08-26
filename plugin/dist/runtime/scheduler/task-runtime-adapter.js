@@ -9,6 +9,11 @@ function unitID(worker) { return `eu:${worker.task_id}`; }
 function lifecycle(m) { return m.execution.scheduler ?? (m.execution.scheduler = createSchedulerLifecycleState(m.identity.mission_id)); }
 export function taskRuntimeSchedulingSnapshot(m, scheduler, override, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
     const graph = projectMissionToWorkGraph(m, Date.now()), unitTraits = {}, resolvedResources = {};
+    if (override) {
+        const worker = m.execution.workers.find(item => item.id === override.workerId), node = worker ? graph.nodes.find(item => item.id === worker.task_id) : undefined;
+        if (node && !['running', 'completed', 'failed', 'cancelled', 'blocked'].includes(node.status))
+            node.status = 'queued';
+    }
     for (const unit of graph.executionUnits) {
         unitTraits[unit.id] = { readOnly: isHiReadOnlyChildRole(unit.role) };
     }

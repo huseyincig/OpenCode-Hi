@@ -64,6 +64,19 @@ test('bounded task queue is FIFO among runnable workers and later entries are no
   assert.equal(m.execution.workers.find(w=>w.id===third.worker_id).status,'busy');assert.equal(rt.queueDepth(),0)
 })
 
+test('a resumable waiting task does not shadow an already queued runnable worker after capacity releases',async()=>{
+  const {rt}=nativeRuntime(1),store=new MissionStore(),m=startAssessedMission(store,'race-waiting-shadow','waiting correction must not starve queued work',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']});m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['test']}
+  const first=await rt.start(m,{objective:'first needs correction',role:'coder',scope:['a.ts']}),second=await rt.start(m,{objective:'independent queued reviewable work',role:'coder',scope:['b.ts']})
+  assert.equal(second.readiness,'WAIT');assert.equal(rt.queueDepth(),1)
+  rt.applyResult(m,first.worker_id,{...done('first needs another correction'),status:'FIX_REQUIRED',open_issues:['bounded correction remains']})
+  await new Promise(r=>setImmediate(r))
+  const firstTask=m.execution.tasks.find(t=>t.id===first.task_id),firstWorker=m.execution.workers.find(w=>w.id===first.worker_id),secondTask=m.execution.tasks.find(t=>t.id===second.task_id),secondWorker=m.execution.workers.find(w=>w.id===second.worker_id)
+  assert.equal(firstTask.status,'waiting');assert.equal(firstWorker.status,'ready')
+  assert.equal(secondTask.status,'running','passive waiting work must not consume a scheduler admission slot')
+  assert.equal(secondWorker.status,'busy');assert.equal(secondWorker.attempt,1);assert.ok(secondWorker.session_id)
+  assert.equal(rt.queueDepth(),0)
+})
+
 
 test('late native permission events after STOP cannot retain patterns or persist project authority',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'stopped-permission-owner','permission stop fence'),pending=new Map(),grants=[]
