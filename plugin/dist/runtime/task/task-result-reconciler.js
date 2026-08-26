@@ -23,6 +23,7 @@ import { evidenceClaimApplicability } from '../evidence/applicability.js';
 import { captureEvidenceScopeState } from '../evidence/scope-state.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
+import { reconcileSessionAbortQuiescenceDemand } from '../readiness/capability-failure.js';
 import { assessExplorationClearance, explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js';
 function resultDigest(result) { return createHash('sha256').update(JSON.stringify(result)).digest('hex'); }
 export class TaskResultReconciler {
@@ -403,6 +404,7 @@ export class TaskResultReconciler {
         }
         applyWorkerResult(m, task, worker, effectiveResult);
         releaseTaskRuntimeReservation(m, worker.id);
+        reconcileSessionAbortQuiescenceDemand(m);
         this.registry.delete(worker.id);
         for (const signal of changedSurfaceMethodologySignals(effectiveResult.changed_files))
             activateMethodologySignal(m, this.projectRoot, { signal: signal.name, producer: 'changed-surface', reason: signal.reason });

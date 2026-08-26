@@ -260,3 +260,23 @@ test('semantic resume leaves a live historical retained attempt quarantined and 
   assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconcile-deferred'&&e.payload?.reason==='historical-attempt-host-active'))
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.semantic-resume-deferred'&&e.payload?.reason==='restart-reconciliation:host-truth-pending-or-active'))
 })
+
+
+test('restore retires stale session-abort demand when every retained owner is already quiescent',()=>{
+  const m=historicalRestartState(),worker=m.execution.workers[0],task=m.execution.tasks[0]
+  m.execution.scheduler.reservations=[];worker.status='ready';worker.restart_reconcile_pending=false;task.status='waiting';task.result={status:'FIX_REQUIRED',summary:'correction remains',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  m.execution.blockers=['capability-unavailable:session-abort',`semantic-abort-unavailable:${task.id}:${worker.id}`,'unrelated-blocker']
+  const restored=new MissionStore();restored.restore([m],false);const out=restored.get('parent-1')
+  assert.ok(out);assert.deepEqual(out.execution.blockers,['unrelated-blocker'])
+  assert.ok(out.execution.ledger.some(e=>e.type==='capability.quiescence-demand-reconciled'&&e.payload?.global_blocker_retired===true))
+})
+
+test('restore preserves session-abort demand while an exact retained host execution still needs reconciliation',()=>{
+  const m=historicalRestartState(),worker=m.execution.workers[0],task=m.execution.tasks[0]
+  m.execution.blockers=['capability-unavailable:session-abort',`semantic-abort-unavailable:${task.id}:${worker.id}`]
+  const restored=new MissionStore();restored.restore([m],true);const out=restored.get('parent-1')
+  assert.ok(out);const current=out.execution.workers[0]
+  assert.equal(current.restart_reconcile_pending,true);assert.ok(out.execution.scheduler.reservations.some(r=>r.workerId===current.id&&r.phase==='RECONCILING'))
+  assert.ok(out.execution.blockers.includes('capability-unavailable:session-abort'))
+  assert.ok(out.execution.blockers.includes(`semantic-abort-unavailable:${task.id}:${worker.id}`))
+})

@@ -12,6 +12,7 @@ import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
+import { reconcileSessionAbortQuiescenceDemand } from '../readiness/capability-failure.js';
 function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}) }; }
 function explicitTestFirstRequested(text) {
     const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
@@ -490,6 +491,7 @@ export class MissionStore {
                 }
             }
         }
+        reconcileSessionAbortQuiescenceDemand(m);
         syncMissionGates(m);
         m.identity.updated_at = Date.now();
         this.syncProgressBaseline(m);

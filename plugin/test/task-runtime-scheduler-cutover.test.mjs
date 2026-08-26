@@ -135,3 +135,23 @@ test('assistant creation time is a secondary stale-attempt fence when host ances
   const out=await runtime.settleHostIdleAssistantResult(m,worker,stale)
   assert.equal(out.applied,false);assert.equal(out.reason,'assistant-result-stale-attempt-message');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
 })
+
+
+test('natural terminal settlement retires stale session-abort quiescence demand once the exact worker no longer owns a host execution',async()=>{
+  const {runtime,m}=setup();const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  m.execution.blockers.push('capability-unavailable:session-abort',`semantic-abort-unavailable:${task.id}:${worker.id}`)
+  runtime.applyResult(m,worker.id,workerResult('FIX_REQUIRED'))
+  assert.equal(worker.status,'ready');assert.equal(task.status,'waiting');assert.equal(m.execution.scheduler.reservations.length,0)
+  assert.equal(m.execution.blockers.includes('capability-unavailable:session-abort'),false)
+  assert.equal(m.execution.blockers.some(x=>x===`semantic-abort-unavailable:${task.id}:${worker.id}`),false)
+  assert.ok(m.execution.ledger.some(e=>e.type==='capability.quiescence-demand-reconciled'&&e.payload?.global_blocker_retired===true))
+})
+
+test('cancelling a ready retained FIX_REQUIRED session skips abort because host quiescence is already established',async()=>{
+  let aborted=0;const {runtime,m}=setup({abort:async()=>{aborted++;return{data:true}}});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  runtime.applyResult(m,worker.id,workerResult('FIX_REQUIRED'));assert.equal(worker.status,'ready');assert.equal(m.execution.scheduler.reservations.length,0)
+  assert.equal(await runtime.cancel(m,task.id),true);assert.equal(aborted,0);assert.equal(worker.status,'cancelled');assert.equal(task.status,'cancelled')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.abort-skipped'&&e.worker_id===worker.id&&e.payload?.reason==='retained-session-already-quiescent-no-active-reservation'))
+})

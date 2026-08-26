@@ -28,7 +28,7 @@ import { admitHostTerminalEvent, admitRestartHostTerminalEvent, hostChildBinding
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
 import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, claimTaskRuntimeSettlement, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
-import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
+import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileSessionAbortQuiescenceDemand, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
@@ -1025,12 +1025,15 @@ export class TaskRuntime {
             if (await this.cancel(m, w.id))
                 n++; return n; }
     async cancel(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); if (!worker)
-        return false; if (worker.session_id) {
+        return false; const reservation = m.execution.scheduler?.reservations.find(item => item.workerId === worker.id), requiresHostQuiescence = Boolean(worker.session_id && (worker.restart_reconcile_pending === true || ['starting', 'busy'].includes(worker.status) || reservation)); if (requiresHostQuiescence && worker.session_id) {
         const stopped = await this.abortNativeSession(m, worker.session_id, 'worker-cancel', worker.id, worker.task_id);
         if (!stopped) {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable' } });
             return false;
         }
+    }
+    else if (worker.session_id)
+        appendLedger(m, 'worker.cancel.abort-skipped', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, status: worker.status, reason: 'retained-session-already-quiescent-no-active-reservation' } }); if (worker.session_id) {
         const browserClean = await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
         if (!browserClean) {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'browser-cleanup-failed' } });
@@ -1040,5 +1043,5 @@ export class TaskRuntime {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
     } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
-        t.status = 'cancelled'; releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
+        t.status = 'cancelled'; releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); reconcileSessionAbortQuiescenceDemand(m); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
 }

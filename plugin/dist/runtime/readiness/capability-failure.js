@@ -52,3 +52,30 @@ export function clearCapabilityUnavailable(m, capability) {
     }
     return false;
 }
+const SESSION_ABORT_OWNER_PREFIXES = [
+    'behavioral-recovery-abort-unavailable:',
+    'stagnation-recovery-abort-unavailable:',
+    'runtime-fallback-recovery-abort-unavailable:',
+    'parallel-conflict-abort-unavailable:',
+    'parallel-conflict-resume-abort-unavailable:',
+    'semantic-abort-unavailable:',
+    'constraint-abort-unavailable:',
+    'constraint-rebase-recovery-abort-unavailable:',
+];
+function sessionAbortOwner(value) { const prefix = SESSION_ABORT_OWNER_PREFIXES.find(item => value.startsWith(item)); if (!prefix)
+    return undefined; const rest = value.slice(prefix.length), split = rest.lastIndexOf(':'); if (split <= 0 || split === rest.length - 1)
+    return undefined; return { taskId: rest.slice(0, split), workerId: rest.slice(split + 1) }; }
+export function reconcileSessionAbortQuiescenceDemand(m) {
+    const retired = [];
+    m.execution.blockers = m.execution.blockers.filter(blocker => { const owner = sessionAbortOwner(blocker); if (!owner)
+        return true; const worker = m.execution.workers.find(item => item.id === owner.workerId && item.task_id === owner.taskId), stillHostOwned = Boolean(worker?.session_id && (worker.restart_reconcile_pending === true || ['starting', 'busy'].includes(worker.status) || m.execution.scheduler?.reservations.some(item => item.workerId === worker.id))); if (stillHostOwned)
+        return true; retired.push(blocker); return false; });
+    const global = 'capability-unavailable:session-abort', hasGlobal = m.execution.blockers.includes(global), hostBoundInflight = m.execution.workers.some(worker => Boolean(worker.session_id && (worker.restart_reconcile_pending === true || ['starting', 'busy'].includes(worker.status) || m.execution.scheduler?.reservations.some(item => item.workerId === worker.id)))), ownerBlocker = m.execution.blockers.some(blocker => Boolean(sessionAbortOwner(blocker))), globalRetired = hasGlobal && !hostBoundInflight && !ownerBlocker;
+    if (globalRetired)
+        m.execution.blockers = m.execution.blockers.filter(blocker => blocker !== global);
+    if (retired.length || globalRetired) {
+        appendLedger(m, 'capability.quiescence-demand-reconciled', { payload: { capability: 'session-abort', retired: retired.slice(0, 30), global_blocker_retired: globalRetired, reason: 'no-active-host-quiescence-owner' } });
+        syncMissionGates(m);
+    }
+    return { retired, globalRetired };
+}

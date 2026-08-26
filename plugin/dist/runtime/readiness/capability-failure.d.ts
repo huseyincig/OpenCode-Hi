@@ -25,3 +25,7 @@ export declare function markVerificationCapabilityUnavailable(m: MissionState, i
     workerId?: string;
 }): string;
 export declare function clearCapabilityUnavailable(m: MissionState, capability: string): boolean;
+export declare function reconcileSessionAbortQuiescenceDemand(m: MissionState): {
+    retired: string[];
+    globalRetired: boolean;
+};
