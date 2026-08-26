@@ -32,6 +32,13 @@ export function inspectCurrentGitChangedFiles(projectRoot?:string):string[]|unde
   if(r.status!==0||typeof r.stdout!=='string')return undefined
   const files=porcelainPaths(r.stdout);return files.includes('__INVALID_GIT_PATH__')?undefined:files
 }
+export function inspectGitIgnoredFiles(projectRoot:string|undefined,candidates:string[]):string[]|undefined{
+  if(!projectRoot)return undefined
+  const bounded=[...new Set(candidates.map(normFile).filter(Boolean))];if(!bounded.length)return[]
+  const r=spawnSync('git',['-c',`safe.directory=${projectRoot}`,'-C',projectRoot,'check-ignore','--stdin'],{encoding:'utf8',input:bounded.join('\n')+'\n'})
+  if(![0,1].includes(r.status??-1)||typeof r.stdout!=='string')return undefined
+  const files=splitLines(r.stdout);return files.filter(file=>bounded.includes(file))
+}
 export function recordGitStatusInspection(m:MissionState,command:string,output:any):void{
   if(!isGitStatusInspection(command))return;const text=commandText(output),files=porcelainPaths(text);m.vcs.git_topology_safety={clean:files.length===0,verified_files:files,verified_at:Date.now(),source:command.slice(0,180)};appendLedger(m,'git.worktree.inspected',{payload:{clean:files.length===0,files:files.slice(0,80),count:files.length}})
 }

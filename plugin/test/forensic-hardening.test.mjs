@@ -242,9 +242,26 @@ test('parent direct progress uses the OpenCode working directory as local eviden
     writeFileSync(join(directory,'index.html'),'<!doctype html><canvas></canvas>\n');await hooks['tool.execute.before']({sessionID:sid,tool:'write'},{args:{filePath:join(directory,'index.html')}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created the requested single-file HTML.',obligation_id:'o-implementation'},{sessionID:sid}))
     assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(result.changed_files,['index.html'])
-    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.current-diff-reconciled'&&e.payload?.source==='working-directory-current-files'))
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.current-diff-reconciled'&&['working-directory-current-files','git-status-plus-ignored-working-files'].includes(e.payload?.source)))
     await hooks.dispose?.()
   }finally{rmSync(worktree,{recursive:true,force:true})}
+})
+
+test('parent direct progress preserves file-aware writes inside an ignored local project even when native session diff is empty',async()=>{
+  const repo=mkdtempSync(join(tmpdir(),'hi-direct-ignored-native-diff-')),directory=join(repo,'test-lab','runtime','scenario','workspace')
+  try{
+    mkdirSync(directory,{recursive:true});writeFileSync(join(repo,'.gitignore'),'test-lab/runtime/*\n')
+    for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','.gitignore'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',repo,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
+    const c=client();c.session.diff=async()=>({data:[]})
+    const hooks=await HiPlugin({directory,worktree:directory,project:{vcs:'git'},client:c});await hooks.config({})
+    const sid='s-ignored-native-diff';await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Create app.py and README.md'}]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['app.py','README.md'],likely_verification:[]})
+    for(const [file,body] of [['app.py','print("ok")\n'],['README.md','# app\n']]){writeFileSync(join(directory,file),body);await hooks['tool.execute.before']({sessionID:sid,tool:'write'},{args:{filePath:join(directory,file)}})}
+    const status=spawnSync('git',['-C',directory,'status','--porcelain=v1','--untracked-files=all'],{encoding:'utf8'});assert.equal(status.status,0);assert.equal(status.stdout,'','ignored local project must be invisible to ordinary Git status')
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created both requested ignored-local files.',obligation_id:'o-implementation'},{sessionID:sid}))
+    assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(new Set(result.changed_files),new Set(['app.py','README.md']))
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.current-diff-reconciled'&&e.payload?.source==='git-status-plus-ignored-working-files'))
+    await hooks.dispose?.()
+  }finally{rmSync(repo,{recursive:true,force:true})}
 })
 
 test('parent direct progress normalizes native absolute project paths before ownership comparison',async()=>{

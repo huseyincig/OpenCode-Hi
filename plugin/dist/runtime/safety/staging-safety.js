@@ -66,6 +66,18 @@ export function inspectCurrentGitChangedFiles(projectRoot) {
     const files = porcelainPaths(r.stdout);
     return files.includes('__INVALID_GIT_PATH__') ? undefined : files;
 }
+export function inspectGitIgnoredFiles(projectRoot, candidates) {
+    if (!projectRoot)
+        return undefined;
+    const bounded = [...new Set(candidates.map(normFile).filter(Boolean))];
+    if (!bounded.length)
+        return [];
+    const r = spawnSync('git', ['-c', `safe.directory=${projectRoot}`, '-C', projectRoot, 'check-ignore', '--stdin'], { encoding: 'utf8', input: bounded.join('\n') + '\n' });
+    if (![0, 1].includes(r.status ?? -1) || typeof r.stdout !== 'string')
+        return undefined;
+    const files = splitLines(r.stdout);
+    return files.filter(file => bounded.includes(file));
+}
 export function recordGitStatusInspection(m, command, output) {
     if (!isGitStatusInspection(command))
         return;

@@ -24,7 +24,7 @@ import { reconcileMethodologyExits } from '../methodology/exit.js';
 import { evaluateCompletion } from '../completion/evaluator.js';
 import { projectControlDecision } from '../completion/control-projection.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
-import { inspectCurrentGitChangedFiles } from '../safety/staging-safety.js';
+import { inspectCurrentGitChangedFiles, inspectGitIgnoredFiles } from '../safety/staging-safety.js';
 import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
 import { MODEL_ROUTED_CHILD_ROLES, isModelRoutedChildRole } from '../../config/schema.js';
@@ -351,14 +351,22 @@ export function createHiToolSurface(input) {
                 if (currentSource === 'historical-write-events') {
                     const current = inspectCurrentGitChangedFiles(missionRoot);
                     if (current !== undefined) {
-                        if (current.length || resolve(missionRoot) === resolve(projectRoot)) {
-                            const set = new Set(current);
-                            directFiles = directFiles.filter(file => set.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
-                            currentSource = 'git-status-fallback';
+                        const normalized = directFiles.map(file => file.replace(/\\/g, '/').replace(/^\.\//, '')), ignored = inspectGitIgnoredFiles(missionRoot, normalized);
+                        if (ignored === undefined) {
+                            if (current.length || resolve(missionRoot) === resolve(projectRoot)) {
+                                const set = new Set(current);
+                                directFiles = directFiles.filter(file => set.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                                currentSource = 'git-status-fallback';
+                            }
+                            else {
+                                directFiles = directFiles.filter(file => existsSync(resolve(missionRoot, file)));
+                                currentSource = 'working-directory-current-files';
+                            }
                         }
                         else {
-                            directFiles = directFiles.filter(file => existsSync(resolve(missionRoot, file)));
-                            currentSource = 'working-directory-current-files';
+                            const changed = new Set(current), ignoredSet = new Set(ignored);
+                            directFiles = directFiles.filter(file => { const normalized = file.replace(/\\/g, '/').replace(/^\.\//, ''); return changed.has(normalized) || (ignoredSet.has(normalized) && existsSync(resolve(missionRoot, normalized))); });
+                            currentSource = ignoredSet.size ? 'git-status-plus-ignored-working-files' : 'git-status-fallback';
                         }
                     }
                 }
