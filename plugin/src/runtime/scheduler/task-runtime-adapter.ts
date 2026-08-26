@@ -16,10 +16,6 @@ export interface TaskRuntimeSchedulingOverride {workerId:string;model?:string}
 
 export function taskRuntimeSchedulingSnapshot(m:MissionState,scheduler:ConcurrencyPolicySource,override?:TaskRuntimeSchedulingOverride,peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW):SchedulingSnapshot{
   const graph=projectMissionToWorkGraph(m,Date.now()),unitTraits:SchedulingSnapshot['unitTraits']={},resolvedResources:SchedulingSnapshot['resolvedResources']={}
-  if(override){
-    const worker=m.execution.workers.find(item=>item.id===override.workerId),node=worker?graph.nodes.find(item=>item.id===worker.task_id):undefined
-    if(node&&!['running','completed','failed','cancelled','blocked'].includes(node.status))node.status='queued'
-  }
   for(const unit of graph.executionUnits){unitTraits[unit.id]={readOnly:isHiReadOnlyChildRole(unit.role)}}
   for(const worker of m.execution.workers){
     const model=worker.id===override?.workerId?override.model:worker.model,unit=unitID(worker)
@@ -60,13 +56,6 @@ export function beginTaskRuntimeSettlement(m:MissionState,worker:WorkerState,at=
   const reservation=workerReservation(m,worker.id);if(!reservation)return{accepted:false,reason:'reservation-not-found',state:lifecycle(m)}
   const attempt=executionAttemptIdentity({executionUnitId:unitID(worker),workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn})
   const out=reduceSchedulerLifecycle(lifecycle(m),{type:'BEGIN_SETTLEMENT',reservationId:reservation.reservationId,attempt,hostExecutionId:worker.session_id,at});if(out.accepted)m.execution.scheduler=out.state;return out
-}
-
-/** Exclusive terminal-event claim layered over the idempotent scheduler transition. */
-export function claimTaskRuntimeSettlement(m:MissionState,worker:WorkerState,at=Date.now()):SchedulerLifecycleResult{
-  const out=beginTaskRuntimeSettlement(m,worker,at)
-  if(out.accepted&&out.reason==='already-settling')return{...out,accepted:false,reason:'settlement-already-claimed'}
-  return out
 }
 
 export function releaseTaskRuntimeReservation(m:MissionState,workerID:string,kind:'RELEASE'|'CANCEL'='RELEASE',at=Date.now()):SchedulerLifecycleResult{

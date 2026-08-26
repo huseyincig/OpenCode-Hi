@@ -9,11 +9,6 @@ function unitID(worker) { return `eu:${worker.task_id}`; }
 function lifecycle(m) { return m.execution.scheduler ?? (m.execution.scheduler = createSchedulerLifecycleState(m.identity.mission_id)); }
 export function taskRuntimeSchedulingSnapshot(m, scheduler, override, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
     const graph = projectMissionToWorkGraph(m, Date.now()), unitTraits = {}, resolvedResources = {};
-    if (override) {
-        const worker = m.execution.workers.find(item => item.id === override.workerId), node = worker ? graph.nodes.find(item => item.id === worker.task_id) : undefined;
-        if (node && !['running', 'completed', 'failed', 'cancelled', 'blocked'].includes(node.status))
-            node.status = 'queued';
-    }
     for (const unit of graph.executionUnits) {
         unitTraits[unit.id] = { readOnly: isHiReadOnlyChildRole(unit.role) };
     }
@@ -59,13 +54,6 @@ export function beginTaskRuntimeSettlement(m, worker, at = Date.now()) {
     const out = reduceSchedulerLifecycle(lifecycle(m), { type: 'BEGIN_SETTLEMENT', reservationId: reservation.reservationId, attempt, hostExecutionId: worker.session_id, at });
     if (out.accepted)
         m.execution.scheduler = out.state;
-    return out;
-}
-/** Exclusive terminal-event claim layered over the idempotent scheduler transition. */
-export function claimTaskRuntimeSettlement(m, worker, at = Date.now()) {
-    const out = beginTaskRuntimeSettlement(m, worker, at);
-    if (out.accepted && out.reason === 'already-settling')
-        return { ...out, accepted: false, reason: 'settlement-already-claimed' };
     return out;
 }
 export function releaseTaskRuntimeReservation(m, workerID, kind = 'RELEASE', at = Date.now()) {

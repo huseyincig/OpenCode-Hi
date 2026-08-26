@@ -3,7 +3,7 @@ import { resolveCategory } from '../routing/category.js';
 import { resolveModel } from '../routing/model-resolver.js';
 import { methodologySkillCandidates, resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
-import { createTask, createWorker, beginWorkerAttempt, retireTaskResultIssues, workerFingerprint } from '../worker/worker-runtime.js';
+import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
 import { parseWorkerResult } from './result-parser.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
@@ -24,11 +24,11 @@ import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-
 import { HI_CHILD_ROLES, isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
 import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
-import { admitHostTerminalEvent, admitRestartHostTerminalEvent, hostChildBindingMatches, restartHostChildBindingMatches } from './host-child-binding.js';
+import { admitHostTerminalEvent } from './host-child-binding.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
-import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, claimTaskRuntimeSettlement, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
-import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileSessionAbortQuiescenceDemand, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
+import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
+import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
@@ -197,22 +197,10 @@ export class TaskRuntime {
     forgetChildCallback(sessionID) { const worker = this.#child.resolveCallbackWorker(sessionID); if (!worker)
         return false; this.registry.delete(worker.id); return true; }
     admitTerminalEvent(m, worker) { return admitHostTerminalEvent(m, worker, this.childHost); }
-    async settleHostIdleRuntimeError(m, worker, error, binding) {
+    async settleHostIdleRuntimeError(m, worker, error) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return { applied: false, reason: 'task-not-found' };
-        if (binding) {
-            if (!hostChildBindingMatches(m, worker, binding) && !restartHostChildBindingMatches(m, worker, binding)) {
-                appendLedger(m, 'worker.error-settlement-stale-binding', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, current_session_id: worker.session_id, current_attempt: worker.attempt } });
-                return { applied: false, reason: 'host-terminal-binding-stale-before-settlement' };
-            }
-            const claim = claimTaskRuntimeSettlement(m, worker);
-            if (!claim.accepted) {
-                appendLedger(m, 'worker.error-settlement-claim-rejected', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, reason: claim.reason } });
-                return { applied: false, reason: claim.reason };
-            }
-            appendLedger(m, 'worker.error-settlement-claimed', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, reservation_id: claim.reservation?.reservationId } });
-        }
         const detail = [error.name, error.message].filter(Boolean).join(': ');
         await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
         const recovery = await this.#recovery.recoverHostTerminalFailure(m, worker.id, error);
@@ -229,7 +217,7 @@ export class TaskRuntime {
         await this.cleanupWorkspaceForTask(m, worker.task_id);
         return { applied: true, reason: 'host-idle-runtime-failed', wakeResult: 'FAILED', failureKind: worker.last_runtime_failure_kind };
     }
-    async settleHostIdleAssistantResult(m, worker, assistant, binding) {
+    async settleHostIdleAssistantResult(m, worker, assistant) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return { applied: false, reason: 'task-not-found' };
@@ -241,7 +229,7 @@ export class TaskRuntime {
         if (assistant.usage)
             this.noteUsage(m, worker.id, assistant.usage);
         if (assistant.error)
-            return this.settleHostIdleRuntimeError(m, worker, assistant.error, binding);
+            return this.settleHostIdleRuntimeError(m, worker, assistant.error);
         if (!assistant.model && !assistant.text)
             return { applied: false, reason: 'assistant-result-not-ready' };
         const effective = this.noteEffectiveModel(m, worker.id, assistant.model ? { ...assistant.model, source: 'assistant-message-metadata' } : undefined);
@@ -293,42 +281,26 @@ export class TaskRuntime {
     async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
     projectPeerView(m) { return projectSchedulingPeerView(m, this.getProjectMissions()); }
     admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler, this.projectPeerView(m)); }
-    reserveExistingSessionAttempt(m, worker, model, task) {
+    reserveExistingSessionAttempt(m, worker, model) {
         if (!model || !worker.session_id)
             return { ok: false, reason: 'model-or-session-missing' };
-        const previousTaskStatus = task?.status, resumableBlocked = Boolean(task && task.status === 'blocked' && task.result && ['BLOCKED', 'NEEDS_CONTEXT'].includes(task.result.status) && worker.status === 'ready');
-        if (resumableBlocked && task)
-            task.status = 'waiting';
-        const restoreBlocked = () => { if (resumableBlocked && task && previousTaskStatus)
-            task.status = previousTaskStatus; };
-        if (this.admittedModel(m, worker, [model]) !== model) {
-            restoreBlocked();
+        if (this.admittedModel(m, worker, [model]) !== model)
             return { ok: false, reason: 'scheduler-not-admitted' };
-        }
         const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.projectPeerView(m));
-        if (!reservation.accepted) {
-            restoreBlocked();
+        if (!reservation.accepted)
             return { ok: false, reason: reservation.reason };
-        }
         const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
         if (!bound.accepted) {
             releaseTaskRuntimeReservation(m, worker.id);
-            restoreBlocked();
             return { ok: false, reason: bound.reason };
         }
-        if (resumableBlocked && task)
-            appendLedger(m, 'worker.blocked-resume-admission-staged', { task_id: task.id, worker_id: worker.id, payload: { from: previousTaskStatus, to: 'waiting', result_status: task.result?.status, reason: 'explicit-retained-session-resume' } });
         return { ok: true, reason: 'reserved-and-bound' };
     }
     async reconcileRestartBeforeResume(m, worker, task) {
         if (!worker.restart_reconcile_pending)
             return 'CONTINUE';
-        const observed = await admitRestartHostTerminalEvent(m, worker, this.childHost);
+        const observed = await this.admitTerminalEvent(m, worker);
         if (observed.decision === 'WAIT') {
-            if (observed.binding?.generation !== m.continuation.generation) {
-                appendLedger(m, 'scheduler.restart-reconcile-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'historical-attempt-host-active', session_id: worker.session_id, host_status: observed.hostStatus, attempt_id: observed.binding?.attempt.attemptId, attempt_generation: observed.binding?.generation, mission_generation: m.continuation.generation } });
-                return 'WAIT';
-            }
             const reconciled = reconcileTaskRuntimeRestart(m, worker, 'ACTIVE');
             if (!reconciled.accepted) {
                 appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: reconciled.reason, session_id: worker.session_id, host_status: observed.hostStatus } });
@@ -364,21 +336,7 @@ export class TaskRuntime {
             appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'assistant-result-read-failed', session_id: worker.session_id, error: String(error) } });
             return 'WAIT';
         }
-        const historicalAttempt = observed.binding?.generation !== undefined && observed.binding.generation !== m.continuation.generation, noAssistantEvidence = !assistant.model && !assistant.text && !assistant.error && !assistant.activity && !assistant.usage;
-        if (historicalAttempt || noAssistantEvidence) {
-            const released = releaseTaskRuntimeReservation(m, worker.id);
-            if (!released.accepted) {
-                appendLedger(m, historicalAttempt ? 'worker.restart-historical-result-release-blocked' : 'worker.restart-no-result-release-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: released.reason, session_id: worker.session_id, attempt_id: observed.binding?.attempt.attemptId } });
-                return 'WAIT';
-            }
-            worker.restart_reconcile_pending = false;
-            worker.status = 'ready';
-            task.status = 'waiting';
-            this.registry.set(worker);
-            appendLedger(m, historicalAttempt ? 'worker.restart-historical-result-quarantined' : 'worker.restart-no-result-reconciled', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt_id: observed.binding?.attempt.attemptId, generation: observed.binding?.generation, mission_generation: m.continuation.generation, host_status: observed.hostStatus, reason: historicalAttempt ? 'historical-attempt-result-not-authoritative-for-current-generation' : 'host-idle-without-assistant-evidence', assistant_message_id: assistant.model?.message_id, assistant_result_present: !noAssistantEvidence, reservation_release: released.reason } });
-            return 'CONTINUE';
-        }
-        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant, observed.binding);
+        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant);
         if (!settled.applied) {
             appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: settled.reason, session_id: worker.session_id } });
             return 'WAIT';
@@ -552,7 +510,7 @@ export class TaskRuntime {
         }
         const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
         let extraResources = this.extraHostResources();
-        const browserEvidenceKinds = new Set(['visual-check', 'visual-evidence', 'browser-evidence', 'accessibility-evidence']), browserRequested = role === 'visual-qa' && (requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) || requiredEvidence.some(kind => browserEvidenceKinds.has(kind)) || m.identity.intent.requiredCapabilities.includes('visual-qa') || Boolean(input.browserBackend) || Boolean(input.browserAllowedOrigins?.length));
+        const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
         let browserBootstrap;
         if (browserRequested && this.ensureBrowserResource) {
             browserBootstrap = await this.ensureBrowserResource();
@@ -578,7 +536,7 @@ export class TaskRuntime {
         }
         else if (browserDecision.backend)
             clearCapabilityUnavailable(m, 'browser-execution');
-        const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets([objective, ...(taskIntent.likelyTargets ?? [])]));
+        const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets(taskIntent.likelyTargets ?? []));
         if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length && !this.previewManager)
             throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin or the Hi-owned local preview capability');
         if (browserDecision.backend === 'mcp' && browserAllowedOrigins.length)
@@ -631,7 +589,7 @@ export class TaskRuntime {
                 const nextModel = this.admittedModel(m, existing, chain) ?? existing.model;
                 if (!nextModel)
                     throw new Error('Worker resume scheduler admission unavailable');
-                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel, oldTask);
+                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel);
                 if (!resumeAdmission.ok)
                     throw new Error(`Worker resume scheduler admission unavailable: ${resumeAdmission.reason}`);
                 const previousModel = existing.model, attemptBaseline = await this.captureNativeDiff(existing, 'baseline');
@@ -662,7 +620,7 @@ export class TaskRuntime {
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
         const contextArtifactStore = this.#scopedStores.contextArtifacts, selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
-        const browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0)), ...browserTools];
+        const browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0)), ...browserTools];
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, ...(mcpExposure.selected.length ? { mcp_servers: mcpExposure.selected } : {}), ...(browserDecision.backend ? { browser_backend: browserDecision.backend } : {}), ...(browserAllowedOrigins.length ? { browser_allowed_origins: browserAllowedOrigins } : {}), model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
         if (isolationRequired) {
@@ -830,18 +788,6 @@ export class TaskRuntime {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || !worker.session_id)
                 continue;
-            if (worker.restart_reconcile_pending) {
-                const restart = await this.reconcileRestartBeforeResume(m, worker, task);
-                if (restart === 'WAIT') {
-                    appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: 'restart-reconciliation:host-truth-pending-or-active' } });
-                    continue;
-                }
-                if (restart === 'TERMINAL') {
-                    worker.semantic_pause_revision = undefined;
-                    appendLedger(m, 'worker.semantic-resume-reconciled-terminal', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind } });
-                    continue;
-                }
-            }
             try {
                 this.workspaceBinding(m, task.id);
             }
@@ -851,7 +797,7 @@ export class TaskRuntime {
                 appendLedger(m, 'worker.semantic-resume-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error) } });
                 continue;
             }
-            const model = worker.model, resumeAdmission = this.reserveExistingSessionAttempt(m, worker, model, task);
+            const model = worker.model, resumeAdmission = this.reserveExistingSessionAttempt(m, worker, model);
             if (!resumeAdmission.ok) {
                 appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: resumeAdmission.reason } });
                 continue;
@@ -1037,15 +983,12 @@ export class TaskRuntime {
             if (await this.cancel(m, w.id))
                 n++; return n; }
     async cancel(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); if (!worker)
-        return false; const reservation = m.execution.scheduler?.reservations.find(item => item.workerId === worker.id), requiresHostQuiescence = Boolean(worker.session_id && (worker.restart_reconcile_pending === true || ['starting', 'busy'].includes(worker.status) || reservation)); if (requiresHostQuiescence && worker.session_id) {
+        return false; if (worker.session_id) {
         const stopped = await this.abortNativeSession(m, worker.session_id, 'worker-cancel', worker.id, worker.task_id);
         if (!stopped) {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable' } });
             return false;
         }
-    }
-    else if (worker.session_id)
-        appendLedger(m, 'worker.cancel.abort-skipped', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, status: worker.status, reason: 'retained-session-already-quiescent-no-active-reservation' } }); if (worker.session_id) {
         const browserClean = await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
         if (!browserClean) {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'browser-cleanup-failed' } });
@@ -1054,6 +997,6 @@ export class TaskRuntime {
     } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
-    } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id), cancelledIssues = [...(t?.result?.open_issues ?? [])]; if (t)
-        t.status = 'cancelled'; const retiredIssues = retireTaskResultIssues(m, worker.task_id, cancelledIssues); releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); reconcileSessionAbortQuiescenceDemand(m); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id, payload: { retired_result_issues: retiredIssues.slice(0, 30) } }); syncMissionGates(m); this.drainQueue(); return true; }
+    } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
+        t.status = 'cancelled'; releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
 }

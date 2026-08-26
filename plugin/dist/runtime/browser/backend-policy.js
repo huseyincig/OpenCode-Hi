@@ -5,7 +5,7 @@ export function resolveBrowserBackend(input) {
     if (requested && input.role !== 'visual-qa')
         throw new Error('Explicit browser backend is allowed only for visual-qa tasks');
     if (requested && !input.browserRequested)
-        throw new Error('Explicit browser backend requires a browser/visual task contract');
+        throw new Error('Explicit browser backend requires a browser/visual methodology need');
     if (requested === 'bounded-playwright') {
         if (!input.localBrowserAvailable)
             throw new Error('Requested bounded-playwright browser backend is unavailable on the active runtime');
@@ -48,18 +48,6 @@ export function normalizeBrowserAllowedOrigins(values) {
     return [...new Set(out)].slice(0, 8);
 }
 export function browserOriginsFromTargets(targets) {
-    const origins = [];
-    for (const raw of targets) {
-        const text = String(raw);
-        for (const match of text.matchAll(/https?:\/\/[^\s\]})>'"`]+/gi)) {
-            const candidate = match[0].replace(/[.,;:!?]+$/, '');
-            try {
-                const url = new URL(candidate);
-                if (localHost(url.hostname))
-                    origins.push(url.origin);
-            }
-            catch { }
-        }
-    }
-    return normalizeBrowserAllowedOrigins(origins);
+    const urls = targets.filter(x => /^https?:\/\//i.test(String(x).trim()));
+    return normalizeBrowserAllowedOrigins(urls);
 }

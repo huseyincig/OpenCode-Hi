@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createTask,createWorker,beginWorkerAttempt } from '../dist/runtime/worker/worker-runtime.js'
-import { admitHostTerminalEvent,admitRestartHostTerminalEvent,hostChildBinding,restartHostChildBinding } from '../dist/runtime/task/host-child-binding.js'
+import { admitHostTerminalEvent,hostChildBinding } from '../dist/runtime/task/host-child-binding.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 import { makeChildSessionPort } from './helpers/host-port.mjs'
 
@@ -59,19 +59,4 @@ test('HostChildBinding fences a same-session newer attempt that starts during th
   assert.equal(out.reason,'host-child-binding-changed-during-status-read')
   assert.equal(out.hostStatus,'idle')
   assert.equal(out.binding?.attempt.ordinal,1)
-})
-
-
-test('restart binding preserves a historical attempt identity without reopening normal stale callbacks',async()=>{
-  const {m,worker}=fixture('historical-child')
-  worker.restart_reconcile_pending=true
-  m.continuation.generation+=1
-  assert.equal(hostChildBinding(m,worker),undefined,'normal callback binding must remain generation-fenced')
-  const historical=restartHostChildBinding(m,worker)
-  assert.equal(historical?.generation,1)
-  assert.equal(historical?.attempt.ordinal,1)
-  const out=await admitRestartHostTerminalEvent(m,worker,makeChildSessionPort({status:async()=>'idle'}))
-  assert.equal(out.decision,'ACCEPT')
-  assert.equal(out.binding?.generation,1)
-  assert.equal(out.binding?.sessionId,'historical-child')
 })

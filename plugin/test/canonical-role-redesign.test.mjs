@@ -110,27 +110,6 @@ test('technical-writer and test-engineer mutation guards reject production-sourc
   }
 })
 
-test('working-manager cannot bypass canonical specialist mutation ownership while specialist obligations remain open',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-primary-specialist-owner-'))
-  try{
-    const store=new MissionStore(),m=startAssessedMission(store,'primary-specialist-owner','update requested docs',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['documentation'],likely_verification:[],likely_targets:['README.md']})
-    const hook=createToolBeforeHook(store,undefined,root,root)
-    await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'edit'},{args:{filePath:'README.md'}}),/canonical specialist surface owned by technical-writer/i)
-    assert.equal(m.vcs.changed_files.length,0,'blocked parent mutation must not become owned mutation evidence')
-    assert.ok(m.execution.ledger.some(e=>e.type==='orchestration.parent-mutation-blocked'&&e.payload?.reason==='semantic-specialist-writer-required'))
-  } finally {rmSync(root,{recursive:true,force:true})}
-})
-
-test('working-manager direct local implementation keeps parent mutation authority when no specialist writer is required',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-primary-direct-owner-'))
-  try{
-    const store=new MissionStore(),m=startAssessedMission(store,'primary-direct-owner','fix app',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_verification:[],likely_targets:['app.py']})
-    const hook=createToolBeforeHook(store,undefined,root,root)
-    await hook({sessionID:m.identity.session_id,tool:'edit'},{args:{filePath:'app.py'}})
-    assert.deepEqual(m.vcs.changed_files,['app.py'])
-  } finally {rmSync(root,{recursive:true,force:true})}
-})
-
 test('non-visual worker cannot contribute browser-derived proof',async()=>{
   const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,'wrong-browser-proof','implement local code',{task_kind:'implementation',scope:'local',risk:'medium',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/app.ts']})
   const out=await x.rt.start(m,{objective:'implement local code',scope:['src/app.ts']})

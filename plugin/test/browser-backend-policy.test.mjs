@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {browserOriginsFromTargets,resolveBrowserBackend} from '../dist/runtime/browser/backend-policy.js'
+import {resolveBrowserBackend} from '../dist/runtime/browser/backend-policy.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
@@ -81,24 +81,4 @@ test('browser requirement resolves operational-tool receipt even when live brows
   assert.equal(out.readiness,'READY');assert.equal(calls.length,1)
   const event=m.execution.ledger.find(e=>e.type==='operational-tool.resolved'&&e.payload?.phase==='task-requirement')
   assert.ok(event);assert.equal(event.payload.capability,'browser-execution');assert.equal(event.payload.implementation,'playwright-chromium');assert.equal(event.payload.status,'existing');assert.equal(event.payload.scope,'existing');assert.match(String(event.payload.receipt_path),/\.opencode[\\/]hi[\\/]tools[\\/]receipts/)
-})
-
-
-test('visual evidence contract survives consumed methodology needs and derives exact loopback origin from task objective',async()=>{
-  const prompts=[],store=new MissionStore(),m=store.start('m13-contract-only','verify app at http://127.0.0.1:5000 through browser')
-  store.applyInitialSemanticAssessment('m13-contract-only',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['templates/index.html'],intent_signals:[],suppressed_intent_signals:[]})
-  m.methodology.methodology_needs=[] // emulate a prior visual worker consuming the one-shot methodology need
-  const rt=runtime(prompts,new Set(['host-capability:browser-execution']))
-  const out=await rt.start(m,{objective:'Verify live UI at http://127.0.0.1:5000 and capture screenshots',role:'visual-qa',category:'visual',scope:['templates/index.html'],requiredEvidence:['visual-check']})
-  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id)
-  assert.deepEqual(out.methodologies,[],'browser execution must not depend on a one-shot methodology need remaining unconsumed')
-  assert.equal(task.execution_profile.browser_backend,'bounded-playwright')
-  assert.deepEqual(task.execution_profile.browser_allowed_origins,['http://127.0.0.1:5000'])
-  for(const id of HI_BROWSER_EXECUTION_TOOL_IDS){assert.ok(task.execution_profile.tools.includes(id),id);assert.equal(prompts[0].body.tools[id],undefined,id)}
-  assert.ok(worker?.session_id)
-  assert.equal(resolveBrowserExecutionOwner(m,{sessionID:worker.session_id,workerID:worker.id,taskID:task.id})?.worker.id,worker.id,'bounded Playwright ownership survives after one-shot methodology needs are consumed')
-})
-
-test('embedded external URLs are not auto-admitted as browser origins',()=>{
-  assert.deepEqual(browserOriginsFromTargets(['compare https://example.com with http://localhost:4173/page']),['http://localhost:4173'])
 })

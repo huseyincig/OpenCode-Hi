@@ -10,7 +10,6 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-governor.js'
 import {appendLedger} from '../dist/runtime/ledger/ledger.js'
-import {reserveTaskRuntimeDispatch,bindTaskRuntimeHost} from '../dist/runtime/scheduler/task-runtime-adapter.js'
 
 function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader,hostStatus='busy'){
   const calls=[],aborts=[]
@@ -22,7 +21,7 @@ function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultRe
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',session_id:'child1',parent_session_id:'parent',parent_mission_id:m.identity.mission_id,model:'p/primary',fallbacks:['p/fallback1','p/fallback2'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',attempt:0,generation_at_spawn:m.continuation.generation,updated_at:Date.now()})
-  return {runtime,m,calls,aborts,scheduler}
+  return {runtime,m,calls,aborts}
 }
 
 test('provider failure creates a fresh child on first fallback without stagnation',async()=>{
@@ -39,29 +38,6 @@ test('provider failure creates a fresh child on first fallback without stagnatio
   assert.equal(calls.length,1)
   assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'fallback1'})
   assert.equal(m.continuation.stagnation_count,4,'provider failure does not increment reasoning stagnation')
-})
-
-test('duplicate host-terminal callbacks claim one exact failed session and launch only one recovery child',async()=>{
-  const models=[{id:'p/fallback1',provider:'p',writeCapable:true,tags:['coding']},{id:'p/fallback2',provider:'p',writeCapable:true,tags:['coding']}]
-  const {runtime,m,calls,scheduler}=setup(async()=>{},true,models,undefined,'idle')
-  const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  worker.status='ready';task.status='waiting'
-  const reserved=reserveTaskRuntimeDispatch(m,worker,worker.model,scheduler);assert.equal(reserved.accepted,true)
-  worker.attempt=reserved.attempt.ordinal;worker.status='busy';task.status='running'
-  assert.equal(bindTaskRuntimeHost(m,worker.id,'child1').accepted,true)
-  const admission=await runtime.admitTerminalEvent(m,worker);assert.equal(admission.decision,'ACCEPT');assert.ok(admission.binding)
-  const error={name:'APIError',message:'503 Endpoint is unavailable',isRetryable:true,statusCode:503}
-  const [first,duplicate]=await Promise.all([
-    runtime.settleHostIdleRuntimeError(m,worker,error,admission.binding),
-    runtime.settleHostIdleRuntimeError(m,worker,error,admission.binding),
-  ])
-  assert.deepEqual([first.applied,duplicate.applied].sort(),[false,true])
-  assert.equal([first,duplicate].filter(x=>x.wakeResult==='RUNTIME_FALLBACK').length,1)
-  assert.equal(calls.length,1,'one terminal host execution may launch only one recovery prompt')
-  assert.equal(worker.session_id,'recovery-1');assert.equal(worker.model,'p/fallback1');assert.equal(worker.runtime_recovery_attempt,1)
-  assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/fallback1'])
-  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].hostExecutionId,'recovery-1')
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.error-settlement-claim-rejected'&&e.payload?.reason==='settlement-already-claimed'))
 })
 
 test('second provider failure advances to next fallback rather than returning to prior model',async()=>{
@@ -316,18 +292,4 @@ test('canonical STALLED assessment on quiescent exact session unlocks bounded sa
   assert.equal(assessment.state,'STALLED');assert.equal(assessment.inflight,'NO');assert.equal(assessment.destructive_recovery_allowed,true)
   const recovery=await runtime.recoverStalledExecution(m,assessment)
   assert.equal(recovery.disposition,'RECOVERED');assert.equal(recovery.reason,'canonical-stall-quiescent-resume');assert.equal(worker.session_id,'child1');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(aborts.length,0);assert.equal(calls.length,1)
-})
-
-
-test('attempt-zero automatic model-dispatch blocker resumes the same task on a still-live recovery-only candidate',async()=>{
-  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
-  const {runtime,m,calls}=setup(async()=>{},true,models)
-  const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  worker.session_id=undefined;worker.status='failed';worker.attempt=0;worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['standard capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
-  task.execution_profile.fallback_models=[];task.execution_profile.fallback_variants={'p/recovery':'high'};task.status='blocked';task.result={status:'BLOCKED',summary:'No selected role model/fallback remains runtime-available and policy-permitted at dispatch time.',changed_files:[],evidence:[],open_issues:['model-dispatch-unavailable:t1'],needs_context:['refresh provider/model inventory or routing/provider permissions']};m.execution.blockers=['capability-unavailable:model-dispatch','unrelated-blocker']
-  const out=await runtime.resume(m,task.id)
-  assert.equal(out.task_id,task.id);assert.equal(out.worker_id,worker.id);assert.equal(out.model,'p/recovery');assert.equal(out.session_id,'recovery-1');assert.equal(task.status,'running');assert.equal(worker.status,'busy');assert.equal(worker.attempt,1);assert.equal(calls.length,1)
-  assert.deepEqual(m.execution.blockers,['unrelated-blocker'])
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.pre-dispatch-model-recovered'&&e.task_id===task.id&&e.payload?.model==='p/recovery'))
-  assert.match(worker.fallback_history.at(-1).reason,/pre-dispatch runtime model unavailability/)
 })

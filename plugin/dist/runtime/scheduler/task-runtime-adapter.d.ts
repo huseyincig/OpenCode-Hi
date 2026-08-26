@@ -16,8 +16,6 @@ export interface TaskRuntimeReservationResult extends SchedulerLifecycleResult {
 export declare function reserveTaskRuntimeDispatch(m: MissionState, worker: WorkerState, model: string | undefined, scheduler: ConcurrencyPolicySource, at?: number, peerView?: ProjectSchedulingPeerView): TaskRuntimeReservationResult;
 export declare function bindTaskRuntimeHost(m: MissionState, workerID: string, hostExecutionId: string, at?: number): SchedulerLifecycleResult;
 export declare function beginTaskRuntimeSettlement(m: MissionState, worker: WorkerState, at?: number): SchedulerLifecycleResult;
-/** Exclusive terminal-event claim layered over the idempotent scheduler transition. */
-export declare function claimTaskRuntimeSettlement(m: MissionState, worker: WorkerState, at?: number): SchedulerLifecycleResult;
 export declare function releaseTaskRuntimeReservation(m: MissionState, workerID: string, kind?: 'RELEASE' | 'CANCEL', at?: number): SchedulerLifecycleResult;
 export declare function reconcileTaskRuntimeRestart(m: MissionState, worker: WorkerState, outcome: 'ACTIVE' | 'TERMINAL' | 'UNKNOWN', at?: number): SchedulerLifecycleResult;
 export declare function taskRuntimeReservation(m: MissionState, workerID: string): SchedulerReservation | undefined;

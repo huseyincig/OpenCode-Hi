@@ -1,5 +1,6 @@
 import { projectExecutionSurface } from '../safety/execution-projection.js';
 import { gitCommandParts } from '../safety/command-classifier.js';
+const INTERACTIVE = [/\bssh\b(?!.*\s-[^\n]*T)/i, /\bpasswd\b/i, /\b(?:npm|pnpm|yarn)\s+login\b/i, /\bgh\s+auth\s+login\b/i, /\baz\s+login\b/i, /\bgcloud\s+(?:auth\s+)?login\b/i, /\baws\s+(?:sso\s+login|configure\s+sso|login)\b/i, /\bselect\s+/i];
 const CATASTROPHIC_FILESYSTEM = [
     /(?:^|[;&|]\s*)shred\s+[^;|&]*(?:\/dev\/|\/etc\/|\/home\/|~\/|\$HOME)/i,
     /(?:^|[;&|]\s*)mkfs(?:\.[A-Za-z0-9_-]+)?\s/i,
@@ -13,68 +14,13 @@ const IRREVERSIBLE_EXTERNAL = [
 ];
 const SECRET_SENSITIVE = [
     /\b(?:password|passwd|secret|token|api[_-]?key)\s*=\s*[^\s$][^\s]*/i,
+    /(?:--(?:password|secret|token|api[_-]?key)|-p)\s+[A-Za-z0-9._~+\/-]{8,}/i,
     /\bAuthorization:\s*Bearer\s+[A-Za-z0-9._~+\/-]{12,}/i,
 ];
-const SHORT_PASSWORD_COMMANDS = new Set(['mysql', 'mariadb', 'mysqldump', 'mariadb-dump', 'mysqladmin', 'mariadb-admin', 'sshpass']);
-function commandBasename(value) { return (value ?? '').replace(/^['"]|['"]$/g, '').replace(/^.*[\\/]/, '').toLowerCase(); }
-function isPlainSecretValue(value) {
-    if (!value)
-        return false;
-    const normalized = value.replace(/^['"]|['"]$/g, '');
-    return Boolean(normalized && !/[${}`]/.test(normalized) && !/^<[^>]+>$/.test(normalized) && normalized !== '<HI_REDACTED_SECRET>');
-}
-function hasPlaintextSecretFlag(text) {
-    const tokens = executableWords(text);
-    if (!tokens.length)
-        return false;
-    for (let i = 1; i < tokens.length; i++) {
-        const token = tokens[i];
-        const long = /^--(?:password|secret|token|api[_-]?key)(?:=(.*))?$/i.exec(token);
-        if (long && isPlainSecretValue(long[1] ?? tokens[i + 1]))
-            return true;
-    }
-    const command = commandBasename(tokens[0]), args = tokens.slice(1), shortPassword = SHORT_PASSWORD_COMMANDS.has(command) || (['docker', 'podman'].includes(command) && commandBasename(args[0]) === 'login');
-    if (!shortPassword)
-        return false;
-    for (let i = 0; i < args.length; i++) {
-        const token = args[i];
-        if (token === '-p' && isPlainSecretValue(args[i + 1]))
-            return true;
-        if (/^-p.+/.test(token) && isPlainSecretValue(token.slice(2)))
-            return true;
-    }
-    return false;
-}
 function words(text) { return text.trim().split(/\s+/).filter(Boolean); }
 function executableWords(text) { const tokens = words(text); let i = 0; while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))
     i++; return tokens.slice(i); }
 function executableText(text) { return executableWords(text).join(' '); }
-function interactiveAssessment(fragment) {
-    const tokens = executableWords(fragment.text);
-    if (!tokens.length)
-        return false;
-    const command = commandBasename(tokens[0]), args = tokens.slice(1);
-    if (command === 'select' && fragment.dialect === 'posix')
-        return true;
-    if (command === 'ssh')
-        return !args.some(token => /^-[^-]*T/.test(token));
-    if (command === 'passwd')
-        return true;
-    if (['npm', 'pnpm', 'yarn'].includes(command) && args[0]?.toLowerCase() === 'login')
-        return true;
-    if (command === 'gh' && args[0]?.toLowerCase() === 'auth' && args[1]?.toLowerCase() === 'login')
-        return true;
-    if (command === 'az' && args[0]?.toLowerCase() === 'login')
-        return true;
-    if (command === 'gcloud' && ((args[0]?.toLowerCase() === 'login') || (args[0]?.toLowerCase() === 'auth' && args[1]?.toLowerCase() === 'login')))
-        return true;
-    if (command === 'aws') {
-        const a0 = args[0]?.toLowerCase(), a1 = args[1]?.toLowerCase();
-        if (a0 === 'login' || a0 === 'sso' && a1 === 'login' || a0 === 'configure' && a1 === 'sso')
-            return true;
-    }
-    return false;
-}
 function rmAssessment(fragment) {
     const tokens = executableWords(fragment.text);
     if (tokens[0]?.toLowerCase() !== 'rm')
@@ -236,9 +182,9 @@ export function evaluateShellCommand(command) {
         return userAction(c, `bounded execution projection is uncertain (${projection.uncertainty.join(', ')}); potentially destructive execution is not admitted`, 'shell-execution-uncertain');
     for (const fragment of projection.fragments) {
         const text = fragment.text, executable = fragment.dialect === 'posix' ? executableText(text) : text;
-        if (interactiveAssessment(fragment))
+        if (INTERACTIVE.some(r => r.test(text)))
             return { decision: 'USER_ACTION_REQUIRED', command: c, reason: 'interactive credential or terminal flow requires real user interaction', human_decision_type: 'credential_action', reason_code: 'interactive-shell' };
-        if (SECRET_SENSITIVE.some(r => r.test(text)) || hasPlaintextSecretFlag(text))
+        if (SECRET_SENSITIVE.some(r => r.test(text)))
             return { decision: 'USER_ACTION_REQUIRED', command: c, reason: 'plaintext secret-sensitive command requires explicit user action and safer credential handling', human_decision_type: 'credential_action', reason_code: 'secret-sensitive-shell' };
         const rm = rmAssessment(fragment);
         if (rm === 'catastrophic')

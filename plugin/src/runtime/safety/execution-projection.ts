@@ -71,17 +71,6 @@ function shellTokens(source:string):string[]{
 function stripAssignmentPrefix(tokens:string[]):string[]{let i=0;while(i<tokens.length&&/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))i++;return tokens.slice(i)}
 function simpleExecutableHead(source:string):string|undefined{const re=/\S+/g;for(let match=re.exec(source);match;match=re.exec(source)){const token=match[0];if(/^[A-Za-z_][A-Za-z0-9_]*=/.test(token))continue;return token.toLowerCase()}return undefined}
 function childCapableHead(head:string|undefined):boolean{return Boolean(head&&(CHILD_CAPABLE_HEADS.has(head)||/^python\d+(?:\.\d+)*$/.test(head)))}
-function shellCommandSource(tokens:string[],head:string|undefined):string|undefined{
-  const shell=(head??'').toLowerCase();if(!['sh','bash','zsh','dash'].includes(shell))return
-  const valueOptions=shell==='bash'?new Set(['-O','-o','--init-file','--rcfile']):new Set(['-o'])
-  for(let i=1;i<tokens.length;i++){
-    const token=tokens[i];if(!token||token==='--'||token==='-'||(!token.startsWith('-')&&!token.startsWith('+')))return
-    if(valueOptions.has(token)){i++;continue}
-    if(token.startsWith('--'))continue
-    if(token[0]==='-'&&token.slice(1).includes('c'))return tokens[i+1]
-  }
-  return
-}
 function transparentChild(tokens:string[]):string[]|undefined{
   let i=0
   const wrapper=tokens[i]?.toLowerCase()
@@ -96,19 +85,6 @@ function transparentChild(tokens:string[]):string[]|undefined{
     i++;while(i<tokens.length&&tokens[i].startsWith('-'))i++;return tokens.slice(i)
   }
   return undefined
-}
-function maskPosixComments(source:string):string{
-  const chars=[...source];let quote:'\"'|"'"|undefined,escape=false,inComment=false
-  for(let i=0;i<chars.length;i++){
-    const ch=chars[i]
-    if(inComment){if(ch==='\n'){inComment=false;continue}if(ch!=='\r')chars[i]=' ';continue}
-    if(escape){escape=false;continue}
-    if(ch==='\\'&&quote!=="'"){escape=true;continue}
-    if(quote){if(ch===quote)quote=undefined;continue}
-    if(ch==='\"'||ch==="'"){quote=ch;continue}
-    if(ch==='#'){const prev=i===0?'\n':chars[i-1];if(i===0||/[\s;&|()]/.test(prev)){chars[i]=' ';inComment=true}}
-  }
-  return chars.join('')
 }
 function quotedHeredocMask(source:string,state:WorkState,depth:number,cwdRisk:EffectiveCwdRisk):string{
   if(!source.includes('<<'))return source
@@ -282,7 +258,7 @@ function deriveChildren(text:string,dialect:ExecutionDialect,depth:number,cwdRis
   if(transparent?.length){const child=transparent.join(' ');addFragment(child,dialect,'transparent-wrapper',depth+1,cwdRisk,state);deriveChildren(child,dialect,depth+1,cwdRisk,state)}
   const head=(transparent?.[0]??tokens[0])?.toLowerCase(),args=transparent??tokens
   if(['sh','bash','zsh','dash'].includes(head??'')){
-    const child=shellCommandSource(args,head);if(child)scanProgram(child,'posix',depth+1,'shell-wrapper',cwdRisk,state)
+    const i=args.findIndex((x,index)=>index>0&&x==='-c');if(i>=0&&args[i+1])scanProgram(args[i+1],'posix',depth+1,'shell-wrapper',cwdRisk,state)
   }
   if(['powershell','powershell.exe','pwsh','pwsh.exe'].includes(head??'')){
     const encoded=args.findIndex((x,index)=>index>0&&['-encodedcommand','-enc','-e'].includes(x.toLowerCase()))
@@ -315,8 +291,7 @@ function scanProgram(source:string,dialect:ExecutionDialect,depth:number,origin:
     if(childCapableHead(simpleExecutableHead(text)))deriveChildren(text,'posix',depth,cwdRisk,state)
     return
   }
-  const heredocMasked=dialect==='posix'?quotedHeredocMask(bounded,state,depth,cwdRisk):bounded
-  const masked=dialect==='posix'?maskPosixComments(heredocMasked):heredocMasked
+  const masked=dialect==='posix'?quotedHeredocMask(bounded,state,depth,cwdRisk):bounded
   scanNestedCarriers(masked,dialect,depth,cwdRisk,state)
   for(const segment of splitSegments(masked,dialect,cwdRisk,state)){addFragment(segment.text,dialect,origin,depth,segment.cwdRisk,state);deriveChildren(segment.text,dialect,depth,segment.cwdRisk,state)}
 }

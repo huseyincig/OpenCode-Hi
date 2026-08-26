@@ -28,7 +28,6 @@ import { evidenceClaimApplicability } from '../evidence/applicability.js'
 import { captureEvidenceScopeState } from '../evidence/scope-state.js'
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js'
 import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
-import { reconcileSessionAbortQuiescenceDemand } from '../readiness/capability-failure.js'
 import { assessExplorationClearance,explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js'
 
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
@@ -224,16 +223,6 @@ export class TaskResultReconciler{
       }
     }
 
-    const requiredVisualProof=worker.role==='visual-qa'&&Boolean(task.execution_profile?.verification_policy?.requiredKinds?.some(kind=>kind==='visual-check'||browserProofKinds.has(kind)))
-    if(effectiveResult.status==='DONE'&&requiredVisualProof){
-      const generation=worker.generation_at_spawn??m.continuation.generation,currentVisualProof=m.execution.evidence.items.some(item=>item.task_id===task.id&&!item.invalidated_at&&browserProofKinds.has(item.kind)&&evidenceVerdictPassed(item.pass,item.outcome)&&item.producer_attempt?.worker_id===worker.id&&item.producer_attempt.ordinal===worker.attempt&&item.producer_attempt.generation===generation)
-      if(!currentVisualProof){
-        const marker=`visual-proof-missing:${task.id}`
-        effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:effectiveResult.summary||'Visual verification executed, but the current attempt did not return an admissible passed visual evidence claim.',open_issues:[...new Set([...effectiveResult.open_issues,marker])],needs_context:[...new Set([...effectiveResult.needs_context,'visual-proof: return evidence.kind="visual-evidence" (or another allowed browser-derived proof kind) with outcome="passed" and evidence_refs naming the current-attempt Hi browser observation evidence refs; BrowserObservation alone is not PASS authority'])]}
-        appendLedger(m,'visual.proof-missing',{task_id:task.id,worker_id:worker.id,payload:{required_kinds:task.execution_profile?.verification_policy?.requiredKinds??[],attempt:worker.attempt,generation,reason:'visual-task-done-without-current-attempt-admitted-proof'}})
-      }
-    }
-
     const explorationClearance=assessExplorationClearance(this.projectRoot,m,task,worker,effectiveResult)
     if(explorationClearance.applicable&&!explorationClearance.admitted&&effectiveResult.status==='DONE'){
       const marker=`exploration-clearance-unsatisfied:${task.id}:${explorationClearance.reason}`
@@ -246,7 +235,7 @@ export class TaskResultReconciler{
       const missingExit=[...new Set((worker.loaded_methodologies??[]).flatMap(name=>methodologyExitCheck(m,name,{task,worker,result:effectiveResult,projectRoot:this.projectRoot,scope:'worker'}).missing))]
       if(missingExit.length){const exitMarker=`methodology-exit-unsatisfied:${task.id}:${missingExit.join(',')}`;effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:`Hi methodology exit contract is not satisfied: ${missingExit.join(', ')}.`,open_issues:[...new Set([...effectiveResult.open_issues,exitMarker])],needs_context:[...new Set([...effectiveResult.needs_context,`methodology-exit: provide the required evidence/result for ${missingExit.join(', ')}`])]};appendLedger(m,'methodology.exit-unsatisfied',{task_id:task.id,worker_id:worker.id,payload:{methodologies:worker.loaded_methodologies,missing:missingExit}})}
     }
-    applyWorkerResult(m,task,worker,effectiveResult);releaseTaskRuntimeReservation(m,worker.id);reconcileSessionAbortQuiescenceDemand(m);this.registry.delete(worker.id)
+    applyWorkerResult(m,task,worker,effectiveResult);releaseTaskRuntimeReservation(m,worker.id);this.registry.delete(worker.id)
     for(const signal of changedSurfaceMethodologySignals(effectiveResult.changed_files))activateMethodologySignal(m,this.projectRoot,{signal:signal.name,producer:'changed-surface',reason:signal.reason})
     for(const signal of workerResultMethodologySignals({status:effectiveResult.status,needsContext:effectiveResult.needs_context,contextGap:effectiveResult.context_gap,failureFinding:effectiveResult.failure_finding})){
       const producer=signal.name.startsWith('context.')?'context':'runtime-failure'

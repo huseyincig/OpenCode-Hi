@@ -1,4 +1,4 @@
-import { automaticRecoveryCandidates, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
+import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
 import { classifyWorkerFailure } from '../worker/failure-classifier.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js';
@@ -8,7 +8,6 @@ import { taskPromptToolOverrides } from '../routing/execution-profile.js';
 import { beginWorkerAttempt } from '../worker/worker-runtime.js';
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { appendLedger } from '../ledger/ledger.js';
-import { clearCapabilityUnavailable } from '../readiness/capability-failure.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from '../scheduler/project-peer-view.js';
@@ -248,7 +247,7 @@ export class TaskRecoveryCoordinator {
                 attempted.add(transition.from);
             attempted.add(transition.to);
         }
-        const automatic = automaticRecoveryCandidates(worker);
+        const automatic = worker.requested_model === undefined && (worker.model_selection_reason ?? []).includes('ephemeral automatic selection') ? (worker.recovery_candidates ?? []) : [];
         return [...new Set([...(worker.fallbacks ?? []), ...automatic].filter(Boolean))].filter(model => !attempted.has(model));
     }
     async launchProviderRecoveryCandidate(m, worker, task, model, failedSession, failureKind, reason) {
@@ -325,32 +324,20 @@ export class TaskRecoveryCoordinator {
     }
     async resumeBlockedProviderFailure(m, workerID) {
         const worker = m.execution.workers.find(w => w.id === workerID), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined;
-        if (!worker || !task || m.identity.status !== 'active' || m.continuation.user_interrupted || worker.session_id || task.result?.status !== 'BLOCKED')
+        if (!worker || !task || m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status !== 'ready' || worker.session_id || worker.last_runtime_failure_kind !== 'provider-transport' || task.result?.status !== 'BLOCKED' || !task.result.open_issues.some(issue => issue.startsWith('provider-failure:provider-transport:')))
             return false;
-        const providerBlocked = worker.status === 'ready' && worker.last_runtime_failure_kind === 'provider-transport' && task.result.open_issues.some(issue => issue.startsWith('provider-failure:provider-transport:'));
-        const preDispatchBlocked = worker.status === 'failed' && worker.attempt === 0 && task.result.open_issues.some(issue => issue === `model-dispatch-unavailable:${task.id}`) && automaticRecoveryCandidates(worker).length > 0;
-        if (!providerBlocked && !preDispatchBlocked)
-            return false;
-        const candidates = this.providerRecoveryCandidates(worker), previousTaskStatus = task.status, previousWorkerStatus = worker.status;
-        worker.status = 'ready';
+        const candidates = this.providerRecoveryCandidates(worker), previousTaskStatus = task.status;
         task.status = 'waiting';
         for (const model of candidates) {
-            const automatic = !(worker.fallbacks ?? []).includes(model), reason = preDispatchBlocked ? 'bounded automatic recovery candidate after pre-dispatch runtime model unavailability' : automatic ? 'bounded automatic recovery candidate after host-terminal provider failure' : task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? 'explicit runtime fallback after provider-transport', failureKind = preDispatchBlocked ? 'model-dispatch-unavailable' : 'provider-transport';
-            const result = await this.launchProviderRecoveryCandidate(m, worker, task, model, undefined, failureKind, reason);
+            const automatic = !(worker.fallbacks ?? []).includes(model), reason = automatic ? 'bounded automatic recovery candidate after host-terminal provider failure' : task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? 'explicit runtime fallback after provider-transport';
+            const result = await this.launchProviderRecoveryCandidate(m, worker, task, model, undefined, 'provider-transport', reason);
             if (result === 'RECOVERED') {
-                if (preDispatchBlocked) {
-                    clearCapabilityUnavailable(m, 'model-dispatch');
-                    m.execution.blockers = m.execution.blockers.filter(blocker => blocker !== 'capability-unavailable:model-dispatch');
-                    appendLedger(m, 'worker.pre-dispatch-model-recovered', { task_id: task.id, worker_id: worker.id, payload: { model, reason } });
-                }
-                else
-                    appendLedger(m, 'worker.runtime-fallback.resumed-blocked', { task_id: task.id, worker_id: worker.id, payload: { model, reason } });
+                appendLedger(m, 'worker.runtime-fallback.resumed-blocked', { task_id: task.id, worker_id: worker.id, payload: { model, reason } });
                 return true;
             }
             if (result === 'QUARANTINED')
                 return false;
         }
-        worker.status = previousWorkerStatus;
         task.status = previousTaskStatus;
         return false;
     }

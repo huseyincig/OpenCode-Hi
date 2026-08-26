@@ -16,7 +16,7 @@ export function resolveBrowserBackend(input:{
   const requested=input.requested?.trim()
   if(requested&&requested!=='bounded-playwright'&&requested!=='mcp')throw new Error(`Unsupported browser backend: ${requested}`)
   if(requested&&input.role!=='visual-qa')throw new Error('Explicit browser backend is allowed only for visual-qa tasks')
-  if(requested&&!input.browserRequested)throw new Error('Explicit browser backend requires a browser/visual task contract')
+  if(requested&&!input.browserRequested)throw new Error('Explicit browser backend requires a browser/visual methodology need')
   if(requested==='bounded-playwright'){
     if(!input.localBrowserAvailable)throw new Error('Requested bounded-playwright browser backend is unavailable on the active runtime')
     return{backend:'bounded-playwright',reason:'explicit-local-browser-backend'}
@@ -47,13 +47,6 @@ export function normalizeBrowserAllowedOrigins(values:readonly string[]):string[
 }
 
 export function browserOriginsFromTargets(targets:readonly string[]):string[]{
-  const origins:string[]=[]
-  for(const raw of targets){
-    const text=String(raw)
-    for(const match of text.matchAll(/https?:\/\/[^\s\]})>'"`]+/gi)){
-      const candidate=match[0].replace(/[.,;:!?]+$/,'')
-      try{const url=new URL(candidate);if(localHost(url.hostname))origins.push(url.origin)}catch{}
-    }
-  }
-  return normalizeBrowserAllowedOrigins(origins)
+  const urls=targets.filter(x=>/^https?:\/\//i.test(String(x).trim()))
+  return normalizeBrowserAllowedOrigins(urls)
 }

@@ -1,4 +1,4 @@
-import { automaticRecoveryCandidates, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
+import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
 import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from '../scheduler/project-peer-view.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { appendLedger } from '../ledger/ledger.js';
@@ -59,7 +59,7 @@ export class QueuedWorkerDispatcher {
         if (!profile)
             throw new Error(`Queued task ${task.id} has no durable execution profile`);
         const role = worker.role, objective = task.objective, catalog = methodologyCatalog(this.projectRoot), contextArtifactStore = this.scopedStores.contextArtifacts;
-        const primary = profile.model ?? worker.model, automatic = worker.attempt === 0 && !worker.session_id ? automaticRecoveryCandidates(worker) : [], chain = [...new Set([primary, ...profile.fallback_models, ...automatic].filter((x) => Boolean(x)))];
+        const primary = profile.model ?? worker.model, chain = [...new Set([primary, ...profile.fallback_models].filter((x) => Boolean(x)))];
         if (!chain.length)
             throw new Error(`Queued task ${task.id} has no durable model chain`);
         const approvalGated = worker.methodologies.filter(item => item.permission === 'ask' && worker.selected_methodologies.includes(item.name)).map(item => item.name);
@@ -145,11 +145,11 @@ export class QueuedWorkerDispatcher {
                     task.status = 'running';
                     this.registry.set(worker);
                     if (i > 0) {
-                        const fallbackReason = profile.fallback_reasons?.find(item => item.model === model)?.reason ?? (automatic.includes(model) ? 'bounded automatic recovery candidate after pre-dispatch runtime revalidation' : `fallback-index:${i}`);
+                        const fallbackReason = profile.fallback_reasons?.[i - 1]?.reason ?? `fallback-index:${i}`;
                         worker.fallback_history = [...(worker.fallback_history ?? []), { from: chain[i - 1], to: model, variant, reason: fallbackReason, phase: 'dispatch', at: Date.now() }];
                     }
                     void this.events?.(runtimeSignal('worker.started', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { model, variant, role } }));
-                    appendLedger(m, 'worker.started', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, model, variant, index: i, reason: i === 0 ? (worker.requested_model_variant ? [...(worker.model_selection_reason ?? []), 'user-specified-variant'] : (worker.model_selection_reason ?? [])) : [profile.fallback_reasons?.find(item => item.model === model)?.reason ?? (automatic.includes(model) ? 'bounded automatic recovery candidate after pre-dispatch runtime revalidation' : 'runtime fallback'), `fallback-index:${i}`] } });
+                    appendLedger(m, 'worker.started', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, model, variant, index: i, reason: i === 0 ? (worker.requested_model_variant ? [...(worker.model_selection_reason ?? []), 'user-specified-variant'] : (worker.model_selection_reason ?? [])) : [profile.fallback_reasons?.[i - 1]?.reason ?? 'runtime fallback', `fallback-index:${i}`] } });
                     const refreshedOutcomes = projectDirectDependencyOutcomes(m, task), refreshedDependencyContext = renderDirectDependencyOutcomeContext(refreshedOutcomes, Math.min(5000, profile.max_context_chars));
                     if (refreshedDependencyContext !== dependencyContext) {
                         appendLedger(m, 'dependency.outcomes-refreshed', { task_id: task.id, worker_id: worker.id, payload: { dependencies: refreshedOutcomes.map(item => item.task_id), previous_chars: dependencyContext?.length ?? 0, current_chars: refreshedDependencyContext?.length ?? 0 } });

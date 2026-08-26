@@ -67,16 +67,6 @@ test('bounded execution projection derives executable children instead of scanni
   assert.ok(xargsProjection.fragments.some(x=>x.origin==='shell-wrapper'&&x.text.includes('rm -rf')&&x.text.includes('$1')))
 })
 
-test('clustered shell command options project executable child bodies without treating quoted payload text as shell syntax',()=>{
-  const login=projectExecutionSurface("bash -lc 'gh auth login'")
-  assert.ok(login.fragments.some(x=>x.origin==='shell-wrapper'&&x.text==='gh auth login'))
-  assert.equal(evaluateShellCommand("bash -lc 'gh auth login'").reason_code,'interactive-shell')
-
-  const select=projectExecutionSurface("bash -lc 'select choice in one two; do echo $choice; done'")
-  assert.ok(select.fragments.some(x=>x.origin==='shell-wrapper'&&x.text==='select choice in one two'))
-  assert.equal(evaluateShellCommand("bash -lc 'select choice in one two; do echo $choice; done'").reason_code,'interactive-shell')
-})
-
 test('projection preserves CWD and Windows-path risk while bounded temporary cleanup remains admissible',()=>{
   const cwd=projectExecutionSurface('cd / && rm -rf .')
   assert.ok(cwd.fragments.some(x=>x.text==='rm -rf .'&&x.cwdRisk==='root'))
@@ -100,16 +90,4 @@ test('malformed destructive execution fails closed without unbounded recursive a
   assert.ok(projection.uncertainty.includes('unterminated-command-substitution'))
   assert.equal(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED')
   assert.ok(projection.workUnits<=524288)
-})
-
-
-test('POSIX comments are inert syntax and apostrophes inside comments do not create quote uncertainty',()=>{
-  const command=`echo safe
-# The template doesn't render note data - JS does via textContent
-HTML_ID=$(printf 7)
-echo "$HTML_ID"`
-  const projection=projectExecutionSurface(command)
-  assert.equal(projection.uncertain,false,JSON.stringify(projection.uncertainty))
-  assert.equal(projection.fragments.some(x=>x.text.includes("doesn't render")),false)
-  assert.ok(projection.fragments.some(x=>x.text==='printf 7'&&x.origin==='command-substitution'))
 })

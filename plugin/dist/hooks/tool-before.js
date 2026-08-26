@@ -15,7 +15,6 @@ import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
 import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js';
 import { recordToolOperationProgress } from '../runtime/liveness/assessment.js';
-import { minimumTeamFor } from '../runtime/routing/minimum-team.js';
 const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
 const SETTINGS_CONTROL_TARGETS = new Set(['hi_settings', 'hi_role_models']);
 function assessedExplicitSettingsRequest(m) {
@@ -23,22 +22,6 @@ function assessedExplicitSettingsRequest(m) {
     return targets.length > 0 && targets.every((target) => SETTINGS_CONTROL_TARGETS.has(target)) && m.identity.intent.requiredCapabilities.length === 0 && m.identity.intent.requestedExternalActions.length === 0;
 }
 function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
-function documentationSurface(path) { return /(^|\/)(?:docs?|documentation)(\/|$)|(^|\/)(?:README|CHANGELOG|CONTRIBUTING|SECURITY|SUPPORT)(?:\.[^/]*)?$|\.(?:md|mdx|rst|adoc)$/i.test(path); }
-function testSourceSurface(path) { return /(^|\/)(?:test|tests|__tests__|spec|specs|fixtures?)(\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path); }
-function parentSpecialistMutationOwners(m, args, projectRoot, workingDirectory) {
-    const surfaces = exactParentMutationSurface(args, projectRoot, workingDirectory);
-    if (!surfaces.length)
-        return [];
-    const openKinds = new Set(m.execution.obligations.filter((o) => o.status === 'open' && ['documentation', 'test-authoring'].includes(o.kind)).map((o) => o.kind));
-    if (!openKinds.size)
-        return [];
-    const team = minimumTeamFor(m.identity.intent, m.execution.verification_policy, m.execution.primary_mode), owners = [];
-    if (openKinds.has('documentation') && team.roles.includes('technical-writer') && surfaces.some(documentationSurface))
-        owners.push('technical-writer');
-    if (openKinds.has('test-authoring') && team.roles.includes('test-engineer') && surfaces.some(testSourceSurface))
-        owners.push('test-engineer');
-    return [...new Set(owners)];
-}
 function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
     if (role !== 'technical-writer' && role !== 'test-engineer')
         return true;
@@ -48,8 +31,8 @@ function specialistMutationAllowed(role, task, tool, args, projectRoot, workingD
     if (!surfaces.length)
         return false;
     if (role === 'technical-writer')
-        return surfaces.every(path => scope.has(path) || documentationSurface(path));
-    return surfaces.every(testSourceSurface);
+        return surfaces.every(path => scope.has(path) || /(^|\/)(?:docs?|documentation)(\/|$)|(^|\/)(?:README|CHANGELOG|CONTRIBUTING|SECURITY|SUPPORT)(?:\.[^/]*)?$|\.(?:md|mdx|rst|adoc)$/i.test(path));
+    return surfaces.every(path => /(^|\/)(?:test|tests|__tests__|spec|specs|fixtures?)(\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path));
 }
 export function createToolBeforeHook(store, background, projectRoot, workingDirectory) {
     return async (input, output) => {
@@ -95,13 +78,6 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         if (!child && m.identity.status === 'active' && m.execution.execution_mode === 'parallel' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
             appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'parallel-topology-requires-hi-task-owner', required_tool: 'hi_task_start' } });
             throw new Error(`Hi topology guard: parent direct mutation via '${tool}' is disabled for parallel execution; create bounded disjoint work units with hi_task_start.`);
-        }
-        if (!child && m.identity.status === 'active' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
-            const owners = parentSpecialistMutationOwners(m, args, projectRoot, workingDirectory);
-            if (owners.length) {
-                appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'semantic-specialist-writer-required', required_tool: 'hi_task_start', canonical_roles: owners, surface: exactParentMutationSurface(args, projectRoot, workingDirectory) } });
-                throw new Error(`Hi ownership guard: parent direct mutation targets a canonical specialist surface owned by ${owners.join(', ')} while its obligation is open. Use hi_task_start for that existing specialist obligation instead of duplicating its write.`);
-            }
         }
         if (!child && m.identity.status === 'active' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
             const decision = projectDirectMutationDecision(m, store.all(), exactParentMutationSurface(args, projectRoot, workingDirectory));

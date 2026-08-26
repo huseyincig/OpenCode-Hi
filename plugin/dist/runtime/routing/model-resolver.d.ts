@@ -37,12 +37,6 @@ export interface RuntimeModelCandidateStatus {
     ok: boolean;
     reason?: string;
 }
-export interface AutomaticRecoveryAuthority {
-    requested_model?: string;
-    model_selection_reason?: string[];
-    recovery_candidates?: string[];
-}
-export declare function automaticRecoveryCandidates(state: AutomaticRecoveryAuthority): string[];
 export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>, role?: string): RuntimeModelCandidateStatus;
 export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HiConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, _feedback?: MissionModelFeedback): ModelResolution;
 /** Pure preview only. Runtime inventory refresh must never persist these inferred choices. */

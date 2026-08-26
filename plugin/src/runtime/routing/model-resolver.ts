@@ -11,8 +11,6 @@ export interface ModelResolution{primary?:string;primaryVariant?:string;fallback
 /** Telemetry shape retained for compatibility; it is not routing authority in the 0.2.4 resolver. */
 export interface MissionModelFeedback{failures?:Record<string,number>;successes?:Record<string,number>;retries?:Record<string,number>;samples?:Record<string,number>;confidence?:Record<string,'insufficient'|'low'|'medium'|'high'>;average_latency_ms?:Record<string,number>;verification_passes?:Record<string,number>;verification_failures?:Record<string,number>;window_size?:number}
 export interface RuntimeModelCandidateStatus{ok:boolean;reason?:string}
-export interface AutomaticRecoveryAuthority{requested_model?:string;model_selection_reason?:string[];recovery_candidates?:string[]}
-export function automaticRecoveryCandidates(state:AutomaticRecoveryAuthority):string[]{return state.requested_model===undefined&&(state.model_selection_reason??[]).includes('ephemeral automatic selection')?[...new Set(state.recovery_candidates??[])]:[]}
 const AUTOMATIC_CAPABILITY_PREFERENCE:Record<Category,string[]>={quick:['fast','coding'],standard:['coding','balanced'],deep:['reasoning','coding'],visual:['coding','reasoning'],critical:['high-assurance','reasoning','coding']}
 const VARIANT_PREFERENCE:Record<Category,string[]>={quick:['low','minimal','none'],standard:['medium','low','none'],deep:['high','xhigh','medium'],visual:['high','medium','xhigh'],critical:['xhigh','max','high']}
 const INITIAL_RECOMMENDATION_CATEGORY:Record<ModelRoutedChildRole,Category>={coder:'standard',architect:'deep','repository-explorer':'standard',researcher:'standard','technical-writer':'standard','test-engineer':'standard','qa-reviewer':'critical','security-reviewer':'critical','visual-qa':'visual'}
