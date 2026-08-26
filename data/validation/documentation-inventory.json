@@ -123,7 +123,7 @@
   "artifacts": [
     {
       "path": ".github/CONTRIBUTING.md",
-      "sha256": "15c4cbcd3f6b2cf706e91b09ebd5b5e79f8a2590103ef08dc4f6dc65b3fee886",
+      "sha256": "651be201018c0e8b4d291d52785e243c491e35f3aa40c9f3acb4472e6dfc5473",
       "area": "contribution",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "c22c0ab59066246b7ffbba94f024fa0ec1e4ea0542d366e839ce724df21f34b6",
+      "sha256": "fa7edb9d01392d17f157509d15a69278ad932d2e04356dd6aea589bf65e61552",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -227,7 +227,7 @@
     },
     {
       "path": "docs/VERIFICATION.md",
-      "sha256": "0e9fa89312d5684c64424f16ffd07b32d7fac0882330e451178f1fa3dc9830db",
+      "sha256": "839694b17f17b91d82d92c03da703cfa2da6dce4a50b86e5cbf0d9fa6c67702d",
       "area": "verification-validation-certification",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "25be66da4b7e9da662fe3c8864858b682cc2a74d65d2e09e61976d242f377439",
+      "sha256": "d35d43b1357a1376b3eb96a6ed313861e807509758369d258440f5601d383fa4",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

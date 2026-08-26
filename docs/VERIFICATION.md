@@ -10,27 +10,19 @@ For active development, run the product/source/runtime/documentation gate:
 npm run check:product
 ```
 
-The evidence layer is a separate exact-source certification gate. Determine readiness first:
+For the complete current local gate, run:
 
 ```sh
-python scripts/evidence-validation-readiness.py
+npm run check
 ```
 
-When that command reports `evidence_ready=true`, run:
+It combines `check:product` with `check:python`. The latter runs the canonical current-source validator and the Python acceptance suite. Run Python acceptance independently when useful with:
 
 ```sh
-npm run check:evidence
+npm run test:python
 ```
 
-`npm run check` is the strict combined product + evidence gate for an evidence-ready candidate. It is deliberately not the normal material-development checkpoint: after source changes, exact-source external CI evidence is stale until the corresponding Release Readiness run exists. CI follows the same split and records evidence certification as pending rather than treating a newer product commit as a failed T3/T4 claim.
-
-Run Python product acceptance when the changed boundary is covered there:
-
-```sh
-npm run test:python:product
-```
-
-Use focused tests while editing; run `check:product` before a coherent checkpoint when shipped behavior, generated projections, or public documentation changed.
+Use focused tests while editing; run `check:product` before a coherent checkpoint when shipped behavior, generated projections, or public documentation changed. Exact-host and publication evidence are release-specific and must be regenerated only when a release/certification workflow is deliberately activated; historical receipt freshness is not an ordinary development gate.
 
 ## Evidence tiers
 

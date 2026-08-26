@@ -21,7 +21,7 @@ function assessed(store,id='constraint-atoms'){
   store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]})
   return m
 }
-function runtime(){const client={session:{create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))}
+function runtime(projectRoot){const client={session:{create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),projectRoot,projectRoot,()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))}
 
 test('semantic assessment accepts only structured constraint atoms on constraint follow-ups',()=>{
   const parsed=parseSemanticIntentAssessment({material:true,message_kind:'constraint',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],user_verification:[],verification_ceiling:false,likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[draft()]})
@@ -69,17 +69,21 @@ test('semantic gate prioritizes pending-text-relevant active atoms without excee
 })
 
 test('write-capable task scope is fail-closed against active DENY mutate path atom',async()=>{
-  const store=new MissionStore(),m=assessed(store,'constraint-preflight')
-  const applied=applyConstraintAtomDrafts([], [draft()],2,'do not change package.json');m.execution.constraint_atoms=applied.atoms
-  await assert.rejects(()=>runtime().start(m,{objective:'change package metadata',role:'coder',category:'quick',scope:['package.json'],model:'p/code'}),/active user mutation constraint/)
-  assert.ok(m.execution.ledger.some(e=>e.type==='task.constraint-preflight-blocked'))
+  const root=mkdtempSync(join(tmpdir(),'hi-constraint-preflight-'))
+  try{const store=new MissionStore(root),m=assessed(store,'constraint-preflight')
+    const applied=applyConstraintAtomDrafts([], [draft()],2,'do not change package.json');m.execution.constraint_atoms=applied.atoms
+    await assert.rejects(()=>runtime(root).start(m,{objective:'change package metadata',role:'coder',category:'quick',scope:['package.json'],model:'p/code'}),/active user mutation constraint/)
+    assert.ok(m.execution.ledger.some(e=>e.type==='task.constraint-preflight-blocked'))
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 
 test('mutation-only constraint does not block read-only reviewer inspection of the same path',async()=>{
-  const store=new MissionStore(),m=assessed(store,'constraint-readonly'),applied=applyConstraintAtomDrafts([], [draft()],2,'do not change package.json');m.execution.constraint_atoms=applied.atoms
-  const out=await runtime().start(m,{objective:'inspect package metadata only',role:'qa-reviewer',category:'standard',scope:['package.json'],model:'p/code'})
-  assert.ok(out.worker_id);assert.equal(m.execution.tasks.find(t=>t.id===out.task_id)?.scope[0],'package.json')
+  const root=mkdtempSync(join(tmpdir(),'hi-constraint-readonly-'))
+  try{const store=new MissionStore(root),m=assessed(store,'constraint-readonly'),applied=applyConstraintAtomDrafts([], [draft()],2,'do not change package.json');m.execution.constraint_atoms=applied.atoms
+    const out=await runtime(root).start(m,{objective:'inspect package metadata only',role:'qa-reviewer',category:'standard',scope:['package.json'],model:'p/code'})
+    assert.ok(out.worker_id);assert.equal(m.execution.tasks.find(t=>t.id===out.task_id)?.scope[0],'package.json')
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('constraint atoms survive canonical runtime persistence and reload with lineage intact',()=>{
@@ -90,8 +94,10 @@ test('constraint atoms survive canonical runtime persistence and reload with lin
 })
 
 test('worker result that reports a prohibited mutation becomes FIX_REQUIRED and cannot complete',()=>{
-  const store=new MissionStore(),m=assessed(store,'constraint-result'),rt=runtime(),applied=applyConstraintAtomDrafts([], [draft()],2,'do not change package.json');m.execution.constraint_atoms=applied.atoms
-  const task=createTask(m,{objective:'existing bounded work',role:'coder',category:'quick',scope:['package.json']}),worker=createWorker(m,task,'p/code');worker.status='busy';worker.attempt=1;worker.generation_at_spawn=m.continuation.generation;task.status='running'
-  rt.applyResult(m,worker.id,{status:'DONE',summary:'done',changed_files:['package.json'],evidence:[],open_issues:[],needs_context:[]})
-  assert.equal(task.result?.status,'FIX_REQUIRED');assert.ok(task.result?.open_issues.some(x=>x.startsWith(`constraint-violation:${applied.added[0].id}:package.json`)));assert.ok(m.execution.blockers.some(x=>x.startsWith('constraint-violation:')))
+  const root=mkdtempSync(join(tmpdir(),'hi-constraint-result-'))
+  try{const store=new MissionStore(root),m=assessed(store,'constraint-result'),rt=runtime(root),applied=applyConstraintAtomDrafts([], [draft()],2,'do not change package.json');m.execution.constraint_atoms=applied.atoms
+    const task=createTask(m,{objective:'existing bounded work',role:'coder',category:'quick',scope:['package.json']}),worker=createWorker(m,task,'p/code');worker.status='busy';worker.attempt=1;worker.generation_at_spawn=m.continuation.generation;task.status='running'
+    rt.applyResult(m,worker.id,{status:'DONE',summary:'done',changed_files:['package.json'],evidence:[],open_issues:[],needs_context:[]})
+    assert.equal(task.result?.status,'FIX_REQUIRED');assert.ok(task.result?.open_issues.some(x=>x.startsWith(`constraint-violation:${applied.added[0].id}:package.json`)));assert.ok(m.execution.blockers.some(x=>x.startsWith('constraint-violation:')))
+  }finally{rmSync(root,{recursive:true,force:true})}
 })

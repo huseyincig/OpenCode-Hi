@@ -321,15 +321,13 @@ During active development, run the product/source/runtime/documentation gate fro
 npm run check:product
 ```
 
-Evidence certification is intentionally source-bound. Check whether the current commit is eligible before running it:
+For the complete current local gate, including the canonical Python validator and Python acceptance suite, run:
 
 ```bash
-python scripts/evidence-validation-readiness.py
-# only when evidence_ready=true
-npm run check:evidence
+npm run check
 ```
 
-`npm run check` remains the strict combined product + evidence gate for an evidence-ready candidate; it is expected to block while material source has moved beyond the latest exact-source external CI receipt. Run Python product acceptance separately when needed with `npm run test:python:product`. Fresh test counts belong to command output, not hand-maintained documentation. Host-bound capability claims require exact T3 receipts; real external publication claims require T4 evidence.
+Python acceptance is also available independently as `npm run test:python`. Fresh test counts belong to command output, not hand-maintained documentation. Exact-host support and publication evidence remain release-specific concerns; they are not replayed as a second historical certification gate during ordinary development.
 
 See [Verification Strategy](docs/VERIFICATION.md).
 

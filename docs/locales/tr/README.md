@@ -239,17 +239,15 @@ Aktif geliştirmede önce güncel ürün kapısını çalıştırın:
 npm run check:product
 ```
 
-Exact-source evidence katmanı ayrı tutulur:
+Güncel local doğrulamanın tamamı için:
 
 ```bash
-python scripts/evidence-validation-readiness.py
-# yalnız evidence_ready=true ise
-npm run check:evidence
+npm run check
 ```
 
-`npm run check`, evidence-ready aday için strict birleşik product + evidence kapısıdır; material source son external CI receipt’inden ilerideyse bloklaması beklenir. Gerektiğinde Python product acceptance için `npm run test:python:product` kullanın.
+Bu komut product gate ile canonical Python validator/test suite'i birleştirir. Python acceptance ayrıca `npm run test:python` ile tek başına çalıştırılabilir.
 
-Fresh test count dokümana elle yazılmaz; command output onun sahibidir. Host-bound claim T3, gerçek external publication claim T4 evidence gerektirir.
+Fresh test count dokümana elle yazılmaz; command output onun sahibidir. Exact-host ve publication kanıtı release'e özgüdür; normal geliştirme historical certification receipt'lerini ikinci bir gate olarak tekrar oynatmaz.
 
 Bu Türkçe README current İngilizce README'nin localization yüzeyidir; yeni product behavior tanımlamaz veya canonical English truth'u genişletmez.
 

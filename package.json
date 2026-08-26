@@ -43,7 +43,7 @@
   "types": "plugin/dist/plugin.d.ts",
   "scripts": {
     "test": "npm --prefix plugin test",
-    "check": "npm run check:product && npm run check:evidence",
+    "check": "npm run check:product && npm run check:python",
     "contracts:generate": "npm --prefix plugin run build",
     "architecture:lint": "npm --prefix plugin run architecture:lint",
     "projections:check": "npm --prefix plugin run projections:check",
@@ -52,16 +52,15 @@
     "check:product": "npm --prefix plugin run check && npm run test:node:setup && npm run docs:check",
     "test:node:setup": "node --test tests/test_node_setup.mjs",
     "test:m16:packed-bootstrap": "node scripts/run-m16-packed-bootstrap-acceptance.mjs",
-    "check:evidence": "node scripts/run-python.mjs scripts/validate.py && npm run test:python:all",
-    "test:python:product": "node scripts/run-python.mjs -m pytest -q -m \"not evidence\" tests/test_hi.py",
-    "test:python:all": "node scripts/run-python.mjs -m pytest -q tests/test_hi.py",
     "docs:pack-check": "node scripts/run-python.mjs scripts/audit-packed-public-docs.py",
     "build:plugin": "npm --prefix plugin run build",
     "test:direct-git-install": "node scripts/run-direct-git-install-acceptance.mjs",
     "test:direct-git-host": "node scripts/run-python.mjs scripts/run-direct-git-host-acceptance.py",
     "host:check-update": "node scripts/run-python.mjs scripts/opencode_upstream_tracker.py --fetch",
     "host:observe-update": "node scripts/run-python.mjs scripts/opencode_upstream_tracker.py --fetch --write",
-    "release:preflight": "node scripts/release-preflight.mjs"
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "check:python": "node scripts/run-python.mjs scripts/validate.py && npm run test:python",
+    "test:python": "node scripts/run-python.mjs -m pytest -q tests/test_hi.py"
   },
   "publishConfig": {
     "access": "public"
