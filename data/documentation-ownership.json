@@ -12,8 +12,7 @@
     "engineering_state_root_markdown": [
       "AGENTS.md",
       "PROJECT_POLICY.md",
-      "TASKS.md",
-      "REPO_CLEANUP_MASTER_PROMPT.md"
+      "TASKS.md"
     ]
   },
   "public_documents": [
