@@ -207,7 +207,7 @@
       ],
       "proof_paths": [
         "plugin/test/context-survival-hardening.test.mjs",
-        "plugin/test/c4-context-budget-estimator.test.mjs",
+        "plugin/test/context-budget-estimator.test.mjs",
         "plugin/test/c1-mission-runtime-projection.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
@@ -225,7 +225,7 @@
         "plugin/src/runtime/task/task-runtime.ts"
       ],
       "proof_paths": [
-        "plugin/test/c6-semantic-context-adapter.test.mjs"
+        "plugin/test/semantic-context-adapter.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
@@ -300,7 +300,7 @@
         "plugin/src/opencode/open-code-pty-adapter.ts"
       ],
       "proof_paths": [
-        "plugin/test/p1-process-contract.test.mjs",
+        "plugin/test/process-contract.test.mjs",
         "plugin/test/p2-opencode-pty-executor.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
@@ -340,7 +340,7 @@
       "proof_paths": [
         "plugin/test/b1-browser-observation-contract.test.mjs",
         "plugin/test/b3-playwright-browser-runtime.test.mjs",
-        "plugin/test/m13-browser-backend-policy.test.mjs"
+        "plugin/test/browser-backend-policy.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
     },
