@@ -91,3 +91,14 @@ test('malformed destructive execution fails closed without unbounded recursive a
   assert.equal(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED')
   assert.ok(projection.workUnits<=524288)
 })
+
+
+test('projection uncertainty cannot turn inert comment or HTTP method vocabulary into destructive shell authority',()=>{
+  const command=`echo safe
+# The template itself doesn't render note data - JS does via textContent
+curl -s -X DELETE http://127.0.0.1:5000/notes/5`
+  const projection=projectExecutionSurface(command)
+  assert.equal(projection.uncertain,true,'fixture intentionally preserves the baseline lexical-parser uncertainty')
+  assert.ok(projection.uncertainty.includes('unterminated-posix-quote'))
+  assert.equal(evaluateShellCommand(command).decision,'ALLOW')
+})

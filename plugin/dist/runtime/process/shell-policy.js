@@ -14,12 +14,36 @@ const IRREVERSIBLE_EXTERNAL = [
 ];
 const SECRET_SENSITIVE = [
     /\b(?:password|passwd|secret|token|api[_-]?key)\s*=\s*[^\s$][^\s]*/i,
-    /(?:--(?:password|secret|token|api[_-]?key)|-p)\s+[A-Za-z0-9._~+\/-]{8,}/i,
     /\bAuthorization:\s*Bearer\s+[A-Za-z0-9._~+\/-]{12,}/i,
 ];
 function words(text) { return text.trim().split(/\s+/).filter(Boolean); }
 function executableWords(text) { const tokens = words(text); let i = 0; while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))
     i++; return tokens.slice(i); }
+const SHORT_PASSWORD_COMMANDS = new Set(['mysql', 'mariadb', 'mysqldump', 'mariadb-dump', 'mysqladmin', 'mariadb-admin', 'sshpass']);
+function commandBasename(value) { return (value ?? '').replace(/^['"]|['"]$/g, '').replace(/^.*[\\/]/, '').toLowerCase(); }
+function plainSecretValue(value) { if (!value)
+    return false; const normalized = value.replace(/^['"]|['"]$/g, ''); return Boolean(normalized && !/[${}`]/.test(normalized) && !/^<[^>]+>$/.test(normalized) && normalized !== '<HI_REDACTED_SECRET>'); }
+function plaintextSecretFlag(text) {
+    const tokens = executableWords(text);
+    if (!tokens.length)
+        return false;
+    for (let i = 1; i < tokens.length; i++) {
+        const token = tokens[i], long = /^--(?:password|secret|token|api[_-]?key)(?:=(.*))?$/i.exec(token);
+        if (long && plainSecretValue(long[1] ?? tokens[i + 1]))
+            return true;
+    }
+    const command = commandBasename(tokens[0]), args = tokens.slice(1), shortPassword = SHORT_PASSWORD_COMMANDS.has(command) || (['docker', 'podman'].includes(command) && commandBasename(args[0]) === 'login');
+    if (!shortPassword)
+        return false;
+    for (let i = 0; i < args.length; i++) {
+        const token = args[i];
+        if (token === '-p' && plainSecretValue(args[i + 1]))
+            return true;
+        if (/^-p.+/.test(token) && plainSecretValue(token.slice(2)))
+            return true;
+    }
+    return false;
+}
 function executableText(text) { return executableWords(text).join(' '); }
 function rmAssessment(fragment) {
     const tokens = executableWords(fragment.text);
@@ -178,13 +202,11 @@ export function evaluateShellCommand(command) {
     if (/^\s*yes\s*\|/i.test(c) || /\|\s*yes\s*$/i.test(c))
         return { decision: 'DENY', command: c, reason: 'blanket approval bypass is forbidden' };
     const projection = projectExecutionSurface(c);
-    if (projection.uncertain && /(?:\brm\b|\bgit\b|\bRemove-Item\b|\b(?:push|publish|delete|destroy|mkfs|dd)\b)/i.test(c))
-        return userAction(c, `bounded execution projection is uncertain (${projection.uncertainty.join(', ')}); potentially destructive execution is not admitted`, 'shell-execution-uncertain');
     for (const fragment of projection.fragments) {
         const text = fragment.text, executable = fragment.dialect === 'posix' ? executableText(text) : text;
         if (INTERACTIVE.some(r => r.test(text)))
             return { decision: 'USER_ACTION_REQUIRED', command: c, reason: 'interactive credential or terminal flow requires real user interaction', human_decision_type: 'credential_action', reason_code: 'interactive-shell' };
-        if (SECRET_SENSITIVE.some(r => r.test(text)))
+        if (SECRET_SENSITIVE.some(r => r.test(text)) || plaintextSecretFlag(text))
             return { decision: 'USER_ACTION_REQUIRED', command: c, reason: 'plaintext secret-sensitive command requires explicit user action and safer credential handling', human_decision_type: 'credential_action', reason_code: 'secret-sensitive-shell' };
         const rm = rmAssessment(fragment);
         if (rm === 'catastrophic')
