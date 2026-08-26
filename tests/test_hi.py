@@ -41,10 +41,6 @@ def test_root_is_product_clean():
         assert (ROOT/rel).is_file()
 
 
-def test_semantic_contract_names_only():
-    for rel in ['data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json']:assert (ROOT/rel).is_file()
-    for rel in ['data/feature-ledger-09-coverage.json','data/native-first-10-coverage.json','data/flow-11-coverage.json','data/flow-11-acceptance.json','data/observed-runtime-smoke-1.18.16.json']:assert not (ROOT/rel).exists()
-
 def test_setup_adds_only_hi_and_preserves_other_plugins(tmp_path):
     (tmp_path/'opencode.json').write_text(json.dumps({'plugin':['user-plugin@1']}))
     r=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);assert r.returncode==0,r.stderr

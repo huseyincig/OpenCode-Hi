@@ -1,6 +1,6 @@
 // Regression guard for the 2.0.3 doctor `routing-config` check that
 // surfaces `.opencode/hi/policy/routing.json` roleModels as an explicit
-// `pass` line. Lab dogfood in 2.0.2 reported this gap as a P2
+// `pass` line. Earlier lab dogfood reported this routing-config gap
 // observation: the doctor confirmed config-hook wiring but printed
 // only `roleOverrides=0` from `model-fallback`, with no explicit
 // roleModels-active assertion. This file locks the new check.
