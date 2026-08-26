@@ -17,7 +17,7 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 const root=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 
 function names(items){return items.map(x=>x.name).sort()}
-function runtime(){return new TaskRuntime(opencodeChildPort({}), {delete(){}}, {release(){}}, root, root, ()=>({}), ()=>[], ()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}), {delete(){}}, {release(){}}, root, root, ()=>({}), ()=>[], ()=>({}),undefined,[],{contextArtifacts:{},taskOutcomeMemory:{observe:()=>undefined,renderAdvisory:()=>''}})}
 function missionWithWorker(objective='Implement a bounded internal change',scope=['plugin/src/internal.ts']){
   const m=new MissionStore(root).start(`s-${Math.random()}`,objective)
   m.methodology.methodology_needs=[]
