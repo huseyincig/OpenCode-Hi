@@ -22,6 +22,8 @@ export interface ProcessContract {
     authority_ref: string;
     cleanup_state: ProcessCleanupState;
 }
+export declare function isWaitableRunningProcess(process: Pick<ProcessContract, 'status' | 'timeout_at'>): boolean;
+export declare function isPersistentRunningProcess(process: Pick<ProcessContract, 'status' | 'timeout_at'>): boolean;
 export declare function processCommandIdentity(input: {
     host: string;
     command: string;

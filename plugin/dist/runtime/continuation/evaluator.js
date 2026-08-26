@@ -5,6 +5,7 @@ import { evaluatePreconditions } from '../readiness/preconditions.js';
 import { latestBlockingVerificationEvidence } from '../verification/policy.js';
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js';
 import { ambiguousConsequentialEffect } from './recovery-governor.js';
+import { isWaitableRunningProcess } from '../../contracts/process.js';
 export function evaluateIdle(m, now = Date.now(), projectRoot) {
     if (!m)
         return { decision: 'NOTHING', reason: 'no-active-mission', reason_code: 'no-active-mission' };
@@ -38,7 +39,7 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
         return { decision: 'WAIT', reason: 'waiting-permission', reason_code: 'waiting-permission' };
     if (m.execution.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
         return { decision: 'WAIT', reason: 'waiting-worker', reason_code: 'waiting-worker' };
-    if (m.execution.processes.some(p => p.status === 'RUNNING'))
+    if (m.execution.processes.some(isWaitableRunningProcess))
         return { decision: 'WAIT', reason: 'waiting-process', reason_code: 'waiting-process' };
     const continuationFailures = m.continuation.continuation_failure_count ?? 0;
     if (continuationFailures >= 3)

@@ -59,12 +59,17 @@ test('explicit permission deny never asks and never spawns',async()=>{
   assert.equal(asks,0);assert.equal(fake.spawned.length,0)
 })
 
-test('running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{
-  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+test('hard-deadline running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo',timeout_ms:1000})
   const decision=evaluateIdle(m);assert.equal(decision.decision,'WAIT');assert.equal(decision.reason_code,'waiting-worker')
-  // Once the owning worker is quiescent, the process itself remains the WAIT hinge.
   worker.status='ready';const processWait=evaluateIdle(m);assert.equal(processWait.decision,'WAIT');assert.equal(processWait.reason_code,'waiting-process');assert.equal(shouldCountStagnation(processWait),false)
   let settled=false;const pending=runtime.wait(m,p.process_id).then(x=>{settled=true;return x});await new Promise(r=>setTimeout(r,5));assert.equal(settled,false);fake.exit(p.process_id,0);const exited=await pending;assert.equal(exited.status,'EXITED');assert.equal(exited.exit_code,0)
+})
+
+test('deadline-less persistent service does not mask an actionable FIX_REQUIRED reconciliation',async()=>{
+  const {m,task,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host());await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  worker.status='ready';task.status='waiting';task.result={status:'FIX_REQUIRED',summary:'structured correction required',changed_files:['src/a.ts'],evidence:[],open_issues:['fix:x'],needs_context:[]}
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'RECONCILE');assert.equal(decision.reason_code,'worker-result-unreconciled')
 })
 
 test('bounded process read records hash-bound pending Evidence without persisting raw output',async()=>{

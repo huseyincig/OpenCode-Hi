@@ -113,6 +113,12 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     }
     return [...new Set(out)];
 }
+function unresolvedResultOwner(m, obligationIds, resumeTaskId) {
+    if (resumeTaskId || !obligationIds.length)
+        return undefined;
+    const owned = new Set(obligationIds);
+    return m.execution.tasks.find(task => task.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT'].includes(task.result.status) && task.obligation_ids.some(id => owned.has(id)));
+}
 export class TaskRuntime {
     childHost;
     registry;
@@ -561,6 +567,11 @@ export class TaskRuntime {
         if (isolationRequired && !isolationReason)
             throw new Error('Hi isolated task requires a bounded isolation reason');
         const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : []), ...mcpExposure.selected.map(name => `hi-mcp:${name}`), ...(browserDecision.backend ? [`hi-browser-backend:${browserDecision.backend}`] : []), ...browserAllowedOrigins.map(origin => `hi-browser-origin:${origin}`)])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = input.resumeTaskId ? m.execution.workers.find(w => w.task_id === input.resumeTaskId && !['completed', 'failed', 'cancelled'].includes(w.status)) : m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
+        const unresolvedOwner = unresolvedResultOwner(m, obligationIds, input.resumeTaskId);
+        if (unresolvedOwner && existing?.task_id !== unresolvedOwner.id) {
+            appendLedger(m, 'task.start.reconcile-required', { task_id: unresolvedOwner.id, payload: { requested_role: role, requested_obligations: obligationIds, unresolved_status: unresolvedOwner.result?.status } });
+            throw new Error(`Canonical task ${unresolvedOwner.id} has unresolved ${unresolvedOwner.result?.status}; resume/reconcile that exact task before starting new work for obligation(s): ${obligationIds.filter(id => unresolvedOwner.obligation_ids.includes(id)).join(', ')}`);
+        }
         if (input.resumeTaskId && !existing)
             throw new Error(`Hi task ${input.resumeTaskId} has no resumable worker`);
         const resumeCapable = Boolean(existing?.session_id), clearanceFreshness = explorationClearanceFreshness(this.projectRoot, m), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || this.childHost.capabilities.create, prompt: this.childHost.capabilities.prompt }, hostConfig, methodologyResourceFailures, methodologyAdmissionFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', staleExplorationClearance: clearanceFreshness.required && !clearanceFreshness.current, authorityRequired: false });

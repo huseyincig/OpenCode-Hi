@@ -49,6 +49,20 @@ test('control projection reports active child work as WAIT and suppresses verifi
   assert.deepEqual(decision.missing_evidence,[],'do not invite verification work while canonical execution is active')
 })
 
+test('deadline-less persistent service does not mask verification and is excluded from WAIT projection',()=>{
+  const {m}=localMission('phase6-persistent-verify');closeImplementation(m)
+  m.execution.processes.push({process_id:'proc-service',mission_id:m.identity.mission_id,task_id:'t-service',worker_id:'w-service',host:'opencode',command_identity:'a'.repeat(64),cwd:process.cwd(),pid:4242,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],authority_ref:'native',cleanup_state:'ACTIVE'})
+  const decision=projectControlDecision(m,process.cwd());assert.equal(decision.action,'VERIFY');assert.deepEqual(decision.wait_for,[])
+})
+
+test('persistent service projects exact kill then cleanup after obligations are satisfied',()=>{
+  const {m}=localMission('phase6-persistent-cleanup');closeImplementation(m)
+  observeToolAfter(m,'bash',{command:'npm run check'},{stdout:'check passed',metadata:{exit:0}},process.cwd())
+  m.execution.processes.push({process_id:'proc-service-clean',mission_id:m.identity.mission_id,task_id:'t-service',worker_id:'w-service',host:'opencode',command_identity:'b'.repeat(64),cwd:process.cwd(),pid:4243,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],authority_ref:'native',cleanup_state:'ACTIVE'})
+  const decision=projectControlDecision(m,process.cwd());assert.equal(decision.action,'CONTINUE');assert.deepEqual(decision.open_obligations,[])
+  const runtime=buildMissionRuntimeProjection(m);assert.match(runtime.next_action,/cleanup-persistent-process:proc-service-clean/);assert.match(runtime.next_action,/hi_process_kill id=proc-service-clean/);assert.match(runtime.next_action,/hi_process_cleanup id=proc-service-clean/);assert.match(runtime.next_action,/do not call hi_process_wait/i)
+})
+
 test('waiting FIX_REQUIRED task is RECONCILE, not a false WAIT',()=>{
   const {m}=localMission('phase6-reconcile');closeImplementation(m)
   addEvidence(m,{kind:'changed-surface-sanity',summary:'current exact host check passed',scope:['phase6.txt'],source:'bash',trusted_source_class:'host-tool-observation',pass:true,outcome:'passed',obligation_ids:['o-verification']})

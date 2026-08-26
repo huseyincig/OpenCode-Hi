@@ -2,10 +2,11 @@ import { evaluateCompletion } from './evaluator.js';
 import { verificationEnvelopeFor, verificationKindSatisfiesRequirement } from '../verification/policy.js';
 import { discoverVerificationRoutes } from '../verification/discovery.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
+import { isPersistentRunningProcess, isWaitableRunningProcess } from '../../contracts/process.js';
 function activeWaits(m) {
     const workers = m.execution.workers.filter(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)).map(w => `worker:${w.id}:${w.status}`);
     const tasks = m.execution.tasks.filter(t => ['created', 'queued', 'running'].includes(t.status) || (t.status === 'waiting' && !t.result)).map(t => `task:${t.id}:${t.status}`);
-    const processes = m.execution.processes.filter(p => p.status === 'RUNNING').map(p => `process:${p.process_id}:RUNNING`);
+    const processes = m.execution.processes.filter(isWaitableRunningProcess).map(p => `process:${p.process_id}:RUNNING`);
     return [...new Set([...workers, ...tasks, ...processes])].slice(0, 8);
 }
 function missingVerification(m, projectRoot) {
@@ -85,6 +86,9 @@ export function controlDecisionInstruction(m, decision) {
             return `verify:${missing.join(',') || 'required-evidence'}; route=none; no-admissible-repo-native-verifier; report-gap-and-stop; use matching Hi-owned verifier only when the required capability explicitly owns this evidence; do not invent a verifier`;
         return `verify:${missing.join(',') || 'required-evidence'}; route=unknown; evidence-owned; do-not-use=${decision.ineffective_actions.join(',')}`;
     }
+    const persistent = m.execution.processes.find(isPersistentRunningProcess);
+    if (persistent && !decision.open_obligations.length)
+        return `continue:cleanup-persistent-process:${persistent.process_id}; call hi_process_kill id=${persistent.process_id}, then hi_process_cleanup id=${persistent.process_id}; do not call hi_process_wait on a deadline-less persistent service`;
     const staleClearance = m.execution.gates.find(g => g.id === 'gate-exploration-clearance' && g.status === 'blocked');
     if (staleClearance)
         return `continue:refresh-exploration-clearance; call hi_task_start with role=repository-explorer against the stale clearance scope; ${staleClearance.reason ?? 're-establish current source provenance'}; do not implement until current bounded repository evidence is re-established`;

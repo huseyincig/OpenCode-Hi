@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 export const PROCESS_STATUSES = ['RUNNING', 'EXITED', 'TIMED_OUT', 'TERMINATED', 'ORPHANED'];
 export const PROCESS_CLEANUP_STATES = ['ACTIVE', 'CLEANUP_PENDING', 'CLEANED', 'QUARANTINED'];
+export function isWaitableRunningProcess(process) { return process.status === 'RUNNING' && process.timeout_at !== undefined; }
+export function isPersistentRunningProcess(process) { return process.status === 'RUNNING' && process.timeout_at === undefined; }
 const KEYS = new Set(['process_id', 'mission_id', 'task_id', 'worker_id', 'host', 'command_identity', 'cwd', 'pid', 'process_group_id', 'status', 'started_at', 'ended_at', 'timeout_at', 'exit_code', 'termination_reason', 'output_artifact_refs', 'authority_ref', 'cleanup_state']);
 const STATUS = new Set(PROCESS_STATUSES), CLEANUP = new Set(PROCESS_CLEANUP_STATES);
 function record(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }

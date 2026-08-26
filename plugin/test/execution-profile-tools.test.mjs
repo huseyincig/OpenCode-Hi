@@ -110,6 +110,16 @@ test('same-session corrective resume preserves the original execution tool surfa
   assert.match(JSON.stringify(prompts[2]),/materially different corrective hypothesis or action/i)
 })
 
+test('new task cannot bypass an unresolved canonical obligation owner and must resume the exact task',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('reconcile-owner','fix one file then verify it');assess(store,'reconcile-owner',{task_kind:'bug-fix',likely_targets:['src/parser.ts'],likely_verification:['targeted-tests']})
+  const first=await runtime.start(m,{objective:'fix parser',role:'coder',category:'quick',scope:['src/parser.ts'],requiredEvidence:['targeted-tests']});runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'one correction remains',changed_files:['src/parser.ts'],evidence:[],open_issues:['fix:x'],needs_context:[]})
+  const firstTask=m.execution.tasks.find(t=>t.id===first.task_id);const beforeTasks=m.execution.tasks.length,beforeWorkers=m.execution.workers.length
+  await assert.rejects(()=>runtime.start(m,{objective:'replacement verifier',role:'coder',category:'quick',scope:['src/parser.ts'],requiredEvidence:['targeted-tests'],obligationIds:[...firstTask.obligation_ids]}),new RegExp(`Canonical task ${first.task_id} has unresolved FIX_REQUIRED`))
+  assert.equal(m.execution.tasks.length,beforeTasks);assert.equal(m.execution.workers.length,beforeWorkers);assert.ok(m.execution.ledger.some(e=>e.type==='task.start.reconcile-required'&&e.task_id===first.task_id))
+})
+
 test('parent can open chat role-model configuration before semantic mission assessment while other execution tools stay gated',async()=>{
   const store=new MissionStore(process.cwd());store.start('parent-config','Hi rol modellerini ayarla')
   const hook=createToolBeforeHook(store)
