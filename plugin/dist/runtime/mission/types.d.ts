@@ -99,6 +99,7 @@ export interface ExecutionProfile {
     };
     tools: string[];
     mcp_servers?: string[];
+    process_lifecycle?: true;
     browser_backend?: 'bounded-playwright' | 'mcp';
     browser_allowed_origins?: string[];
     model?: string;

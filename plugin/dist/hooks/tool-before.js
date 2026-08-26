@@ -11,6 +11,7 @@ import { appendLedger } from '../runtime/ledger/ledger.js';
 import { openHumanDecision } from '../runtime/human-decision/runtime.js';
 import { verificationKindAdmittedForMission } from '../runtime/verification/policy.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
+import { HI_PROCESS_EXECUTION_TOOL_IDS } from '../runtime/routing/execution-profile.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
 import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js';
@@ -22,6 +23,32 @@ function assessedExplicitSettingsRequest(m) {
     return targets.length > 0 && targets.every((target) => SETTINGS_CONTROL_TARGETS.has(target)) && m.identity.intent.requiredCapabilities.length === 0 && m.identity.intent.requestedExternalActions.length === 0;
 }
 function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
+function hasTopLevelBackgroundOperator(command) {
+    let quote, escape = false;
+    for (let i = 0; i < command.length; i++) {
+        const ch = command[i];
+        if (escape) {
+            escape = false;
+            continue;
+        }
+        if (ch === '\\' && quote !== "'") {
+            escape = true;
+            continue;
+        }
+        if (quote) {
+            if (ch === quote)
+                quote = undefined;
+            continue;
+        }
+        if (ch === '"' || ch === "'") {
+            quote = ch;
+            continue;
+        }
+        if (ch === '&' && command[i - 1] !== '&' && command[i + 1] !== '&' && command[i - 1] !== '>' && command[i - 1] !== '<')
+            return true;
+    }
+    return false;
+}
 function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
     if (role !== 'technical-writer' && role !== 'test-engineer')
         return true;
@@ -56,11 +83,25 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             }
         }
         if (child && tool.startsWith('hi_')) {
-            const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool);
+            const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool), processTool = HI_PROCESS_EXECUTION_TOOL_IDS.includes(tool);
             if (browserTool) {
                 const owner = resolveBrowserExecutionOwner(m, { sessionID: String(sid), workerID: child.id, taskID: child.task_id });
                 if (!owner)
                     throw new Error(`Hi browser execution guard: child '${child.id}' cannot invoke '${tool}' outside its active visual task/methodology.`);
+            }
+            else if (processTool) {
+                const task = m.execution.tasks.find(t => t.id === child.task_id);
+                if (task?.execution_profile?.process_lifecycle !== true || !task.execution_profile.tools.includes(tool))
+                    throw new Error(`Hi process ownership: child '${child.id}' cannot invoke '${tool}' outside its admitted process-lifecycle task.`);
+                if (tool === 'hi_process_spawn') {
+                    if (String(args?.worker_id ?? '') !== child.id)
+                        throw new Error(`Hi process ownership: child '${child.id}' cannot spawn a process for another worker.`);
+                }
+                else if (tool !== 'hi_process_list') {
+                    const id = String(args?.id ?? ''), owned = m.execution.processes.find(p => p.process_id === id);
+                    if (!owned || owned.worker_id !== child.id || owned.task_id !== child.task_id)
+                        throw new Error(`Hi process ownership: child '${child.id}' cannot access process '${id}' outside its own task.`);
+                }
             }
             else
                 throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
@@ -116,6 +157,11 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
                 assertChildMethodologyLoad(m.execution.workers.find(worker => worker.id === child.id), name);
             else if (name)
                 assertParentMethodologyLoad(m, name, projectRoot);
+        }
+        if (tool === 'bash' && typeof args?.command === 'string' && hasTopLevelBackgroundOperator(args.command)) {
+            const processTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined;
+            if (processTask?.execution_profile?.process_lifecycle === true || !child && m.identity.intent.requiredCapabilities.includes('interactive-process'))
+                throw new Error('Hi process ownership: background shell jobs are outside ProcessContract ownership; use the admitted hi_process_spawn lifecycle instead.');
         }
         if (tool === 'bash' && typeof args?.command === 'string') {
             const shell = evaluateShellCommand(args.command);

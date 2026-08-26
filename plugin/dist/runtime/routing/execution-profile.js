@@ -63,8 +63,9 @@ export function effectiveExecutionSurface(hostConfig, role, skillToolEnabled) {
     }
     return { tools: [...new Set(tools)].sort(), permissions: { mode: def?.mode ? String(def.mode) : undefined, decisions, source: def ? 'effective-opencode-agent' : 'hi-default-invariants' } };
 }
-export const HI_CONTROL_TOOL_IDS = ['hi_doctor', 'hi_status', 'hi_settings', 'hi_role_models', 'hi_metrics', 'hi_ledger', 'hi_readiness', 'hi_context_artifact_add', 'hi_context_artifacts', 'hi_temporary_mutation_register', 'hi_temporary_mutation_revert', 'hi_direct_progress', 'hi_task_start', 'hi_task_await', 'hi_task_peek', 'hi_task_list', 'hi_task_cancel', 'hi_process_spawn', 'hi_process_read', 'hi_process_write', 'hi_process_wait', 'hi_process_kill', 'hi_process_cleanup', 'hi_process_list'];
-export const HI_RUNTIME_TOOL_IDS = [...HI_CONTROL_TOOL_IDS, 'hi_intent_assess', ...HI_BROWSER_EXECUTION_TOOL_IDS];
+export const HI_PROCESS_EXECUTION_TOOL_IDS = ['hi_process_spawn', 'hi_process_read', 'hi_process_write', 'hi_process_wait', 'hi_process_kill', 'hi_process_cleanup', 'hi_process_list'];
+export const HI_CONTROL_TOOL_IDS = ['hi_doctor', 'hi_status', 'hi_settings', 'hi_role_models', 'hi_metrics', 'hi_ledger', 'hi_readiness', 'hi_context_artifact_add', 'hi_context_artifacts', 'hi_temporary_mutation_register', 'hi_temporary_mutation_revert', 'hi_direct_progress', 'hi_task_start', 'hi_task_await', 'hi_task_peek', 'hi_task_list', 'hi_task_cancel'];
+export const HI_RUNTIME_TOOL_IDS = [...HI_CONTROL_TOOL_IDS, 'hi_intent_assess', ...HI_PROCESS_EXECUTION_TOOL_IDS, ...HI_BROWSER_EXECUTION_TOOL_IDS];
 export const KNOWN_BUILTIN_TOOL_IDS = ['bash', 'edit', 'write', 'apply_patch', 'read', 'grep', 'glob', 'list', 'lsp', 'skill', 'todowrite', 'todoread', 'webfetch', 'websearch', 'question', 'task'];
 function mcpServerPattern(name) { return name.replace(/[^a-zA-Z0-9_-]/g, '_') + '_*'; }
 export function resolveMcpServerExposure(hostConfig, selected = []) { const mcp = isRecord(hostConfig.mcp) ? hostConfig.mcp : {}, active = Object.entries(mcp).filter(([, value]) => !isRecord(value) || value.enabled !== false).map(([name]) => name).sort(), requested = [...new Set(selected.map(x => String(x).trim()).filter(Boolean))].sort(), missing = requested.filter(name => !active.includes(name)); if (missing.length)
@@ -78,6 +79,8 @@ export function taskPromptToolOverrides(allowed, hostConfig, selectedMcpServers 
 export function promptToolOverrides(allowed, hiToolNames = [...HI_CONTROL_TOOL_IDS]) { const keep = new Set(allowed); const out = {}; for (const id of KNOWN_BUILTIN_TOOL_IDS)
     if (!keep.has(id))
         out[id] = false; for (const id of hiToolNames)
-    out[id] = false; for (const id of HI_BROWSER_EXECUTION_TOOL_IDS)
+    out[id] = false; for (const id of HI_PROCESS_EXECUTION_TOOL_IDS)
+    if (!keep.has(id))
+        out[id] = false; for (const id of HI_BROWSER_EXECUTION_TOOL_IDS)
     if (!keep.has(id))
         out[id] = false; return out; }

@@ -33,6 +33,7 @@ export interface StartTaskInput {
     mcpServers?: string[];
     browserBackend?: BrowserBackend;
     browserAllowedOrigins?: string[];
+    processLifecycle?: boolean;
     resumeTaskId?: string;
 }
 export declare class TaskRuntime {

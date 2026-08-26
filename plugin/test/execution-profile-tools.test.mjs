@@ -6,7 +6,7 @@ import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurr
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import { PACKAGED_HI_AGENTS } from '../dist/generated/agent-config.js'
-import { effectiveExecutionSurface,promptToolOverrides } from '../dist/runtime/routing/execution-profile.js'
+import { effectiveExecutionSurface,HI_PROCESS_EXECUTION_TOOL_IDS,promptToolOverrides } from '../dist/runtime/routing/execution-profile.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -63,6 +63,28 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
   assert.match(JSON.stringify(prompts[0]),/Use them only when materially required/i)
 })
 
+
+test('process lifecycle is an exact task-level opt-in and survives child handoff',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-profile','run app and verify it')
+  assess(store,'process-profile',{required_capabilities:['implementation'],likely_targets:['app.py']})
+  const out=await runtime.start(m,{objective:'run app server',role:'coder',category:'standard',scope:['app.py'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),profile=task.execution_profile
+  assert.equal(profile.process_lifecycle,true);for(const id of HI_PROCESS_EXECUTION_TOOL_IDS)assert.ok(profile.tools.includes(id),id)
+  const tools=prompts[0].body.tools;for(const id of HI_PROCESS_EXECUTION_TOOL_IDS)assert.equal(tools[id],undefined,id)
+  assert.match(JSON.stringify(prompts[0]),new RegExp(`hi_process_spawn with worker_id=${out.worker_id}`));assert.match(JSON.stringify(prompts[0]),/Do not use shell '&', nohup, setsid, disown, pkill, killall/i)
+})
+
+test('process lifecycle cannot be widened from mission or task defaults without both semantic and task-level admission',async()=>{
+  const c=client([],[]),runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-no-task','run bounded command');assess(store,'process-no-task',{required_capabilities:['implementation','interactive-process'],likely_targets:['app.py']})
+  const plain=await runtime.start(m,{objective:'inspect app',role:'coder',scope:['app.py']});const profile=m.execution.tasks.find(t=>t.id===plain.task_id).execution_profile
+  assert.equal(profile.process_lifecycle,undefined);for(const id of HI_PROCESS_EXECUTION_TOOL_IDS)assert.ok(!profile.tools.includes(id),id)
+  const store2=new MissionStore(process.cwd()),m2=store2.start('process-task-optin','bounded task');assess(store2,'process-task-optin',{required_capabilities:['implementation'],likely_targets:['app.py']})
+  const owned=await runtime.start(m2,{objective:'run app',role:'coder',scope:['app.py'],processLifecycle:true});assert.equal(m2.execution.tasks.find(t=>t.id===owned.task_id).execution_profile.process_lifecycle,true)
+})
+
 test('same-session corrective resume preserves the original execution tool surface and does not spawn a new child',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
@@ -106,6 +128,20 @@ test('child workers cannot invoke any Hi control-plane custom tool, including co
   for(const tool of ['hi_direct_progress','hi_task_cancel','hi_ledger','hi_status','hi_context_artifact_add']){
     await assert.rejects(()=>hook({sessionID:'child',tool},{args:{}}),/child workers cannot invoke Hi control-plane tool/)
   }
+})
+
+test('child process admission is exact-task/same-worker and blocks native background bypass',async()=>{
+  const store=new MissionStore(process.cwd()),m=store.start('process-hook-parent','process task');assess(store,'process-hook-parent',{required_capabilities:['implementation','interactive-process']})
+  const task={id:'t_process_hook',mission_id:m.identity.mission_id,objective:'run service',status:'running',role:'coder',category:'standard',scope:['app.py'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'run service',scope:['app.py'],dependencies:[],required_evidence:[]},tools:['bash',...HI_PROCESS_EXECUTION_TOOL_IDS],process_lifecycle:true,fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:'w_process_hook'}
+  const worker={id:'w_process_hook',task_id:task.id,role:'coder',category:'standard',session_id:'child-process-hook',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'fp',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.tasks.push(task);m.execution.workers.push(worker);m.execution.processes.push({process_id:'proc_hook',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'x',cwd:process.cwd(),authority_ref:'native',pid:99,process_group_id:99,status:'RUNNING',started_at:Date.now(),cleanup_state:'ACTIVE'})
+  const bg=new BackgroundRegistry();bg.set(worker);const hook=createToolBeforeHook(store,bg,()=>resolveHiConfig({}),process.cwd())
+  await hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{worker_id:worker.id,command:'node'}})
+  await hook({sessionID:worker.session_id,tool:'hi_process_read'},{args:{id:'proc_hook'}})
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{worker_id:'other',command:'node'}}),/another worker/i)
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'hi_process_read'},{args:{id:'foreign'}}),/outside its own task/i)
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'node server.js &'}}),/background shell jobs are outside ProcessContract ownership/i)
+  await hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'echo "a & b" && echo done'}})
 })
 
 test('prompt tool overrides only disable tools; they never turn a denied native permission into allow',()=>{

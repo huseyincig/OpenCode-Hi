@@ -8,20 +8,48 @@ import {normalizeOpenCodeEvent} from '../dist/opencode/event-adapter.js'
 import {openHumanDecision} from '../dist/runtime/human-decision/runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {renderSemanticAssessmentGate} from '../dist/runtime/intent/semantic-assessment-gate.js'
-import {HI_CONTROL_TOOL_IDS,promptToolOverrides} from '../dist/runtime/routing/execution-profile.js'
+import {HI_CONTROL_TOOL_IDS,HI_PROCESS_EXECUTION_TOOL_IDS,promptToolOverrides} from '../dist/runtime/routing/execution-profile.js'
 
 const INITIAL={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
 function assessed(store,id='parent') {const m=store.start(id,'opaque');store.applyInitialSemanticAssessment(id,INITIAL);return m}
 function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.20'}}
 function scoped(){return{contextArtifacts:{}}}
 
-test('parent surface exposes bounded process controls and child overrides disable every process control',()=>{
+test('parent surface exposes bounded process controls while child exposure is explicit task-level execution policy',()=>{
   const store=new MissionStore(),calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}},read:async()=>({}),write:async()=>{},wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
-  const ids=['hi_process_spawn','hi_process_read','hi_process_write','hi_process_wait','hi_process_kill','hi_process_cleanup','hi_process_list']
-  for(const id of ids){assert.ok(id in toolSurface,id);assert.ok(HI_CONTROL_TOOL_IDS.includes(id),`${id} missing from control-plane deny list`)}
-  const child=promptToolOverrides(['read','bash']);for(const id of ids)assert.equal(child[id],false,id)
+  const ids=[...HI_PROCESS_EXECUTION_TOOL_IDS]
+  for(const id of ids){assert.ok(id in toolSurface,id);assert.ok(!HI_CONTROL_TOOL_IDS.includes(id),`${id} must not be classified as parent-only control-plane`)}
+  const normalChild=promptToolOverrides(['read','bash']);for(const id of ids)assert.equal(normalChild[id],false,id)
+  const processChild=promptToolOverrides(['read','bash',...ids]);for(const id of ids)assert.equal(processChild[id],undefined,id)
+})
+
+function attachParentProcessOwner(m,workerID='w1'){
+  const taskID=`t_${workerID}`
+  m.execution.tasks.push({id:taskID,mission_id:m.identity.mission_id,objective:'owned process',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'owned process',scope:[],dependencies:[],required_evidence:[]},tools:['bash',...HI_PROCESS_EXECUTION_TOOL_IDS],process_lifecycle:true,fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:workerID})
+  m.execution.workers.push({id:workerID,task_id:taskID,role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:`f_${workerID}`,status:'busy',generation_at_spawn:m.continuation.generation})
+}
+
+function processOwnedChildFixture(){
+  const store=new MissionStore(),m=store.start('process-parent','opaque process mission');store.applyInitialSemanticAssessment('process-parent',{...INITIAL,required_capabilities:['implementation','interactive-process']})
+  const task={id:'t_process',mission_id:m.identity.mission_id,objective:'run app server',status:'running',role:'coder',category:'standard',scope:['app.py'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'run app server',scope:['app.py'],dependencies:[],required_evidence:[]},tools:['bash',...HI_PROCESS_EXECUTION_TOOL_IDS],process_lifecycle:true,fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:'w_process'}
+  const worker={id:'w_process',task_id:task.id,role:'coder',category:'standard',session_id:'process-child',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f_process',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.tasks.push(task);m.execution.workers.push(worker)
+  return{store,m,task,worker}
+}
+
+test('child process tool surface resolves parent mission and enforces exact worker ownership',async()=>{
+  const {store,m,task,worker}=processOwnedChildFixture(),calls=[]
+  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(['spawn',input.worker_id]);const p={process_id:'proc-own',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'x',cwd:'/repo',authority_ref:'native',pid:42,process_group_id:42,status:'RUNNING',started_at:Date.now(),cleanup_state:'ACTIVE'};m.execution.processes.push(p);return p},read:async()=>({text:'ok',start_cursor:0,end_cursor:2,available_start_cursor:0,available_end_cursor:2,truncated:false}),write:async()=>{},wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const spawned=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'python',args_json:'["app.py"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo',ask:async()=>{}}))
+  assert.equal(spawned.process_id,'proc-own');assert.deepEqual(calls,[['spawn',worker.id]])
+  assert.match(String(await toolSurface.hi_process_spawn.execute({worker_id:'w_other',command:'python',args_json:'["app.py"]'},{sessionID:worker.session_id,directory:'/repo'})),/cannot spawn for worker/i)
+  m.execution.processes.push({...m.execution.processes[0],process_id:'proc-other',worker_id:'w_other',task_id:'t_other'})
+  assert.match(String(await toolSurface.hi_process_read.execute({id:'proc-other'},{sessionID:worker.session_id})),/outside its own task/i)
+  const rows=JSON.parse(await toolSurface.hi_process_list.execute({},{sessionID:worker.session_id}));assert.deepEqual(rows.map(x=>x.process_id),['proc-own'])
 })
 
 test('semantic user STOP stops mission before process cleanup then workers reconcile',async()=>{
@@ -78,16 +106,18 @@ test('semantic gate separates capability IDs from methodology intent signals',()
   const gate=renderSemanticAssessmentGate(m);assert.match(gate,/interactive-process=persistent/);assert.match(gate,/capability-named signals reject/)
 })
 
-test('bounded command mission cannot escalate into Hi PTY lifecycle without interactive-process capability',async()=>{
+test('process spawn requires exact task-level process_lifecycle ownership even when parent mission exists',async()=>{
   const store=new MissionStore(),m=assessed(store,'m12-bounded'),calls=[]
+  m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'bounded command',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'bounded command',scope:[],dependencies:[],required_evidence:[]},tools:['bash'],fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:'w1'})
+  m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation})
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   const out=String(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'npm',args_json:'["test"]'},{sessionID:m.identity.session_id,directory:'/repo'}))
-  assert.match(out,/persistent\/interactive process lifecycle was not selected/i);assert.deepEqual(calls,[])
+  assert.match(out,/does not own process_lifecycle/i);assert.deepEqual(calls,[])
 })
 
 test('interactive-process intent still fails closed when live native PTY capability is unavailable',async()=>{
-  const store=new MissionStore(),m=store.start('m12-no-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-no-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[]
+  const store=new MissionStore(),m=store.start('m12-no-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-no-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m)
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
   const out=String(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]'},{sessionID:m.identity.session_id,directory:'/repo'}))
@@ -95,7 +125,7 @@ test('interactive-process intent still fails closed when live native PTY capabil
 })
 
 test('interactive-process plus observed native PTY capability admits the existing ProcessRuntime owner',async()=>{
-  const store=new MissionStore(),m=store.start('m12-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[]
+  const store=new MissionStore(),m=store.start('m12-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m)
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_1',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo',ask:async()=>{throw new Error('unexpected ask')}}))
@@ -103,7 +133,7 @@ test('interactive-process plus observed native PTY capability admits the existin
 })
 
 test('process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
-  const store=new MissionStore(),m=store.start('m24-pty-drift-down','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-down',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0
+  const store=new MissionStore(),m=store.start('m24-pty-drift-down','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-down',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0;attachParentProcessOwner(m)
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'should-not-spawn',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
   const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
@@ -111,7 +141,7 @@ test('process spawn reobserves a stale SUPPORTED PTY capability and fails closed
 })
 
 test('process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{
-  const store=new MissionStore(),m=store.start('m24-pty-drift-up','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-up',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({});let probes=0
+  const store=new MissionStore(),m=store.start('m24-pty-drift-up','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-up',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({});let probes=0;attachParentProcessOwner(m)
   m.execution.blockers.push('capability-unavailable:process-lifecycle')
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_recovered',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}, {processLifecycle:true}).contracts);return{available:true,detail:'OpenCode canonical v2 PTY list observed'}}})

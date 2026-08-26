@@ -424,7 +424,7 @@ export function createHiToolSurface(input) {
             const remaining = m.execution.obligations.filter(x => x.status === 'open').slice(0, 12).map(x => ({ id: x.id, kind: x.kind })), methodologyNeeds = [...new Set(m.methodology.methodology_needs.map(x => x.name))].slice(0, 12);
             return JSON.stringify({ status: 'RECORDED', completion_ready: completion.complete, mission_status: completion.complete ? 'completed' : m.identity.status, next: completion.complete ? 'STOP' : completion.next ?? null, verification_required: completion.next === 'VERIFY' || remaining.some(x => x.kind === 'verification'), remaining_obligations: remaining, methodology_needs: methodologyNeeds, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] });
         } });
-    const startTool = tool({ description: 'Start one bounded Hi worker task, or resume the exact existing task when task_id is supplied. When creating a NEW task, omit task_id; task_id is only for an exact canonical t_... id previously returned by Hi. For multiple scope paths, pass comma-separated project-relative paths; semicolon-separated paths are accepted for compatibility. task_id resume never creates a replacement task.', args: { task_id: tool.schema.string().optional(), objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional(), isolation_required: tool.schema.boolean().optional(), isolation_reason: tool.schema.string().optional(), mcp_servers: tool.schema.string().optional(), browser_backend: tool.schema.string().optional(), browser_allowed_origins: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+    const startTool = tool({ description: 'Start one bounded Hi worker task, or resume the exact existing task when task_id is supplied. Set process_lifecycle=true only when that exact task must own a long-running server/watcher/service. When creating a NEW task, omit task_id; task_id is only for an exact canonical t_... id previously returned by Hi. For multiple scope paths, pass comma-separated project-relative paths; semicolon-separated paths are accepted for compatibility. task_id resume never creates a replacement task.', args: { task_id: tool.schema.string().optional(), objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional(), isolation_required: tool.schema.boolean().optional(), isolation_reason: tool.schema.string().optional(), mcp_servers: tool.schema.string().optional(), browser_backend: tool.schema.string().optional(), browser_allowed_origins: tool.schema.string().optional(), process_lifecycle: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
             const missionRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot, rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a;
             const completion = evaluateCompletion(m, missionRoot);
@@ -447,7 +447,7 @@ export function createHiToolSurface(input) {
                 appendLedger(m, 'verification.worker-deferred', { payload: { role: requestedRole, predecessors: predecessors.map(o => o.id), reason: 'canonical-predecessor-obligation-open' } });
                 return JSON.stringify({ status: 'BLOCKED', reason: 'canonical-predecessor-obligation-open', predecessor_obligations: predecessors.map(o => ({ id: o.id, kind: o.kind })), control });
             }
-            const input = { ...rawArgs, forkFromSession: rawArgs.fork_from_session ? String(rawArgs.fork_from_session) : undefined, modelVariant: rawArgs.model_variant ? String(rawArgs.model_variant) : undefined, isolationRequired: rawArgs.isolation_required === true, isolationReason: rawArgs.isolation_reason ? String(rawArgs.isolation_reason) : undefined, mcpServers: rawArgs.mcp_servers ? String(rawArgs.mcp_servers).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, browserBackend: rawArgs.browser_backend ? (String(rawArgs.browser_backend) === 'playwright' || String(rawArgs.browser_backend) === 'hi' ? 'bounded-playwright' : String(rawArgs.browser_backend)) : undefined, browserAllowedOrigins: rawArgs.browser_allowed_origins ? String(rawArgs.browser_allowed_origins).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, scope: optionalScopeList(rawArgs.scope), constraints: rawArgs.constraints ? [String(rawArgs.constraints)] : undefined, dependencies: optionalIdList(rawArgs.dependencies), requiredEvidence: rawArgs.required_evidence ? String(rawArgs.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: rawArgs.obligation_ids ? String(rawArgs.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: rawArgs.context_artifact_ids ? String(rawArgs.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            const input = { ...rawArgs, forkFromSession: rawArgs.fork_from_session ? String(rawArgs.fork_from_session) : undefined, modelVariant: rawArgs.model_variant ? String(rawArgs.model_variant) : undefined, isolationRequired: rawArgs.isolation_required === true, isolationReason: rawArgs.isolation_reason ? String(rawArgs.isolation_reason) : undefined, mcpServers: rawArgs.mcp_servers ? String(rawArgs.mcp_servers).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, browserBackend: rawArgs.browser_backend ? (String(rawArgs.browser_backend) === 'playwright' || String(rawArgs.browser_backend) === 'hi' ? 'bounded-playwright' : String(rawArgs.browser_backend)) : undefined, browserAllowedOrigins: rawArgs.browser_allowed_origins ? String(rawArgs.browser_allowed_origins).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, processLifecycle: rawArgs.process_lifecycle === true, scope: optionalScopeList(rawArgs.scope), constraints: rawArgs.constraints ? [String(rawArgs.constraints)] : undefined, dependencies: optionalIdList(rawArgs.dependencies), requiredEvidence: rawArgs.required_evidence ? String(rawArgs.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: rawArgs.obligation_ids ? String(rawArgs.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: rawArgs.context_artifact_ids ? String(rawArgs.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
             if (m.execution.adaptive_execution?.path === 'DIRECT' && !m.execution.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')))
                 return JSON.stringify({ status: 'SKIPPED', reason: 'minimum-sufficient-direct-path: independent reviewer is not required' });
             const started = await tasks.start(m, input);
@@ -591,16 +591,41 @@ export function createHiToolSurface(input) {
         catch (e) {
             return `Browser close blocked: ${String(e)}`;
         } } });
-    const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; if (!m.identity.intent.requiredCapabilities.includes('interactive-process'))
-            return 'BLOCKED: persistent/interactive process lifecycle was not selected; use the native shell for bounded commands'; let observed; if (refreshOwnedHostCapability)
+    const processToolContext = (c) => {
+        const sid = String(c?.sessionID ?? '');
+        const direct = store.get(sid);
+        if (direct)
+            return { m: direct, child: undefined };
+        const resolver = typeof tasks?.resolveChildCallback === 'function' ? tasks.resolveChildCallback.bind(tasks) : undefined, child = resolver?.(sid);
+        if (!child)
+            return undefined;
+        const m = store.get(child.parent_session_id);
+        if (!m || child.parent_mission_id !== m.identity.mission_id || child.generation_at_spawn !== m.continuation.generation)
+            return undefined;
+        const task = m.execution.tasks.find(t => t.id === child.task_id);
+        if (!task || task.execution_profile?.process_lifecycle !== true || !task.execution_profile.tools.includes('hi_process_spawn'))
+            throw new Error(`Hi process ownership: child '${child.id}' has no admitted process-lifecycle task surface.`);
+        return { m, child, task };
+    };
+    const assertChildProcessOwner = (cx, id) => { if (!cx?.child)
+        return; const owned = cx.m.execution.processes.find((item) => item.process_id === id); if (!owned || owned.worker_id !== cx.child.id || owned.task_id !== cx.child.task_id)
+        throw new Error(`Hi process ownership: child '${cx.child.id}' cannot access process '${id}' outside its own task.`); };
+    const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Child calls are admitted only for that exact child worker/task. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { let cx; try {
+            cx = processToolContext(c);
+        }
+        catch (error) {
+            return `Process spawn blocked: ${String(error)}`;
+        } ; if (!cx)
+            return 'No active Hi mission'; const m = cx.m, workerID = cx.child ? cx.child.id : String(a.worker_id); if (cx.child && String(a.worker_id) !== workerID)
+            return `Process spawn blocked: Hi process ownership: child '${workerID}' cannot spawn for worker '${String(a.worker_id)}'.`; const worker = m.execution.workers.find((item) => item.id === workerID), task = worker ? m.execution.tasks.find((item) => item.id === worker.task_id) : undefined; if (!worker || !task || task.execution_profile?.process_lifecycle !== true)
+            return 'BLOCKED: exact worker task does not own process_lifecycle; use bounded native shell or create/resume the intended task with process_lifecycle=true'; let observed; if (refreshOwnedHostCapability)
             try {
                 observed = await refreshOwnedHostCapability('process-lifecycle');
             }
             catch (error) {
                 observed = { available: false, detail: String(error) };
             } const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (observed?.available === false || processCapability?.status !== 'SUPPORTED') {
-            const detail = observed?.detail ?? 'native process lifecycle is unavailable on the active OpenCode host', marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: String(a.worker_id) });
+            const detail = observed?.detail ?? 'native process lifecycle is unavailable on the active OpenCode host', marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: workerID });
             return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
         } clearCapabilityUnavailable(m, 'process-lifecycle'); let args; if (a.args_json) {
             try {
@@ -613,7 +638,7 @@ export function createHiToolSurface(input) {
                 return `BLOCKED: invalid args_json: ${String(error)}`;
             }
         } try {
-            return JSON.stringify(await processRuntime.spawn(m, { worker_id: String(a.worker_id), command: String(a.command), args, cwd: String(a.cwd ?? c?.directory ?? projectRoot), timeout_ms: a.timeout_ms === undefined ? undefined : Number(a.timeout_ms), title: a.title ? String(a.title) : undefined, ask: async (request) => c.ask({ permission: request.permission, patterns: request.patterns, always: request.always, metadata: request.metadata }) }));
+            return JSON.stringify(await processRuntime.spawn(m, { worker_id: workerID, command: String(a.command), args, cwd: String(a.cwd ?? c?.directory ?? projectRoot), timeout_ms: a.timeout_ms === undefined ? undefined : Number(a.timeout_ms), title: a.title ? String(a.title) : undefined, ask: async (request) => c.ask({ permission: request.permission, patterns: request.patterns, always: request.always, metadata: request.metadata }) }));
         }
         catch (error) {
             if (refreshOwnedHostCapability) {
@@ -625,51 +650,75 @@ export function createHiToolSurface(input) {
                     after = { available: false, detail: String(probeError) };
                 }
                 if (!after.available) {
-                    const detail = after.detail ?? String(error), marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: String(a.worker_id) });
+                    const detail = after.detail ?? String(error), marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: workerID });
                     return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
                 }
             }
             return `Process spawn blocked: ${String(error)}`;
         } } });
-    const processReadTool = tool({ description: 'Read one bounded cursor window from an owned Hi process. Output observation is hash-bound Evidence input, never implicit verification PASS.', args: { id: tool.schema.string(), cursor: tool.schema.number().optional(), max_chars: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; try {
-            return JSON.stringify(await processRuntime.read(m, String(a.id), a.cursor === undefined ? undefined : Number(a.cursor), a.max_chars === undefined ? undefined : Number(a.max_chars)));
+    const processReadTool = tool({ description: 'Read one bounded cursor window from an owned Hi process. Child calls are same-worker only. Output observation is hash-bound Evidence input, never implicit verification PASS.', args: { id: tool.schema.string(), cursor: tool.schema.number().optional(), max_chars: tool.schema.number().optional() }, execute: async (a, c) => { try {
+            const cx = processToolContext(c);
+            if (!cx)
+                return 'No active Hi mission';
+            assertChildProcessOwner(cx, String(a.id));
+            return JSON.stringify(await processRuntime.read(cx.m, String(a.id), a.cursor === undefined ? undefined : Number(a.cursor), a.max_chars === undefined ? undefined : Number(a.max_chars)));
         }
         catch (error) {
             return `Process read failed: ${String(error)}`;
         } } });
-    const processWriteTool = tool({ description: 'Write bounded stdin to one owned running Hi process.', args: { id: tool.schema.string(), input: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; try {
-            await processRuntime.write(m, String(a.id), String(a.input));
+    const processWriteTool = tool({ description: 'Write bounded stdin to one owned running Hi process. Child calls are same-worker only.', args: { id: tool.schema.string(), input: tool.schema.string() }, execute: async (a, c) => { try {
+            const cx = processToolContext(c);
+            if (!cx)
+                return 'No active Hi mission';
+            assertChildProcessOwner(cx, String(a.id));
+            await processRuntime.write(cx.m, String(a.id), String(a.input));
             return 'OK';
         }
         catch (error) {
             return `Process write failed: ${String(error)}`;
         } } });
-    const processWaitTool = tool({ description: 'Await the native exit promise for one owned Hi process. This is event-driven and must not be used as a polling loop.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; try {
-            return JSON.stringify(await processRuntime.wait(m, String(a.id)));
+    const processWaitTool = tool({ description: 'Await the native exit promise for one owned Hi process. Child calls are same-worker only. This is event-driven and must not be used as a polling loop.', args: { id: tool.schema.string() }, execute: async (a, c) => { try {
+            const cx = processToolContext(c);
+            if (!cx)
+                return 'No active Hi mission';
+            assertChildProcessOwner(cx, String(a.id));
+            return JSON.stringify(await processRuntime.wait(cx.m, String(a.id)));
         }
         catch (error) {
             return `Process wait failed: ${String(error)}`;
         } } });
-    const processKillTool = tool({ description: 'Terminate one owned running Hi process after native PID identity revalidation.', args: { id: tool.schema.string(), signal: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; const signal = String(a.signal ?? 'SIGTERM'); if (!['SIGTERM', 'SIGINT'].includes(signal))
+    const processKillTool = tool({ description: 'Terminate one owned running Hi process after native PID identity revalidation. Child calls are same-worker only.', args: { id: tool.schema.string(), signal: tool.schema.string().optional() }, execute: async (a, c) => { const signal = String(a.signal ?? 'SIGTERM'); if (!['SIGTERM', 'SIGINT'].includes(signal))
             return 'BLOCKED: signal must be SIGTERM or SIGINT'; try {
-            return JSON.stringify(await processRuntime.kill(m, String(a.id), signal));
+            const cx = processToolContext(c);
+            if (!cx)
+                return 'No active Hi mission';
+            assertChildProcessOwner(cx, String(a.id));
+            return JSON.stringify(await processRuntime.kill(cx.m, String(a.id), signal));
         }
         catch (error) {
             return `Process kill failed: ${String(error)}`;
         } } });
-    const processCleanupTool = tool({ description: 'Cleanup one owned terminal Hi process. Cleanup cannot terminate a running process.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; try {
-            await processRuntime.cleanup(m, String(a.id));
+    const processCleanupTool = tool({ description: 'Cleanup one owned terminal Hi process. Child calls are same-worker only. Cleanup cannot terminate a running process.', args: { id: tool.schema.string() }, execute: async (a, c) => { try {
+            const cx = processToolContext(c);
+            if (!cx)
+                return 'No active Hi mission';
+            assertChildProcessOwner(cx, String(a.id));
+            await processRuntime.cleanup(cx.m, String(a.id));
             return 'OK';
         }
         catch (error) {
             return `Process cleanup failed: ${String(error)}`;
         } } });
-    const processListTool = tool({ description: 'List bounded durable Hi process contracts for the current mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(processRuntime.list(m)) : 'No active Hi mission'; } });
+    const processListTool = tool({ description: 'List bounded durable Hi process contracts for the current mission. Child calls expose only that exact worker/task process set.', args: {}, execute: async (_a, c) => { try {
+            const cx = processToolContext(c);
+            if (!cx)
+                return 'No active Hi mission';
+            const rows = processRuntime.list(cx.m);
+            return JSON.stringify(cx.child ? rows.filter((item) => item.worker_id === cx.child.id && item.task_id === cx.child.task_id) : rows);
+        }
+        catch (error) {
+            return `Process list failed: ${String(error)}`;
+        } } });
     const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_settings: settingsTool, hi_role_models: roleModelsTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool, hi_browser_preview_open: browserPreviewOpenTool, hi_browser_open: browserOpenTool, hi_browser_navigate: browserNavigateTool, hi_browser_click: browserClickTool, hi_browser_type: browserTypeTool, hi_browser_key: browserKeyTool, hi_browser_inspect: browserInspectTool, hi_browser_viewport: browserViewportTool, hi_browser_screenshot: browserScreenshotTool, hi_browser_wait: browserWaitTool, hi_browser_close: browserCloseTool };
     assertHiToolNamespace(Object.keys(toolSurface));
     return { toolSurface };
