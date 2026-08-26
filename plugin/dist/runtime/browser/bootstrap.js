@@ -4,6 +4,7 @@ import { homedir, platform } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { discoverChromiumInRoots } from './discovery.js';
 import { projectOperationalToolImplementationRoot } from '../storage/ownership.js';
+import { discoverOperationalToolOnPath } from '../tools/provisioning.js';
 function bounded(text, max = 8000) { return text.length <= max ? text : text.slice(text.length - max); }
 export function configuredPlaywrightCoreVersion(packageRoot) {
     try {
@@ -68,6 +69,7 @@ export class PlaywrightBrowserBootstrap {
     #run;
     #packageJsonOverride;
     #cliOverride;
+    #nodeExecutable;
     #findExecutable;
     #attempt;
     #last;
@@ -79,6 +81,7 @@ export class PlaywrightBrowserBootstrap {
         this.#run = options.run_process ?? runBounded;
         this.#packageJsonOverride = options.package_json_path;
         this.#cliOverride = options.cli_path;
+        this.#nodeExecutable = options.node_executable ?? discoverOperationalToolOnPath('node');
         this.#findExecutable = options.find_executable ?? (cache => discoverChromiumInRoots([cache]));
     }
     status() { return this.#last ? { ...this.#last } : undefined; }
@@ -109,6 +112,8 @@ export class PlaywrightBrowserBootstrap {
         const located = locatePlaywrightCore(this.packageRoot, this.#packageJsonOverride, this.#cliOverride);
         if (!located)
             return this.#remember({ available: false, attempted: false, cachePath: this.cachePath, version: this.version, reason: 'playwright-core runtime package/CLI is unavailable' });
+        if (!this.#nodeExecutable)
+            return this.#remember({ available: false, attempted: false, cachePath: this.cachePath, version: this.version, reason: 'Node.js runtime is unavailable for Playwright CLI bootstrap' });
         let actual;
         try {
             actual = JSON.parse(readFileSync(located.packageJson, 'utf8'))?.version;
@@ -117,7 +122,7 @@ export class PlaywrightBrowserBootstrap {
         if (actual !== this.version)
             return this.#remember({ available: false, attempted: false, cachePath: this.cachePath, version: this.version, reason: `playwright-core version mismatch: configured=${this.version}; installed=${actual ?? 'unknown'}` });
         mkdirSync(this.cachePath, { recursive: true });
-        const result = await this.#run(process.execPath, [located.cli, 'install', 'chromium'], { cwd: this.packageRoot, env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: this.cachePath }, timeoutMs: this.#timeoutMs });
+        const result = await this.#run(this.#nodeExecutable, [located.cli, 'install', 'chromium'], { cwd: this.packageRoot, env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: this.cachePath }, timeoutMs: this.#timeoutMs });
         if (result.timedOut)
             return this.#remember({ available: false, attempted: true, cachePath: this.cachePath, version: this.version, reason: 'playwright chromium bootstrap timed out' });
         if (result.exitCode !== 0)

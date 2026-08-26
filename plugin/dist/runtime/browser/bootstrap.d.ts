@@ -24,6 +24,7 @@ export interface PlaywrightBrowserBootstrapOptions {
     }) => Promise<BrowserBootstrapRunResult>;
     package_json_path?: string;
     cli_path?: string;
+    node_executable?: string;
     find_executable?: (cachePath: string) => string | undefined;
 }
 export declare function configuredPlaywrightCoreVersion(packageRoot: string): string | undefined;

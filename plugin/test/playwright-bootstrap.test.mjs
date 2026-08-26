@@ -12,10 +12,21 @@ function fixture(){const root=mkdtempSync(join(tmpdir(),'hi-pw-bootstrap-')),pkg
 test('Hi Playwright bootstrap is pinned, project-clean and dedupes concurrent first-use install',async()=>{
   const f=fixture();let runs=0,ready=false
   try{
-    const cache=join(f.root,'external-hi-cache'),bootstrap=new PlaywrightBrowserBootstrap({package_root:f.root,cache_path:cache,find_executable:()=>ready?join(cache,'chromium-fake','chrome'):undefined,run_process:async(command,args,options)=>{runs++;assert.equal(command,process.execPath);assert.deepEqual(args,[join(f.pkg,'cli.js'),'install','chromium']);assert.equal(options.cwd,f.root);assert.equal(options.env.PLAYWRIGHT_BROWSERS_PATH,cache);ready=true;return{exitCode:0,stdout:'ok',stderr:'',timedOut:false}}})
+    const cache=join(f.root,'external-hi-cache'),bootstrap=new PlaywrightBrowserBootstrap({package_root:f.root,cache_path:cache,find_executable:()=>ready?join(cache,'chromium-fake','chrome'):undefined,node_executable:'/fixture/node',run_process:async(command,args,options)=>{runs++;assert.equal(command,'/fixture/node');assert.deepEqual(args,[join(f.pkg,'cli.js'),'install','chromium']);assert.equal(options.cwd,f.root);assert.equal(options.env.PLAYWRIGHT_BROWSERS_PATH,cache);ready=true;return{exitCode:0,stdout:'ok',stderr:'',timedOut:false}}})
     const [a,b]=await Promise.all([bootstrap.ensure(),bootstrap.ensure()])
     assert.equal(runs,1);assert.equal(a.available,true);assert.equal(b.available,true);assert.equal(a.version,'1.62.1');assert.ok(a.executablePath)
     assert.equal((await bootstrap.ensure()).available,true);assert.equal(runs,1)
+  }finally{f.cleanup()}
+})
+
+
+test('Playwright bootstrap never reuses a packaged OpenCode process executable as the JavaScript runner',async()=>{
+  const f=fixture();let commandSeen
+  try{
+    const bootstrap=new PlaywrightBrowserBootstrap({package_root:f.root,cache_path:join(f.root,'cache'),node_executable:'/usr/bin/node',find_executable:()=>undefined,run_process:async(command)=>{commandSeen=command;return{exitCode:1,stdout:'',stderr:'synthetic stop',timedOut:false}}})
+    await bootstrap.ensure()
+    assert.equal(commandSeen,'/usr/bin/node')
+    assert.notEqual(commandSeen,process.execPath)
   }finally{f.cleanup()}
 })
 

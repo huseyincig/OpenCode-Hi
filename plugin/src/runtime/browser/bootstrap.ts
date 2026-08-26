@@ -4,6 +4,7 @@ import {homedir,platform} from 'node:os'
 import {dirname,join,resolve} from 'node:path'
 import {discoverChromiumInRoots} from './discovery.js'
 import {projectOperationalToolImplementationRoot} from '../storage/ownership.js'
+import {discoverOperationalToolOnPath} from '../tools/provisioning.js'
 
 export interface BrowserBootstrapRunResult{exitCode:number|null;stdout:string;stderr:string;timedOut:boolean}
 export interface BrowserBootstrapResult{available:boolean;attempted:boolean;cachePath:string;version?:string;executablePath?:string;reason?:string}
@@ -15,6 +16,7 @@ export interface PlaywrightBrowserBootstrapOptions{
   run_process?:(command:string,args:string[],options:{cwd:string;env:Record<string,string|undefined>;timeoutMs:number})=>Promise<BrowserBootstrapRunResult>
   package_json_path?:string
   cli_path?:string
+  node_executable?:string
   find_executable?:(cachePath:string)=>string|undefined
 }
 function bounded(text:string,max=8000):string{return text.length<=max?text:text.slice(text.length-max)}
@@ -57,11 +59,12 @@ export class PlaywrightBrowserBootstrap{
   readonly #run:NonNullable<PlaywrightBrowserBootstrapOptions['run_process']>
   readonly #packageJsonOverride?:string
   readonly #cliOverride?:string
+  readonly #nodeExecutable?:string
   readonly #findExecutable:(cachePath:string)=>string|undefined
   #attempt?:Promise<BrowserBootstrapResult>
   #last?:BrowserBootstrapResult
   constructor(options:PlaywrightBrowserBootstrapOptions){
-    this.packageRoot=resolve(options.package_root);this.version=configuredPlaywrightCoreVersion(this.packageRoot);this.cachePath=options.cache_path??(options.project_root?join(projectOperationalToolImplementationRoot(options.project_root,'browser-execution','playwright-chromium'),this.version??'unresolved'):hiPlaywrightCachePath(this.version??'unresolved'));this.#timeoutMs=Math.min(Math.max(options.timeout_ms??300_000,10_000),600_000);this.#run=options.run_process??runBounded;this.#packageJsonOverride=options.package_json_path;this.#cliOverride=options.cli_path;this.#findExecutable=options.find_executable??(cache=>discoverChromiumInRoots([cache]))
+    this.packageRoot=resolve(options.package_root);this.version=configuredPlaywrightCoreVersion(this.packageRoot);this.cachePath=options.cache_path??(options.project_root?join(projectOperationalToolImplementationRoot(options.project_root,'browser-execution','playwright-chromium'),this.version??'unresolved'):hiPlaywrightCachePath(this.version??'unresolved'));this.#timeoutMs=Math.min(Math.max(options.timeout_ms??300_000,10_000),600_000);this.#run=options.run_process??runBounded;this.#packageJsonOverride=options.package_json_path;this.#cliOverride=options.cli_path;this.#nodeExecutable=options.node_executable??discoverOperationalToolOnPath('node');this.#findExecutable=options.find_executable??(cache=>discoverChromiumInRoots([cache]))
   }
   status():BrowserBootstrapResult|undefined{return this.#last?{...this.#last}:undefined}
   discover():string|undefined{return this.version?this.#findExecutable(this.cachePath):undefined}
@@ -76,10 +79,11 @@ export class PlaywrightBrowserBootstrap{
     if(!this.version){return this.#remember({available:false,attempted:false,cachePath:this.cachePath,reason:'playwright-core exact runtime version is not configured'})}
     const located=locatePlaywrightCore(this.packageRoot,this.#packageJsonOverride,this.#cliOverride)
     if(!located)return this.#remember({available:false,attempted:false,cachePath:this.cachePath,version:this.version,reason:'playwright-core runtime package/CLI is unavailable'})
+    if(!this.#nodeExecutable)return this.#remember({available:false,attempted:false,cachePath:this.cachePath,version:this.version,reason:'Node.js runtime is unavailable for Playwright CLI bootstrap'})
     let actual:string|undefined;try{actual=JSON.parse(readFileSync(located.packageJson,'utf8'))?.version}catch{}
     if(actual!==this.version)return this.#remember({available:false,attempted:false,cachePath:this.cachePath,version:this.version,reason:`playwright-core version mismatch: configured=${this.version}; installed=${actual??'unknown'}`})
     mkdirSync(this.cachePath,{recursive:true})
-    const result=await this.#run(process.execPath,[located.cli,'install','chromium'],{cwd:this.packageRoot,env:{...process.env,PLAYWRIGHT_BROWSERS_PATH:this.cachePath},timeoutMs:this.#timeoutMs})
+    const result=await this.#run(this.#nodeExecutable,[located.cli,'install','chromium'],{cwd:this.packageRoot,env:{...process.env,PLAYWRIGHT_BROWSERS_PATH:this.cachePath},timeoutMs:this.#timeoutMs})
     if(result.timedOut)return this.#remember({available:false,attempted:true,cachePath:this.cachePath,version:this.version,reason:'playwright chromium bootstrap timed out'})
     if(result.exitCode!==0)return this.#remember({available:false,attempted:true,cachePath:this.cachePath,version:this.version,reason:`playwright chromium bootstrap failed: ${bounded(result.stderr||result.stdout||`exit ${result.exitCode}`,1200)}`})
     const executable=this.#findExecutable(this.cachePath)
