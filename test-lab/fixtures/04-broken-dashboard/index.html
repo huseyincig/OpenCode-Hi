@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;margin:0}.toolbar{display:flex;gap:8px}.cards{display:grid;grid-template-columns:repeat(4,320px);gap:16px}.card{border:1px solid #aaa;padding:12px}.modal{position:fixed;inset:20%;background:white;border:1px solid;padding:20px}.hidden{display:none}.dark{background:#111;color:#eee}</style></head><body><div class="toolbar"><input id="filter" placeholder="Filter"><button id="theme">☾</button><span id="count"></span></div><main class="cards" id="cards"></main><div id="modal" class="modal hidden"><button id="close">×</button><h2 id="modalTitle"></h2></div><script>
+const data=['Alpha','Beta','Gamma','Delta']; const cards=document.querySelector('#cards'), count=document.querySelector('#count');
+function render(items){cards.innerHTML=items.map(x=>`<button class="card" data-name="${x}">${x}</button>`).join(''); count.textContent=data.length+' items'} render(data)
+filter.oninput=()=>render(data.filter(x=>x.toLowerCase().includes(filter.value.toLowerCase())))
+cards.onclick=e=>{if(e.target.dataset.name){modalTitle.textContent=e.target.dataset.name;modal.classList.remove('hidden')}}
+close.onclick=()=>modal.classList.add('hidden')
+theme.onclick=()=>document.body.classList.toggle('dark')
+</script></body></html>

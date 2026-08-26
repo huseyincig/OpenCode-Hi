@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "04-broken-dashboard",
+  "status": "READY",
+  "prompt": "PROMPT.md",
+  "fixture": "../../fixtures/04-broken-dashboard",
+  "run_root": "../../runtime/04-broken-dashboard"
+}

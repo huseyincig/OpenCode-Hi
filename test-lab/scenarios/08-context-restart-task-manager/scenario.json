@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "08-context-restart-task-manager",
+  "status": "READY",
+  "prompt": "PROMPT.md",
+  "fixture": "../../fixtures/08-context-restart-task-manager",
+  "run_root": "../../runtime/08-context-restart-task-manager"
+}

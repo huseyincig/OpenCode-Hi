@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "02-flask-notes",
+  "status": "READY",
+  "prompt": "PROMPT.md",
+  "fixture": null,
+  "run_root": "../../runtime/02-flask-notes"
+}

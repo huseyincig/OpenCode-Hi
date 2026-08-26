@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "captured_at": "2026-08-26",
+  "live_opencode_version": "1.18.23",
+  "npm_opencode_ai_latest": "1.18.23",
+  "npm_sdk_latest": "1.18.23",
+  "host_policy": "Use current stable OpenCode at run time; this snapshot is informational and must be refreshed before live testing.",
+  "source_notes": [
+    "Local `opencode --version` and npm metadata are the mechanical host/version authority for this lab.",
+    "Official OpenCode Go/Zen documentation confirms provider model lists are dynamic and free models may be limited-time.",
+    "Live `opencode models` inventory is authoritative for the effective test allowlist at execution time."
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "07-parallel-api-ui-docs",
+  "status": "READY",
+  "prompt": "PROMPT.md",
+  "fixture": "../../fixtures/07-parallel-api-ui-docs",
+  "run_root": "../../runtime/07-parallel-api-ui-docs"
+}

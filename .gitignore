@@ -50,3 +50,8 @@ opencode.jsonc
 /ROADMAP.md
 /TASKS.md
 /agent-archive/
+
+# Real-life test lab ephemeral run state/artifacts
+test-lab/STATE.json
+test-lab/runtime/*
+!test-lab/runtime/.gitkeep

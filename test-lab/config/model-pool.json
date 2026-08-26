@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "purpose": "test-only model allowlist; never product hardcode",
+  "selection_policy": {
+    "single_mode": "prefer lower-cost eligible candidates in cost_priority; if model-specific behavior is suspected, advance to the next eligible candidate before attributing a product defect",
+    "adaptive_multi": "restrict to allowed_models but let OpenCode-Hi choose by its normal capability/routing logic; do not force role-to-model mappings just to pass a test",
+    "free_model_behavior": "quota/rate-limit/unavailable outcomes are intentionally observable test conditions"
+  },
+  "user_cost_order": [
+    "opencode-go/longcat-2.0",
+    "opencode-go/muse-spark-1.2-contributor",
+    "opencode-go/mimo-v2.5",
+    "opencode-go/deepseek-v4-flash",
+    "opencode-go/hy3",
+    "opencode-go/qwen3.7-plus",
+    "opencode-go/deepseek-v4-flash-vision-exp",
+    "opencode-go/minimax-m2.7",
+    "opencode-go/qwen3.6-plus",
+    "opencode-go/mimo-v2.5-pro"
+  ],
+  "live_free_candidates_as_of_2026_08_26": [
+    "opencode-go/ox-alpha-free",
+    "opencode/big-pickle",
+    "opencode/hy3-free",
+    "opencode/mimo-v2.5-free",
+    "opencode/muse-spark-1.2-contributor-free",
+    "opencode/nemotron-3-ultra-free",
+    "opencode/nemotron-3.5-lightning-free",
+    "opencode/x-preview-f-free"
+  ],
+  "cost_priority": [
+    "opencode-go/ox-alpha-free",
+    "opencode/big-pickle",
+    "opencode/hy3-free",
+    "opencode/mimo-v2.5-free",
+    "opencode/muse-spark-1.2-contributor-free",
+    "opencode/nemotron-3-ultra-free",
+    "opencode/nemotron-3.5-lightning-free",
+    "opencode/x-preview-f-free",
+    "opencode-go/longcat-2.0",
+    "opencode-go/muse-spark-1.2-contributor",
+    "opencode-go/mimo-v2.5",
+    "opencode-go/deepseek-v4-flash",
+    "opencode-go/hy3",
+    "opencode-go/qwen3.7-plus",
+    "opencode-go/deepseek-v4-flash-vision-exp",
+    "opencode-go/minimax-m2.7",
+    "opencode-go/qwen3.6-plus",
+    "opencode-go/mimo-v2.5-pro"
+  ],
+  "refresh_rule": "Before a test run, intersect this intended pool with live `opencode models opencode-go` and `opencode models opencode`; do not assume a free model remains available because it was present earlier."
+}
