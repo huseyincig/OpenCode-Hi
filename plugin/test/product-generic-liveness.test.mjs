@@ -20,17 +20,6 @@ test('~120s no durable progress + exact inflight NO => STALLED',async()=>{
   assert.equal(x.state,'STALLED');assert.equal(x.inflight,'NO');assert.equal(x.last_durable_progress_at,10_000)
 })
 
-
-test('>120s no durable progress + exact primary session busy/retry => ACTIVE inflight YES',async()=>{
-  const {assessMissionLiveness}=await api(),m=mission('primary-busy-not-stall');event(m,'semantic.assessed',10_000,{revision:1})
-  for(const status of ['busy','retry']){const x=assessMissionLiveness(m,{now:200_000,hostSessions:{[m.identity.session_id]:status}});assert.equal(x.state,'ACTIVE');assert.equal(x.inflight,'YES');assert.equal(x.destructive_recovery_allowed,false);assert.ok(x.reasons.some(r=>r===`host-primary-session-${status}:${m.identity.session_id}`))}
-})
-
-test('exact primary session unknown => RECONCILE and never destructive recovery',async()=>{
-  const {assessMissionLiveness}=await api(),m=mission('primary-unknown');event(m,'semantic.assessed',10_000,{revision:1})
-  const x=assessMissionLiveness(m,{now:200_000,hostSessions:{[m.identity.session_id]:'unknown'}});assert.equal(x.state,'RECONCILE');assert.equal(x.inflight,'UNKNOWN');assert.equal(x.destructive_recovery_allowed,false)
-})
-
 test('>120s no durable progress + exact native busy => not STALLED',async()=>{
   const {assessMissionLiveness}=await api(),m=mission('busy-not-stall');event(m,'semantic.assessed',10_000,{revision:1})
   m.execution.tasks.push({id:'t',mission_id:m.identity.mission_id,objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',external_action_requirements:[],created_at:10_001,updated_at:10_001})

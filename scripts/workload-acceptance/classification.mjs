@@ -1,4 +1,0 @@
-export const CLASSIFICATIONS=Object.freeze(['ACCEPTANCE_PASS','WORKLOAD_RESULT_FAILURE','PRODUCT_DEFECT','HARNESS_DEFECT','FIXTURE_DEFECT','ORACLE_DEFECT','OPERATIONAL_TOOL_BLOCKER','ENVIRONMENT_BLOCKER','PROVIDER_RUNTIME_FAILURE','MODEL_BEHAVIOR','EXPECTED_POLICY_BEHAVIOR','DESIGN_CHANGE_REQUIRED','INCONCLUSIVE'])
-const terminal=new Set(CLASSIFICATIONS)
-export function classify(kind,{evidenceRefs=[],rootCause}={}){if(!CLASSIFICATIONS.includes(kind))throw new Error(`UNKNOWN_CLASSIFICATION:${kind}`);if(kind==='PRODUCT_DEFECT'&&(!rootCause||!evidenceRefs.length))throw new Error('PRODUCT_DEFECT_REQUIRES_MECHANICAL_PROOF');return{class:kind,evidence_refs:[...evidenceRefs],root_cause:rootCause??null,product_repair_authorized:kind==='PRODUCT_DEFECT',terminal_allowed:terminal.has(kind)}}
-export const productRepairAuthorized=c=>c?.class==='PRODUCT_DEFECT'&&c.product_repair_authorized===true

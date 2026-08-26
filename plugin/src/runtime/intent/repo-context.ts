@@ -25,13 +25,11 @@ function has(root:string,name:string):boolean{try{return existsSync(join(root,na
 function packageScripts(root:string):Record<string,unknown>{try{const p=JSON.parse(readFileSync(join(root,'package.json'),'utf8'));return p?.scripts&&typeof p.scripts==='object'?p.scripts:{}}catch{return{}}}
 function usableScript(value:unknown):boolean{const s=String(value??'').trim();if(!s)return false;if(/no test specified|not implemented|todo:?\s*(?:add|write).*test/i.test(s))return false;return true}
 function nodeVerificationKinds(s:Record<string,unknown>):string[]{const out:string[]=[];const keys=Object.keys(s);if((keys.includes('test')&&usableScript(s.test))||keys.some(k=>/^test[:.-]/.test(k)&&usableScript(s[k])))out.push('test');for(const key of ['typecheck','check','lint','build'])if(key in s&&usableScript(s[key]))out.push(key);return out}
-function plainPythonTestSurface(root:string):boolean{try{const top=readdirSync(root,{withFileTypes:true});return top.some((x:any)=>x.isFile()&&x.name.endsWith('.py'))&&top.some((x:any)=>x.isDirectory()&&(x.name==='test'||x.name==='tests'))}catch{return false}}
 export function collectRepoContext(root:string,nativeContext:NativeProjectContext={}):RepoContext{
   const nativeRoot=resolveNativeProjectRoot(root,nativeContext)
   const ecosystems:string[]=[];const markers:string[]=[];const likelyVerification:string[]=[]
   if(has(nativeRoot,'package.json')){ecosystems.push('node');markers.push('package.json');const s=packageScripts(nativeRoot);likelyVerification.push(...nodeVerificationKinds(s))}
-  const declaredPython=has(nativeRoot,'pyproject.toml')||has(nativeRoot,'requirements.txt'),plainPython=plainPythonTestSurface(nativeRoot)
-  if(declaredPython||plainPython){ecosystems.push('python');markers.push(declaredPython?(has(nativeRoot,'pyproject.toml')?'pyproject.toml':'requirements.txt'):'python-files');likelyVerification.push(declaredPython?'pytest':'unittest')}
+  if(has(nativeRoot,'pyproject.toml')||has(nativeRoot,'requirements.txt')){ecosystems.push('python');markers.push(has(nativeRoot,'pyproject.toml')?'pyproject.toml':'requirements.txt');likelyVerification.push('pytest')}
   if(has(nativeRoot,'Cargo.toml')){ecosystems.push('rust');markers.push('Cargo.toml');likelyVerification.push('cargo test')}
   if(has(nativeRoot,'go.mod')){ecosystems.push('go');markers.push('go.mod');likelyVerification.push('go test')}
   if(has(nativeRoot,'composer.json')){ecosystems.push('php');markers.push('composer.json')}

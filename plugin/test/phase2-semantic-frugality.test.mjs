@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
-import { parseSemanticIntentAssessment, resolveAdaptiveVerificationAssessment, technicalVerificationKinds } from '../dist/runtime/intent/semantic-assessment.js'
+import { parseSemanticIntentAssessment, technicalVerificationKinds } from '../dist/runtime/intent/semantic-assessment.js'
 import { assessChangedFileOwnership } from '../dist/runtime/task/diff-ownership.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { renderSemanticAssessmentGate } from '../dist/runtime/intent/semantic-assessment-gate.js'
@@ -134,15 +134,6 @@ test('M10 initial local contract keeps explicit user verifier ahead of inferred 
   const assessed=mission.execution.ledger.find(e=>e.type==='semantic.assessed')
   assert.deepEqual(assessed?.payload?.technical_user_verification,['targeted-tests'])
   assert.equal(assessed?.payload?.technical_verification_ceiling_applied,true)
-})
-
-
-test('W01 bounded local medium bug-fix filters unavailable inferred repo-native verifier kinds',()=>{
-  const proposed=parseSemanticIntentAssessment({...assessment,likely_verification:['targeted-tests','build'],likely_targets:['cli.mjs']})
-  const repo={root:'/fixture',name:'w01',ecosystems:['node'],markers:['package.json','test/'],likelyVerification:['test'],git:true,native:{directory:'/fixture',worktree:'/fixture',vcs:'git'}}
-  const resolved=resolveAdaptiveVerificationAssessment(proposed,'Mevcut public testi çalıştır; sonucu mekanik test kanıtıyla tamamla.',repo)
-  assert.equal(resolved.policy,'local-capability-surface')
-  assert.deepEqual(resolved.assessment.likely_verification,['targeted-tests'])
 })
 
 test('M10 high-risk initial assessment may widen beyond an explicit user verifier',()=>{

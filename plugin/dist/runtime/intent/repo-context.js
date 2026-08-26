@@ -33,13 +33,6 @@ function nodeVerificationKinds(s) { const out = []; const keys = Object.keys(s);
     out.push('test'); for (const key of ['typecheck', 'check', 'lint', 'build'])
     if (key in s && usableScript(s[key]))
         out.push(key); return out; }
-function plainPythonTestSurface(root) { try {
-    const top = readdirSync(root, { withFileTypes: true });
-    return top.some((x) => x.isFile() && x.name.endsWith('.py')) && top.some((x) => x.isDirectory() && (x.name === 'test' || x.name === 'tests'));
-}
-catch {
-    return false;
-} }
 export function collectRepoContext(root, nativeContext = {}) {
     const nativeRoot = resolveNativeProjectRoot(root, nativeContext);
     const ecosystems = [];
@@ -51,11 +44,10 @@ export function collectRepoContext(root, nativeContext = {}) {
         const s = packageScripts(nativeRoot);
         likelyVerification.push(...nodeVerificationKinds(s));
     }
-    const declaredPython = has(nativeRoot, 'pyproject.toml') || has(nativeRoot, 'requirements.txt'), plainPython = plainPythonTestSurface(nativeRoot);
-    if (declaredPython || plainPython) {
+    if (has(nativeRoot, 'pyproject.toml') || has(nativeRoot, 'requirements.txt')) {
         ecosystems.push('python');
-        markers.push(declaredPython ? (has(nativeRoot, 'pyproject.toml') ? 'pyproject.toml' : 'requirements.txt') : 'python-files');
-        likelyVerification.push(declaredPython ? 'pytest' : 'unittest');
+        markers.push(has(nativeRoot, 'pyproject.toml') ? 'pyproject.toml' : 'requirements.txt');
+        likelyVerification.push('pytest');
     }
     if (has(nativeRoot, 'Cargo.toml')) {
         ecosystems.push('rust');

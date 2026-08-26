@@ -61,9 +61,7 @@
     "test:direct-git-host": "node scripts/run-python.mjs scripts/run-direct-git-host-acceptance.py",
     "host:check-update": "node scripts/run-python.mjs scripts/opencode_upstream_tracker.py --fetch",
     "host:observe-update": "node scripts/run-python.mjs scripts/opencode_upstream_tracker.py --fetch --write",
-    "release:preflight": "node scripts/release-preflight.mjs",
-    "test:w-harness": "node --test tests/test_workload_acceptance_harness.mjs",
-    "check:w-harness": "node scripts/workload-acceptance/certify.mjs"
+    "release:preflight": "node scripts/release-preflight.mjs"
   },
   "publishConfig": {
     "access": "public"

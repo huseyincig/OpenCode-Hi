@@ -1,4 +1,0 @@
-import {rmSync,existsSync} from 'node:fs'
-import {resolve,sep} from 'node:path'
-function contained(path,root){const p=resolve(path),r=resolve(root);return p===r||p.startsWith(r+sep)}
-export async function cleanupOwnedResources(runId,resources){const cleaned=[],skipped=[],quarantined=[];for(const r of resources){if(r.ownerRunId!==runId){skipped.push(r);continue}if(r.kind==='path'){if(!contained(r.path,r.root)){quarantined.push({...r,reason:'PATH_OUTSIDE_OWNED_ROOT'});continue}if(existsSync(r.path))rmSync(r.path,{recursive:true,force:true});cleaned.push(r);continue}if(r.kind==='process'){const result=await r.manager.terminate(r.contract,r.options);if(result.disposition==='QUARANTINED')quarantined.push({...r,reason:result.reason});else cleaned.push({...r,result});continue}if(r.kind==='lock'){await r.lock.release();cleaned.push(r);continue}skipped.push(r)}return{cleaned,skipped,quarantined}}

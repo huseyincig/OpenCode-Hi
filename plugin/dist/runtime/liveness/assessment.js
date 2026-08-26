@@ -49,14 +49,6 @@ function toolInflight(m, host) {
     return unknown ? 'UNKNOWN' : 'NO';
 }
 function mergeInflight(values) { return values.includes('YES') ? 'YES' : values.includes('UNKNOWN') ? 'UNKNOWN' : 'NO'; }
-function primaryInflight(m, host) {
-    const status = host[m.identity.session_id];
-    if (status === 'busy' || status === 'retry')
-        return { state: 'YES', reasons: [`host-primary-session-${status}:${m.identity.session_id}`] };
-    if (status === 'unknown')
-        return { state: 'UNKNOWN', reasons: [`host-primary-session-unknown:${m.identity.session_id}`] };
-    return { state: 'NO', reasons: [] };
-}
 function workerInflight(m, host) {
     const reasons = [], states = [];
     for (const worker of m.execution.workers) {
@@ -115,7 +107,7 @@ export function assessMissionLiveness(m, observation = {}) {
     const now = observation.now ?? Date.now(), window = Math.max(1, Math.floor(observation.noProgressWindowMs ?? DEFAULT_NO_PROGRESS_WINDOW_MS)), last = lastDurableProgressAt(m), noProgress = Math.max(0, now - last);
     if (['completed', 'stopped', 'failed'].includes(m.identity.status))
         return { state: 'TERMINAL', inflight: 'NO', last_durable_progress_at: last, no_progress_ms: noProgress, no_progress_window_ms: window, destructive_recovery_allowed: false, reasons: ['execution-terminal'] };
-    const host = observation.hostSessions ?? {}, primary = primaryInflight(m, host), tool = toolInflight(m, host), workers = workerInflight(m, host), processes = processInflight(m, observation.processes ?? {}), inflight = mergeInflight([primary.state, tool, workers.state, processes.state]), reasons = [...primary.reasons, ...workers.reasons, ...processes.reasons];
+    const host = observation.hostSessions ?? {}, tool = toolInflight(m, host), workers = workerInflight(m, host), processes = processInflight(m, observation.processes ?? {}), inflight = mergeInflight([tool, workers.state, processes.state]), reasons = [...workers.reasons, ...processes.reasons];
     if (tool === 'YES')
         reasons.push('current-tool-operation');
     else if (tool === 'UNKNOWN')

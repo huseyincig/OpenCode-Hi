@@ -34,29 +34,14 @@ function specialistMutationAllowed(role, task, tool, args, projectRoot, workingD
         return surfaces.every(path => scope.has(path) || /(^|\/)(?:docs?|documentation)(\/|$)|(^|\/)(?:README|CHANGELOG|CONTRIBUTING|SECURITY|SUPPORT)(?:\.[^/]*)?$|\.(?:md|mdx|rst|adoc)$/i.test(path));
     return surfaces.every(path => /(^|\/)(?:test|tests|__tests__|spec|specs|fixtures?)(\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path));
 }
-function resolveChildSessionOwner(store, background, sessionID) {
-    if (!sessionID)
-        return undefined;
-    const ephemeral = background?.list().filter(worker => worker.session_id === sessionID) ?? [];
-    const durable = store.all().flatMap(mission => mission.execution.workers.filter(worker => worker.session_id === sessionID));
-    const byIdentity = new Map([...ephemeral, ...durable].map(worker => [`${worker.parent_mission_id ?? ''}:${worker.id}`, worker]));
-    if (byIdentity.size > 1)
-        throw new Error(`Hi ownership guard: child session '${sessionID}' maps to multiple worker identities; reconcile durable runtime ownership before tool execution.`);
-    return [...byIdentity.values()][0];
-}
 export function createToolBeforeHook(store, background, projectRoot, workingDirectory) {
     return async (input, output) => {
-        const sid = input?.sessionID ?? input?.sessionId, child = resolveChildSessionOwner(store, background, sid), m = child ? store.get(child.parent_session_id) : store.get(sid);
-        if (child && !m)
-            throw new Error(`Hi ownership guard: child session '${String(sid)}' has no durable parent Mission; tool execution is blocked until ownership is reconciled.`);
+        const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
         if (!m)
             return;
-        const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
-        if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation))) {
-            if (toolMayMutate(tool, args))
-                throw new Error(`Hi ownership guard: stale child session '${String(sid)}' cannot mutate after Mission ownership/generation changed.`);
+        if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
-        }
+        const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
         if (!child && !NON_MATERIAL_CONTROL_TOOLS.has(tool) && store.reopenContradictedNonMaterial(String(sid), tool))
             throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`);
         if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args)) {
