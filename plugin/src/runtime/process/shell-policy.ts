@@ -4,7 +4,42 @@ import {gitCommandParts} from '../safety/command-classifier.js'
 export type ShellDecision='ALLOW'|'REWRITE'|'USER_ACTION_REQUIRED'|'DENY'
 export type ShellHumanDecisionType='credential_action'|'operational_action'
 export interface ShellPolicyResult{decision:ShellDecision;command:string;reason:string;human_decision_type?:ShellHumanDecisionType;reason_code?:string}
-const INTERACTIVE=[/\bssh\b(?!.*\s-[^\n]*T)/i,/\bpasswd\b/i,/\b(?:npm|pnpm|yarn)\s+login\b/i,/\bgh\s+auth\s+login\b/i,/\baz\s+login\b/i,/\bgcloud\s+(?:auth\s+)?login\b/i,/\baws\s+(?:sso\s+login|configure\s+sso|login)\b/i,/\bselect\s+/i]
+interface ShellCommandView{executable:string;args:string[];assignments:string[]}
+function shellWords(source:string):string[]{
+  const out:string[]=[];let cur='',quote:'"'|"'"|undefined,escape=false
+  const flush=()=>{if(cur){out.push(cur);cur=''}}
+  for(let i=0;i<source.length;i++){
+    const ch=source[i]
+    if(escape){cur+=ch;escape=false;continue}
+    if(ch==='\\'&&quote!=="'"){escape=true;continue}
+    if(quote){if(ch===quote)quote=undefined;else cur+=ch;continue}
+    if(ch==='"'||ch==="'"){quote=ch;continue}
+    if(/\s/.test(ch)){flush();continue}
+    cur+=ch
+  }
+  flush();return out
+}
+function commandBasename(value:string|undefined):string{return(value??'').replace(/^.*[\\/]/,'').toLowerCase()}
+function commandView(text:string):ShellCommandView|undefined{
+  const tokens=shellWords(text);if(!tokens.length)return
+  let i=0;const assignments:string[]=[]
+  while(i<tokens.length&&/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))assignments.push(tokens[i++])
+  const executable=commandBasename(tokens[i]);if(!executable)return
+  return{executable,args:tokens.slice(i+1),assignments}
+}
+function interactiveAssessment(view:ShellCommandView|undefined,dialect:ExecutionFragment['dialect']):boolean{
+  if(!view)return false
+  const {executable,args}=view,a0=args[0]?.toLowerCase(),a1=args[1]?.toLowerCase()
+  if(executable==='select'&&dialect==='posix')return true
+  if(executable==='ssh')return !args.some(token=>/^-[^-]*T/.test(token))
+  if(executable==='passwd')return true
+  if(['npm','pnpm','yarn'].includes(executable)&&a0==='login')return true
+  if(executable==='gh'&&a0==='auth'&&a1==='login')return true
+  if(executable==='az'&&a0==='login')return true
+  if(executable==='gcloud'&&(a0==='login'||a0==='auth'&&a1==='login'))return true
+  if(executable==='aws'&&(a0==='login'||a0==='sso'&&a1==='login'||a0==='configure'&&a1==='sso'))return true
+  return false
+}
 const CATASTROPHIC_FILESYSTEM=[
   /(?:^|[;&|]\s*)shred\s+[^;|&]*(?:\/dev\/|\/etc\/|\/home\/|~\/|\$HOME)/i,
   /(?:^|[;&|]\s*)mkfs(?:\.[A-Za-z0-9_-]+)?\s/i,
@@ -16,11 +51,27 @@ const IRREVERSIBLE_EXTERNAL=[
   /\bterraform\s+destroy\b/i,
   /\b(?:aws|gcloud|az)\b[^;|&]*\b(?:delete|destroy|terminate)\b/i,
 ]
-const SECRET_SENSITIVE=[
-  /\b(?:password|passwd|secret|token|api[_-]?key)\s*=\s*[^\s$][^\s]*/i,
-  /(?:--(?:password|secret|token|api[_-]?key)|-p)\s+[A-Za-z0-9._~+\/-]{8,}/i,
-  /\bAuthorization:\s*Bearer\s+[A-Za-z0-9._~+\/-]{12,}/i,
-]
+const SHORT_PASSWORD_COMMANDS=new Set(['mysql','mariadb','mysqldump','mariadb-dump','mysqladmin','mariadb-admin','sshpass'])
+function plainSecretValue(value:string|undefined):boolean{
+  if(!value)return false
+  const normalized=value.replace(/^['"]|['"]$/g,'')
+  return Boolean(normalized&&!/[${}`]/.test(normalized)&&!/^<[^>]+>$/.test(normalized)&&normalized!=='<HI_REDACTED_SECRET>')
+}
+function secretSensitiveAssessment(view:ShellCommandView|undefined):boolean{
+  if(!view)return false
+  for(const assignment of view.assignments){const match=/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/.exec(assignment);if(match&&/(?:password|passwd|secret|token|api_?key)$/i.test(match[1])&&plainSecretValue(match[2]))return true}
+  const args=view.args
+  for(let i=0;i<args.length;i++){
+    const token=args[i]
+    if(/^Authorization:\s*Bearer\s+[A-Za-z0-9._~+\/-]{12,}$/i.test(token))return true
+    const long=/^--(?:password|secret|token|api[_-]?key)(?:=(.*))?$/i.exec(token)
+    if(long&&plainSecretValue(long[1]??args[i+1]))return true
+  }
+  const shortPassword=SHORT_PASSWORD_COMMANDS.has(view.executable)||(['docker','podman'].includes(view.executable)&&args[0]?.toLowerCase()==='login')
+  if(!shortPassword)return false
+  for(let i=0;i<args.length;i++){const token=args[i];if(token==='-p'&&plainSecretValue(args[i+1]))return true;if(/^-p.+/.test(token)&&plainSecretValue(token.slice(2)))return true}
+  return false
+}
 function words(text:string):string[]{return text.trim().split(/\s+/).filter(Boolean)}
 function executableWords(text:string):string[]{const tokens=words(text);let i=0;while(i<tokens.length&&/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))i++;return tokens.slice(i)}
 function executableText(text:string):string{return executableWords(text).join(' ')}
@@ -78,11 +129,10 @@ export function evaluateShellCommand(command:string):ShellPolicyResult{
   const c=command.trim();if(!c)return{decision:'DENY',command:c,reason:'empty command'}
   if(/^\s*yes\s*\|/i.test(c)||/\|\s*yes\s*$/i.test(c))return{decision:'DENY',command:c,reason:'blanket approval bypass is forbidden'}
   const projection=projectExecutionSurface(c)
-  if(projection.uncertain&&/(?:\brm\b|\bgit\b|\bRemove-Item\b|\b(?:push|publish|delete|destroy|mkfs|dd)\b)/i.test(c))return userAction(c,`bounded execution projection is uncertain (${projection.uncertainty.join(', ')}); potentially destructive execution is not admitted`,'shell-execution-uncertain')
   for(const fragment of projection.fragments){
-    const text=fragment.text,executable=fragment.dialect==='posix'?executableText(text):text
-    if(INTERACTIVE.some(r=>r.test(text)))return{decision:'USER_ACTION_REQUIRED',command:c,reason:'interactive credential or terminal flow requires real user interaction',human_decision_type:'credential_action',reason_code:'interactive-shell'}
-    if(SECRET_SENSITIVE.some(r=>r.test(text)))return{decision:'USER_ACTION_REQUIRED',command:c,reason:'plaintext secret-sensitive command requires explicit user action and safer credential handling',human_decision_type:'credential_action',reason_code:'secret-sensitive-shell'}
+    const text=fragment.text,executable=fragment.dialect==='posix'?executableText(text):text,view=commandView(text)
+    if(interactiveAssessment(view,fragment.dialect))return{decision:'USER_ACTION_REQUIRED',command:c,reason:'interactive credential or terminal flow requires real user interaction',human_decision_type:'credential_action',reason_code:'interactive-shell'}
+    if(secretSensitiveAssessment(view))return{decision:'USER_ACTION_REQUIRED',command:c,reason:'plaintext secret-sensitive command requires explicit user action and safer credential handling',human_decision_type:'credential_action',reason_code:'secret-sensitive-shell'}
     const rm=rmAssessment(fragment);if(rm==='catastrophic')return userAction(c,'catastrophic recursive filesystem mutation requires explicit user action','destructive-filesystem-action');if(rm==='dynamic')return userAction(c,'recursive filesystem mutation has a dynamically resolved target and requires explicit reconciliation','dynamic-destructive-target')
     const git=gitAssessment(fragment);if(git==='destructive')return userAction(c,'destructive Git worktree/index rewrite requires explicit user action','destructive-git-action');if(git==='dynamic')return userAction(c,'destructive Git operation contains dynamically resolved execution syntax','dynamic-destructive-git')
     const ps=powershellAssessment(fragment);if(ps==='destructive')return userAction(c,'recursive PowerShell filesystem mutation requires explicit user action','destructive-filesystem-action');if(ps==='dynamic')return userAction(c,'PowerShell filesystem mutation has dynamically resolved execution syntax','dynamic-destructive-target')

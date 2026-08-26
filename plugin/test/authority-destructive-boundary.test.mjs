@@ -29,6 +29,11 @@ test('potentially paid or irreversible supported external effects enter exact Au
   }
 })
 
+test('shell credential semantics are bound to the called executable and argv boundaries',()=>{
+  for(const command of ['mkdir -p /workspace/project/templates',`.venv/bin/python -c "import sqlite3; conn=sqlite3.connect('notes.db'); conn.execute('SELECT id FROM notes').fetchall()"`])assert.equal(evaluateShellCommand(command).decision,'ALLOW',command)
+  for(const command of ['mysql -p supersecret','mariadb-dump -psupersecret db','docker login -p supersecret registry.example','deploy-tool --api-key abcdefghijklmnop']){const result=evaluateShellCommand(command);assert.equal(result.decision,'USER_ACTION_REQUIRED',command);assert.equal(result.reason_code,'secret-sensitive-shell',command)}
+})
+
 test('bounded local cleanup is not misclassified as catastrophic filesystem destruction',()=>{
   for(const command of ['rm -rf ./dist','rm -rf /tmp/hi-build-123','rm -f ./cache.json','git clean -fd -- ./dist','TOKEN=$DEPLOY_TOKEN deploy-tool run','deploy-tool --token $DEPLOY_TOKEN']){
     assert.notEqual(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED',command)

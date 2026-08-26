@@ -91,3 +91,12 @@ test('malformed destructive execution fails closed without unbounded recursive a
   assert.equal(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED')
   assert.ok(projection.workUnits<=524288)
 })
+
+
+test('valid shell data and comment vocabulary cannot impersonate shell control semantics',()=>{
+  const command=`echo safe
+# The template itself doesn't render note data - JS does via textContent
+curl -s -X DELETE http://127.0.0.1:5000/notes/5`
+  assert.equal(evaluateShellCommand(command).decision,'ALLOW')
+  assert.equal(evaluateShellCommand(`python -c "print('SELECT id FROM notes')"`).decision,'ALLOW')
+})
