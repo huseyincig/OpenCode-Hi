@@ -131,7 +131,7 @@ test('transport dispose cancels every open waiter and rejects late replies',asyn
   transport.dispose()
 })
 
-test('plugin dispose resolves and stops a waiting-user Mission before clean persistence',async()=>{
+test('plugin dispose preserves a waiting-user Mission and durable HumanDecision across clean host teardown',async()=>{
   const {default:HiPlugin}=await import('../dist/plugin.js')
   const {assessPluginMission}=await import('./helpers/semantic.mjs')
   const root=mkdtempSync(join(tmpdir(),'hi-hd-plugin-dispose-'))
@@ -146,8 +146,32 @@ test('plugin dispose resolves and stops a waiting-user Mission before clean pers
     assert.equal(before?.identity.status,'waiting-user');assert.equal(before?.authority.human_decision?.status,'OPEN')
     await hooks.dispose();hooks=undefined
     const after=new RuntimePersistence(root).load().find(x=>x.identity.session_id==='h1-dispose-parent')
-    assert.equal(after?.identity.status,'stopped')
-    assert.equal(after?.authority.human_decision?.status,'RESOLVED')
-    assert.equal(after?.authority.human_decision?.resolution,'mission-stopped')
+    assert.equal(after?.identity.status,'waiting-user')
+    assert.equal(after?.continuation.user_interrupted,false)
+    assert.equal(after?.authority.human_decision?.status,'OPEN')
+    assert.equal(after?.execution.ledger.some(e=>e.type==='mission.stopped'&&e.payload?.reason==='plugin-dispose'),false)
+    assert.ok(after?.execution.ledger.some(e=>e.type==='runtime.plugin-disposed'&&e.payload?.durable_mission_preserved===true))
+  }finally{await hooks?.dispose?.();rmSync(root,{recursive:true,force:true})}
+})
+
+test('plugin dispose preserves an active worker recipe for restart reconciliation instead of cancelling it',async()=>{
+  const {default:HiPlugin}=await import('../dist/plugin.js')
+  const {assessPluginMission}=await import('./helpers/semantic.mjs')
+  const root=mkdtempSync(join(tmpdir(),'hi-active-plugin-dispose-'))
+  let child=0
+  const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`child-${++child}`}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),status:async()=>({data:{}}),diff:async()=>({data:[]}),messages:async()=>({data:[]})}}
+  let hooks
+  try{
+    hooks=await HiPlugin({directory:root,worktree:root,project:{},client});await hooks.config({})
+    const sid='h1-dispose-active';await hooks['chat.message']({sessionID:sid,agent:'working-manager'},userOutput('fix local bug'))
+    await assessPluginMission(hooks,sid,{task_kind:'bug-fix',required_capabilities:['implementation'],likely_verification:['targeted-tests']})
+    const started=JSON.parse(String(await hooks.tool.hi_task_start.execute({input:{role:'coder',objective:'fix local bug'}},{sessionID:sid})))
+    assert.match(started.task_id,/^t_/);assert.match(started.worker_id,/^w_/)
+    await hooks.dispose();hooks=undefined
+    const after=new RuntimePersistence(root).load().find(x=>x.identity.session_id===sid)
+    const task=after?.execution.tasks.find(x=>x.id===started.task_id),worker=after?.execution.workers.find(x=>x.id===started.worker_id)
+    assert.equal(after?.identity.status,'active');assert.equal(after?.continuation.user_interrupted,false)
+    assert.equal(task?.status,'running');assert.equal(worker?.status,'busy');assert.equal(worker?.session_id,'child-1')
+    assert.equal(after?.execution.ledger.some(e=>e.type==='worker.cancelled'&&e.worker_id===started.worker_id),false)
   }finally{await hooks?.dispose?.();rmSync(root,{recursive:true,force:true})}
 })

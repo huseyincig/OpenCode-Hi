@@ -85,9 +85,8 @@ export function createOpenCodeHooks(input) {
         dispose: async () => { try {
             for (const m of store.all())
                 if (['active', 'waiting-user'].includes(m.identity.status)) {
-                    store.stop(m.identity.session_id, 'plugin-dispose');
                     await processRuntime.stopMission(m);
-                    await tasks.cancelAll(m);
+                    appendLedger(m, 'runtime.plugin-disposed', { payload: { mission_status: m.identity.status, durable_mission_preserved: true, semantic_stop: false } });
                 }
             humanDecisionTransport.dispose();
             eventController.clearAllNativePermissions();
