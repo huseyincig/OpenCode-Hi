@@ -610,7 +610,7 @@ export function createHiToolSurface(input) {
     const assertChildProcessOwner = (cx, id) => { if (!cx?.child)
         return; const owned = cx.m.execution.processes.find((item) => item.process_id === id); if (!owned || owned.worker_id !== cx.child.id || owned.task_id !== cx.child.task_id)
         throw new Error(`Hi process ownership: child '${cx.child.id}' cannot access process '${id}' outside its own task.`); };
-    const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. This tool never creates process ownership and has no process_lifecycle argument: a parent must first call hi_task_start with process_lifecycle=true, then the admitted exact task worker owns hi_process_spawn. Child calls are admitted only for that exact child worker/task. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { let cx; try {
+    const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. This tool never creates process ownership and has no process_lifecycle argument: a parent must first call hi_task_start with process_lifecycle=true, then the admitted exact task worker owns hi_process_spawn. timeout_ms is an optional HARD wall-clock termination deadline, not a readiness/wait budget: omit timeout_ms for a server/watcher/service that must remain alive while verification uses it; use a finite timeout only when termination at that deadline is actually intended. Never increase a finite timeout and replay the same healthy persistent command as a substitute for persistence. Child calls are admitted only for that exact child worker/task. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { let cx; try {
             cx = processToolContext(c);
         }
         catch (error) {
@@ -677,11 +677,14 @@ export function createHiToolSurface(input) {
         catch (error) {
             return `Process write failed: ${String(error)}`;
         } } });
-    const processWaitTool = tool({ description: 'Await the native exit promise for one owned Hi process. Child calls are same-worker only. This is event-driven and must not be used as a polling loop.', args: { id: tool.schema.string() }, execute: async (a, c) => { try {
+    const processWaitTool = tool({ description: 'Await natural/timeout terminal exit for one owned bounded process. Do NOT call this on a server/watcher/service that is intentionally supposed to remain RUNNING while you verify against it; for persistent service mode use hi_process_read or the service itself, then hi_process_kill and hi_process_cleanup when verification is finished. Child calls are same-worker only. This is event-driven and must not be used as a polling loop.', args: { id: tool.schema.string() }, execute: async (a, c) => { try {
             const cx = processToolContext(c);
             if (!cx)
                 return 'No active Hi mission';
             assertChildProcessOwner(cx, String(a.id));
+            const current = cx.m.execution.processes.find((item) => item.process_id === String(a.id));
+            if (current?.status === 'RUNNING' && current.timeout_at === undefined)
+                return JSON.stringify({ status: 'BLOCKED', reason: 'persistent-process-still-running', process_id: String(a.id), deadline_policy: 'none', retry_wait: false, next_tools: ['hi_process_read', 'hi_process_kill', 'hi_process_cleanup'], instruction: 'This process has no hard deadline and is therefore in persistent-service mode. Keep it running while exercising/health-checking the service; do not wait for exit. When verification is complete, kill the exact owned process and then cleanup it.' });
             return JSON.stringify(await processRuntime.wait(cx.m, String(a.id)));
         }
         catch (error) {

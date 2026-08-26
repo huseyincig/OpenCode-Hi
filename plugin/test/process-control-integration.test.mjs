@@ -39,6 +39,22 @@ function processOwnedChildFixture(){
   return{store,m,task,worker}
 }
 
+test('model-facing process tools distinguish persistent services from hard-deadline bounded jobs',async()=>{
+  const {store,m,task,worker}=processOwnedChildFixture();let waits=0
+  const persistent={process_id:'proc-persistent',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'a'.repeat(64),cwd:'/repo',authority_ref:'native',pid:42,process_group_id:42,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],cleanup_state:'ACTIVE'}
+  m.execution.processes.push(persistent)
+  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async()=>({}),read:async()=>({}),write:async()=>{},wait:async()=>{waits++;return persistent},kill:async()=>({}),cleanup:async()=>{}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  assert.match(toolSurface.hi_process_spawn.description,/timeout_ms is an optional HARD wall-clock termination deadline/i)
+  assert.match(toolSurface.hi_process_spawn.description,/omit timeout_ms for a server\/watcher\/service/i)
+  assert.match(toolSurface.hi_process_wait.description,/Do NOT call this on a server\/watcher\/service/i)
+  const blocked=JSON.parse(await toolSurface.hi_process_wait.execute({id:persistent.process_id},{sessionID:worker.session_id}))
+  assert.equal(blocked.status,'BLOCKED');assert.equal(blocked.reason,'persistent-process-still-running');assert.equal(blocked.retry_wait,false);assert.deepEqual(blocked.next_tools,['hi_process_read','hi_process_kill','hi_process_cleanup']);assert.equal(waits,0)
+  persistent.timeout_at=Date.now()+1000
+  await toolSurface.hi_process_wait.execute({id:persistent.process_id},{sessionID:worker.session_id});assert.equal(waits,1,'explicit hard-deadline process remains eligible for event-driven terminal wait')
+})
+
 test('child process tool surface resolves parent mission and enforces exact worker ownership',async()=>{
   const {store,m,task,worker}=processOwnedChildFixture(),calls=[]
   const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(['spawn',input.worker_id]);const p={process_id:'proc-own',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'x',cwd:'/repo',authority_ref:'native',pid:42,process_group_id:42,status:'RUNNING',started_at:Date.now(),cleanup_state:'ACTIVE'};m.execution.processes.push(p);return p},read:async()=>({text:'ok',start_cursor:0,end_cursor:2,available_start_cursor:0,available_end_cursor:2,truncated:false}),write:async()=>{},wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{}}
