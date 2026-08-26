@@ -5,7 +5,7 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "15a5240d7f978ef19fb12133cc2bae618934f65d29045417e732c043a8f635d7"
+    "sha256": "7e7a70c101581e586c91224808240fa16ac72f6737906624d1470548d84f698f"
   },
   "summary": {
     "public_documents": 16,
