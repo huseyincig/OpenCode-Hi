@@ -130,6 +130,22 @@ test('lost ACK reconciliation fails closed when more than one new valid workspac
   }finally{for(const x of [root,a,b,common])rmSync(x,{recursive:true,force:true})}
 })
 
+test('default Git inspector uses command-scoped safe.directory without mutating global Git trust',async t=>{
+  if(process.platform==='win32'||typeof process.getuid!=='function'||process.getuid()!==0){t.skip('requires POSIX root to reproduce Git dubious-ownership deterministically');return}
+  const root=mkdtempSync(join(tmpdir(),'hi-w2-dubious-owner-'))
+  const run=(args,cwd=root)=>spawnSync('git',args,{cwd,encoding:'utf8'})
+  try{
+    assert.equal(run(['init']).status,0);assert.equal(run(['config','user.email','hi@example.invalid']).status,0);assert.equal(run(['config','user.name','Hi Test']).status,0)
+    const {writeFileSync}=await import('node:fs');writeFileSync(join(root,'a.txt'),'one\n');assert.equal(run(['add','a.txt']).status,0);assert.equal(run(['commit','-m','base']).status,0);const head=String(run(['rev-parse','HEAD']).stdout).trim()
+    const changed=spawnSync('chown',['-R','65534:65534',root],{encoding:'utf8'});assert.equal(changed.status,0,String(changed.stderr??changed.stdout))
+    const bare=run(['rev-parse','HEAD']);assert.notEqual(bare.status,0);assert.match(String(bare.stderr??bare.stdout),/dubious ownership|safe\.directory/i)
+    const workspace={list:async()=>({data:[]}),create:async()=>({data:{}}),remove:async()=>({data:{}})}
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root)
+    assert.equal(await adapter.sourceBaseline(root),head,'adapter must trust only the exact inspected repository for this Git command')
+    const global=spawnSync('git',['config','--global','--get-all','safe.directory'],{encoding:'utf8'});assert.doesNotMatch(String(global.stdout??''),new RegExp(root.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')),'adapter must not mutate global safe.directory')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('default Git inspector accepts an actual detached registered worktree without staging or snapshot mutation',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-real-git-')),work=join(dirname(root),`${basename(root)}-work`)
   const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}

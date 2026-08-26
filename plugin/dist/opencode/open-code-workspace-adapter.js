@@ -7,7 +7,7 @@ export function openCodeExperimentalWorkspacesEnabled(env = process.env) {
     const direct = env.OPENCODE_EXPERIMENTAL_WORKSPACES, value = (direct === undefined ? env.OPENCODE_EXPERIMENTAL : direct)?.toLowerCase();
     return value === 'true' || value === '1';
 }
-function git(directory, args) { const r = spawnSync('git', ['-C', directory, ...args], { encoding: 'utf8' }); if (r.status !== 0)
+function git(directory, args) { const safe = canonicalExisting(directory), r = spawnSync('git', ['-c', `safe.directory=${safe}`, '-C', safe, ...args], { encoding: 'utf8' }); if (r.status !== 0)
     throw new Error(`Git workspace inspection failed: ${String(r.stderr ?? r.stdout ?? 'unknown error')}`); return String(r.stdout ?? '').trim(); }
 function canonicalExisting(path) { return realpathSync(resolve(path)); }
 function defaultInspect(directory) {
