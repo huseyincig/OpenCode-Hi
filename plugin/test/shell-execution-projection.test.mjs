@@ -1,10 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {evaluateShellCommand} from '../dist/runtime/process/shell-policy.js'
-import {projectExecutionSurface} from '../dist/runtime/safety/execution-projection.js'
+import {hasTopLevelPosixBackgroundOperator,projectExecutionSurface} from '../dist/runtime/safety/execution-projection.js'
 import {externalEffectCommand,canonicalExternalCommand} from '../dist/runtime/safety/command-classifier.js'
 
 function restricted(command){const shell=evaluateShellCommand(command);return shell.decision==='DENY'||shell.decision==='USER_ACTION_REQUIRED'||externalEffectCommand(command)}
+
+
+test('top-level background detection distinguishes shell control from quoted comment and redirection data',()=>{
+  assert.equal(hasTopLevelPosixBackgroundOperator('python3 app.py &'),true)
+  assert.equal(hasTopLevelPosixBackgroundOperator('nohup python3 app.py > flask.log 2>&1 &'),true)
+  assert.equal(hasTopLevelPosixBackgroundOperator('echo left & echo right'),true)
+  assert.equal(hasTopLevelPosixBackgroundOperator('echo "a & b" && echo done'),false)
+  assert.equal(hasTopLevelPosixBackgroundOperator("echo '&lt;script&gt;'"),false)
+  assert.equal(hasTopLevelPosixBackgroundOperator("# Check if script tags are escaped in the HTML (should appear as &lt;script&gt;)\ncurl -s http://localhost:5000/ | grep -o '&lt;script&gt;' | head -3"),false)
+  assert.equal(hasTopLevelPosixBackgroundOperator('echo ok &>flask.log'),false)
+  assert.equal(hasTopLevelPosixBackgroundOperator('echo ok 2>&1'),false)
+  assert.equal(hasTopLevelPosixBackgroundOperator('echo ok |& cat'),false)
+  assert.equal(hasTopLevelPosixBackgroundOperator('echo foo\\&bar'),false)
+})
 
 const HOLDOUT=[
   ['safe-sub-output-git','echo $(printf "git reset --hard")',false],

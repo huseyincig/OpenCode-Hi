@@ -1,6 +1,7 @@
 import { isVerificationCommand, normalizeProjectPath, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
 import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
 import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
+import { hasTopLevelPosixBackgroundOperator } from '../runtime/safety/execution-projection.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
 import { assertSafeGitMutation, invalidateStagingProof, invalidateGitTopologyProof, beginGitTopologyMutation, mutatesGitIndex, isGitTopologyMutation } from '../runtime/safety/staging-safety.js';
 import { assertReleaseChainPrecondition, isPackagePublish, isReleaseCreate } from '../runtime/safety/release-chain.js';
@@ -23,32 +24,6 @@ function assessedExplicitSettingsRequest(m) {
     return targets.length > 0 && targets.every((target) => SETTINGS_CONTROL_TARGETS.has(target)) && m.identity.intent.requiredCapabilities.length === 0 && m.identity.intent.requestedExternalActions.length === 0;
 }
 function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
-function hasTopLevelBackgroundOperator(command) {
-    let quote, escape = false;
-    for (let i = 0; i < command.length; i++) {
-        const ch = command[i];
-        if (escape) {
-            escape = false;
-            continue;
-        }
-        if (ch === '\\' && quote !== "'") {
-            escape = true;
-            continue;
-        }
-        if (quote) {
-            if (ch === quote)
-                quote = undefined;
-            continue;
-        }
-        if (ch === '"' || ch === "'") {
-            quote = ch;
-            continue;
-        }
-        if (ch === '&' && command[i - 1] !== '&' && command[i + 1] !== '&' && command[i - 1] !== '>' && command[i - 1] !== '<')
-            return true;
-    }
-    return false;
-}
 function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
     if (role !== 'technical-writer' && role !== 'test-engineer')
         return true;
@@ -158,7 +133,7 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             else if (name)
                 assertParentMethodologyLoad(m, name, projectRoot);
         }
-        if (m.identity.status === 'active' && tool === 'bash' && typeof args?.command === 'string' && hasTopLevelBackgroundOperator(args.command)) {
+        if (m.identity.status === 'active' && tool === 'bash' && typeof args?.command === 'string' && hasTopLevelPosixBackgroundOperator(args.command)) {
             appendLedger(m, 'process.native-background-blocked', { task_id: child?.task_id, worker_id: child?.id, payload: { owner: child ? 'child' : 'parent', reason: 'process-contract-requires-task-worker-owner', command: String(args.command).slice(0, 180), required_tool: child ? 'hi_process_spawn' : 'hi_task_start' } });
             throw new Error(child ? 'Hi process ownership: active child workers cannot create native background shell jobs. Return the long-running-process requirement to the parent unless this exact task owns process_lifecycle=true; process-owning workers must use hi_process_spawn.' : 'Hi process ownership: active parent sessions cannot create native background shell jobs. Create or resume the exact Task with process_lifecycle=true, then let that Task worker use hi_process_spawn.');
         }

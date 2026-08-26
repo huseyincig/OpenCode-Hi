@@ -36,6 +36,27 @@ function detectDialect(source:string):ExecutionDialect{
   if(/^&\s*\{/.test(s)||/\b-(?:Recurse|Force|LiteralPath|Path)\b/i.test(s)&&/\bRemove-Item\b/i.test(s))return'powershell'
   return'posix'
 }
+export function hasTopLevelPosixBackgroundOperator(source:string):boolean{
+  let quote:'\"'|"'"|undefined,escape=false,comment=false,wordBoundary=true
+  for(let i=0;i<source.length;i++){
+    const ch=source[i],next=source[i+1],prev=source[i-1]
+    if(comment){if(ch==='\n'||ch==='\r'){comment=false;wordBoundary=true}continue}
+    if(escape){escape=false;wordBoundary=false;continue}
+    if(ch==='\\'&&quote!=="'"){escape=true;wordBoundary=false;continue}
+    if(quote){if(ch===quote)quote=undefined;continue}
+    if(ch==='\"'||ch==="'"){quote=ch;wordBoundary=false;continue}
+    if(ch==='#'&&wordBoundary){comment=true;continue}
+    if(/\s/.test(ch)){wordBoundary=true;continue}
+    if(ch==='&'){
+      if(next==='&'){i++;wordBoundary=true;continue}
+      if(next==='>'||prev==='>'||prev==='<'||prev==='|'){wordBoundary=true;continue}
+      return true
+    }
+    if(ch===';'||ch==='|'||ch==='('||ch===')'){wordBoundary=true;continue}
+    wordBoundary=false
+  }
+  return false
+}
 function tokenDynamic(token:string|undefined):boolean{return Boolean(token&&/(?:\$\(|`|<\(|>\(|\$\{|\$[A-Za-z_0-9@*?])/.test(token))}
 function hasActiveDynamicSyntax(source:string):boolean{
   let quote:'"'|"'"|undefined,escape=false

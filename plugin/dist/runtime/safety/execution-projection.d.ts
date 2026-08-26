@@ -15,4 +15,5 @@ export interface ExecutionProjection {
     uncertainty: string[];
     workUnits: number;
 }
+export declare function hasTopLevelPosixBackgroundOperator(source: string): boolean;
 export declare function projectExecutionSurface(command: string, dialect?: 'auto' | ExecutionDialect): ExecutionProjection;
