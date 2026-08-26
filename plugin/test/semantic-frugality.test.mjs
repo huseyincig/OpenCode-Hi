@@ -85,6 +85,7 @@ test('follow-up semantic gate distinguishes resume from amendment to avoid dupli
   const gate=renderSemanticAssessmentGate(mission)
   assert.match(gate,/resume=continue the existing unfinished contract/)
   assert.match(gate,/amendment=add\/change an implementation outcome/)
+  assert.match(gate,/requires C to include implementation/)
   assert.match(gate,/Continuation\/reconnect\/handoff wording alone is resume, not amendment/)
 })
 

@@ -123,6 +123,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   if(verificationCeiling&&!userVerification.length)throw new Error('verification_ceiling requires at least one explicit user_verification kind')
   const effectiveVerification=verificationCeiling?userVerification:[...new Set([...userVerification,...inferredVerification])]
   const requiredCapabilities=enumList(v.required_capabilities,SEMANTIC_CAPABILITIES,40,'required_capabilities')
+  if(messageKind==='amendment'&&['implementation','bug-fix','performance'].includes(String(v.task_kind??''))&&!requiredCapabilities.includes('implementation'))throw new Error('message_kind=amendment for material implementation change requires required_capabilities to include implementation; use verification or resume when no implementation outcome is added/changed')
   const semanticSignals=intentSignalList(v.intent_signals)
   if(semanticSignals.includes('intent.external-source')&&!requiredCapabilities.includes('external-research'))requiredCapabilities.push('external-research')
   if(semanticSignals.includes('intent.documentation')&&!requiredCapabilities.includes('documentation'))requiredCapabilities.push('documentation')

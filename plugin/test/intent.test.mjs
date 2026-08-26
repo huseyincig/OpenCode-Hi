@@ -56,6 +56,12 @@ test('review versus implementation is an explicit semantic assessment decision',
   assert.equal(implementation.task_kind,'implementation')
 })
 
+test('follow-up amendment cannot manufacture implementation work from verification-only capabilities',()=>{
+  assert.throws(()=>parseSemanticIntentAssessment({...base,message_kind:'amendment',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html']}),/amendment.*requires.*implementation/)
+  const verify=parseSemanticIntentAssessment({...base,message_kind:'verification',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html']})
+  assert.equal(verify.message_kind,'verification')
+})
+
 test('security and independent-review capabilities are bounded enum values',()=>{
   const a=parseSemanticIntentAssessment({...base,risk:'high',required_capabilities:['implementation','security-review','independent-review']})
   assert.deepEqual(a.required_capabilities,['implementation','security-review','independent-review'])
