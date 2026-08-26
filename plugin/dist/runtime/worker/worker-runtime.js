@@ -8,6 +8,14 @@ export function createTask(m, input) { const now = Date.now(), id = uid('t'), ta
 export function createWorker(m, task, model, fallbacks = [], selectedMethodologies = [], methodologyProvenanceItems = []) { const now = Date.now(), w = { id: uid('w'), task_id: task.id, role: task.role, category: task.category, parent_session_id: m.identity.session_id, parent_mission_id: m.identity.mission_id, model, fallbacks, selected_methodologies: selectedMethodologies, loaded_methodologies: [], methodologies: methodologyProvenanceItems, fingerprint: workerFingerprint(task.role, task.category, model, m.identity.intent.taskKind, task.objective, { scope: task.scope, constraints: task.constraints, dependencies: task.dependencies, requiredEvidence: task.requiredEvidence, obligationIds: task.obligation_ids }), status: 'created', attempt: 0, generation_at_spawn: m.continuation.generation, updated_at: now }; m.execution.workers.push(w); task.worker_id = w.id; appendLedger(m, 'worker.created', { task_id: task.id, worker_id: w.id, payload: { model, selected_methodologies: selectedMethodologies, generation: m.continuation.generation, mission_id: m.identity.mission_id, methodologies: methodologyProvenanceItems.map(x => ({ name: x.name, provider: x.provider, permission: x.permission, injection: x.injection, sha256: x.source_sha256 })) } }); return w; }
 export function workerAttemptPromptMessageID(worker, at) { const stamp = Number.isFinite(at) && at >= 0 ? Math.floor(at) : Date.now(), ordinal = Math.max(0, Math.floor(worker.attempt ?? 0)), tick = (BigInt(stamp) * 0x1000n + BigInt(ordinal & 0xfff)) & 0xffffffffffffn, time = tick.toString(16).padStart(12, '0'), entropy = createHash('sha256').update([worker.parent_mission_id, worker.task_id, worker.id, worker.session_id ?? 'session-pending', String(worker.generation_at_spawn), String(ordinal), String(stamp)].join('\0')).digest('hex').slice(0, 14); return `msg_${time}${entropy}`; }
 export function beginWorkerAttempt(task, worker, at = Date.now()) { worker.attempt = (worker.attempt ?? 0) + 1; worker.started_at = at; worker.attempt_prompt_message_id = workerAttemptPromptMessageID(worker, at); worker.updated_at = at; task.updated_at = at; }
+export function retireTaskResultIssues(m, taskID, issues, replacementIssues = []) {
+    if (!issues.length)
+        return [];
+    const replacement = new Set(replacementIssues), stillOwned = new Set(m.execution.tasks.filter(t => t.id !== taskID && t.status !== 'cancelled' && t.result?.status !== 'DONE').flatMap(t => t.result?.open_issues ?? [])), retired = issues.filter(issue => !replacement.has(issue) && !stillOwned.has(issue));
+    if (retired.length)
+        m.execution.blockers = m.execution.blockers.filter(blocker => !retired.includes(blocker));
+    return retired;
+}
 export function applyWorkerResult(m, task, worker, result) { const supersededIssues = [...(task.result?.open_issues ?? [])]; task.result = result; task.updated_at = Date.now(); worker.completed_at = task.updated_at; worker.updated_at = task.updated_at; if (result.status === 'DONE') {
     task.status = 'completed';
     worker.status = 'completed';
@@ -23,5 +31,5 @@ else if (result.status === 'FIX_REQUIRED') {
 else {
     task.status = 'failed';
     worker.status = 'failed';
-} m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...result.changed_files])]; const stillOwned = new Set(m.execution.tasks.filter(t => t.id !== task.id).flatMap(t => t.result?.status === 'DONE' ? [] : (t.result?.open_issues ?? []))); m.execution.blockers = m.execution.blockers.filter(b => !supersededIssues.includes(b) || result.open_issues.includes(b) || stillOwned.has(b)); if (result.status !== 'DONE')
+} m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...result.changed_files])]; retireTaskResultIssues(m, task.id, supersededIssues, result.open_issues); if (result.status !== 'DONE')
     m.execution.blockers = [...new Set([...m.execution.blockers, ...result.open_issues])]; appendLedger(m, 'worker.completed', { task_id: task.id, worker_id: worker.id, payload: { status: result.status, changed_files: result.changed_files } }); }

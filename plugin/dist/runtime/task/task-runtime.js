@@ -3,7 +3,7 @@ import { resolveCategory } from '../routing/category.js';
 import { resolveModel } from '../routing/model-resolver.js';
 import { methodologySkillCandidates, resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
-import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
+import { createTask, createWorker, beginWorkerAttempt, retireTaskResultIssues, workerFingerprint } from '../worker/worker-runtime.js';
 import { parseWorkerResult } from './result-parser.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
@@ -1054,6 +1054,6 @@ export class TaskRuntime {
     } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
-    } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
-        t.status = 'cancelled'; releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); reconcileSessionAbortQuiescenceDemand(m); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
+    } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id), cancelledIssues = [...(t?.result?.open_issues ?? [])]; if (t)
+        t.status = 'cancelled'; const retiredIssues = retireTaskResultIssues(m, worker.task_id, cancelledIssues); releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); reconcileSessionAbortQuiescenceDemand(m); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id, payload: { retired_result_issues: retiredIssues.slice(0, 30) } }); syncMissionGates(m); this.drainQueue(); return true; }
 }

@@ -178,3 +178,16 @@ test('failed explicit BLOCKED resume admission restores the durable blocked task
   await assert.rejects(()=>runtime.resume(m,firstTask.id),/scheduler admission unavailable/)
   assert.equal(firstTask.status,'blocked');assert.equal(firstWorker.status,'ready');assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].workerId,second.worker_id)
 })
+
+
+test('cancelling a task retires only its result-owned blockers while preserving shared and unrelated blockers',async()=>{
+  const {runtime,m}=setup();const first=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const firstWorker=m.execution.workers.find(w=>w.id===first.worker_id),firstTask=m.execution.tasks.find(t=>t.id===first.task_id)
+  runtime.applyResult(m,firstWorker.id,{...workerResult('FIX_REQUIRED'),open_issues:['only-cancelled','shared-blocker']})
+  const second=await runtime.start(m,{objective:'change y',role:'coder',category:'standard',scope:['src/y.ts']});const secondWorker=m.execution.workers.find(w=>w.id===second.worker_id),secondTask=m.execution.tasks.find(t=>t.id===second.task_id)
+  runtime.applyResult(m,secondWorker.id,{...workerResult('FIX_REQUIRED'),open_issues:['shared-blocker']});m.execution.blockers.push('unrelated-blocker')
+  assert.deepEqual(new Set(m.execution.blockers),new Set(['only-cancelled','shared-blocker','unrelated-blocker']))
+  assert.equal(await runtime.cancel(m,firstTask.id),true);assert.equal(firstTask.status,'cancelled');assert.equal(firstWorker.status,'cancelled')
+  assert.deepEqual(new Set(m.execution.blockers),new Set(['shared-blocker','unrelated-blocker']))
+  const cancelled=m.execution.ledger.findLast(e=>e.type==='worker.cancelled'&&e.task_id===firstTask.id);assert.deepEqual(cancelled?.payload?.retired_result_issues,['only-cancelled'])
+})
