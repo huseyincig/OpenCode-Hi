@@ -28,7 +28,7 @@ export function evaluateCompletion(m, projectRoot) { const reasons = [], verific
     reasons.push(`open-obligations:${open.map(o => o.id).join(',')}`); const authorityGate = m.execution.gates.find(g => g.kind === 'user-authority' && g.status !== 'closed'); if (authorityGate)
     return { complete: false, reasons: [...reasons, `authority:${authorityGate.status}`], next: 'USER_ACTION_REQUIRED' }; const rollback = m.execution.gates.find(g => g.kind === 'rollback' && g.status !== 'closed'); if (rollback)
     return { complete: false, reasons: [...reasons, 'temporary-rollback-pending'], next: 'USER_ACTION_REQUIRED' }; const prereq = m.execution.gates.find(g => g.kind === 'prerequisite-task' && g.status !== 'closed'); if (prereq)
-    reasons.push('prerequisite-task-pending'); if (m.execution.tasks.some(t => t.result?.status === 'FIX_REQUIRED' || t.result?.status === 'NEEDS_CONTEXT'))
+    reasons.push('prerequisite-task-pending'); if (m.execution.tasks.some(t => t.status !== 'cancelled' && (t.result?.status === 'FIX_REQUIRED' || t.result?.status === 'NEEDS_CONTEXT')))
     return { complete: false, reasons: [...reasons, 'worker-result-unreconciled'], next: 'RECONCILE' }; const openWork = m.execution.obligations.filter(o => o.status === 'open' && (o.kind === 'analysis' || o.kind === 'implementation')); if (openWork.length)
     return { complete: false, reasons, next: 'CONTINUE' }; if (!verification.ok)
     return { complete: false, reasons: [...reasons, `verification-claims-missing:${verification.missing.join(',')}`], next: 'VERIFY' }; if (!reviews.ok)

@@ -74,6 +74,13 @@ test('waiting FIX_REQUIRED task is RECONCILE, not a false WAIT',()=>{
   assert.deepEqual(decision.wait_for,[])
 })
 
+test('cancelled FIX_REQUIRED result remains provenance but cannot own RECONCILE control',()=>{
+  const {m}=localMission('phase6-cancelled-result');closeImplementation(m)
+  const task=createTask(m,{objective:'cancelled correction',role:'coder',category:'quick',scope:['phase6.txt']});const worker=createWorker(m,task,'host-default')
+  task.status='cancelled';worker.status='cancelled';task.result={status:'FIX_REQUIRED',summary:'historical cancelled result',changed_files:[],evidence:[],open_issues:['historical-only'],needs_context:[]}
+  const decision=projectControlDecision(m,process.cwd());assert.equal(decision.action,'VERIFY');assert.notEqual(decision.action,'RECONCILE')
+})
+
 test('host-observed verification moves the same projection from VERIFY to DONE',()=>{
   const {m}=localMission('phase6-done');closeImplementation(m)
   assert.equal(projectControlDecision(m).action,'VERIFY')
