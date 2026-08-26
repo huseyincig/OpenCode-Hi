@@ -19,7 +19,7 @@
       ],
       "proof_paths": [
         "plugin/test/mission.test.mjs",
-        "plugin/test/a3-mission-slices.test.mjs"
+        "plugin/test/mission-slices.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
@@ -38,7 +38,7 @@
       ],
       "proof_paths": [
         "plugin/test/task-worker-contract.test.mjs",
-        "plugin/test/a2-task-runtime-collaborators.test.mjs"
+        "plugin/test/task-runtime-collaborators.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
@@ -376,7 +376,7 @@
         "plugin/src/runtime/mission/mission-store.ts"
       ],
       "proof_paths": [
-        "plugin/test/a4-persistence-validator-composition.test.mjs",
+        "plugin/test/persistence-validator-composition.test.mjs",
         "plugin/test/storage-ownership-contract.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
