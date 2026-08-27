@@ -110,6 +110,31 @@ test('same-session corrective resume preserves the original execution tool surfa
   assert.match(JSON.stringify(prompts[2]),/materially different corrective hypothesis or action/i)
 })
 
+test('exact task resume preserves stored role identity when later mission routing moves to visual-qa',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('resume-role-drift','fix backend then visually verify it')
+  assess(store,'resume-role-drift',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/server.ts'],likely_verification:[]})
+  const first=await runtime.start(m,{objective:'fix backend',role:'coder',category:'quick',scope:['src/server.ts'],requiredEvidence:[]})
+  runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'return the structured result envelope',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['structured result required']})
+  const task=m.execution.tasks.find(t=>t.id===first.task_id),worker=m.execution.workers.find(w=>w.id===first.worker_id);assert.equal(task.role,'coder');assert.equal(worker.role,'coder')
+  m.identity.intent.requiredCapabilities=[...new Set([...m.identity.intent.requiredCapabilities,'visual-qa'])]
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');if(verification&&!task.obligation_ids.includes(verification.id))task.obligation_ids.push(verification.id)
+  const resumed=await runtime.resume(m,task.id)
+  assert.equal(resumed.task_id,task.id);assert.equal(resumed.worker_id,worker.id);assert.equal(resumed.session_id,first.session_id);assert.equal(task.role,'coder');assert.equal(worker.role,'coder');assert.equal(created.length,1);assert.equal(prompts.length,2)
+})
+
+test('exact task resume rejects an explicit role change instead of reclassifying the existing owner',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('resume-explicit-role-drift','fix backend')
+  assess(store,'resume-explicit-role-drift',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/server.ts'],likely_verification:[]})
+  const first=await runtime.start(m,{objective:'fix backend',role:'coder',category:'quick',scope:['src/server.ts'],requiredEvidence:[]})
+  runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'correction remains',changed_files:[],evidence:[],open_issues:['fix:x'],needs_context:[]})
+  await assert.rejects(()=>runtime.start(m,{resumeTaskId:first.task_id,role:'visual-qa'}),new RegExp(`Exact resume role drift for task ${first.task_id}`))
+  const task=m.execution.tasks.find(t=>t.id===first.task_id),worker=m.execution.workers.find(w=>w.id===first.worker_id);assert.equal(task.role,'coder');assert.equal(worker.role,'coder');assert.equal(worker.status,'ready');assert.equal(created.length,1);assert.equal(prompts.length,1)
+})
+
 test('new task cannot bypass an unresolved canonical obligation owner and must resume the exact task',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
