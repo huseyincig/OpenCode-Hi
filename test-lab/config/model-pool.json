@@ -1,12 +1,17 @@
 {
   "schema": 1,
-  "purpose": "test-only model allowlist; never product hardcode",
-  "selection_policy": {
-    "single_mode": "prefer lower-cost eligible candidates in cost_priority; if model-specific behavior is suspected, advance to the next eligible candidate before attributing a product defect",
-    "adaptive_multi": "restrict to allowed_models but let OpenCode-Hi choose by its normal capability/routing logic; do not force role-to-model mappings just to pass a test",
-    "free_model_behavior": "quota/rate-limit/unavailable outcomes are intentionally observable test conditions"
+  "purpose": "test-only model allowlist and user-provided cost order; never product hardcode",
+  "execution_profile": {
+    "executionPolicy": "adaptive",
+    "topology": "adaptive",
+    "roleModels": {},
+    "rule": "restrict live test inventory to allowed_models; let OpenCode-Hi choose eligible child models by normal capability/routing logic; do not force role-to-model mappings"
   },
-  "user_cost_order": [
+  "selection_policy": {
+    "single_mode": "use the first live eligible candidate in cost_priority; if behavior is plausibly model-specific, advance to the next eligible candidate before attributing a product defect",
+    "adaptive_multi": "restrict to the live intersection of allowed_models and preserve OpenCode-Hi normal capability/routing decisions inside that pool"
+  },
+  "allowed_models": [
     "opencode-go/longcat-2.0",
     "opencode-go/muse-spark-1.2-contributor",
     "opencode-go/mimo-v2.5",
@@ -17,26 +22,8 @@
     "opencode-go/minimax-m2.7",
     "opencode-go/qwen3.6-plus",
     "opencode-go/mimo-v2.5-pro"
-  ],
-  "live_free_candidates_as_of_2026_08_26": [
-    "opencode-go/ox-alpha-free",
-    "opencode/big-pickle",
-    "opencode/hy3-free",
-    "opencode/mimo-v2.5-free",
-    "opencode/muse-spark-1.2-contributor-free",
-    "opencode/nemotron-3-ultra-free",
-    "opencode/nemotron-3.5-lightning-free",
-    "opencode/x-preview-f-free"
   ],
   "cost_priority": [
-    "opencode-go/ox-alpha-free",
-    "opencode/big-pickle",
-    "opencode/hy3-free",
-    "opencode/mimo-v2.5-free",
-    "opencode/muse-spark-1.2-contributor-free",
-    "opencode/nemotron-3-ultra-free",
-    "opencode/nemotron-3.5-lightning-free",
-    "opencode/x-preview-f-free",
     "opencode-go/longcat-2.0",
     "opencode-go/muse-spark-1.2-contributor",
     "opencode-go/mimo-v2.5",
@@ -48,5 +35,5 @@
     "opencode-go/qwen3.6-plus",
     "opencode-go/mimo-v2.5-pro"
   ],
-  "refresh_rule": "Before a test run, intersect this intended pool with live `opencode models opencode-go` and `opencode models opencode`; do not assume a free model remains available because it was present earlier."
+  "refresh_rule": "Before each live test run, intersect allowed_models with current `opencode models opencode-go`; preserve this order and do not add models that are not listed here."
 }
