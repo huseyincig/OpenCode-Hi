@@ -618,14 +618,32 @@ export function createHiToolSurface(input) {
     const assertChildProcessOwner = (cx, id) => { if (!cx?.child)
         return; const owned = cx.m.execution.processes.find((item) => item.process_id === id); if (!owned || owned.worker_id !== cx.child.id || owned.task_id !== cx.child.task_id)
         throw new Error(`Hi process ownership: child '${cx.child.id}' cannot access process '${id}' outside its own task.`); };
-    const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. This tool never creates process ownership and has no process_lifecycle argument: a parent must first call hi_task_start with process_lifecycle=true, then the admitted exact task worker owns hi_process_spawn. timeout_ms is an optional HARD wall-clock termination deadline, not a readiness/wait budget: omit timeout_ms for a server/watcher/service that must remain alive while verification uses it; use a finite timeout only when termination at that deadline is actually intended. Never increase a finite timeout and replay the same healthy persistent command as a substitute for persistence. Child calls are admitted only for that exact child worker/task. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { let cx; try {
+    const eligibleParentProcessOwners = (m) => m.execution.workers.flatMap((worker) => { const task = m.execution.tasks.find((item) => item.id === worker.task_id); if (!task || task.execution_profile?.process_lifecycle !== true || ['completed', 'failed', 'cancelled'].includes(worker.status) || ['completed', 'failed', 'cancelled', 'blocked'].includes(task.status))
+        return []; return [{ worker, task }]; });
+    const processSpawnTool = tool({ description: 'Spawn one owned process for an existing Hi worker/task through the native OpenCode PTY lifecycle. This tool never creates process ownership and has no process_lifecycle argument: a parent must first call hi_task_start with process_lifecycle=true, then the admitted exact task worker owns hi_process_spawn. Parent worker_id may be omitted only when the current Mission has exactly one nonterminal process-lifecycle owner; Hi then binds that already-existing worker/task deterministically. Multiple eligible owners are ambiguous and fail closed; an explicit wrong worker_id is never substituted. timeout_ms is an optional HARD wall-clock termination deadline, not a readiness/wait budget: omit timeout_ms for a server/watcher/service that must remain alive while verification uses it; use a finite timeout only when termination at that deadline is actually intended. Never increase a finite timeout and replay the same healthy persistent command as a substitute for persistence. Child calls are admitted only for that exact child worker/task. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string().optional(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { let cx; try {
             cx = processToolContext(c);
         }
         catch (error) {
             return `Process spawn blocked: ${String(error)}`;
         } ; if (!cx)
-            return 'No active Hi mission'; const m = cx.m, workerID = cx.child ? cx.child.id : String(a.worker_id); if (cx.child && String(a.worker_id) !== workerID)
-            return `Process spawn blocked: Hi process ownership: child '${workerID}' cannot spawn for worker '${String(a.worker_id)}'.`; const worker = m.execution.workers.find((item) => item.id === workerID), task = worker ? m.execution.tasks.find((item) => item.id === worker.task_id) : undefined; if (!worker || !task || task.execution_profile?.process_lifecycle !== true)
+            return 'No active Hi mission'; const m = cx.m, requestedWorkerID = typeof a.worker_id === 'string' ? String(a.worker_id).trim() : ''; let workerID; if (cx.child) {
+            workerID = cx.child.id;
+            if (requestedWorkerID && requestedWorkerID !== workerID)
+                return `Process spawn blocked: Hi process ownership: child '${workerID}' cannot spawn for worker '${requestedWorkerID}'.`;
+        }
+        else if (requestedWorkerID)
+            workerID = requestedWorkerID;
+        else {
+            const owners = eligibleParentProcessOwners(m);
+            if (owners.length === 1) {
+                workerID = owners[0].worker.id;
+                appendLedger(m, 'process.owner-resolved', { task_id: owners[0].task.id, worker_id: workerID, payload: { source: 'parent-unique-existing-owner', task_status: owners[0].task.status, worker_status: owners[0].worker.status } });
+            }
+            else if (owners.length > 1)
+                return JSON.stringify({ status: 'BLOCKED', reason: 'process-owner-ambiguous', required_owner: 'exact-task-worker', candidate_owners: owners.slice(0, 12).map((item) => ({ task_id: item.task.id, worker_id: item.worker.id, task_status: item.task.status, worker_status: item.worker.status })), next_tool: 'hi_process_spawn', required_argument: 'worker_id', retry_same_spawn: false, instruction: 'Multiple nonterminal process-lifecycle owners exist. Reconcile/select the exact task owner, then call hi_process_spawn once with that worker_id; do not guess or fan out.' });
+            else
+                return JSON.stringify({ status: 'BLOCKED', reason: 'process-lifecycle-task-required', required_owner: 'exact-task-worker', next_tool: 'hi_task_start', process_lifecycle_field_owner: 'hi_task_start', retry_same_spawn: false, instruction: 'Create or resume one exact task with hi_task_start and process_lifecycle=true. The admitted child worker then owns hi_process_spawn. Do not add process_lifecycle to hi_process_spawn and do not retry this spawn unchanged.' });
+        } const worker = m.execution.workers.find((item) => item.id === workerID), task = worker ? m.execution.tasks.find((item) => item.id === worker.task_id) : undefined; if (!worker || !task || task.execution_profile?.process_lifecycle !== true)
             return JSON.stringify({ status: 'BLOCKED', reason: 'process-lifecycle-task-required', required_owner: 'exact-task-worker', next_tool: 'hi_task_start', process_lifecycle_field_owner: 'hi_task_start', retry_same_spawn: false, instruction: 'Create or resume one exact task with hi_task_start and process_lifecycle=true. The admitted child worker then owns hi_process_spawn. Do not add process_lifecycle to hi_process_spawn and do not retry this spawn unchanged.' }); let observed; if (refreshOwnedHostCapability)
             try {
                 observed = await refreshOwnedHostCapability('process-lifecycle');

@@ -151,6 +151,24 @@ test('interactive-process plus observed native PTY capability admits the existin
   assert.equal(out.process_id,'proc_1');assert.equal(calls.length,1);assert.equal(calls[0].command,'node')
 })
 
+
+test('parent process spawn reuses the sole existing process-lifecycle owner when worker_id is omitted',async()=>{
+  const store=new MissionStore(),m=store.start('m12-parent-owner-reuse','opaque persistent process');store.applyInitialSemanticAssessment('m12-parent-owner-reuse',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m)
+  const task=m.execution.tasks.find(t=>t.worker_id==='w1'),worker=m.execution.workers.find(w=>w.id==='w1');task.status='waiting';task.result={status:'FIX_REQUIRED',summary:'structured result correction pending',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:[]};worker.status='ready'
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_reused',status:'RUNNING'}}}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({command:'bash',args_json:'["-c","curl -s http://127.0.0.1:5000/notes"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.equal(out.process_id,'proc_reused');assert.equal(calls.length,1);assert.equal(calls[0].worker_id,'w1');assert.ok(m.execution.ledger.some(e=>e.type==='process.owner-resolved'&&e.task_id===task.id&&e.worker_id==='w1'&&e.payload?.source==='parent-unique-existing-owner'))
+})
+
+test('parent process spawn fails closed when worker_id is omitted with multiple eligible owners',async()=>{
+  const store=new MissionStore(),m=store.start('m12-parent-owner-ambiguous','two process owners');store.applyInitialSemanticAssessment('m12-parent-owner-ambiguous',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m,'w1');attachParentProcessOwner(m,'w2')
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'should-not-spawn',status:'RUNNING'}}}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-owner-ambiguous');assert.equal(out.required_argument,'worker_id');assert.deepEqual(out.candidate_owners.map(x=>x.worker_id),['w1','w2']);assert.deepEqual(calls,[])
+})
+
 test('process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
   const store=new MissionStore(),m=store.start('m24-pty-drift-down','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-down',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0;attachParentProcessOwner(m)
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'should-not-spawn',status:'RUNNING'}}}
