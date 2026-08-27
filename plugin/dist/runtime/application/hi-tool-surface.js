@@ -617,12 +617,36 @@ export function createHiToolSurface(input) {
             throw new Error(`Hi process ownership: child '${child.id}' has no admitted process-lifecycle task surface.`);
         return { m, child, task };
     };
-    const parentProcessExecutionBlocked = (toolID) => JSON.stringify({ status: 'BLOCKED', reason: 'process-execution-child-owner-required', required_owner: 'exact-process-lifecycle-task-worker', next_tool: 'hi_task_start', resume_existing_with: 'hi_task_start(task_id=<exact t_...>)', await_existing_with: 'hi_task_await(id=<exact t_...>)', retry_same_call: false, instruction: `${toolID} is executable only from the admitted process-lifecycle child session. Parent sessions may create/resume/await the exact task but cannot proxy process execution for its worker.` });
+    const parentProcessExecutionBlocked = (toolID) => JSON.stringify({ status: 'BLOCKED', reason: 'process-execution-child-owner-required', required_owner: 'exact-process-lifecycle-task-worker', next_tool: 'hi_task_start', resume_existing_with: 'hi_task_start(task_id=<exact t_...>)', await_existing_with: 'hi_task_await(id=<exact t_...>)', retry_same_call: false, instruction: `${toolID} remains child-owned while its process-lifecycle task/worker is active. Parent sessions cannot proxy process execution for an active owner: spawn/write/wait remain child-only. After that exact owner is terminal, only retained same-mission list/read/kill/cleanup custody is available.` });
     const assertChildProcessContext = (cx, toolID) => { if (cx?.parent)
         throw new Error(parentProcessExecutionBlocked(toolID)); if (!cx?.child)
         throw new Error(`Hi process ownership: '${toolID}' requires an admitted process-lifecycle child session.`); };
     const assertChildProcessOwner = (cx, id) => { assertChildProcessContext(cx, 'hi_process_*'); const owned = cx.m.execution.processes.find((item) => item.process_id === id); if (!owned || owned.worker_id !== cx.child.id || owned.task_id !== cx.child.task_id)
         throw new Error(`Hi process ownership: child '${cx.child.id}' cannot access process '${id}' outside its own task.`); };
+    const terminalProcessOwner = (m, item) => {
+        if (!item || item.mission_id !== m.identity.mission_id || item.cleanup_state === 'CLEANED')
+            return undefined;
+        const task = m.execution.tasks.find((candidate) => candidate.id === item.task_id), worker = m.execution.workers.find((candidate) => candidate.id === item.worker_id);
+        if (!task || !worker || task.execution_profile?.process_lifecycle !== true || worker.task_id !== task.id || task.worker_id !== worker.id || worker.parent_mission_id !== m.identity.mission_id)
+            return undefined;
+        const taskTerminal = ['completed', 'failed', 'cancelled'].includes(task.status), workerTerminal = ['completed', 'failed', 'cancelled'].includes(worker.status);
+        return taskTerminal && workerTerminal ? { task, worker, item } : undefined;
+    };
+    const parentRetainedProcessAdmission = (cx, id, action, toolID) => {
+        if (!cx?.parent)
+            throw new Error(`Hi parent process custody: '${action}' is parent-only retained-resource admission.`);
+        const item = cx.m.execution.processes.find((candidate) => candidate.process_id === id);
+        if (!item)
+            throw new Error(`Hi process not found in mission: ${id}`);
+        const task = cx.m.execution.tasks.find((candidate) => candidate.id === item.task_id), worker = cx.m.execution.workers.find((candidate) => candidate.id === item.worker_id);
+        if (!task || !worker || task.execution_profile?.process_lifecycle !== true || worker.task_id !== task.id || task.worker_id !== worker.id || worker.parent_mission_id !== cx.m.identity.mission_id)
+            throw new Error(`Hi retained process owner identity is incomplete for '${id}'.`);
+        const owner = terminalProcessOwner(cx.m, item);
+        if (!owner)
+            return { blocked: parentProcessExecutionBlocked(toolID) };
+        appendLedger(cx.m, 'process.parent-custody', { task_id: owner.task.id, worker_id: owner.worker.id, payload: { action, process_id: id, status: item.status, cleanup_state: item.cleanup_state, policy: 'terminal-process-lifecycle-owner-exact-contract' } });
+        return { owner };
+    };
     const processCommandAdmission = (raw) => { const command = String(raw ?? '').trim(); if (!command)
         return { ok: false, command, reason: 'empty-command' }; if (resolve(command) === command && existsSync(command))
         return { ok: true, command }; if (!/\s/.test(command) && !/[;&|<>`$()]/.test(command))
@@ -675,14 +699,19 @@ export function createHiToolSurface(input) {
             }
             return `Process spawn blocked: ${String(error)}`;
         } } });
-    const processReadTool = tool({ description: 'Read one bounded cursor window from a process owned by the current admitted process-lifecycle child. Parent proxy execution is blocked. Output observation is hash-bound Evidence input, never implicit verification PASS.', args: { id: tool.schema.string(), cursor: tool.schema.number().optional(), max_chars: tool.schema.number().optional() }, execute: async (a, c) => { try {
+    const processReadTool = tool({ description: 'Read one bounded cursor window from the current child-owned process, or from an exact same-mission retained ProcessContract after its process-lifecycle task/worker is terminal. Parent custody never changes original task/worker ownership. Output observation is hash-bound Evidence input, never implicit verification PASS.', args: { id: tool.schema.string(), cursor: tool.schema.number().optional(), max_chars: tool.schema.number().optional() }, execute: async (a, c) => { try {
             const cx = processToolContext(c);
             if (!cx)
                 return 'No active Hi mission';
-            if (cx.parent)
-                return parentProcessExecutionBlocked('hi_process_read');
-            assertChildProcessOwner(cx, String(a.id));
-            return JSON.stringify(await processRuntime.read(cx.m, String(a.id), a.cursor === undefined ? undefined : Number(a.cursor), a.max_chars === undefined ? undefined : Number(a.max_chars)));
+            const id = String(a.id);
+            if (cx.parent) {
+                const admission = parentRetainedProcessAdmission(cx, id, 'read', 'hi_process_read');
+                if (admission.blocked)
+                    return admission.blocked;
+            }
+            else
+                assertChildProcessOwner(cx, id);
+            return JSON.stringify(await processRuntime.read(cx.m, id, a.cursor === undefined ? undefined : Number(a.cursor), a.max_chars === undefined ? undefined : Number(a.max_chars)));
         }
         catch (error) {
             return `Process read failed: ${String(error)}`;
@@ -717,41 +746,53 @@ export function createHiToolSurface(input) {
         catch (error) {
             return `Process wait failed: ${String(error)}`;
         } } });
-    const processKillTool = tool({ description: 'Terminate one running process owned by the current admitted process-lifecycle child after native PID identity revalidation. Parent proxy execution is blocked.', args: { id: tool.schema.string(), signal: tool.schema.string().optional() }, execute: async (a, c) => { try {
+    const processKillTool = tool({ description: 'Terminate one running process after native PID/command/cwd identity revalidation. Active execution remains child-only; after the exact process-lifecycle task/worker is terminal, the parent may terminate only that retained same-mission ProcessContract as mission custodian.', args: { id: tool.schema.string(), signal: tool.schema.string().optional() }, execute: async (a, c) => { try {
             const cx = processToolContext(c);
             if (!cx)
                 return 'No active Hi mission';
-            if (cx.parent)
-                return parentProcessExecutionBlocked('hi_process_kill');
             const signal = String(a.signal ?? 'SIGTERM');
             if (!['SIGTERM', 'SIGINT'].includes(signal))
                 return 'BLOCKED: signal must be SIGTERM or SIGINT';
-            assertChildProcessOwner(cx, String(a.id));
-            return JSON.stringify(await processRuntime.kill(cx.m, String(a.id), signal));
+            const id = String(a.id);
+            if (cx.parent) {
+                const admission = parentRetainedProcessAdmission(cx, id, 'kill', 'hi_process_kill');
+                if (admission.blocked)
+                    return admission.blocked;
+            }
+            else
+                assertChildProcessOwner(cx, id);
+            return JSON.stringify(await processRuntime.kill(cx.m, id, signal));
         }
         catch (error) {
             return `Process kill failed: ${String(error)}`;
         } } });
-    const processCleanupTool = tool({ description: 'Cleanup one terminal process owned by the current admitted process-lifecycle child. Parent proxy execution is blocked. Cleanup cannot terminate a running process.', args: { id: tool.schema.string() }, execute: async (a, c) => { try {
+    const processCleanupTool = tool({ description: 'Cleanup one terminal process. Active execution remains child-only; after the exact process-lifecycle task/worker is terminal, the parent may cleanup only that retained same-mission ProcessContract. Cleanup never terminates a running process and original task/worker ownership is preserved.', args: { id: tool.schema.string() }, execute: async (a, c) => { try {
             const cx = processToolContext(c);
             if (!cx)
                 return 'No active Hi mission';
-            if (cx.parent)
-                return parentProcessExecutionBlocked('hi_process_cleanup');
-            assertChildProcessOwner(cx, String(a.id));
-            await processRuntime.cleanup(cx.m, String(a.id));
+            const id = String(a.id);
+            if (cx.parent) {
+                const admission = parentRetainedProcessAdmission(cx, id, 'cleanup', 'hi_process_cleanup');
+                if (admission.blocked)
+                    return admission.blocked;
+                if (admission.owner.item.status === 'RUNNING')
+                    return 'BLOCKED: retained running process must be killed before cleanup';
+            }
+            else
+                assertChildProcessOwner(cx, id);
+            await processRuntime.cleanup(cx.m, id);
             return 'OK';
         }
         catch (error) {
             return `Process cleanup failed: ${String(error)}`;
         } } });
-    const processListTool = tool({ description: 'List bounded durable ProcessContracts owned by the current admitted process-lifecycle child/task. Parent proxy access is blocked.', args: {}, execute: async (_a, c) => { try {
+    const processListTool = tool({ description: 'List bounded durable ProcessContracts for the active child owner, or only exact retained same-mission processes whose process-lifecycle task/worker is terminal when called by the parent. Active child resources never transfer parent custody.', args: {}, execute: async (_a, c) => { try {
             const cx = processToolContext(c);
             if (!cx)
                 return 'No active Hi mission';
-            if (cx.parent)
-                return parentProcessExecutionBlocked('hi_process_list');
             const rows = processRuntime.list(cx.m);
+            if (cx.parent)
+                return JSON.stringify(rows.filter((item) => Boolean(terminalProcessOwner(cx.m, item))));
             return JSON.stringify(rows.filter((item) => item.worker_id === cx.child.id && item.task_id === cx.child.task_id));
         }
         catch (error) {

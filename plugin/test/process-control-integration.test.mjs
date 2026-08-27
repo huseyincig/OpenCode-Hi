@@ -180,12 +180,47 @@ test('parent process execution is child-bound regardless of how many process own
   assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-execution-child-owner-required');assert.deepEqual(calls,[])
 })
 
-test('parent process read/list are blocked rather than projected through worker ownership',async()=>{
+test('parent process read/list stay blocked while the exact lifecycle owner is nonterminal',async()=>{
   const store=new MissionStore(),m=store.start('m12-parent-process-reads','owned process');store.applyInitialSemanticAssessment('m12-parent-process-reads',{...INITIAL,required_capabilities:['implementation','interactive-process']});attachParentProcessOwner(m)
-  const processRuntime={list:()=>{throw new Error('parent must not list')},stopMission:async()=>0,read:async()=>{throw new Error('parent must not read')}}
+  const process={process_id:'proc-active-owner',mission_id:m.identity.mission_id,task_id:'t_w1',worker_id:'w1',host:'opencode',command_identity:'a'.repeat(64),cwd:'/repo',authority_ref:'native',pid:77,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],cleanup_state:'ACTIVE'};m.execution.processes.push(process)
+  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,read:async()=>{throw new Error('parent must not read active owner')}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
-  const read=JSON.parse(await toolSurface.hi_process_read.execute({id:'proc_any'},{sessionID:m.identity.session_id})),list=JSON.parse(await toolSurface.hi_process_list.execute({},{sessionID:m.identity.session_id}))
-  assert.equal(read.reason,'process-execution-child-owner-required');assert.equal(list.reason,'process-execution-child-owner-required')
+  const read=JSON.parse(await toolSurface.hi_process_read.execute({id:process.process_id},{sessionID:m.identity.session_id})),list=JSON.parse(await toolSurface.hi_process_list.execute({},{sessionID:m.identity.session_id}))
+  assert.equal(read.reason,'process-execution-child-owner-required');assert.deepEqual(list,[],'active child-owned processes must not transfer parent custody')
+})
+
+test('terminal lifecycle owner transfers only retained process custody to parent while spawn write and wait stay child-only',async()=>{
+  const store=new MissionStore(),m=store.start('m12-parent-retained-custody','retained persistent process');store.applyInitialSemanticAssessment('m12-parent-retained-custody',{...INITIAL,required_capabilities:['implementation','interactive-process']});attachParentProcessOwner(m)
+  const task=m.execution.tasks.find(t=>t.id==='t_w1'),worker=m.execution.workers.find(w=>w.id==='w1');task.status='completed';task.result={status:'DONE',summary:'service ready',changed_files:[],evidence:[],open_issues:[],needs_context:[]};worker.status='completed';worker.completed_at=Date.now()
+  const process={process_id:'proc-retained',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,host:'opencode',command_identity:'b'.repeat(64),cwd:'/repo',authority_ref:'native',pid:78,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],cleanup_state:'ACTIVE'};m.execution.processes.push(process)
+  const calls=[]
+  const processRuntime={
+    list:mission=>mission.execution.processes,stopMission:async()=>0,
+    read:async(_m,id)=>{calls.push(['read',id]);return{text:'ready',start_cursor:0,end_cursor:5,available_start_cursor:0,available_end_cursor:5,truncated:false,status:'RUNNING'}},
+    kill:async(_m,id,signal)=>{calls.push(['kill',id,signal]);Object.assign(process,{status:'TERMINATED',ended_at:Date.now(),termination_reason:'signal',cleanup_state:'CLEANUP_PENDING'});return structuredClone(process)},
+    cleanup:async(_m,id)=>{calls.push(['cleanup',id]);process.cleanup_state='CLEANED'},
+    spawn:async()=>{calls.push(['spawn']);throw new Error('parent spawn forbidden')},write:async()=>{calls.push(['write']);throw new Error('parent write forbidden')},wait:async()=>{calls.push(['wait']);throw new Error('parent wait forbidden')},
+  }
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const listed=JSON.parse(await toolSurface.hi_process_list.execute({},{sessionID:m.identity.session_id}));assert.deepEqual(listed.map(x=>x.process_id),[process.process_id])
+  const read=JSON.parse(await toolSurface.hi_process_read.execute({id:process.process_id},{sessionID:m.identity.session_id}));assert.equal(read.text,'ready')
+  const spawn=JSON.parse(await toolSurface.hi_process_spawn.execute({command:'python3',args_json:'["app.py"]'},{sessionID:m.identity.session_id,directory:'/repo'}));assert.equal(spawn.reason,'process-execution-child-owner-required')
+  const write=JSON.parse(String(await toolSurface.hi_process_write.execute({id:process.process_id,input:'x'},{sessionID:m.identity.session_id})).replace(/^Process write failed: Error: /,''));assert.equal(write.reason,'process-execution-child-owner-required')
+  const wait=JSON.parse(String(await toolSurface.hi_process_wait.execute({id:process.process_id},{sessionID:m.identity.session_id})).replace(/^Process wait failed: Error: /,''));assert.equal(wait.reason,'process-execution-child-owner-required')
+  const killed=JSON.parse(await toolSurface.hi_process_kill.execute({id:process.process_id},{sessionID:m.identity.session_id}));assert.equal(killed.status,'TERMINATED')
+  assert.equal(await toolSurface.hi_process_cleanup.execute({id:process.process_id},{sessionID:m.identity.session_id}),'OK');assert.equal(process.cleanup_state,'CLEANED')
+  assert.deepEqual(calls,[['read',process.process_id],['kill',process.process_id,'SIGTERM'],['cleanup',process.process_id]])
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.parent-custody'&&e.payload?.action==='read'&&e.payload?.process_id===process.process_id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.parent-custody'&&e.payload?.action==='kill'&&e.payload?.process_id===process.process_id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.parent-custody'&&e.payload?.action==='cleanup'&&e.payload?.process_id===process.process_id))
+})
+
+test('parent retained-process custody fails closed for unknown or non-lifecycle owner identities',async()=>{
+  const store=new MissionStore(),m=assessed(store,'m12-parent-retained-foreign'),processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,read:async()=>{throw new Error('must not reach runtime')}}
+  m.execution.processes.push({process_id:'proc-orphan-contract',mission_id:m.identity.mission_id,task_id:'t-missing',worker_id:'w-missing',host:'opencode',command_identity:'c'.repeat(64),cwd:'/repo',authority_ref:'native',pid:79,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],cleanup_state:'ACTIVE'})
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  assert.match(String(await toolSurface.hi_process_read.execute({id:'proc-orphan-contract'},{sessionID:m.identity.session_id})),/retained process owner identity is incomplete/i)
+  assert.match(String(await toolSurface.hi_process_read.execute({id:'proc-unknown'},{sessionID:m.identity.session_id})),/process not found in mission/i)
 })
 
 test('process spawn rejects shell-like command strings before capability or runtime execution',async()=>{
