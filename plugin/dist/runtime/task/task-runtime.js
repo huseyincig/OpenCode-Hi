@@ -577,6 +577,9 @@ export class TaskRuntime {
             throw new Error(`Hi task ${resumeTask.id} owns no open obligations; satisfied task ownership cannot be resumed implicitly. Create separate work only for a newly opened canonical obligation.`);
         if (resumeTask && resumeWorker && resumeTask.role !== resumeWorker.role)
             throw new Error(`Hi task ${resumeTask.id} role identity mismatch: task=${resumeTask.role}, worker=${resumeWorker.role}`);
+        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length;
+        if (implicitProcessSupport && !input.resumeTaskId && !input.objective?.trim())
+            throw new Error('Implicit process-lifecycle support task requires an explicit bounded objective for the process resource; it cannot inherit the Mission objective');
         const objective = input.objective?.trim() || resumeTask?.objective || m.identity.objective;
         const taskIntent = m.identity.intent;
         const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (resumeTask?.category ?? (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory))), requestedRole = String(input.role ?? '').trim();
@@ -604,7 +607,7 @@ export class TaskRuntime {
                 throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);
             role = canonicalRole;
         }
-        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length, requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds;
+        const requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds;
         const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), requiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence;
         if (ownedObligationEvidence.authoritative && JSON.stringify([...new Set(requestedEvidence)]) !== JSON.stringify(ownedObligationEvidence.requiredEvidence))
             appendLedger(m, 'task.evidence-contract-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(requestedEvidence)], authoritative_evidence: ownedObligationEvidence.requiredEvidence, policy: 'exact-open-obligation-contract-wins' } });
@@ -684,7 +687,7 @@ export class TaskRuntime {
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
-        const scope = input.scope ?? (isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []);
+        const scope = input.scope ?? (implicitProcessSupport ? [] : isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []);
         if (!isHiReadOnlyChildRole(role)) {
             const denied = [...new Map(scope.flatMap(path => deniedMutationAtoms(m.execution.constraint_atoms, path)).map(atom => [atom.id, atom])).values()];
             if (denied.length) {

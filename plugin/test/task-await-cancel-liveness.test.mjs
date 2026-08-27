@@ -26,6 +26,17 @@ function setup(){
 }
 
 
+test('implicit process-lifecycle support requires a bounded objective and never inherits mission scope',async()=>{
+  const {runtime,m}=setup()
+  await assert.rejects(()=>runtime.start(m,{role:'coder',processLifecycle:true}),/requires an explicit bounded objective.*cannot inherit the Mission objective/i)
+  assert.deepEqual(m.execution.tasks,[]);assert.deepEqual(m.execution.workers,[])
+  const started=await runtime.start(m,{objective:'start and keep the inventory HTTP server ready for parent smoke checks',role:'coder',processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id);assert.ok(task)
+  assert.equal(task.objective,'start and keep the inventory HTTP server ready for parent smoke checks')
+  assert.deepEqual(task.scope,[],'resource-only support must not inherit semantic likely-target scope')
+  assert.deepEqual(task.obligation_ids,[]);assert.deepEqual(task.requiredEvidence,[]);assert.deepEqual(task.execution_profile.methodologies,[])
+})
+
 test('implicit process-lifecycle support task owns only the runtime resource, not mission implementation or verification',async()=>{
   const {runtime,m}=setup()
   const verify=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verify);m.execution.verification_policy.requiredKinds=['targeted-tests','changed-surface-sanity','visual-check'];verify.requiredEvidence=[...m.execution.verification_policy.requiredKinds]

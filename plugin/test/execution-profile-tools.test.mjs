@@ -251,6 +251,14 @@ test('child workers cannot invoke any Hi control-plane custom tool, including co
 })
 
 
+test('process lifecycle start contract requires explicit resource objective and keeps command execution child-owned',()=>{
+  const source=readFileSync(new URL('../src/runtime/application/hi-tool-surface.ts',import.meta.url),'utf8')
+  assert.match(source,/NEW lifecycle-support task.*MUST provide an explicit bounded objective/i)
+  assert.match(source,/never inherits the Mission objective/i)
+  assert.match(source,/command\/args\/env\/title are NOT hi_task_start fields/i)
+  assert.match(source,/admitted child calls hi_process_spawn itself/i)
+})
+
 test('process lifecycle handoff separates resource ownership from mission-wide verification by default',()=>{
   const source=readFileSync(new URL('../src/runtime/task/queued-worker-dispatcher.ts',import.meta.url),'utf8')
   assert.match(source,/lifecycle-support task with no required_evidence\/obligation ownership must not run mission-wide test\/build\/review suites/i)
