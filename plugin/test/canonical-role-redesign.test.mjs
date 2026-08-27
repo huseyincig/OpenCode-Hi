@@ -16,12 +16,12 @@ import {applyProjectSettings} from '../dist/config/project-settings.js'
 import {createToolBeforeHook} from '../dist/hooks/tool-before.js'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import {join,resolve} from 'node:path'
 
 const FINAL_CHILD=['coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa']
 function intent(overrides={}){return{objective:'opaque',taskKind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependencyClass:'independent',requiredCapabilities:['implementation'],requestedExternalActions:[],likelyVerification:[],avoid:[],...overrides}}
 function roleOf(overrides){return routeCapabilities(intent(overrides),{specialistThreshold:'medium',reviewThreshold:'medium'}).role}
-function runtime(){const created=[],registry=new BackgroundRegistry();const client={session:{create:async req=>{created.push(req);return{data:{id:'child-'+created.length}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}};const cfg=resolveHiConfig({parallel:{enabled:true,max:4}});return{created,registry,rt:new TaskRuntime(opencodeChildPort(client),registry,createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/model',provider:'p',quality:8,cost:1,tags:['balanced'],writeCapable:true,visionCapable:true}],()=>({}))}}
+function runtime(options={}){const created=[],registry=new BackgroundRegistry();const client={session:{create:async req=>{created.push(req);return{data:{id:'child-'+created.length}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}};const cfg=resolveHiConfig({parallel:{enabled:true,max:4}}),host=options.browser?{agent:PACKAGED_HI_AGENTS}:{},root=options.browser?resolve(process.cwd(),'..'):process.cwd();return{created,registry,rt:new TaskRuntime(opencodeChildPort(client),registry,createConcurrencyPolicySource(()=>({global:4})),root,root,()=>cfg,()=>[{id:'p/model',provider:'p',quality:8,cost:1,tags:['balanced'],writeCapable:true,visionCapable:true}],()=>host,undefined,{},undefined,undefined,()=>options.browser?new Set(['host-capability:browser-execution']):new Set())}}
 
 test('canonical catalog contains exactly the nine child roles with native subagent projections',()=>{
   assert.deepEqual([...HI_CHILD_ROLES],FINAL_CHILD)
@@ -73,6 +73,26 @@ test('new role permission classes reflect their mutation boundaries',()=>{
   assert.equal(isHiReadOnlyChildRole('researcher'),true)
   assert.equal(isHiReadOnlyChildRole('technical-writer'),false)
   assert.equal(isHiReadOnlyChildRole('test-engineer'),false)
+})
+
+test('omitted role keeps coder while implementation is open, then selects sole visual verification owner',async()=>{
+  const x=runtime({browser:true}),store=new MissionStore(),m=startAssessedMission(store,'visual-after-implementation','build then visually verify',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation','visual-qa'],likely_verification:['visual-check'],likely_targets:['index.html']})
+  const first=await x.rt.start(m,{objective:'build page',scope:['index.html']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification')
+  assert.equal(m.execution.tasks.find(t=>t.id===first.task_id)?.role,'coder')
+  implementation.status='closed';implementation.closedAt=Date.now()
+  m.execution.tasks.find(t=>t.id===first.task_id).status='completed';m.execution.workers.find(w=>w.id===first.worker_id).status='completed'
+  const second=await x.rt.start(m,{objective:'visually verify page',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const task=m.execution.tasks.find(t=>t.id===second.task_id),worker=m.execution.workers.find(w=>w.id===second.worker_id)
+  assert.equal(task?.role,'visual-qa');assert.equal(worker?.role,'visual-qa');assert.ok(task?.obligation_ids.includes(verification.id));assert.ok(second.methodologies.includes('hi-visual-qa'));assert.equal(task?.execution_profile?.browser_backend,'bounded-playwright');assert.ok(task?.execution_profile?.tools.includes('hi_browser_screenshot'))
+})
+
+test('omitted role fails closed when routed owner has no open work and multiple specialist owners remain',async()=>{
+  const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,'ambiguous-specialists','build then verify and document',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation','visual-qa'],likely_verification:['visual-check'],likely_targets:['index.html']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');implementation.status='closed';implementation.closedAt=Date.now()
+  m.execution.obligations.push({id:'o-doc-extra',kind:'documentation',summary:'docs',status:'open',requiredEvidence:[]})
+  await assert.rejects(()=>x.rt.start(m,{objective:'remaining specialist work',scope:['index.html']}),/multiple canonical role owners|span multiple canonical role owners/i)
+  assert.equal(x.created.length,0)
 })
 
 test('caller supplied incompatible role cannot override canonical visual owner',async()=>{

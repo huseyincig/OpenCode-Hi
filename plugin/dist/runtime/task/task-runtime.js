@@ -79,9 +79,27 @@ function canonicalRoleForTask(m, routedRole, explicit = [], requestedRole = '') 
         if (isHiReadOnlyChildRole(requestedRole))
             return requestedRole;
     }
+    if (!requestedRole) {
+        const openOwners = [...new Set(m.execution.obligations.filter(o => o.status === 'open').map(o => ownerForObligation(m, o.kind)).filter((x) => Boolean(x)))];
+        if (isHiChildRole(routedRole) && openOwners.includes(routedRole))
+            return routedRole;
+        if (openOwners.length === 1)
+            return openOwners[0];
+        if (openOwners.length > 1)
+            throw new Error(`Open obligations span multiple canonical role owners (${openOwners.join(', ')}); supply exact obligation_ids or decompose the work.`);
+    }
     if (isHiChildRole(routedRole))
         return routedRole;
     throw new Error(`No canonical role owner for task semantics; routed=${routedRole || 'none'}`);
+}
+function ownedProcessResumeContext(m, task, worker) {
+    if (task.execution_profile?.process_lifecycle !== true)
+        return undefined;
+    const owned = m.execution.processes.filter(process => process.task_id === task.id && process.worker_id === worker.id && process.cleanup_state !== 'CLEANED').slice(0, 8);
+    if (!owned.length)
+        return 'CURRENT OWNED RUNTIME PROCESSES: none recorded for this exact task/worker.';
+    const rows = owned.map(process => `${process.process_id} status=${process.status} cleanup=${process.cleanup_state} pid=${process.pid} cwd=${process.cwd}`);
+    return `CURRENT OWNED RUNTIME PROCESSES: ${rows.join(' | ')}. These are the canonical ProcessContract records for this exact task/worker. A RUNNING record is not permission to assume host liveness blindly: reobserve your own process with hi_process_list/hi_process_read before deciding whether another spawn is required. Do not spawn a duplicate merely because the previous WorkerResult omitted process state.`;
 }
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     const requested = [...new Set(explicit)].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
@@ -564,12 +582,13 @@ export class TaskRuntime {
                 throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);
             role = canonicalRole;
         }
+        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);
         if (selected.rejected.length)
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => input.resumeTaskId ? need.task_id === input.resumeTaskId || (!need.task_id && (!need.obligation_id || input.obligationIds?.includes(need.obligation_id))) : !need.task_id && (!need.obligation_id || input.obligationIds?.includes(need.obligation_id)));
+        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => input.resumeTaskId ? need.task_id === input.resumeTaskId || (!need.task_id && (!need.obligation_id || obligationIds.includes(need.obligation_id))) : !need.task_id && (!need.obligation_id || obligationIds.includes(need.obligation_id)));
         const catalog = methodologyCatalog(this.projectRoot), requestedMethodologyNames = methodologyNames(taskMethodologyNeeds);
         const requestedMcpServers = [...new Set(input.mcpServers ?? [])].map(x => String(x).trim()).filter(Boolean).slice(0, 8);
         if (requestedMcpServers.length && !m.identity.intent.requiredCapabilities.includes('mcp'))
@@ -591,7 +610,6 @@ export class TaskRuntime {
             markCapabilityUnavailable(m, { capability: 'mcp-tool-namespace', reason: message });
             throw new Error(`USER_ACTION_REQUIRED: ${message}`);
         }
-        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
         let extraResources = this.extraHostResources();
         const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
         let browserBootstrap;
@@ -688,13 +706,13 @@ export class TaskRuntime {
                 existing.started_at = Date.now();
                 oldTask.status = 'running';
                 this.registry.set(existing);
-                const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), freshEvidence = m.execution.evidence.items.filter(e => !e.invalidated_at && evidenceVerdictPassed(e.pass, e.outcome) && (e.task_id === oldTask.id || e.obligation_ids?.some(id => oldTask.obligation_ids.includes(id)) || (e.scope ?? []).some(file => oldTask.scope.includes(file)))).slice(-8).map(e => `${e.kind}: ${e.summary}`).join(' | '), reviewScope = isHiReadOnlyChildRole(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.vcs.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${freshEvidence || 'none'}.` : '', resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
+                const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), freshEvidence = m.execution.evidence.items.filter(e => !e.invalidated_at && evidenceVerdictPassed(e.pass, e.outcome) && (e.task_id === oldTask.id || e.obligation_ids?.some(id => oldTask.obligation_ids.includes(id)) || (e.scope ?? []).some(file => oldTask.scope.includes(file)))).slice(-8).map(e => `${e.kind}: ${e.summary}`).join(' | '), reviewScope = isHiReadOnlyChildRole(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.vcs.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${freshEvidence || 'none'}.` : '', processResumeContext = ownedProcessResumeContext(m, oldTask, existing), resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
                 const resumeVariant = nextModel === selected.primary ? selected.primaryVariant : selected.fallbackVariants[nextModel];
                 const protectedBaseline = Object.keys(m.vcs.preexisting_user_changes ?? {}).slice(0, 60);
                 const correctionLevel = Math.min(2, hazardBeforeResume.attempts + 1);
                 beginWorkerAttempt(oldTask, existing);
                 this.recordModelProjection(existing, nextModel, resumeVariant);
-                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT FRESH EVIDENCE: ${freshEvidence || 'none'}.`, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, correctionLevel === 1 ? 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.' : 'Resume the SAME task/session, but use a materially different corrective hypothesis or action from the prior correction. Do not repeat the failed strategy, restart planning, or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, taskPromptToolOverrides(oldTask.execution_profile?.tools ?? [], this.getHostConfig(), oldTask.execution_profile?.mcp_servers ?? []), existing.attempt_prompt_message_id);
+                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT FRESH EVIDENCE: ${freshEvidence || 'none'}.`, processResumeContext, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, correctionLevel === 1 ? 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.' : 'Resume the SAME task/session, but use a materially different corrective hypothesis or action from the prior correction. Do not repeat the failed strategy, restart planning, or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, taskPromptToolOverrides(oldTask.execution_profile?.tools ?? [], this.getHostConfig(), oldTask.execution_profile?.mcp_servers ?? []), existing.attempt_prompt_message_id);
                 recordRecoveryStrategy(m, { level: correctionLevel, action: 'same-worker-resume' }, 'started', Date.now(), { task_id: oldTask.id, worker_id: existing.id, model: nextModel, failure_signature: existing.last_runtime_failure_kind });
                 existing.model_variant = resumeVariant;
                 existing.restart_reconcile_pending = false;

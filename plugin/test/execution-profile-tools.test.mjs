@@ -85,6 +85,36 @@ test('process lifecycle cannot be widened from mission or task defaults without 
   const owned=await runtime.start(m2,{objective:'run app',role:'coder',scope:['app.py'],processLifecycle:true});assert.equal(m2.execution.tasks.find(t=>t.id===owned.task_id).execution_profile.process_lifecycle,true)
 })
 
+test('process-lifecycle corrective resume projects only exact owned ProcessContracts and requires reobservation before spawn',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-resume-context','run app and verify it')
+  assess(store,'process-resume-context',{required_capabilities:['implementation'],likely_targets:['app.py']})
+  const first=await runtime.start(m,{objective:'run app server',role:'coder',category:'standard',scope:['app.py'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===first.task_id),worker=m.execution.workers.find(w=>w.id===first.worker_id)
+  m.execution.processes.push({process_id:'proc_owned',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,host:'opencode',command_identity:'a'.repeat(64),cwd:process.cwd(),pid:4312,process_group_id:4312,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],authority_ref:'native-permission:test:bash',cleanup_state:'ACTIVE'})
+  m.execution.processes.push({process_id:'proc_other',mission_id:m.identity.mission_id,task_id:'other-task',worker_id:'other-worker',host:'opencode',command_identity:'b'.repeat(64),cwd:'/tmp/other',pid:4313,process_group_id:4313,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],authority_ref:'native-permission:other:bash',cleanup_state:'ACTIVE'})
+  runtime.applyResult(m,first.worker_id,{status:'NEEDS_CONTEXT',summary:'permission denied',changed_files:[],evidence:[],open_issues:['permission-denied:x'],needs_context:['use an allowed different path']})
+  await runtime.resume(m,first.task_id)
+  const text=JSON.stringify(prompts[1])
+  assert.match(text,/CURRENT OWNED RUNTIME PROCESSES: proc_owned status=RUNNING cleanup=ACTIVE pid=4312/)
+  assert.match(text,/reobserve your own process with hi_process_list\/hi_process_read before deciding whether another spawn is required/i)
+  assert.match(text,/Do not spawn a duplicate merely because the previous WorkerResult omitted process state/i)
+  assert.doesNotMatch(text,/proc_other|\/tmp\/other/)
+})
+
+test('non-process corrective resume does not leak unrelated ProcessContracts',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('plain-resume-context','fix parser')
+  assess(store,'plain-resume-context',{task_kind:'bug-fix',likely_targets:['src/parser.ts']})
+  const first=await runtime.start(m,{objective:'fix parser',role:'coder',scope:['src/parser.ts']})
+  m.execution.processes.push({process_id:'proc_unrelated',mission_id:m.identity.mission_id,task_id:'other-task',worker_id:'other-worker',host:'opencode',command_identity:'c'.repeat(64),cwd:'/tmp/unrelated',pid:5001,process_group_id:5001,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],authority_ref:'native-permission:other:bash',cleanup_state:'ACTIVE'})
+  runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'fix remains',changed_files:[],evidence:[],open_issues:['fix:x'],needs_context:[]})
+  await runtime.resume(m,first.task_id)
+  const text=JSON.stringify(prompts[1]);assert.doesNotMatch(text,/CURRENT OWNED RUNTIME PROCESSES|proc_unrelated|\/tmp\/unrelated/)
+})
+
 test('same-session corrective resume preserves the original execution tool surface and does not spawn a new child',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
