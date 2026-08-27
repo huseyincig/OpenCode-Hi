@@ -32,3 +32,17 @@ test('USER_ACTION_REQUIRED remains a compatibility alias but canonical result st
   assert.ok(result.open_issues.includes('USER_ACTION_REQUIRED'))
   assert.equal(isWorkerResultContract(result),true)
 })
+
+
+test('WorkerResult evidence refs normalize annotated canonical runtime tokens without granting unknown prose authority',()=>{
+  const result=normalizeWorkerResult({status:'DONE',summary:'visual proof',changed_files:[],evidence:[{kind:'visual-evidence',summary:'checked',outcome:'passed',evidence_refs:[
+    'ev_mtbbk78h_h7k5af -> hi-artifact:a_e2aa0b2193319cea0d275456 screenshot 1280x800',
+    'ev_mtbbk5ds_k0kivn: viewport 1280x800',
+    'bo_0123456789abcdef01234567 inspected',
+    'opaque-provider-receipt'
+  ]}],open_issues:[],needs_context:[]})
+  assert.deepEqual(result.evidence[0].evidence_refs,[
+    'ev_mtbbk78h_h7k5af','hi-artifact:a_e2aa0b2193319cea0d275456','ev_mtbbk5ds_k0kivn','bo_0123456789abcdef01234567','opaque-provider-receipt'
+  ])
+  assert.equal(isWorkerResultContract(result),true)
+})

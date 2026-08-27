@@ -22,6 +22,17 @@ function stringArray(v:unknown):v is string[]{return Array.isArray(v)&&v.every(x
 function onlyKeys(v:Record<string,unknown>,allowed:Set<string>):boolean{return Object.keys(v).every(k=>allowed.has(k))}
 function clip(v:unknown,max:number):string{return String(v??'').slice(0,max)}
 function cleanKey(v:unknown):string{return String(v??'').trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'')}
+const RUNTIME_EVIDENCE_REF_TOKEN=/(?:ev_[a-z0-9]+_[a-z0-9]+|bo_[a-f0-9]{24}|hi-artifact:a_[a-f0-9]{24})/g
+function normalizeEvidenceRefs(raw:unknown):string[]|undefined{
+  if(!Array.isArray(raw))return undefined
+  const out:string[]=[]
+  for(const value of raw){
+    const text=String(value??'').trim();if(!text)continue
+    const canonical=text.match(RUNTIME_EVIDENCE_REF_TOKEN)??[]
+    for(const ref of canonical.length?canonical:[text])if(!out.includes(ref)){out.push(ref);if(out.length>=20)return out}
+  }
+  return out.length?out:undefined
+}
 
 export function isWorkerEvidenceClaimContract(v:unknown):v is WorkerEvidenceClaim{
   if(!record(v)||!onlyKeys(v,EVIDENCE_KEYS)||typeof v.kind!=='string'||!KIND_SET.has(v.kind)||typeof v.summary!=='string')return false
@@ -48,7 +59,7 @@ export function isWorkerResultContract(v:unknown):v is WorkerResult{
 
 function normalizeEvidence(raw:unknown):WorkerEvidenceClaim[]{
   const values=Array.isArray(raw)?raw:(record(raw)?Object.entries(raw).map(([kind,value])=>({kind,summary:typeof value==='string'?value:JSON.stringify(value)})):[])
-  return values.slice(0,40).flatMap((v:any)=>{if(!record(v))return[];const kind=String(v.kind??'') as WorkerEvidenceKind;if(!KIND_SET.has(kind))return[];const outcome=typeof v.outcome==='string'&&OUTCOME_SET.has(v.outcome)?v.outcome as EvidenceOutcome:undefined,rawPass=typeof v.pass==='boolean'?v.pass:undefined,rawRefs=Array.isArray(v.evidence_refs)?v.evidence_refs:Array.isArray(v.refs)?v.refs:undefined,summarySource=typeof v.summary==='string'?v.summary:typeof v.description==='string'?v.description:typeof v.detail==='string'?v.detail:'';return[{kind,summary:clip(summarySource,1000),scope:Array.isArray(v.scope)?v.scope.map(String).slice(0,50):undefined,evidence_refs:rawRefs?[...new Set(rawRefs.map(String).filter(Boolean))].slice(0,20):undefined,pass:evidenceVerdictPassValue(rawPass,outcome),outcome,reason:typeof v.reason==='string'?clip(v.reason,1000):undefined}]})
+  return values.slice(0,40).flatMap((v:any)=>{if(!record(v))return[];const kind=String(v.kind??'') as WorkerEvidenceKind;if(!KIND_SET.has(kind))return[];const outcome=typeof v.outcome==='string'&&OUTCOME_SET.has(v.outcome)?v.outcome as EvidenceOutcome:undefined,rawPass=typeof v.pass==='boolean'?v.pass:undefined,rawRefs=Array.isArray(v.evidence_refs)?v.evidence_refs:Array.isArray(v.refs)?v.refs:undefined,summarySource=typeof v.summary==='string'?v.summary:typeof v.description==='string'?v.description:typeof v.detail==='string'?v.detail:'';return[{kind,summary:clip(summarySource,1000),scope:Array.isArray(v.scope)?v.scope.map(String).slice(0,50):undefined,evidence_refs:normalizeEvidenceRefs(rawRefs),pass:evidenceVerdictPassValue(rawPass,outcome),outcome,reason:typeof v.reason==='string'?clip(v.reason,1000):undefined}]})
 }
 function normalizeMethodologyObservations(raw:unknown):MethodologyObservation[]|undefined{
   if(!Array.isArray(raw))return undefined

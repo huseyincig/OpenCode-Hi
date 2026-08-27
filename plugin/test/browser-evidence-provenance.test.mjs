@@ -14,6 +14,7 @@ import {methodologyExitCheck} from '../dist/runtime/methodology/exit.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {ContextArtifactStore} from '../dist/runtime/context/artifact-store.js'
 import {createRuntimeScopedStores} from '../dist/runtime/application/runtime-scoped-stores.js'
+import {normalizeWorkerResult} from '../dist/contracts/worker-result.js'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
@@ -61,6 +62,19 @@ test('passed visual evidence keeps exact browser authority while verified Hi scr
     const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})),artifact=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${f.task.id}`,new Uint8Array([137,80,78,71,13,10,26,10,1]),{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${f.task.id}`]})
     runtime(scopedStores).applyResult(f.m,f.worker.id,{status:'DONE',summary:'visual proof with screenshot provenance',changed_files:[],evidence:[{kind:'visual-evidence',summary:'verified browser-visible state',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref,`hi-artifact:${artifact.artifact_id}`],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
     assert.equal(f.task.result.status,'DONE');assert.deepEqual(f.task.result.evidence[0].evidence_refs,[out.evidence_ref]);const normalized=f.m.execution.ledger.find(e=>e.type==='browser.evidence-ref-normalized');assert.ok(normalized);assert.deepEqual(normalized.payload.supplemental_refs,[`hi-artifact:${artifact.artifact_id}`])
+  } finally {rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('annotated current-attempt browser refs normalize at WorkerResult boundary and still require exact browser authority',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-browser-annotated-proof-'))
+  try{
+    const f=fixture('m13-proof-annotated'),scopedStores=createRuntimeScopedStores(root);f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa']
+    const toolSurface=createHiToolSurface({state:{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},openCodeVersion:'1.18.21'},store:f.store,tasks:{},processRuntime:{},browserExecutor:{inspect:async()=>observation(f.task.id),health:async()=>({available:true})},projectRoot:root,capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores}).toolSurface
+    const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})),artifact=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${f.task.id}`,new Uint8Array([137,80,78,71,13,10,26,10,9]),{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${f.task.id}`]})
+    const result=normalizeWorkerResult({status:'DONE',summary:'annotated visual proof',changed_files:[],evidence:[{kind:'visual-evidence',summary:'verified state',scope:['src/view.tsx'],evidence_refs:[`${out.evidence_ref} -> hi-artifact:${artifact.artifact_id} screenshot 1280x800`],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    runtime(scopedStores).applyResult(f.m,f.worker.id,result)
+    assert.equal(f.task.result.status,'DONE');assert.deepEqual(f.task.result.evidence[0].evidence_refs,[out.evidence_ref]);assert.equal(methodologyExitCheck(f.m,'hi-visual-qa',{task:f.task,result:f.task.result,projectRoot:root,scope:'worker'}).ok,true)
   } finally {rmSync(root,{recursive:true,force:true})}
 })
 

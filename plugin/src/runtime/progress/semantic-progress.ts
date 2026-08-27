@@ -27,8 +27,9 @@ function workerFailureSignature(worker:MissionState['execution']['workers'][numb
 /** Host-neutral semantic state fingerprint. Deliberately excludes prose summaries, timestamps and raw activity counts. */
 export function semanticProgressSnapshot(m:MissionState):SemanticProgressSnapshot{
   const dependencyIDs=new Set(m.execution.tasks.flatMap(task=>task.dependencies))
-  const evidenceIDs=sorted(m.execution.evidence.items.map(e=>e.id))
-  const invalidated=sorted(m.execution.evidence.items.filter(e=>Boolean(e.invalidated_at)).map(e=>e.id))
+  const semanticEvidence=m.execution.evidence.items.filter(e=>e.outcome==='passed'||e.outcome==='failed'||e.outcome==='environment-issue')
+  const evidenceIDs=sorted(semanticEvidence.map(e=>e.id))
+  const invalidated=sorted(semanticEvidence.filter(e=>Boolean(e.invalidated_at)).map(e=>e.id))
   const completedTasks=sorted(m.execution.tasks.filter(t=>t.status==='completed').map(t=>t.id))
   const completedDependencies=sorted(m.execution.tasks.filter(t=>t.status==='completed'&&dependencyIDs.has(t.id)).map(t=>t.id))
   const closedObligations=sorted(m.execution.obligations.filter(o=>o.status==='closed').map(o=>o.id))

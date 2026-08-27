@@ -11,6 +11,7 @@ import {dispatchContinuation} from '../dist/runtime/continuation/dispatcher.js'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
+import {addEvidence} from '../dist/runtime/evidence/evidence-runtime.js'
 
 function mission(id='recovery-governor'){
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,id,'opaque implementation',{task_kind:'implementation',likely_verification:[]})
@@ -82,6 +83,21 @@ test('recovery semantic signature ignores activity-only worker attempt churn',()
   const before=recoverySemanticSignature(m)
   worker.attempt+=1;worker.status='busy';task.status='running';assert.equal(store.updateProgress(m,false),false);worker.status='ready';task.status='waiting';assert.equal(store.updateProgress(m,false),false)
   assert.equal(recoverySemanticSignature(m),before,'activity churn must not manufacture a fresh recovery epoch')
+})
+
+
+test('pending evidence churn does not reset same-model bounded-correction hazard signature',()=>{
+  const {store,m}=mission('rg-pending-evidence-churn')
+  const task=createTask(m,{objective:'visual verify',role:'visual-qa',category:'visual'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b'];store.updateProgress(m,false)
+  const signature=recoverySemanticSignature(m)
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  const pending1=addEvidence(m,{kind:'browser-evidence',summary:'attempt one inspect',source:'browser:bo_one',task_id:task.id,obligation_ids:[],outcome:'pending',reason:'raw browser observation'});store.updateProgress(m,false);pending1.invalidated_at=Date.now();store.updateProgress(m,false)
+  assert.equal(recoverySemanticSignature(m),signature)
+  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  const pending2=addEvidence(m,{kind:'visual-evidence',summary:'attempt two screenshot observation',source:'browser:bo_two',task_id:task.id,obligation_ids:[],outcome:'pending',reason:'raw browser observation'});store.updateProgress(m,false);pending2.invalidated_at=Date.now();store.updateProgress(m,false)
+  assert.equal(recoverySemanticSignature(m),signature)
+  m.continuation.stagnation_count=3
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,2);assert.deepEqual(hazard.recovery_candidates,['p/b'])
 })
 
 test('two same-model bounded corrections open recovery-only model escalation on unchanged semantic gain state',()=>{

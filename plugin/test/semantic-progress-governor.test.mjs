@@ -38,6 +38,22 @@ test('new evidence dependency completion and changed surface are material semant
   before=semanticProgressSnapshot(m);markMutation(m,['src/new.ts'],'test');delta=semanticProgressDelta(before,semanticProgressSnapshot(m));assert.equal(delta.changedFiles,1);assert.equal(semanticProgressMade(delta),true)
 })
 
+
+test('pending host observations are activity, not productive semantic evidence',()=>{
+  const {store,m}=mission('sp-pending-observation')
+  const before=semanticProgressSnapshot(m)
+  const pending=addEvidence(m,{kind:'browser-evidence',summary:'browser inspected',scope:['src/a.ts'],source:'browser:bo_test',task_id:undefined,obligation_ids:[],outcome:'pending',reason:'raw host observation'})
+  let delta=semanticProgressDelta(before,semanticProgressSnapshot(m))
+  assert.equal(delta.evidenceAdded,0)
+  assert.equal(semanticProgressMade(delta),false)
+  assert.ok(delta.signals.includes('state-changed-without-semantic-gain'))
+  store.updateProgress(m,false)
+  pending.invalidated_at=Date.now()
+  delta=semanticProgressDelta(m.continuation.semantic_progress_snapshot,semanticProgressSnapshot(m))
+  assert.equal(delta.evidenceInvalidated,0,'invalidating never-admitted pending observation must not create a recovery epoch')
+  assert.equal(semanticProgressMade(delta),false)
+})
+
 test('repeated identical failure does not buy infinite progress but a new failure signature is new information once',()=>{
   const {store,m}=mission('sp-failure')
   m.execution.blockers.push('same-failure')
