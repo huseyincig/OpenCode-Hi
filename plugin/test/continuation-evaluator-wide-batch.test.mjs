@@ -168,7 +168,7 @@ test('child-result wake honors a terminal capability blocker instead of blindly 
     await assessPluginMission(hooks,'parent-capability',{task_kind:'review',required_capabilities:['repository-analysis','interactive-process'],likely_targets:['src/a.ts']})
     const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect repository',role:'repository-explorer',category:'quick',scope:'src/a.ts',process_lifecycle:true},{sessionID:'parent-capability'}))
     assert.ok(started.worker_id)
-    const processBlocked=JSON.parse(await hooks.tool.hi_process_spawn.execute({worker_id:started.worker_id,command:'node',args_json:'["server.js"]'},{sessionID:'parent-capability',directory:dir}))
+    const processBlocked=JSON.parse(await hooks.tool.hi_process_spawn.execute({worker_id:started.worker_id,command:'node',args_json:'["server.js"]'},{sessionID:'child-capability',directory:dir}))
     assert.equal(processBlocked.status,'USER_ACTION_REQUIRED');assert.equal(processBlocked.blocker,'capability-unavailable:process-lifecycle')
     assert.equal(promptCalls.filter(x=>x.path?.id==='parent-capability').length,0)
     await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-capability'}}})

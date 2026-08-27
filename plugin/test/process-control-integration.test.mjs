@@ -133,7 +133,7 @@ test('semantic gate separates capability IDs from methodology intent signals',()
   const gate=renderSemanticAssessmentGate(m);assert.match(gate,/interactive-process=persistent/);assert.match(gate,/capability-named signals reject/)
 })
 
-test('process spawn requires exact task-level process_lifecycle ownership even when parent mission exists',async()=>{
+test('parent process execution is blocked even when it names an existing worker',async()=>{
   const store=new MissionStore(),m=assessed(store,'m12-bounded'),calls=[]
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'bounded command',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'bounded command',scope:[],dependencies:[],required_evidence:[]},tools:['bash'],fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:'w1'})
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation})
@@ -141,62 +141,93 @@ test('process spawn requires exact task-level process_lifecycle ownership even w
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   const before={tasks:m.execution.tasks.length,workers:m.execution.workers.length,processes:m.execution.processes.length}
   const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'npm',args_json:'["test"]'},{sessionID:m.identity.session_id,directory:'/repo'}))
-  assert.deepEqual(out,{status:'BLOCKED',reason:'process-lifecycle-task-required',required_owner:'exact-task-worker',next_tool:'hi_task_start',process_lifecycle_field_owner:'hi_task_start',retry_same_spawn:false,instruction:'Create or resume one exact task with hi_task_start and process_lifecycle=true. The admitted child worker then owns hi_process_spawn. Do not add process_lifecycle to hi_process_spawn and do not retry this spawn unchanged.'})
-  assert.doesNotMatch(JSON.stringify(out),/bounded native shell/i);assert.deepEqual(calls,[])
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-execution-child-owner-required');assert.equal(out.required_owner,'exact-process-lifecycle-task-worker');assert.equal(out.next_tool,'hi_task_start');assert.equal(out.retry_same_call,false);assert.match(out.instruction,/Parent sessions.*cannot proxy process execution/i);assert.deepEqual(calls,[])
   assert.deepEqual({tasks:m.execution.tasks.length,workers:m.execution.workers.length,processes:m.execution.processes.length},before,'blocked spawn must not fabricate ownership or process state')
 })
 
-test('interactive-process intent still fails closed when live native PTY capability is unavailable',async()=>{
-  const store=new MissionStore(),m=store.start('m12-no-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-no-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m)
+test('admitted child still fails closed when live native PTY capability is unavailable',async()=>{
+  const {store,worker}=processOwnedChildFixture(),calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
-  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
-  const out=String(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const out=String(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'node',args_json:'["server.js"]'},{sessionID:worker.session_id,directory:'/repo'}))
   assert.match(out,/native process lifecycle is unavailable/i);assert.deepEqual(calls,[])
 })
 
-test('interactive-process plus observed native PTY capability admits the existing ProcessRuntime owner',async()=>{
-  const store=new MissionStore(),m=store.start('m12-pty','opaque persistent process');store.applyInitialSemanticAssessment('m12-pty',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m)
+test('admitted child plus observed native PTY capability reaches the existing ProcessRuntime owner',async()=>{
+  const {store,worker}=processOwnedChildFixture(),calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_1',status:'RUNNING'}}}
-  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
-  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo',ask:async()=>{throw new Error('unexpected ask')}}))
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo',ask:async()=>{throw new Error('unexpected ask')}}))
   assert.equal(out.process_id,'proc_1');assert.equal(calls.length,1);assert.equal(calls[0].command,'node')
 })
 
-
-test('parent process spawn reuses the sole existing process-lifecycle owner when worker_id is omitted',async()=>{
+test('parent cannot proxy process execution through the sole existing process-lifecycle owner',async()=>{
   const store=new MissionStore(),m=store.start('m12-parent-owner-reuse','opaque persistent process');store.applyInitialSemanticAssessment('m12-parent-owner-reuse',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m)
   const task=m.execution.tasks.find(t=>t.worker_id==='w1'),worker=m.execution.workers.find(w=>w.id==='w1');task.status='waiting';task.result={status:'FIX_REQUIRED',summary:'structured result correction pending',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:[]};worker.status='ready'
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_reused',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   const out=JSON.parse(await toolSurface.hi_process_spawn.execute({command:'bash',args_json:'["-c","curl -s http://127.0.0.1:5000/notes"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
-  assert.equal(out.process_id,'proc_reused');assert.equal(calls.length,1);assert.equal(calls[0].worker_id,'w1');assert.ok(m.execution.ledger.some(e=>e.type==='process.owner-resolved'&&e.task_id===task.id&&e.worker_id==='w1'&&e.payload?.source==='parent-unique-existing-owner'))
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-execution-child-owner-required');assert.equal(out.retry_same_call,false);assert.match(out.resume_existing_with,/hi_task_start/);assert.match(out.await_existing_with,/hi_task_await/);assert.deepEqual(calls,[]);assert.ok(!m.execution.ledger.some(e=>e.type==='process.owner-resolved'))
 })
 
-test('parent process spawn fails closed when worker_id is omitted with multiple eligible owners',async()=>{
+test('parent process execution is child-bound regardless of how many process owners exist',async()=>{
   const store=new MissionStore(),m=store.start('m12-parent-owner-ambiguous','two process owners');store.applyInitialSemanticAssessment('m12-parent-owner-ambiguous',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[];attachParentProcessOwner(m,'w1');attachParentProcessOwner(m,'w2')
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'should-not-spawn',status:'RUNNING'}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   const out=JSON.parse(await toolSurface.hi_process_spawn.execute({command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
-  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-owner-ambiguous');assert.equal(out.required_argument,'worker_id');assert.deepEqual(out.candidate_owners.map(x=>x.worker_id),['w1','w2']);assert.deepEqual(calls,[])
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-execution-child-owner-required');assert.deepEqual(calls,[])
 })
 
-test('process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
-  const store=new MissionStore(),m=store.start('m24-pty-drift-down','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-down',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0;attachParentProcessOwner(m)
+test('parent process read/list are blocked rather than projected through worker ownership',async()=>{
+  const store=new MissionStore(),m=store.start('m12-parent-process-reads','owned process');store.applyInitialSemanticAssessment('m12-parent-process-reads',{...INITIAL,required_capabilities:['implementation','interactive-process']});attachParentProcessOwner(m)
+  const processRuntime={list:()=>{throw new Error('parent must not list')},stopMission:async()=>0,read:async()=>{throw new Error('parent must not read')}}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const read=JSON.parse(await toolSurface.hi_process_read.execute({id:'proc_any'},{sessionID:m.identity.session_id})),list=JSON.parse(await toolSurface.hi_process_list.execute({},{sessionID:m.identity.session_id}))
+  assert.equal(read.reason,'process-execution-child-owner-required');assert.equal(list.reason,'process-execution-child-owner-required')
+})
+
+test('process spawn rejects shell-like command strings before capability or runtime execution',async()=>{
+  const {store,worker}=processOwnedChildFixture(),calls=[];let probes=0
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'never'}}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async()=>{probes++;return{available:true}}})
+  for(const command of ['python3 app.py','/usr/bin/python3 app.py','bash -c "python3 app.py"']){
+    const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command,cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo'}))
+    assert.equal(out.status,'BLOCKED',command);assert.equal(out.reason,'process-command-argv-required',command);assert.equal(out.retry_same_spawn,false,command);assert.deepEqual(out.example,{command:'python3',args_json:'["app.py"]'},command)
+  }
+  assert.equal(probes,0);assert.deepEqual(calls,[])
+})
+
+test('process spawn preserves explicit executable plus argv and explicit shell argv forms',async()=>{
+  const {store,worker}=processOwnedChildFixture(),calls=[]
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:`proc_${calls.length}`,status:'RUNNING'}}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const direct=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'python3',args_json:'["app.py"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo',ask:async()=>{}}))
+  const shell=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'bash',args_json:'["-c","printf ok"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo',ask:async()=>{}}))
+  assert.equal(direct.process_id,'proc_1');assert.equal(shell.process_id,'proc_2');assert.deepEqual(calls.map(x=>[x.command,x.args]),[['python3',['app.py']],['bash',['-c','printf ok']]])
+})
+
+test('child process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
+  const {store,m,worker}=processOwnedChildFixture(),calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'should-not-spawn',status:'RUNNING'}}}
-  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
-  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo'}))
   assert.equal(probes,1);assert.deepEqual(calls,[]);assert.equal(out.status,'USER_ACTION_REQUIRED');assert.equal(out.blocker,'capability-unavailable:process-lifecycle');assert.match(out.detail,/PTY list unavailable|process lifecycle is unavailable/i)
 })
 
-test('process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{
-  const store=new MissionStore(),m=store.start('m24-pty-drift-up','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-up',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({});let probes=0;attachParentProcessOwner(m)
+test('child process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{
+  const {store,m,worker}=processOwnedChildFixture(),calls=[],capabilities=detectOpenCodeCapabilities({});let probes=0
   m.execution.blockers.push('capability-unavailable:process-lifecycle')
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_recovered',status:'RUNNING'}}}
-  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}, {processLifecycle:true}).contracts);return{available:true,detail:'OpenCode canonical v2 PTY list observed'}}})
-  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}, {processLifecycle:true}).contracts);return{available:true,detail:'OpenCode canonical v2 PTY list observed'}}})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo'}))
   assert.equal(probes,1);assert.equal(out.process_id,'proc_recovered');assert.equal(calls.length,1);assert.ok(!m.execution.blockers.includes('capability-unavailable:process-lifecycle'))
 })
-
 
 test('native-revert registration missing session-revert capability is terminal and deduped',async()=>{
   const store=new MissionStore(),m=assessed(store,'no-session-revert'),processRuntime={list:()=>[],stopMission:async()=>0}
