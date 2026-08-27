@@ -11,6 +11,9 @@ import { join } from 'node:path'
 import { activateMethodologySignal } from '../dist/runtime/methodology/activation.js'
 import { parseSemanticIntentAssessment } from '../dist/runtime/intent/semantic-assessment.js'
 import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
+import { reconcileMethodologyExits } from '../dist/runtime/methodology/exit.js'
+import { evaluateCompletion } from '../dist/runtime/completion/evaluator.js'
+import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 import {fileURLToPath} from 'node:url'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -106,6 +109,42 @@ test('loaded methodology need resolves after the bounded worker completes succes
   assert.ok(m.execution.ledger.some(x=>x.type==='methodology.resolved'&&x.payload?.name==='hi-test-driven-development'))
 })
 
+
+
+
+test('never-loaded unbound methodology is retired after canonical work is exhausted and cannot trigger zero-obligation stagnation',()=>{
+  const store=new MissionStore(root),m=store.start('s-unused-methodology-terminal','Apply two ordered changes')
+  store.applyInitialSemanticAssessment('s-unused-methodology-terminal',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts','src/b.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.ok(m.methodology.methodology_needs.some(need=>need.name==='hi-implementation-planning'&&!need.task_id&&!need.obligation_id))
+  m.vcs.changed_files=['src/a.ts','src/b.ts']
+  const verification=m.execution.obligations.find(obligation=>obligation.kind==='verification')
+  if(verification)addEvidence(m,{kind:'changed-surface-sanity',summary:'current bounded host sanity passed',scope:['src/a.ts','src/b.ts'],source:'bash',trusted_source_class:'host-tool-observation',obligation_ids:[verification.id],pass:true,outcome:'passed'})
+  for(const obligation of m.execution.obligations){obligation.status='closed';obligation.closedAt=Date.now()}
+  const retired=reconcileMethodologyExits(m,root)
+  assert.deepEqual(retired,[],'unused retirement is not a successful methodology exit')
+  assert.equal(m.methodology.methodology_needs.some(need=>need.name==='hi-implementation-planning'),false)
+  assert.ok(m.execution.ledger.some(event=>event.type==='methodology.unused-retired'&&event.payload?.name==='hi-implementation-planning'))
+  const completion=evaluateCompletion(m,root);assert.equal(completion.complete,true,JSON.stringify(completion))
+  const idle=evaluateIdle(m,Date.now(),root);assert.equal(idle.decision,'STOP');assert.equal(idle.reason_code,'complete')
+})
+
+test('unloaded advisory methodology inventory cannot independently own completion even before exit reconciliation',()=>{
+  const m=new MissionStore(root).start('s-advisory-methodology-completion','No canonical work remains')
+  m.identity.semantic_assessment={status:'assessed',source:'host-primary',assessed_at:Date.now()}
+  activateMethodologySignal(m,root,{signal:'architecture.dependency-structure',producer:'architecture',reason:'stale advisory planning signal'})
+  assert.ok(m.methodology.methodology_needs.length>0);assert.deepEqual(m.methodology.parent_loaded_methodologies,[])
+  const completion=evaluateCompletion(m,root);assert.equal(completion.complete,true,JSON.stringify(completion));assert.ok(!completion.reasons.some(reason=>reason.startsWith('methodology-needs:')))
+  const idle=evaluateIdle(m,Date.now(),root);assert.equal(idle.decision,'STOP');assert.equal(idle.reason_code,'complete')
+})
+
+test('actually loaded unresolved methodology exit remains fail-closed for completion',()=>{
+  const m=new MissionStore(root).start('s-loaded-methodology-exit','Loaded procedure still has an unmet exit')
+  m.identity.semantic_assessment={status:'assessed',source:'host-primary',assessed_at:Date.now()}
+  activateMethodologySignal(m,root,{signal:'intent.refactor',producer:'intent',reason:'behavior-preserving refactor methodology selected'})
+  m.methodology.parent_loaded_methodologies=['hi-safe-refactoring']
+  const completion=evaluateCompletion(m,root);assert.equal(completion.complete,false);assert.ok(completion.reasons.includes('methodology-needs:hi-safe-refactoring'))
+  reconcileMethodologyExits(m,root);assert.ok(m.methodology.methodology_needs.some(need=>need.name==='hi-safe-refactoring'),'loaded unmet exit must not be retired as unused')
+})
 
 test('independent multi-stream topology does not activate dependency-planning methodology',()=>{
   const store=new MissionStore(root)

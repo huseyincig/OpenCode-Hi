@@ -5,12 +5,13 @@ import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { createSystemTransformHook } from '../dist/hooks/system-transform.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
-function makeWorker(loadedSkills = []) {
+function makeWorker(mission, selectedMethodologies = []) {
   return {
     id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
-    parent_session_id: 's1', model: 'host-default', fallbacks: [],
-    selected_methodologies: loadedSkills, methodologies: [], fingerprint: 'f1', status: 'busy',
-    generation_at_spawn: 1, session_id: 'w1_session',
+    parent_session_id: mission.identity.session_id, parent_mission_id: mission.identity.mission_id,
+    model: 'host-default', fallbacks: [], selected_methodologies: selectedMethodologies,
+    loaded_methodologies: [], methodologies: [], fingerprint: 'f1', status: 'busy', attempt: 0,
+    generation_at_spawn: mission.continuation.generation, session_id: 'w1_session', updated_at: Date.now(),
   }
 }
 
@@ -19,7 +20,7 @@ test('system-transform projects selected architecture methodology without duplic
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque multi-stream architecture task',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['design-exploration','multi-stream-delegation'],intent_signals:['intent.architecture-decision']})
   const m = store.get('s1')
-  m.execution.workers.push(makeWorker(['hi-architecture-decisions']))
+  m.execution.workers.push(makeWorker(m,['hi-architecture-decisions']))
   bg.set(m.execution.workers[0])
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
@@ -37,7 +38,7 @@ test('system-transform omits unselected architecture methodology from runtime pr
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque local task')
   const m = store.get('s1')
-  m.execution.workers.push(makeWorker(['hi-test-strategy']))
+  m.execution.workers.push(makeWorker(m,['hi-test-strategy']))
   bg.set(m.execution.workers[0])
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
@@ -82,7 +83,7 @@ test('system-transform skips child whose generation is stale', async () => {
   const bg = new BackgroundRegistry()
   store.start('s1', 'tek bir bug')
   const m = store.get('s1')
-  const w = makeWorker(['hi-architecture-decisions'])
+  const w = makeWorker(m,['hi-architecture-decisions'])
   w.generation_at_spawn = 99 // stale
   m.execution.workers.push(w)
   bg.set(w)

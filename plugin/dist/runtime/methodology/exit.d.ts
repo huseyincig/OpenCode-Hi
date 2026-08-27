@@ -12,4 +12,5 @@ export declare function methodologyExitCheck(m: MissionState, name: string, inpu
     scope?: 'worker' | 'mission';
     obligationId?: string;
 }): MethodologyExitCheck;
+export declare function loadedMethodologyNeedNames(m: MissionState): Set<string>;
 export declare function reconcileMethodologyExits(m: MissionState, projectRoot?: string): string[];

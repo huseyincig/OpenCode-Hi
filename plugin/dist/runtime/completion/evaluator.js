@@ -2,6 +2,7 @@ import { verificationClaimsSatisfied, reviewClaimsSatisfied } from '../verificat
 import { syncMissionGates } from '../gates/gates.js';
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js';
 import { assessRequiredTargetCoverage } from '../task/diff-ownership.js';
+import { loadedMethodologyNeedNames } from '../methodology/exit.js';
 export function evaluateCompletion(m, projectRoot) { const reasons = [], verification = verificationClaimsSatisfied(m, projectRoot), reviews = reviewClaimsSatisfied(m, projectRoot); syncMissionGates(m, projectRoot, { verification, review: reviews }); if (missionRequiresReleaseCreate(m)) {
     if (m.release.release_chain?.release?.outcome !== 'success')
         reasons.push('release-chain:release-not-completed');
@@ -22,8 +23,8 @@ export function evaluateCompletion(m, projectRoot) { const reasons = [], verific
     reasons.push('orphan-process'); if (m.execution.processes.some(p => p.cleanup_state !== 'CLEANED' && p.status !== 'ORPHANED'))
     reasons.push('process-cleanup-pending'); if (m.execution.native_todos_incomplete > 0)
     reasons.push(`native-todos-incomplete:${m.execution.native_todos_incomplete}`); if (m.execution.blockers.length)
-    reasons.push(`blockers:${m.execution.blockers.slice(0, 6).join('|')}`); if (m.methodology.methodology_needs.length)
-    reasons.push(`methodology-needs:${[...new Set(m.methodology.methodology_needs.map(n => n.name))].slice(0, 6).join('|')}`); const uncoveredTargets = m.execution.obligations.filter(o => o.kind === 'implementation' && (o.requiredTargets?.length ?? 0) > 0).flatMap(o => assessRequiredTargetCoverage(o.requiredTargets ?? [], m.vcs.changed_files).missing.map(target => `${o.id}:${target}`)); if (uncoveredTargets.length)
+    reasons.push(`blockers:${m.execution.blockers.slice(0, 6).join('|')}`); const loadedMethodologies = loadedMethodologyNeedNames(m), unresolvedLoadedMethodologies = [...new Set(m.methodology.methodology_needs.filter(need => loadedMethodologies.has(need.name)).map(need => need.name))]; if (unresolvedLoadedMethodologies.length)
+    reasons.push(`methodology-needs:${unresolvedLoadedMethodologies.slice(0, 6).join('|')}`); const uncoveredTargets = m.execution.obligations.filter(o => o.kind === 'implementation' && (o.requiredTargets?.length ?? 0) > 0).flatMap(o => assessRequiredTargetCoverage(o.requiredTargets ?? [], m.vcs.changed_files).missing.map(target => `${o.id}:${target}`)); if (uncoveredTargets.length)
     reasons.push(`required-targets-uncovered:${uncoveredTargets.join(',')}`); const open = m.execution.obligations.filter(o => o.status === 'open'); if (open.length)
     reasons.push(`open-obligations:${open.map(o => o.id).join(',')}`); const authorityGate = m.execution.gates.find(g => g.kind === 'user-authority' && g.status !== 'closed'); if (authorityGate)
     return { complete: false, reasons: [...reasons, `authority:${authorityGate.status}`], next: 'USER_ACTION_REQUIRED' }; const rollback = m.execution.gates.find(g => g.kind === 'rollback' && g.status !== 'closed'); if (rollback)

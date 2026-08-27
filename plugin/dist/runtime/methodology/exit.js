@@ -123,6 +123,25 @@ export function methodologyExitCheck(m, name, input = {}) {
     }
     return { ok: missing.length === 0, missing };
 }
+function taskStillActionable(task) { return Boolean(task && ['created', 'queued', 'running', 'waiting'].includes(task.status)); }
+function unloadedNeedStillActionable(m, need) {
+    const task = need.task_id ? m.execution.tasks.find(item => item.id === need.task_id) : undefined;
+    if (need.task_id)
+        return taskStillActionable(task);
+    const obligation = need.obligation_id ? m.execution.obligations.find(item => item.id === need.obligation_id) : undefined;
+    if (need.obligation_id)
+        return obligation?.status === 'open';
+    if (m.execution.tasks.some(taskStillActionable))
+        return true;
+    return m.execution.obligations.some(item => item.status === 'open');
+}
+export function loadedMethodologyNeedNames(m) {
+    const loaded = new Set(m.methodology.parent_loaded_methodologies);
+    for (const worker of m.execution.workers)
+        for (const name of worker.loaded_methodologies)
+            loaded.add(name);
+    return loaded;
+}
 export function reconcileMethodologyExits(m, projectRoot) {
     const resolved = [], remaining = [];
     for (const need of m.methodology.methodology_needs) {
@@ -135,7 +154,11 @@ export function reconcileMethodologyExits(m, projectRoot) {
         }
         const childLoaded = Boolean(worker?.loaded_methodologies.includes(need.name)), parentLoaded = m.methodology.parent_loaded_methodologies.includes(need.name);
         if (!childLoaded && !parentLoaded) {
-            remaining.push(need);
+            if (unloadedNeedStillActionable(m, need)) {
+                remaining.push(need);
+                continue;
+            }
+            appendLedger(m, 'methodology.unused-retired', { task_id: task?.id ?? need.task_id, payload: { name: need.name, signal: need.signal, trigger_source: need.trigger_source, producer: need.producer, obligation_id: need.obligation_id, reason: 'never-loaded methodology has no remaining canonical task or obligation owner' } });
             continue;
         }
         const check = methodologyExitCheck(m, need.name, { task, worker, result: task?.result, projectRoot, obligationId: need.obligation_id });
