@@ -338,14 +338,17 @@ export class TaskResultReconciler {
             if (!claimedPassed || !browserProofKinds.has(e.kind))
                 return e;
             const rawRequested = [...new Set(e.evidence_refs ?? [])], requested = rawRequested.map(id => { if (!id.startsWith('bo_'))
-                return id; const match = m.execution.evidence.items.find(item => item.task_id === task.id && String(item.source ?? '') === `browser:${id}` && item.kind === 'browser-evidence' && !item.invalidated_at && evidenceClaimApplicability(m, item).applicable); return match?.id ?? id; }), support = requested.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item));
-            const valid = requested.length > 0 && support.length === requested.length && support.every(item => String(item.source ?? '').startsWith('browser:') && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
+                return id; const match = m.execution.evidence.items.find(item => item.task_id === task.id && String(item.source ?? '') === `browser:${id}` && item.kind === 'browser-evidence' && !item.invalidated_at && evidenceClaimApplicability(m, item).applicable); return match?.id ?? id; });
+            const supplemental = requested.filter(id => { if (!id.startsWith('hi-artifact:'))
+                return false; const artifactID = id.slice('hi-artifact:'.length), artifact = this.scopedStores.contextArtifacts.get(artifactID); return artifact?.kind === 'browser-screenshot' && artifact.producer === 'hi-browser-executor' && artifact.consumer_refs.includes(`task:${task.id}`) && Boolean(this.scopedStores.contextArtifacts.getBinary(artifactID)); });
+            const supplementalSet = new Set(supplemental), authoritative = requested.filter(id => !supplementalSet.has(id)), support = authoritative.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item));
+            const valid = authoritative.length > 0 && support.length === authoritative.length && support.every(item => String(item.source ?? '').startsWith('browser:') && item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
             if (valid) {
-                if (rawRequested.some((id, i) => id !== requested[i]))
-                    appendLedger(m, 'browser.evidence-ref-normalized', { task_id: task.id, worker_id: worker.id, payload: { from: rawRequested.slice(0, 20), to: requested.slice(0, 20), policy: 'same-task-current-observation-only' } });
-                return { ...e, evidence_refs: requested };
+                if (rawRequested.some((id, i) => id !== requested[i]) || supplemental.length)
+                    appendLedger(m, 'browser.evidence-ref-normalized', { task_id: task.id, worker_id: worker.id, payload: { from: rawRequested.slice(0, 20), to: authoritative.slice(0, 20), supplemental_refs: supplemental.slice(0, 20), policy: 'exact-browser-evidence-authority-with-verified-hi-screenshot-provenance' } });
+                return { ...e, evidence_refs: authoritative };
             }
-            appendLedger(m, 'browser.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: requested.slice(0, 20), resolved_refs: support.map(item => item.id), reason: 'passed browser-derived proof requires current task/attempt browser observations' } });
+            appendLedger(m, 'browser.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: requested.slice(0, 20), resolved_refs: support.map(item => item.id), supplemental_refs: supplemental.slice(0, 20), reason: 'passed browser-derived proof requires current task/attempt browser observations; only verified Hi screenshot artifacts are supplemental' } });
             const { pass: _pass, outcome: _outcome, ...rest } = e;
             return { ...rest, outcome: 'pending', reason: 'browser-proof-unbound: passed browser/visual/accessibility proof requires current task/attempt browser observation evidence_refs' };
         });

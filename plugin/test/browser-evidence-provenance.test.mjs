@@ -13,6 +13,7 @@ import {browserObservationId} from '../dist/contracts/browser-observation.js'
 import {methodologyExitCheck} from '../dist/runtime/methodology/exit.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {ContextArtifactStore} from '../dist/runtime/context/artifact-store.js'
+import {createRuntimeScopedStores} from '../dist/runtime/application/runtime-scoped-stores.js'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
@@ -24,7 +25,7 @@ function fixture(id='m13-browser-proof'){
   const worker=createWorker(m,task,'host-default',[],['hi-browser-testing']);worker.session_id=`${id}-child`;worker.status='busy';worker.loaded_methodologies=['hi-browser-testing'];beginWorkerAttempt(task,worker,Date.now()-10)
   return{store,m,task,worker}
 }
-function runtime(){const client={session:{abort:async()=>({data:true}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,{},undefined)}
+function runtime(scopedStores){const client={session:{abort:async()=>({data:true}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,{},scopedStores)}
 function observation(taskID){const x={task_id:taskID,executor_version:'hi-playwright-browser@1',url:'http://127.0.0.1:4173/',action:'inspect',timestamp:Date.now(),document_identity:createHash('sha256').update(`doc:${taskID}`).digest('hex'),dom_summary:'Ready',console_errors:[],network_errors:[],result:'OBSERVED'};return{...x,observation_id:browserObservationId(x)}}
 function surface(f,browserExecutor){return createHiToolSurface({state:{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},openCodeVersion:'1.18.18'},store:f.store,tasks:{},processRuntime:{},browserExecutor,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}}).toolSurface}
 
@@ -50,6 +51,44 @@ test('browser observation reference from a prior worker attempt cannot satisfy c
   const f=fixture('m13-proof-stale'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}));beginWorkerAttempt(f.task,f.worker)
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale browser proof',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale claim',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/)
+})
+
+
+test('passed visual evidence keeps exact browser authority while verified Hi screenshot provenance is supplemental',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-browser-mixed-proof-'))
+  try{
+    const f=fixture('m13-proof-mixed-artifact'),scopedStores=createRuntimeScopedStores(root);f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa'];const toolSurface=createHiToolSurface({state:{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},openCodeVersion:'1.18.21'},store:f.store,tasks:{},processRuntime:{},browserExecutor:{inspect:async()=>observation(f.task.id),health:async()=>({available:true})},projectRoot:root,capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores}).toolSurface
+    const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})),artifact=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${f.task.id}`,new Uint8Array([137,80,78,71,13,10,26,10,1]),{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${f.task.id}`]})
+    runtime(scopedStores).applyResult(f.m,f.worker.id,{status:'DONE',summary:'visual proof with screenshot provenance',changed_files:[],evidence:[{kind:'visual-evidence',summary:'verified browser-visible state',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref,`hi-artifact:${artifact.artifact_id}`],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    assert.equal(f.task.result.status,'DONE');assert.deepEqual(f.task.result.evidence[0].evidence_refs,[out.evidence_ref]);const normalized=f.m.execution.ledger.find(e=>e.type==='browser.evidence-ref-normalized');assert.ok(normalized);assert.deepEqual(normalized.payload.supplemental_refs,[`hi-artifact:${artifact.artifact_id}`])
+  } finally {rmSync(root,{recursive:true,force:true})}
+})
+
+test('verified Hi screenshot artifact alone cannot satisfy browser proof authority',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-browser-artifact-only-'))
+  try{
+    const f=fixture('m13-proof-artifact-only'),scopedStores=createRuntimeScopedStores(root),artifact=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${f.task.id}`,new Uint8Array([137,80,78,71,13,10,26,10,2]),{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${f.task.id}`]})
+    runtime(scopedStores).applyResult(f.m,f.worker.id,{status:'DONE',summary:'artifact-only claim',changed_files:[],evidence:[{kind:'browser-evidence',summary:'screenshot only',scope:['src/view.tsx'],evidence_refs:[`hi-artifact:${artifact.artifact_id}`],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/)
+  } finally {rmSync(root,{recursive:true,force:true})}
+})
+
+test('fabricated Hi artifact and arbitrary unresolved refs remain fail-closed beside valid browser evidence',async()=>{
+  for(const badRef of ['hi-artifact:a_fabricatedbrowserproof','not-a-canonical-evidence-ref']){
+    const f=fixture(`m13-proof-bad-mixed-${badRef.startsWith('hi-')?'artifact':'arbitrary'}`),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})}),out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+    runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'mixed bad ref',changed_files:[],evidence:[{kind:'browser-evidence',summary:'valid observation plus invalid ref',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref,badRef],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    assert.equal(f.task.result.status,'FIX_REQUIRED',badRef);assert.equal(f.task.result.evidence[0].outcome,'pending',badRef);assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/,badRef)
+  }
+})
+
+test('verified screenshot provenance cannot rescue a prior-attempt browser observation',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-browser-stale-plus-artifact-'))
+  try{
+    const f=fixture('m13-proof-stale-plus-artifact'),scopedStores=createRuntimeScopedStores(root),toolSurface=createHiToolSurface({state:{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},openCodeVersion:'1.18.21'},store:f.store,tasks:{},processRuntime:{},browserExecutor:{inspect:async()=>observation(f.task.id),health:async()=>({available:true})},projectRoot:root,capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores}).toolSurface
+    const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})),artifact=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${f.task.id}`,new Uint8Array([137,80,78,71,13,10,26,10,3]),{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${f.task.id}`]});beginWorkerAttempt(f.task,f.worker)
+    runtime(scopedStores).applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale plus screenshot',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale observation plus verified screenshot',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref,`hi-artifact:${artifact.artifact_id}`],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/)
+  } finally {rmSync(root,{recursive:true,force:true})}
 })
 
 
