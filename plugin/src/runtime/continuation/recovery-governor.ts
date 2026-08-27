@@ -19,7 +19,7 @@ function fnv(value:string):string{let h=2166136261;for(let i=0;i<value.length;i+
 export function recoverySemanticSignature(m:MissionState):string{
   const s=m.continuation.semantic_progress_snapshot
   if(!s)return m.continuation.last_progress_signature||'00000000'
-  return fnv(JSON.stringify({evidence:s.evidence_ids,invalidated:s.invalidated_evidence_ids,completed_tasks:s.completed_task_ids,completed_dependencies:s.completed_dependency_ids,closed_obligations:s.closed_obligation_ids,changed_files:s.changed_files,failures:s.failure_signatures,terminal_processes:s.terminal_process_ids}))
+  return fnv(JSON.stringify({evidence:s.evidence_ids,invalidated:s.invalidated_evidence_ids,completed_tasks:s.completed_task_ids,completed_dependencies:s.completed_dependency_ids,closed_obligations:s.closed_obligation_ids,changed_files:s.changed_files,terminal_processes:s.terminal_process_ids}))
 }
 function currentProgressSignature(m:MissionState):string{return recoverySemanticSignature(m)}
 function latestRecoveryWorker(m:MissionState):WorkerState|undefined{return[...m.execution.workers].reverse().find(w=>Boolean(w.session_id)&&!['failed','cancelled','busy','starting','queued'].includes(w.status))}

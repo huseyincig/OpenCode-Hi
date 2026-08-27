@@ -94,6 +94,22 @@ test('verification-only coder task loses repository mutation surface and tool gu
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.verification-only-mutation-blocked'&&e.task_id===task.id))
 })
 
+
+test('exact review obligation overrides semantic evidence aliases and does not inherit unrelated mission visual verification',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('review-owned-evidence','review dependency change while visual verification is separately owned')
+  assess(store,'review-owned-evidence',{required_capabilities:['implementation','security-review','visual-qa'],likely_targets:['requirements.txt'],likely_verification:['visual-check']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');implementation.status='closed';implementation.closedAt=Date.now()
+  m.execution.verification_policy.requiredKinds=['visual-check'];m.execution.verification_policy.requireReview=true
+  const review={id:'o-dependency-review-test',kind:'review',summary:'Dependency graph changed',status:'open',requiredEvidence:['review-evidence']};m.execution.obligations.push(review)
+  const out=await runtime.start(m,{objective:'review Flask dependency',role:'security-reviewer',category:'review',scope:['requirements.txt'],requiredEvidence:['dependency-review'],obligationIds:[review.id]})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),text=JSON.stringify(prompts[0])
+  assert.deepEqual(task.requiredEvidence,['review-evidence']);assert.deepEqual(task.obligation_ids,[review.id])
+  assert.match(text,/REQUIRED EVIDENCE: review-evidence/);assert.match(text,/Verification contract: review-evidence/i);assert.doesNotMatch(text,/Verification contract: visual-check/i)
+  assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.task_id===undefined&&e.payload?.requested_evidence?.includes('dependency-review')&&e.payload?.authoritative_evidence?.includes('review-evidence')))
+})
+
 test('process lifecycle is an exact task-level opt-in and survives child handoff',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)

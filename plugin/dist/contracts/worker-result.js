@@ -14,6 +14,12 @@ function stringArray(v) { return Array.isArray(v) && v.every(x => typeof x === '
 function onlyKeys(v, allowed) { return Object.keys(v).every(k => allowed.has(k)); }
 function clip(v, max) { return String(v ?? '').slice(0, max); }
 function cleanKey(v) { return String(v ?? '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, ''); }
+function boundedIssueText(v) { if (typeof v === 'string')
+    return clip(v, 1200); if (record(v) || Array.isArray(v))
+    try {
+        return clip(JSON.stringify(v), 1200);
+    }
+    catch { } return clip(v, 1200); }
 const RUNTIME_EVIDENCE_REF_TOKEN = /(?:ev_[a-z0-9]+_[a-z0-9]+|bo_[a-f0-9]{24}|hi-artifact:a_[a-f0-9]{24})/g;
 function normalizeEvidenceRefs(raw) {
     if (!Array.isArray(raw))
@@ -98,11 +104,11 @@ function reconcileFailureFinding(finding, evidence) {
     return finding;
 }
 export function normalizeWorkerResult(raw) {
-    const x = record(raw) ? raw : {}, status = STATUS_ALIAS[String(x.status ?? '').toUpperCase()] ?? 'FAILED', open = Array.isArray(x.open_issues) ? x.open_issues.map(String) : [];
+    const x = record(raw) ? raw : {}, status = STATUS_ALIAS[String(x.status ?? '').toUpperCase()] ?? 'FAILED', open = Array.isArray(x.open_issues) ? x.open_issues.map(boundedIssueText) : [];
     if (String(x.status ?? '').toUpperCase() === 'USER_ACTION_REQUIRED' && !open.some(v => v.includes('USER_ACTION_REQUIRED')))
         open.unshift('USER_ACTION_REQUIRED');
     const contextGap = ['scope', 'iterative', 'none'].includes(String(x.context_gap)) ? String(x.context_gap) : undefined;
     const rawFinding = ['ci-build', 'unknown-root-cause', 'none'].includes(String(x.failure_finding)) ? String(x.failure_finding) : undefined;
     const evidence = normalizeEvidence(x.evidence);
-    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.flatMap(v => { const p = normalizeBoundedProjectPath(v); return p ? [p] : []; }).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).flatMap(v => { const file = normalizeBoundedProjectPath(v.file); return file ? [{ file, reason: clip(v.reason, 600), necessary: v.necessary === true }] : []; }) : [], evidence, findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(String).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
+    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.flatMap(v => { const p = normalizeBoundedProjectPath(v); return p ? [p] : []; }).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).flatMap(v => { const file = normalizeBoundedProjectPath(v.file); return file ? [{ file, reason: clip(v.reason, 600), necessary: v.necessary === true }] : []; }) : [], evidence, findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(boundedIssueText).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
 }

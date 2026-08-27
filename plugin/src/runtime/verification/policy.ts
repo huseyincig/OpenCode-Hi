@@ -43,8 +43,9 @@ export function replanVerificationForChangedSurface(m:MissionState,task:MissionT
   return{changed,addedKinds,scopeExpanded:expanded,riskEscalated,reason:dependencyChanged?'dependency-changed-surface':sensitive?'sensitive-changed-surface':expanded?'changed-surface-expanded':'verification-policy-unchanged'}
 }
 
-export function verificationEconomyInstruction(m:MissionState):string{
-  const kinds=[...new Set(m.execution.verification_policy.requiredKinds.map(canonical))]
+export function verificationEconomyInstruction(m:MissionState,ownedKinds?:string[]):string{
+  const kinds=[...new Set((ownedKinds===undefined?m.execution.verification_policy.requiredKinds:ownedKinds).map(canonical))]
+  if(ownedKinds!==undefined&&!kinds.length)return 'Task evidence contract: none. Do not claim, reopen, or block on mission verification owned by other tasks.'
   const required=kinds.join(', ')||'changed-surface-sanity'
   if(m.identity.intent.taskKind==='release-readiness'||m.identity.risk==='high')return `Verification contract: ${required}. Use repo-native commands and satisfy these required kinds; prefer targeted tests first, then the required static/build checks. Do not substitute a cheap unrelated PASS for a missing required kind.`
   if(m.identity.intent.scope==='local'&&m.identity.risk==='low')return `Verification contract: ${required}. Use the smallest repo-native check that covers the changed surface. Prefer a targeted test or changed-surface sanity; do not run a full repository suite unless targeted verification is unavailable or the change proves broader than expected.`

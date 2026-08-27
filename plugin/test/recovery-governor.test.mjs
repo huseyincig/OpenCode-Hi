@@ -31,13 +31,26 @@ test('same recovery strategy cannot replay on unchanged semantic state and deter
   assert.match(next.prompt,/materially different corrective hypothesis or action/i)
 })
 
-test('material semantic delta permits the same recovery strategy again',()=>{
+test('material mechanical evidence delta permits the same recovery strategy again',()=>{
   const {store,m}=mission('rg-new-info');m.continuation.stagnation_count=1
   const first=recoveryPlan(m);recordRecoveryStrategy(m,first,'started',10)
-  m.execution.blockers.push('new-diagnostic-information');assert.equal(store.updateProgress(m,false),true)
+  addEvidence(m,{kind:'diagnostic-evidence',summary:'new falsifying observation',source:'test:diagnostic',outcome:'passed',pass:true});assert.equal(store.updateProgress(m,false),true)
   m.continuation.stagnation_count=1
   const again=recoveryPlan(m);assert.equal(again.level,1);assert.equal(again.action,'same-worker-resume')
   assert.equal(recoveryStrategyEligibility(m,again).allowed,true)
+})
+
+test('equivalent failure marker churn does not manufacture a fresh same-worker correction epoch',()=>{
+  const {store,m}=mission('rg-failure-marker-churn')
+  const task=createTask(m,{objective:'bounded review',role:'security-reviewer',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b'];task.result={status:'FIX_REQUIRED',summary:'verdict missing',changed_files:[],evidence:[],open_issues:['review-verdict-required:'+task.id],needs_context:['review-evidence required']};store.updateProgress(m,false)
+  const signature=recoverySemanticSignature(m)
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  task.result={...task.result,open_issues:['{"id":"review-verdict-required:'+task.id+'","summary":"canonical verdict still missing"}'],needs_context:['review-verdict: canonical review-evidence required']};assert.equal(store.updateProgress(m,false),true,'failure description can be new diagnostic state without being recovery gain')
+  assert.equal(recoverySemanticSignature(m),signature)
+  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  task.result={...task.result,open_issues:['review-verdict-required:'+task.id],needs_context:['review-evidence outcome=passed required']};store.updateProgress(m,false)
+  assert.equal(recoverySemanticSignature(m),signature)
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,2);assert.deepEqual(hazard.recovery_candidates,['p/b'])
 })
 
 test('unknown consequential release outcome blocks automatic recovery until reconciliation',()=>{

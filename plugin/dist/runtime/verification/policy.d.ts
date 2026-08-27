@@ -10,7 +10,7 @@ export interface VerificationReplan {
     reason: string;
 }
 export declare function replanVerificationForChangedSurface(m: MissionState, task: MissionTask, files: string[], repo?: RepoContext): VerificationReplan;
-export declare function verificationEconomyInstruction(m: MissionState): string;
+export declare function verificationEconomyInstruction(m: MissionState, ownedKinds?: string[]): string;
 export declare function verificationKindSatisfiesRequirement(required: string, actual: string): boolean;
 export declare function verificationKindAdmittedForMission(m: MissionState, actual: string): boolean;
 export declare function verificationEnvelopeFor(m: MissionState, obligationID?: string, projectRoot?: string): VerificationEnvelope;
