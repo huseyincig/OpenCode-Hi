@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { MissionState,WorkerResult,WorkerState } from '../mission/types.js'
 import { appendLedger } from '../ledger/ledger.js'
-import { addEvidence,markMutation } from '../evidence/evidence-runtime.js'
+import { addEvidence,markMutation,reconcileEvidenceOwnedVerificationObligations } from '../evidence/evidence-runtime.js'
 import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.js'
 import { isHiReadOnlyChildRole,isHiReviewerRole } from '../roles/catalog.js'
 import { assessDiffOwnership,assessRequiredTargetCoverage } from './diff-ownership.js'
@@ -151,6 +151,12 @@ export class TaskResultReconciler{
       effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:`Selected Hi methodology was not loaded through the native skill tool: ${missingMethodologyLoads.join(', ')}.`,open_issues:[...new Set([...effectiveResult.open_issues,marker])],needs_context:[...new Set([...effectiveResult.needs_context,'load the Hi-selected methodology through the OpenCode native skill tool before retrying the bounded task'])]}
       appendLedger(m,'methodology.load-missing',{task_id:task.id,worker_id:worker.id,payload:{selected:worker.selected_methodologies,loaded:worker.loaded_methodologies??[],missing:missingMethodologyLoads}})
     }
+    const reviewerOwnsReview=task.obligation_ids.some(id=>m.execution.obligations.some(o=>o.id===id&&o.kind==='review'&&o.status==='open')),reviewVerdictRequired=isHiReviewerRole(worker.role)&&(reviewerOwnsReview||task.requiredEvidence.includes('review-evidence'))
+    if(effectiveResult.status==='DONE'&&reviewVerdictRequired&&!effectiveResult.evidence.some(e=>e.kind==='review-evidence'&&evidenceVerdictPassed(e.pass,e.outcome))){
+      const marker=`review-verdict-required:${task.id}`
+      effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:effectiveResult.summary||'Reviewer result is missing an explicit passing review verdict.',open_issues:[...new Set([...effectiveResult.open_issues,marker])],needs_context:[...new Set([...effectiveResult.needs_context,'review-verdict: return review-evidence with outcome="passed" only after the bounded review passes; otherwise return FIX_REQUIRED with the blocking finding. DONE prose or verdict-less review evidence is not approval.'])]}
+      appendLedger(m,'review.verdict-unresolved',{task_id:task.id,worker_id:worker.id,payload:{reason:'explicit-passing-review-verdict-required',review_evidence:effectiveResult.evidence.filter(e=>e.kind==='review-evidence').map(e=>({pass:e.pass,outcome:e.outcome})).slice(0,8)}})
+    }
     if(cleanlinessMarker){
       task.diff_cleanliness={collateral:[...ownership.collateral],accepted_expansions:[...(task.diff_cleanliness?.accepted_expansions??[])]}
       appendLedger(m,'diff.cleanliness.blocked',{task_id:task.id,worker_id:worker.id,payload:{collateral:ownership.collateral.slice(0,40),outside:ownership.outside.slice(0,40),role:worker.role}})
@@ -259,6 +265,7 @@ export class TaskResultReconciler{
     if(effectiveResult.status==='DONE'){
       const now=Date.now();if(explorationClearance.admitted&&worker.role==='repository-explorer'&&m.identity.intent.ambiguity!=='none'){m.identity.intent.ambiguity='none';appendLedger(m,'intent.ambiguity.resolved',{task_id:task.id,worker_id:worker.id,payload:{source:'repository-explorer-clearance',source_state_hash:explorationClearance.source_state_hash,evidence_authority:false}})}
       for(const id of task.obligation_ids){const owned=m.execution.obligations.find(o=>o.id===id&&o.status==='open');if(!owned)continue;if(owned.kind==='verification'){if(verificationSatisfied(m,owned.id,this.projectRoot).ok){owned.status='closed';owned.closedAt=now}}else if(owned.kind==='review'){if(reviewEvidenceSatisfied(owned.id)){owned.status='closed';owned.closedAt=now}else appendLedger(m,'review.claim-unproven',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,reason:'explicit-fresh-source-bound-review-evidence-required'}})}else if(owned.kind==='implementation'){const changed=[...new Set([...m.vcs.changed_files,...effectiveResult.changed_files])],coverage=assessRequiredTargetCoverage(owned.requiredTargets??[],changed);if(!coverage.missing.length){owned.status='closed';owned.closedAt=now}else appendLedger(m,'implementation.required-targets-uncovered',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,required:coverage.required,covered:coverage.covered,missing:coverage.missing,changed_files:changed.slice(0,60)}})}else{owned.status='closed';owned.closedAt=now}if(owned.status==='closed')appendLedger(m,'obligation.closed',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,owner:'task'}})}
+      reconcileEvidenceOwnedVerificationObligations(m,this.projectRoot,{task_id:task.id,worker_id:worker.id,owner:'post-task-evidence-reconciliation'})
       reconcileMethodologyExits(m,this.projectRoot)
     }
     syncMissionGates(m,this.projectRoot);this.drainQueue()

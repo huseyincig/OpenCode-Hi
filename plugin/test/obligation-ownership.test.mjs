@@ -68,8 +68,26 @@ test('reviewer DONE prose without explicit source-bound review evidence cannot c
   runtime().applyResult(m,worker.id,{status:'DONE',summary:'review complete; safe to release',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['review-evidence','review-obligation']})
   assert.equal(review.status,'open'); assert.equal(verification.status,'open')
+  assert.equal(task.result?.status,'FIX_REQUIRED');assert.equal(task.status,'waiting')
   assert.equal(m.execution.evidence.items.some(e=>e.kind==='review-evidence'),false,'DONE prose must not synthesize PASS Evidence')
-  assert.ok(m.execution.ledger.some(e=>e.type==='review.claim-unproven'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='review.verdict-unresolved'))
+})
+
+test('reviewer DONE with verdict-less review evidence fails closed instead of entering parent verification recovery',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-verdict-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const reviewed = true\n')
+    const m=assessedMission('ownership-review-verdict','Review src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:false}
+    const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['review-evidence']
+    const task=createTask(m,{objective:'review src/a.ts',role:'qa-reviewer',category:'standard',scope:['src/a.ts'],requiredEvidence:['review-evidence'],obligationIds:[review.id]})
+    const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='d'.repeat(64)
+    runtime(root).applyResult(m,worker.id,{status:'DONE',summary:'review complete',changed_files:[],evidence:[{kind:'review-evidence',summary:'reviewed target',scope:['src/a.ts']}],open_issues:[],needs_context:[]})
+    assert.equal(task.result?.status,'FIX_REQUIRED');assert.equal(task.status,'waiting');assert.equal(worker.status,'ready')
+    assert.equal(review.status,'open');assert.equal(verification.status,'open')
+    assert.equal(m.execution.evidence.items.some(e=>e.kind==='review-evidence'&&e.outcome==='passed'),false)
+    assert.ok(task.result?.needs_context.some(x=>x.includes('outcome="passed"')));assert.ok(m.execution.ledger.some(e=>e.type==='review.verdict-unresolved'))
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('reviewer explicit PASS without source-state identity remains inadmissible',()=>{
@@ -96,6 +114,24 @@ test('source-bound explicit reviewer evidence can close its owned review and ver
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+test('late independent review closure re-evaluates earlier passed verification even when reviewer does not own it',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-late-review-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','app.ts'),'export const ui = true\n')
+    const m=assessedMission('ownership-late-review','Implement and visually verify src/app.ts',{task_kind:'implementation',risk:'low',required_capabilities:['implementation','visual-qa'],likely_verification:['visual-check'],likely_targets:['src/app.ts']})
+    const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation);assert.ok(verification)
+    implementation.status='closed';implementation.closedAt=Date.now();verification.requiredEvidence=['visual-check'];m.execution.verification_policy={requiredKinds:['visual-check'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:false}
+    const review={id:'o-dependency-review',kind:'review',summary:'Dependency review required',status:'open',requiredEvidence:['review-evidence']};m.execution.obligations.push(review)
+    addEvidence(m,{kind:'visual-evidence',summary:'live UI passed',scope:['src/app.ts'],source:'browser:runtime-observation',trusted_source_class:'browser-observation',obligation_ids:[verification.id],pass:true,outcome:'passed'})
+    assert.deepEqual(verificationSatisfied(m,verification.id,root),{ok:false,missing:['review-obligation']});assert.equal(verification.status,'open')
+    const task=createTask(m,{objective:'independent dependency review',role:'security-reviewer',category:'standard',scope:['src/app.ts'],requiredEvidence:['review-evidence'],obligationIds:[review.id]})
+    const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='e'.repeat(64)
+    runtime(root).applyResult(m,worker.id,{status:'DONE',summary:'dependency review passed',changed_files:[],evidence:[{kind:'review-evidence',summary:'bounded dependency review passed',scope:['src/app.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    assert.equal(review.status,'closed');assert.equal(verification.status,'closed');assert.deepEqual(verificationSatisfied(m,verification.id,root),{ok:true,missing:[]})
+    assert.ok(m.execution.ledger.some(e=>e.type==='obligation.closed'&&e.payload?.obligation===verification.id&&e.payload?.owner==='post-task-evidence-reconciliation'))
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
 
 test('review evidence cannot satisfy a different verification obligation',()=>{
   const m=assessedMission('ownership-review-obligation','review two bounded surfaces',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence']})

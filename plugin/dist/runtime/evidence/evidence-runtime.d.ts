@@ -10,6 +10,11 @@ export declare function markMutation(mission: MissionState, files?: string[], so
 export declare function addEvidence(mission: MissionState, input: Omit<EvidenceItem, 'id' | 'observed_at'> & {
     observed_at?: number;
 }): EvidenceItem;
+export declare function reconcileEvidenceOwnedVerificationObligations(mission: MissionState, projectRoot?: string, context?: {
+    task_id?: string;
+    worker_id?: string;
+    owner?: string;
+}): string[];
 export declare function observeToolBefore(mission: MissionState, tool: string, args: any, projectRoot?: string): void;
 export interface ToolEvidenceOwner {
     source: string;

@@ -75,6 +75,18 @@ export function markMutation(mission, files = [], source = 'tool') {
 export function addEvidence(mission, input) { if (!evidenceVerdictConsistent(input.pass, input.outcome))
     throw new Error(`Contradictory evidence verdict: pass=${String(input.pass)} outcome=${String(input.outcome)}`); const outcome = resolvedEvidenceOutcome(input.pass, input.outcome), item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, trusted_source_class: input.trusted_source_class, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, scope_state_hash: input.scope_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, evidence_refs: input.evidence_refs, browser_url: input.browser_url, browser_origin: input.browser_origin, producer_attempt: input.producer_attempt, pass: evidenceVerdictPassValue(input.pass, outcome), outcome, reason: input.reason, invalidated_at: input.invalidated_at }; mission.execution.evidence.items.push(item); if (mission.execution.evidence.items.length > 100)
     mission.execution.evidence.items.splice(0, mission.execution.evidence.items.length - 100); refreshCompatibilityFreshness(mission); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : item.outcome === 'passed' ? 'verification.pass' : 'evidence.observed', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, trusted_source_class: item.trusted_source_class, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids, evidence_refs: item.evidence_refs, browser_url: item.browser_url, browser_origin: item.browser_origin } }); return item; }
+export function reconcileEvidenceOwnedVerificationObligations(mission, projectRoot, context) {
+    const closed = [], now = Date.now();
+    for (const obligation of mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open')) {
+        if (!verificationSatisfied(mission, obligation.id, projectRoot).ok)
+            continue;
+        obligation.status = 'closed';
+        obligation.closedAt = now;
+        closed.push(obligation.id);
+        appendLedger(mission, 'obligation.closed', { task_id: context?.task_id, worker_id: context?.worker_id, payload: { obligation: obligation.id, owner: context?.owner ?? 'evidence-reconciliation' } });
+    }
+    return closed;
+}
 export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_TOOLS.has(tool)) {
     const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string').map(x => normalizeProjectPath(x, projectRoot)).filter(Boolean);
     markMutation(mission, files, tool);
@@ -107,12 +119,7 @@ export function observeToolAfter(mission, tool, args, output, projectRoot, owner
             const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text), obligation_ids = owner?.obligation_ids ?? mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
             const stateHash = createHash('sha256').update(JSON.stringify({ command, exit: numericExit(output), output: text })).digest('hex');
             addEvidence(mission, { kind, summary: command.slice(0, 180), scope: owner?.scope ?? mission.vcs.changed_files, source: owner?.source ?? 'bash', trusted_source_class: owner?.trusted_source_class ?? 'host-tool-observation', source_session_id: owner?.source_session_id, source_state_hash: stateHash, task_id: owner?.task_id, obligation_ids, producer_attempt: owner?.producer_attempt, pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
-            for (const obligation of mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open'))
-                if (verificationSatisfied(mission, obligation.id, projectRoot).ok) {
-                    obligation.status = 'closed';
-                    obligation.closedAt = Date.now();
-                    appendLedger(mission, 'obligation.closed', { payload: { obligation: obligation.id, owner: 'verification-evidence' } });
-                }
+            reconcileEvidenceOwnedVerificationObligations(mission, projectRoot, { owner: 'verification-evidence' });
         }
     }
 }
