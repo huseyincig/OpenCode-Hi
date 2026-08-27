@@ -26,7 +26,7 @@ export function routeCapabilities(intent, _profile = { specialistThreshold: 'med
         return { role: 'technical-writer', category: categoryFor(intent), capabilities: caps, reason: ['canonical documentation authoring owner'] };
     if (has('test-authoring') && !has('implementation') && intent.taskKind !== 'bug-fix')
         return { role: 'test-engineer', category: categoryFor(intent), capabilities: caps, reason: ['canonical test-authoring owner'] };
-    if (intent.taskKind === 'analysis' || has('repository-analysis') || has('repository-exploration'))
+    if (intent.taskKind === 'analysis' || (!implementation && (has('repository-analysis') || has('repository-exploration'))))
         return { role: 'repository-explorer', category: intent.scope === 'repo-wide' ? 'deep' : 'standard', capabilities: caps, reason: ['canonical repository analysis/exploration owner'] };
     if (intent.taskKind === 'diagnosis')
         return { role: 'repository-explorer', category: intent.scope === 'repo-wide' ? 'deep' : 'standard', capabilities: caps, reason: ['canonical repository diagnosis owner'] };

@@ -33,11 +33,22 @@ test('semantic owner routing covers research docs tests implementation diagnosis
   assert.equal(roleOf({taskKind:'implementation',requiredCapabilities:['documentation']}),'technical-writer')
   assert.equal(roleOf({taskKind:'implementation',requiredCapabilities:['test-authoring']}),'test-engineer')
   assert.equal(roleOf({taskKind:'implementation',requiredCapabilities:['implementation']}),'coder')
+  assert.equal(roleOf({taskKind:'implementation',scope:'multi-file',requiredCapabilities:['implementation','repository-analysis','verification','visual-qa']}),'coder','repository analysis is supporting context and cannot steal implementation ownership')
+  assert.equal(roleOf({taskKind:'analysis',scope:'multi-file',requiredCapabilities:['repository-analysis']}),'repository-explorer')
   assert.equal(roleOf({taskKind:'diagnosis',scope:'repo-wide',requiredCapabilities:['repository-analysis']}),'repository-explorer')
   assert.equal(roleOf({taskKind:'implementation',scope:'repo-wide',requiredCapabilities:['design-exploration']}),'architect')
   assert.equal(roleOf({taskKind:'review',requiredCapabilities:['review','independent-review']}),'qa-reviewer')
   assert.equal(roleOf({taskKind:'review',requiredCapabilities:['review','security-review']}),'security-reviewer')
   assert.equal(roleOf({taskKind:'review',requiredCapabilities:['visual-qa']}),'visual-qa')
+})
+
+test('TaskRuntime keeps implementation ownership on coder when mission also requires repository analysis and visual verification',async()=>{
+  const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,'implementation-with-supporting-analysis','build application',{task_kind:'implementation',scope:'multi-file',risk:'low',required_capabilities:['implementation','repository-analysis','verification','visual-qa'],likely_verification:['targeted-tests','visual-check'],likely_targets:['app.py','templates/index.html']})
+  const out=await x.rt.start(m,{objective:'Build application',scope:['app.py','templates/index.html']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id)
+  assert.equal(task?.role,'coder');assert.equal(worker?.role,'coder')
+  assert.ok(task?.obligation_ids.includes('o-implementation'),'coder must own the implementation obligation')
+  assert.ok(task?.execution_profile?.tools.includes('write'),'implementation worker must retain write authority')
 })
 
 test('unknown semantics fail closed instead of defaulting to coder',()=>{
