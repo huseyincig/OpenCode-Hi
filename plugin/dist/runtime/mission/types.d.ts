@@ -102,6 +102,7 @@ export interface ExecutionProfile {
     process_lifecycle?: true;
     browser_backend?: 'bounded-playwright' | 'mcp';
     browser_allowed_origins?: string[];
+    browser_required_origins?: string[];
     model?: string;
     model_variant?: string;
     fallback_models: string[];

@@ -13,3 +13,4 @@ export declare function resolveBrowserBackend(input: {
 }): BrowserBackendDecision;
 export declare function normalizeBrowserAllowedOrigins(values: readonly string[]): string[];
 export declare function browserOriginsFromTargets(targets: readonly string[]): string[];
+export declare function browserOriginsFromText(text: string): string[];

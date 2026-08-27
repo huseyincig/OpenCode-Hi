@@ -488,7 +488,12 @@ export function createHiToolSurface(input) {
         if (owner)
             return { m, w: owner.worker, t: owner.task, cx: { task_id: taskID, execution_owner_ref: `${m.identity.mission_id}:${owner.worker.id}:${owner.worker.session_id}:${owner.worker.generation_at_spawn}`, executor_version: 'hi-playwright-browser@1', allowed_origins: [...(owner.task.execution_profile?.browser_allowed_origins ?? [])] } };
     } throw new Error('Browser execution is allowed only for the active visual-qa worker/task with a selected browser/visual methodology'); };
-    const browserObservationResult = (x, observation) => { const stateHash = createHash('sha256').update(JSON.stringify(observation)).digest('hex'), evidence = addEvidence(x.m, { kind: 'browser-evidence', summary: `Browser ${String(observation?.action ?? 'observation')} ${String(observation?.result ?? 'UNKNOWN')} at ${String(observation?.url ?? 'unknown')}`.slice(0, 1000), scope: [...x.t.scope], source: `browser:${String(observation?.observation_id ?? 'unknown')}`, trusted_source_class: 'browser-observation', source_session_id: x.w.session_id, source_state_hash: stateHash, task_id: x.t.id, obligation_ids: [...x.t.obligation_ids], producer_attempt: evidenceProducerAttemptForWorker(x.m, x.w), outcome: observation?.result === 'FAILED' ? 'failed' : 'pending', pass: observation?.result === 'FAILED' ? false : undefined, reason: observation?.result === 'FAILED' ? 'browser-observation-failed' : 'browser-observation-only' }); appendLedger(x.m, 'browser.observation-recorded', { task_id: x.t.id, worker_id: x.w.id, payload: { observation_id: observation?.observation_id, evidence_ref: evidence.id, action: observation?.action, result: observation?.result } }); return JSON.stringify({ observation, evidence_ref: evidence.id }); };
+    const browserObservationResult = (x, observation) => { const stateHash = createHash('sha256').update(JSON.stringify(observation)).digest('hex'), evidence = addEvidence(x.m, { kind: 'browser-evidence', summary: `Browser ${String(observation?.action ?? 'observation')} ${String(observation?.result ?? 'UNKNOWN')} at ${String(observation?.url ?? 'unknown')}`.slice(0, 1000), scope: [...x.t.scope], source: `browser:${String(observation?.observation_id ?? 'unknown')}`, trusted_source_class: 'browser-observation', browser_url: typeof observation?.url === 'string' ? observation.url : undefined, browser_origin: typeof observation?.url === 'string' ? (() => { try {
+            return new URL(observation.url).origin;
+        }
+        catch {
+            return undefined;
+        } })() : undefined, source_session_id: x.w.session_id, source_state_hash: stateHash, task_id: x.t.id, obligation_ids: [...x.t.obligation_ids], producer_attempt: evidenceProducerAttemptForWorker(x.m, x.w), outcome: observation?.result === 'FAILED' ? 'failed' : 'pending', pass: observation?.result === 'FAILED' ? false : undefined, reason: observation?.result === 'FAILED' ? 'browser-observation-failed' : 'browser-observation-only' }); appendLedger(x.m, 'browser.observation-recorded', { task_id: x.t.id, worker_id: x.w.id, payload: { observation_id: observation?.observation_id, evidence_ref: evidence.id, action: observation?.action, result: observation?.result } }); return JSON.stringify({ observation, evidence_ref: evidence.id }); };
     const browserPreviewOpenTool = tool({ description: 'Serve one visual-task-scoped local file through a Hi-owned ephemeral loopback preview and open it with the bounded browser. This never installs dependencies, writes project helper files, or exposes a non-loopback listener.', args: { task_id: tool.schema.string(), path: tool.schema.string() }, execute: async (a, c) => { try {
             if (!browserExecutor || !previewManager)
                 return 'BLOCKED: local browser preview unavailable';
@@ -504,9 +509,12 @@ export function createHiToolSurface(input) {
             }
             if (!owner || !mission)
                 throw new Error('Preview is allowed only for the active visual-qa worker/task');
+            const requiredOrigins = owner.task.execution_profile?.browser_required_origins ?? [];
+            if (requiredOrigins.length)
+                throw new Error(`Static preview cannot substitute for required live browser origin(s): ${requiredOrigins.join(', ')}`);
             const preview = await previewManager.start(taskID, String(a.path), owner.task.scope);
             owner.task.execution_profile ??= {};
-            owner.task.execution_profile.browser_allowed_origins = [preview.origin];
+            owner.task.execution_profile.browser_allowed_origins = [...new Set([...(owner.task.execution_profile.browser_allowed_origins ?? []), preview.origin])];
             appendLedger(mission, 'browser.preview-started', { task_id: taskID, worker_id: owner.worker.id, payload: { origin: preview.origin, target: preview.target, reused: preview.reused, loopback_only: true, project_mutation: false } });
             const x = browserContext(taskID, c);
             return browserObservationResult(x, await browserExecutor.open(x.cx, preview.url));

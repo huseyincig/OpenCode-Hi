@@ -50,3 +50,9 @@ export function browserOriginsFromTargets(targets:readonly string[]):string[]{
   const urls=targets.filter(x=>/^https?:\/\//i.test(String(x).trim()))
   return normalizeBrowserAllowedOrigins(urls)
 }
+
+export function browserOriginsFromText(text:string):string[]{
+  const candidates=String(text??'').match(/https?:\/\/[^\s<>{}\[\]"']+/gi)??[]
+  const cleaned=candidates.map(value=>value.replace(/[),.;:!?]+$/g,''))
+  return normalizeBrowserAllowedOrigins(cleaned)
+}

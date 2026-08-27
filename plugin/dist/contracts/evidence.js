@@ -4,13 +4,13 @@ export const EVIDENCE_SOURCE_CLASSES = ['host-tool-observation', 'host-diff-obse
 const KIND_SET = new Set(MISSION_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);
 const SOURCE_CLASS_SET = new Set(EVIDENCE_SOURCE_CLASSES);
-const KEYS = new Set(['id', 'kind', 'summary', 'scope', 'source', 'trusted_source_class', 'source_session_id', 'source_state_hash', 'scope_state_hash', 'task_id', 'obligation_ids', 'evidence_refs', 'producer_attempt', 'observed_at', 'invalidated_at', 'pass', 'outcome', 'reason']);
+const KEYS = new Set(['id', 'kind', 'summary', 'scope', 'source', 'trusted_source_class', 'source_session_id', 'source_state_hash', 'scope_state_hash', 'task_id', 'obligation_ids', 'evidence_refs', 'browser_url', 'browser_origin', 'producer_attempt', 'observed_at', 'invalidated_at', 'pass', 'outcome', 'reason']);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function strings(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
 export function isEvidenceItemContract(v) {
     if (!record(v) || !Object.keys(v).every(k => KEYS.has(k)) || typeof v.id !== 'string' || !v.id || typeof v.kind !== 'string' || !KIND_SET.has(v.kind) || typeof v.summary !== 'string' || !strings(v.scope) || typeof v.observed_at !== 'number' || !Number.isFinite(v.observed_at))
         return false;
-    for (const key of ['source', 'source_session_id', 'source_state_hash', 'scope_state_hash', 'task_id', 'reason'])
+    for (const key of ['source', 'source_session_id', 'source_state_hash', 'scope_state_hash', 'task_id', 'reason', 'browser_url', 'browser_origin'])
         if (v[key] !== undefined && typeof v[key] !== 'string')
             return false;
     const scopeStateHash = v.scope_state_hash;

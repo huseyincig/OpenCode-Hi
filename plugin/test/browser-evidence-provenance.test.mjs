@@ -48,6 +48,26 @@ test('passed browser evidence accepts same-task current-attempt real browser obs
   assert.equal(f.task.result.status,'DONE');const passed=f.m.execution.evidence.items.find(e=>e.kind==='browser-evidence'&&e.outcome==='passed');assert.ok(passed);assert.deepEqual(passed.evidence_refs,[out.evidence_ref]);assert.match(passed.source_state_hash,/^[a-f0-9]{64}$/);assert.equal(methodologyExitCheck(f.m,'hi-browser-testing',{task:f.task,result:f.task.result,projectRoot:process.cwd(),scope:'worker'}).ok,true)
 })
 
+
+
+test('current-attempt preview-origin observation cannot satisfy browser proof bound to a different required live origin',async()=>{
+  const f=fixture('m13-proof-target-mismatch');f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa'];f.task.execution_profile.browser_allowed_origins=['http://localhost:5000','http://127.0.0.1:39929'];f.task.execution_profile.browser_required_origins=['http://localhost:5000']
+  const previewObservation=()=>{const x={...observation(f.task.id),url:'http://127.0.0.1:39929/templates/index.html'};x.observation_id=browserObservationId(x);return x}
+  const toolSurface=surface(f,{inspect:async()=>previewObservation(),health:async()=>({available:true})}),out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+  const raw=f.m.execution.evidence.items.find(e=>e.id===out.evidence_ref);assert.equal(raw.browser_origin,'http://127.0.0.1:39929');assert.match(raw.browser_url,/templates\/index\.html/)
+  runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'preview-only visual claim',changed_files:[],evidence:[{kind:'visual-evidence',summary:'static preview looked correct',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.ok(f.m.execution.ledger.some(e=>e.type==='browser.evidence-unbound'&&String(e.payload?.reason).includes('required live origin')))
+  assert.equal(f.m.execution.evidence.items.some(e=>e.kind==='visual-evidence'&&e.outcome==='passed'),false)
+})
+
+test('current-attempt browser observation on the required live origin remains admissible',async()=>{
+  const f=fixture('m13-proof-target-match');f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa'];f.task.execution_profile.browser_allowed_origins=['http://localhost:5000'];f.task.execution_profile.browser_required_origins=['http://localhost:5000']
+  const liveObservation=()=>{const x={...observation(f.task.id),url:'http://localhost:5000/'};x.observation_id=browserObservationId(x);return x}
+  const toolSurface=surface(f,{inspect:async()=>liveObservation(),health:async()=>({available:true})}),out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+  runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'live target verified',changed_files:[],evidence:[{kind:'visual-evidence',summary:'live Flask UI verified',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.equal(f.task.result.status,'DONE');const passed=f.m.execution.evidence.items.find(e=>e.kind==='visual-evidence'&&e.outcome==='passed');assert.ok(passed);assert.deepEqual(passed.evidence_refs,[out.evidence_ref])
+})
+
 test('browser observation reference from a prior worker attempt cannot satisfy current browser proof',async()=>{
   const f=fixture('m13-proof-stale'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}));beginWorkerAttempt(f.task,f.worker)
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale browser proof',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale claim',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})

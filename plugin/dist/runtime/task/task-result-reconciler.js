@@ -323,6 +323,8 @@ export class TaskResultReconciler {
                 appendLedger(m, 'review.finding-pre-existing', { task_id: task.id, worker_id: worker.id, payload: { findings: preExisting.map(f => ({ id: f.id, severity: f.severity, scope: f.scope.slice(0, 20) })), policy: 'record-without-unrelated-mission-blocker' } });
         }
         const browserProofKinds = new Set(['browser-evidence', 'visual-evidence', 'accessibility-evidence']);
+        const requiredBrowserOrigins = [...(task.execution_profile?.browser_required_origins ?? [])];
+        const browserTargetApplicable = (items) => !requiredBrowserOrigins.length || items.some(item => Boolean(item.browser_origin) && requiredBrowserOrigins.includes(item.browser_origin));
         if (worker.role !== 'visual-qa' && effectiveResult.evidence.some(e => browserProofKinds.has(e.kind))) {
             appendLedger(m, 'browser.evidence-owner-rejected', { task_id: task.id, worker_id: worker.id, payload: { role: worker.role, reason: 'browser-derived evidence requires exact visual-qa worker ownership' } });
             effectiveResult = { ...effectiveResult, evidence: effectiveResult.evidence.filter(e => !browserProofKinds.has(e.kind)) };
@@ -342,13 +344,13 @@ export class TaskResultReconciler {
             const supplemental = requested.filter(id => { if (!id.startsWith('hi-artifact:'))
                 return false; const artifactID = id.slice('hi-artifact:'.length), artifact = this.scopedStores.contextArtifacts.get(artifactID); return artifact?.kind === 'browser-screenshot' && artifact.producer === 'hi-browser-executor' && artifact.consumer_refs.includes(`task:${task.id}`) && Boolean(this.scopedStores.contextArtifacts.getBinary(artifactID)); });
             const supplementalSet = new Set(supplemental), authoritative = requested.filter(id => !supplementalSet.has(id)), support = authoritative.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item));
-            const valid = authoritative.length > 0 && support.length === authoritative.length && support.every(item => String(item.source ?? '').startsWith('browser:') && item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
+            const valid = authoritative.length > 0 && support.length === authoritative.length && support.every(item => String(item.source ?? '').startsWith('browser:') && item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable) && browserTargetApplicable(support);
             if (valid) {
                 if (rawRequested.some((id, i) => id !== requested[i]) || supplemental.length)
                     appendLedger(m, 'browser.evidence-ref-normalized', { task_id: task.id, worker_id: worker.id, payload: { from: rawRequested.slice(0, 20), to: authoritative.slice(0, 20), supplemental_refs: supplemental.slice(0, 20), policy: 'exact-browser-evidence-authority-with-verified-hi-screenshot-provenance' } });
                 return { ...e, evidence_refs: authoritative };
             }
-            appendLedger(m, 'browser.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: requested.slice(0, 20), resolved_refs: support.map(item => item.id), supplemental_refs: supplemental.slice(0, 20), reason: 'passed browser-derived proof requires current task/attempt browser observations; only verified Hi screenshot artifacts are supplemental' } });
+            appendLedger(m, 'browser.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: requested.slice(0, 20), resolved_refs: support.map(item => item.id), supplemental_refs: supplemental.slice(0, 20), reason: requiredBrowserOrigins.length ? 'passed browser-derived proof requires current task/attempt browser observations on the task required live origin' : 'passed browser-derived proof requires current task/attempt browser observations; only verified Hi screenshot artifacts are supplemental' } });
             const { pass: _pass, outcome: _outcome, ...rest } = e;
             return { ...rest, outcome: 'pending', reason: 'browser-proof-unbound: passed browser/visual/accessibility proof requires current task/attempt browser observation evidence_refs' };
         });
@@ -377,9 +379,9 @@ export class TaskResultReconciler {
             }
             if (browserProofKinds.has(e.kind) && evidenceVerdictPassed(e.pass, e.outcome)) {
                 const support = refs.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item));
-                const valid = refs.length > 0 && support.length === refs.length && support.every(item => item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
+                const valid = refs.length > 0 && support.length === refs.length && support.every(item => item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable) && browserTargetApplicable(support);
                 if (!valid) {
-                    appendLedger(m, 'browser.evidence-admission-rejected', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: refs.slice(0, 20), reason: 'canonical-browser-observation-required' } });
+                    appendLedger(m, 'browser.evidence-admission-rejected', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: refs.slice(0, 20), reason: requiredBrowserOrigins.length ? 'canonical-browser-target-observation-required' : 'canonical-browser-observation-required', required_origins: requiredBrowserOrigins } });
                     continue;
                 }
                 const browserStateHash = createHash('sha256').update(support.map(item => `${item.id}:${item.source_state_hash ?? ''}`).join('\n')).digest('hex');

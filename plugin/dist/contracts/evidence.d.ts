@@ -24,6 +24,8 @@ export interface EvidenceItem {
     task_id?: string;
     obligation_ids?: string[];
     evidence_refs?: string[];
+    browser_url?: string;
+    browser_origin?: string;
     producer_attempt?: EvidenceProducerAttempt;
     observed_at: number;
     invalidated_at?: number;

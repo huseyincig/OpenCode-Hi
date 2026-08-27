@@ -73,6 +73,19 @@ test('local visual task can defer origin creation to Hi-owned preview and receiv
   await preview.dispose()
 })
 
+
+
+test('visual task binds explicit live objective URL as immutable browser target and does not offer static preview substitution',async()=>{
+  const prompts=[],m=mission('m13-live-objective',['visual-qa']),preview=new LocalPreviewManager(repoRoot)
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
+  const out=await rt.start(m,{objective:'Browser UI verification for Flask Notes app at http://localhost:5000. Verify add/edit/delete.',role:'visual-qa',category:'visual',scope:['app.py','templates/index.html'],requiredEvidence:['visual-check']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task)
+  assert.deepEqual(task.execution_profile.browser_required_origins,['http://localhost:5000'])
+  assert.deepEqual(task.execution_profile.browser_allowed_origins,['http://localhost:5000'])
+  const prompt=JSON.stringify(prompts[0]);assert.match(prompt,/REQUIRED LIVE BROWSER ORIGIN\(S\): http:\/\/localhost:5000/);assert.doesNotMatch(prompt,/LOCAL STATIC PREVIEW/)
+  await preview.dispose()
+})
+
 test('browser requirement resolves operational-tool receipt even when live browser capability was already observed',async()=>{
   const prompts=[],m=mission('m13-operational-tool-existing',['visual-qa']),calls=[]
   const ensure=async()=>{calls.push('ensure');return{available:true,attempted:false,implementationId:'playwright-chromium',status:'existing',scope:'existing',receiptPath:join(repoRoot,'.opencode','hi','tools','receipts','browser-execution','playwright-chromium.json')}}
