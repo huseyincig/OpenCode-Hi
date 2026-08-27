@@ -84,6 +84,18 @@ test('deadline-less persistent service does not mask an actionable FIX_REQUIRED 
   const decision=evaluateIdle(m);assert.equal(decision.decision,'RECONCILE');assert.equal(decision.reason_code,'worker-result-unreconciled')
 })
 
+test('cancelled task keeps historical FIX_REQUIRED result inert for completion and stagnation',()=>{
+  const {m,task,worker}=mission()
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification)
+  m.vcs.changed_files=['src/a.ts'];addEvidence(m,{kind:'changed-surface-sanity',summary:'current host verification passed',scope:['src/a.ts'],source:'bash',trusted_source_class:'host-tool-observation',pass:true,outcome:'passed',obligation_ids:[verification.id]})
+  for(const obligation of m.execution.obligations){obligation.status='closed';obligation.closedAt=Date.now()}
+  task.status='cancelled';task.result={status:'FIX_REQUIRED',summary:'historical cancelled correction',changed_files:[],evidence:[],open_issues:['historical-only'],needs_context:[]}
+  worker.status='cancelled';worker.completed_at=Date.now();m.execution.blockers=[];m.continuation.stagnation_count=0
+  const decision=evaluateIdle(m)
+  assert.equal(decision.decision,'STOP');assert.equal(decision.reason_code,'complete');assert.equal(shouldCountStagnation(decision),false);assert.equal(m.continuation.stagnation_count,0)
+  assert.equal(task.result.status,'FIX_REQUIRED','cancelled task result remains retained for audit/history')
+})
+
 test('bounded process read records hash-bound pending Evidence without persisting raw output',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
   const out=await runtime.read(m,p.process_id,0,8);assert.equal(out.text,'secret-o');const ev=m.execution.evidence.items.at(-1);assert.equal(ev.kind,'diagnostic-evidence');assert.equal(ev.outcome,'pending');assert.match(ev.source,/^process:/);assert.match(ev.source_state_hash,/^[a-f0-9]{64}$/);assert.doesNotMatch(JSON.stringify(ev),/secret-output/)
