@@ -151,11 +151,11 @@ export class MissionStore {
         if (caps.has('test-authoring'))
             obligations.push(obligation('o-test-authoring', 'test-authoring', 'Requested test-source change completed', [], requiredMaterialTargets));
         if (m.identity.intent.taskKind === 'review')
-            obligations.push(obligation('o-review', 'review', 'Requested review completed', m.identity.intent.likelyVerification));
+            obligations.push(obligation('o-review', 'review', 'Requested review completed', ['review-evidence']));
         if (m.identity.intent.taskKind !== 'diagnosis')
             obligations.push(obligation('o-verification', 'verification', m.identity.intent.likelyVerification.join(', '), m.identity.intent.likelyVerification));
         if (m.identity.intent.risk === 'high')
-            obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
+            obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed', ['review-evidence']));
         if (m.identity.intent.risk === 'authority-boundary')
             obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
         m.execution.obligations = obligations;

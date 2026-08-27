@@ -97,6 +97,15 @@ function ownedProcessResumeContext(m:MissionState,task:MissionTask,worker:Worker
   const rows=owned.map(process=>`${process.process_id} status=${process.status} cleanup=${process.cleanup_state} pid=${process.pid} cwd=${process.cwd}`)
   return `CURRENT OWNED RUNTIME PROCESSES: ${rows.join(' | ')}. These are the canonical ProcessContract records for this exact task/worker. A RUNNING record is not permission to assume host liveness blindly: reobserve your own process with hi_process_list/hi_process_read before deciding whether another spawn is required. Do not spawn a duplicate merely because the previous WorkerResult omitted process state.`
 }
+function explicitObligationEvidenceContract(m:MissionState,explicit:string[]=[]):{requiredEvidence:string[];authoritative:boolean}{
+  const obligations=[...new Set(explicit)].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations']
+  const requiredEvidence:string[]=[];let authoritative=false
+  for(const obligation of obligations){
+    if(obligation.kind==='review'){authoritative=true;requiredEvidence.push('review-evidence');continue}
+    if((obligation.requiredEvidence??[]).length){authoritative=true;requiredEvidence.push(...(obligation.requiredEvidence??[]))}
+  }
+  return{requiredEvidence:[...new Set(requiredEvidence.map(kind=>String(kind).trim()).filter(Boolean))],authoritative}
+}
 function inferObligationIds(m:MissionState,role:string,requiredEvidence:string[],explicit:string[]=[]):string[]{
   const requested=[...new Set(explicit)].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations']
   const disallowed=requested.filter(o=>!roleCanOwnObligation(role,o.kind));if(disallowed.length)throw new Error(`Role ${role} cannot own obligation(s): ${disallowed.map(o=>`${o.id}:${o.kind}`).join(', ')}`)
@@ -265,8 +274,8 @@ export class TaskRuntime{
     let role:string
     if(resumeTask){if(!isHiChildRole(resumeTask.role))throw new Error(`Hi task ${resumeTask.id} has invalid stored role '${resumeTask.role}'`);if(requestedRole&&requestedRole!==resumeTask.role)throw new Error(`Exact resume role drift for task ${resumeTask.id}: stored canonical role is '${resumeTask.role}', requested '${requestedRole}'. Resume cannot change task ownership; create separate work only after the existing task is reconciled.`);role=resumeTask.role}
     else{if(requestedRole&&(input.obligationIds?.length??0)>0){const requestedObligations=[...new Set(input.obligationIds??[])].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations'];const disallowed=requestedObligations.filter(o=>!roleCanOwnObligation(requestedRole,o.kind));if(disallowed.length)throw new Error(`Role ${requestedRole} cannot own obligation(s): ${disallowed.map(o=>`${o.id}:${o.kind}`).join(', ')}`)}const canonicalRole=canonicalRoleForTask(m,routed.role,input.obligationIds??[],requestedRole);if(!isHiChildRole(canonicalRole))throw new Error(`No canonical role owner for task semantics: ${canonicalRole}`);if(requestedRole&&requestedRole!==canonicalRole)throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);role=canonicalRole}
-    const processLifecycleRequested=input.processLifecycle===true,explicitEvidence=(input.requiredEvidence??[]).filter(Boolean),explicitObligations=(input.obligationIds??[]).filter(Boolean),implicitProcessSupport=processLifecycleRequested&&!explicitEvidence.length&&!explicitObligations.length
-    const requiredEvidence=explicitEvidence.length?explicitEvidence:implicitProcessSupport?[]:m.execution.verification_policy.requiredKinds,obligationIds=implicitProcessSupport?[]:inferObligationIds(m,role,requiredEvidence,explicitObligations)
+    const processLifecycleRequested=input.processLifecycle===true,explicitEvidence=(input.requiredEvidence??[]).filter(Boolean),explicitObligations=(input.obligationIds??[]).filter(Boolean),implicitProcessSupport=processLifecycleRequested&&!explicitEvidence.length&&!explicitObligations.length,obligationEvidence=explicitObligationEvidenceContract(m,explicitObligations)
+    const requiredEvidence=explicitEvidence.length?explicitEvidence:implicitProcessSupport?[]:obligationEvidence.authoritative?obligationEvidence.requiredEvidence:m.execution.verification_policy.requiredKinds,obligationIds=implicitProcessSupport?[]:inferObligationIds(m,role,requiredEvidence,explicitObligations)
     const hostConfig=this.getHostConfig();applyAdmittedProjectMethodologyPermissions(hostConfig,this.projectRoot);const selected=resolveModel(category,this.getModels(),this.getConfig(),input.model,role,hostConfig);if(selected.rejected.length)appendLedger(m,'model.policy.rejected',{payload:{items:selected.rejected.slice(0,20)}})
     const taskMethodologyNeeds=m.methodology.methodology_needs.filter(need=>input.resumeTaskId?need.task_id===input.resumeTaskId||(!need.task_id&&(!need.obligation_id||obligationIds.includes(need.obligation_id))):!need.task_id&&(!need.obligation_id||obligationIds.includes(need.obligation_id)))
     const catalog=methodologyCatalog(this.projectRoot),requestedMethodologyNames=methodologyNames(taskMethodologyNeeds)

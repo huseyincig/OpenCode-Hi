@@ -28,6 +28,9 @@ export function workerHandoffText(h:WorkerHandoff,maxChars:number=DEFAULT_CONTEX
   const reviewFindingInstruction=h.expected_output.findings
     ? 'Reviewer findings: {id, reviewer_role, subject, severity, causality, scope, evidence_refs, confidence, disposition, blocking}; evidence_refs must name evidence.kind values from this result; unrelated existing debt is causality=pre-existing.'
     : ''
+  const reviewEvidenceInstruction=h.expected_output.findings&&h.required_evidence.includes('review-evidence')
+    ? 'Reviewer closure: emit evidence.kind="review-evidence" for the bounded review verdict. Do not invent provider-, package-, advisory-, CVE-, or scanner-specific evidence.kind IDs; put those source details in evidence.summary and findings. A passing review uses outcome="passed" only after the scoped review is complete; a blocking introduced finding must return FIX_REQUIRED rather than a prose-only DONE.'
+    : ''
   const lines=[
     'Hi WORKER HANDOFF',
     `OBJECTIVE: ${clipText(h.objective,4000)}`,
@@ -40,6 +43,7 @@ export function workerHandoffText(h:WorkerHandoff,maxChars:number=DEFAULT_CONTEX
     `RESULT: compact JSON; status= DONE|FIX_REQUIRED|NEEDS_CONTEXT|BLOCKED|FAILED; fields=${resultFields}.`,
     h.required_evidence.length?'Required evidence kinds are canonical IDs: emit those exact values as evidence.kind; never rename or alias them; if unmet, report the gap and never invent proof.':'',
     reviewFindingInstruction,
+    reviewEvidenceInstruction,
     'Optional signals only when supported: context_gap=scope|iterative|none; failure_finding=ci-build|unknown-root-cause|none.',
     exitRequirements.length?'Methodology exits require fresh passed structured evidence; summary wording alone never satisfies an exit. targeted-test-evidence may use evidence.kind=targeted-tests.':'',
     visualProof?'For visual-check / hi-visual-qa, emit evidence.kind="visual-evidence" with evidence.outcome="passed" only after the claimed browser-visible state actually passes; include the actual Hi browser evidence_ref values in evidence_refs, with each array element containing only the bare canonical ref token (for example ev_... or bo_... or hi-artifact:a_...), never labels, arrows, dimensions, or prose annotations. hi_browser_screenshot provides the pixels as a native image attachment; screenshot_artifact_ref=hi-artifact:... is opaque canonical provenance, not a filesystem path, so never read/glob/find it. Never manufacture PASS from a BrowserObservation or screenshot alone. Return the WorkerResult directly in assistant text; never write a temporary/result JSON file.':'',

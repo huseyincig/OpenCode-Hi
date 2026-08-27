@@ -69,3 +69,24 @@ test('follow-up reviewer defaults to actual changed surface and replanned requir
   assert.deepEqual(t?.requiredEvidence,['targeted-tests','typecheck','build'])
   assert.match(prompts[0].body.parts[0].text,/src\/auth\/token\.ts/)
 })
+
+
+test('explicit dependency reviewer derives review evidence from its review obligation instead of mission-global visual verification',async()=>{
+  const root=repo(),s=new MissionStore(root),m=startAssessedMission(s,'dependency-review-evidence','opaque visual app change',{task_kind:'implementation',risk:'low',required_capabilities:['implementation','visual-qa'],likely_verification:['visual-check'],likely_targets:['src/other.ts']})
+  m.execution.verification_policy={requiredKinds:['visual-check'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false}
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation)
+  const producer=createTask(m,{objective:'update dependency',role:'coder',category:'standard',scope:['src/other.ts'],requiredEvidence:['visual-check'],obligationIds:[implementation.id]})
+  producer.status='completed';producer.result={status:'DONE',summary:'dependency updated',changed_files:['requirements.txt'],evidence:[],open_issues:[],needs_context:[]};implementation.status='closed';implementation.closedAt=Date.now();m.vcs.changed_files=['requirements.txt']
+  const replanned=replanVerificationForChangedSurface(m,producer,['requirements.txt'],collectRepoContext(root));assert.equal(replanned.reason,'dependency-changed-surface')
+  const review=m.execution.obligations.find(o=>o.kind==='review'&&o.summary.includes('Dependency graph changed'));assert.ok(review);assert.deepEqual(review.requiredEvidence,['review-evidence'])
+  const prompts=[];let seq=0
+  const client={session:{create:async()=>({data:{id:`review-child-${++seq}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const out=await rt.start(m,{objective:'review requirements dependency',role:'security-reviewer',category:'standard',scope:['requirements.txt'],obligationIds:[review.id]})
+  const task=m.execution.tasks.find(x=>x.id===out.task_id);assert.ok(task)
+  assert.deepEqual(task.requiredEvidence,['review-evidence'])
+  assert.deepEqual(task.obligation_ids,[review.id])
+  assert.match(prompts[0].body.parts[0].text,/REQUIRED EVIDENCE: review-evidence/)
+  assert.doesNotMatch(prompts[0].body.parts[0].text,/REQUIRED EVIDENCE: visual-check/)
+  assert.match(prompts[0].body.parts[0].text,/Do not invent provider-, package-, advisory-, CVE-, or scanner-specific evidence\.kind IDs/)
+})

@@ -101,6 +101,23 @@ function ownedProcessResumeContext(m, task, worker) {
     const rows = owned.map(process => `${process.process_id} status=${process.status} cleanup=${process.cleanup_state} pid=${process.pid} cwd=${process.cwd}`);
     return `CURRENT OWNED RUNTIME PROCESSES: ${rows.join(' | ')}. These are the canonical ProcessContract records for this exact task/worker. A RUNNING record is not permission to assume host liveness blindly: reobserve your own process with hi_process_list/hi_process_read before deciding whether another spawn is required. Do not spawn a duplicate merely because the previous WorkerResult omitted process state.`;
 }
+function explicitObligationEvidenceContract(m, explicit = []) {
+    const obligations = [...new Set(explicit)].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
+    const requiredEvidence = [];
+    let authoritative = false;
+    for (const obligation of obligations) {
+        if (obligation.kind === 'review') {
+            authoritative = true;
+            requiredEvidence.push('review-evidence');
+            continue;
+        }
+        if ((obligation.requiredEvidence ?? []).length) {
+            authoritative = true;
+            requiredEvidence.push(...(obligation.requiredEvidence ?? []));
+        }
+    }
+    return { requiredEvidence: [...new Set(requiredEvidence.map(kind => String(kind).trim()).filter(Boolean))], authoritative };
+}
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     const requested = [...new Set(explicit)].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
     const disallowed = requested.filter(o => !roleCanOwnObligation(role, o.kind));
@@ -582,8 +599,8 @@ export class TaskRuntime {
                 throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);
             role = canonicalRole;
         }
-        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length;
-        const requiredEvidence = explicitEvidence.length ? explicitEvidence : implicitProcessSupport ? [] : m.execution.verification_policy.requiredKinds, obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requiredEvidence, explicitObligations);
+        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length, obligationEvidence = explicitObligationEvidenceContract(m, explicitObligations);
+        const requiredEvidence = explicitEvidence.length ? explicitEvidence : implicitProcessSupport ? [] : obligationEvidence.authoritative ? obligationEvidence.requiredEvidence : m.execution.verification_policy.requiredKinds, obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requiredEvidence, explicitObligations);
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);

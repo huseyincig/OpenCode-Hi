@@ -56,10 +56,10 @@ export function replanVerificationForChangedSurface(m, task, files, repo) {
         m.identity.intent.requiredCapabilities = [...new Set([...m.identity.intent.requiredCapabilities, 'dependency-change', 'security-review'])];
         m.execution.verification_policy.requireReview = true;
         if (!m.execution.obligations.some(o => o.kind === 'review' && o.status === 'open' && o.summary.includes('Dependency graph changed')))
-            m.execution.obligations.push({ id: `o-dependency-review-${Date.now().toString(36)}`, kind: 'review', summary: 'Dependency graph changed; independent supply-chain/security review required', status: 'open' });
+            m.execution.obligations.push({ id: `o-dependency-review-${Date.now().toString(36)}`, kind: 'review', summary: 'Dependency graph changed; independent supply-chain/security review required', status: 'open', requiredEvidence: ['review-evidence'] });
     }
     else if (riskEscalated && !m.execution.obligations.some(o => o.kind === 'review' && o.status === 'open'))
-        m.execution.obligations.push({ id: `o-high-assurance-${Date.now().toString(36)}`, kind: 'review', summary: 'Changed surface entered a security/configuration-sensitive area; independent review required', status: 'open' });
+        m.execution.obligations.push({ id: `o-high-assurance-${Date.now().toString(36)}`, kind: 'review', summary: 'Changed surface entered a security/configuration-sensitive area; independent review required', status: 'open', requiredEvidence: ['review-evidence'] });
     const changed = addedKinds.length > 0 || expanded || riskEscalated;
     if (changed) {
         m.execution.verification_policy.requiredKinds = next;

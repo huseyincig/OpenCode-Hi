@@ -19,7 +19,9 @@ test('dependency graph changes create explicit security/review obligation and ca
   assert.equal(m.identity.risk,'high')
   assert.ok(m.identity.intent.requiredCapabilities.includes('dependency-change'))
   assert.ok(m.identity.intent.requiredCapabilities.includes('security-review'))
-  assert.ok(m.execution.obligations.some(o=>o.kind==='review'&&o.status==='open'&&/Dependency graph changed/.test(o.summary)))
+  const dependencyReview=m.execution.obligations.find(o=>o.kind==='review'&&o.status==='open'&&/Dependency graph changed/.test(o.summary))
+  assert.ok(dependencyReview)
+  assert.deepEqual(dependencyReview.requiredEvidence,['review-evidence'])
 })
 
 test('doctor reports primary-model drift separately when fallback is still available',()=>{
