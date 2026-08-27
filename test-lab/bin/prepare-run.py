@@ -1,12 +1,46 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import argparse, json, shutil, subprocess
+import argparse, hashlib, json, shutil, subprocess
+from datetime import datetime, timezone
 
 ROOT=Path(__file__).resolve().parents[2]
 LAB=ROOT/'test-lab'
 
 def run_checked(args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True, stderr=subprocess.STDOUT).strip()
+
+def product_runtime_state_path(workspace:Path)->Path:
+    # The test harness must not duplicate Hi's project-key/hash algorithm. Resolve the
+    # exact runtime mission-survival path through the built product implementation.
+    code=("import {runtimeStatePath} from './plugin/dist/runtime/storage/locations.js';"
+          "console.log(runtimeStatePath(process.argv[1]));")
+    resolved=Path(run_checked(['node','--input-type=module','-e',code,str(workspace.resolve())],ROOT)).resolve()
+    if resolved.name!='runtime-state.json':
+        raise SystemExit(f'product runtime-state resolver returned unexpected path: {resolved}')
+    return resolved
+
+def backup_and_clear_runtime_state(run:Path,workspace:Path):
+    state_path=product_runtime_state_path(workspace)
+    if not state_path.exists():
+        return {'runtime_state_path':str(state_path),'runtime_state_present':False,'runtime_state_removed':False}
+    if not state_path.is_file():
+        raise SystemExit(f'expected runtime state to be a file: {state_path}')
+    artifacts=run/'artifacts';artifacts.mkdir(parents=True,exist_ok=True)
+    content=state_path.read_bytes();digest=hashlib.sha256(content).hexdigest()
+    stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    backup=artifacts/f'runtime-state-pre-reset-{stamp}-{digest[:12]}.json'
+    suffix=1
+    while backup.exists():
+        backup=artifacts/f'runtime-state-pre-reset-{stamp}-{digest[:12]}-{suffix}.json';suffix+=1
+    backup.write_bytes(content)
+    receipt=backup.with_suffix(backup.suffix+'.sha256')
+    receipt.write_text(f'{digest}  {backup.name}\n')
+    if hashlib.sha256(backup.read_bytes()).hexdigest()!=digest:
+        raise SystemExit(f'runtime-state backup verification failed: {backup}')
+    state_path.unlink()
+    if state_path.exists():
+        raise SystemExit(f'failed to remove exact runtime-state after backup: {state_path}')
+    return {'runtime_state_path':str(state_path),'runtime_state_present':True,'runtime_state_removed':True,'runtime_state_backup':str(backup),'runtime_state_sha256':digest,'runtime_state_receipt':str(receipt)}
 
 def write_test_host_config(workspace:Path):
     pool=json.loads((LAB/'config/model-pool.json').read_text())
@@ -52,6 +86,7 @@ if not scenario.is_dir(): raise SystemExit(f'unknown scenario: {sid}')
 run=LAB/'runtime'/sid
 if run.exists() and not a.reset: raise SystemExit(f'run already exists: {run}; resume it or use --reset only after proving restart is intended')
 prior_debug_checkpoint=None
+fresh_reset_receipt=None
 if run.exists() and a.reset and (run/'RUN_STATE.json').is_file():
     try:
         old=json.loads((run/'RUN_STATE.json').read_text())
@@ -59,6 +94,8 @@ if run.exists() and a.reset and (run/'RUN_STATE.json').is_file():
         prior_debug_checkpoint={k:old[k] for k in keep if k in old}
     except Exception:
         prior_debug_checkpoint={'classification':'PRIOR_RUN_STATE_UNREADABLE'}
+if run.exists() and a.reset:
+    fresh_reset_receipt=backup_and_clear_runtime_state(run,run/'workspace')
 if run.exists():
     shutil.rmtree(run/'workspace',ignore_errors=True)
     shutil.rmtree(run/'tmp',ignore_errors=True)
@@ -80,7 +117,8 @@ state={
   'exact_next_action':'Refresh live host/model inventory, confirm the effective allowlist is the live intersection of test-lab/config/model-pool.json, then start the scenario prompt once without changing the fixture first.',
   'active_processes':[],
   'test_environment':{'workspace_git_root':str((run/'workspace').resolve()),'baseline_commit':baseline,'product_commit':head,'executionPolicy':'adaptive','topology':'adaptive','roleModels':{},'allowed_models':allowed},
-  **({'prior_debug_checkpoint':prior_debug_checkpoint} if prior_debug_checkpoint else {})
+  **({'prior_debug_checkpoint':prior_debug_checkpoint} if prior_debug_checkpoint else {}),
+  **({'fresh_reset':fresh_reset_receipt} if fresh_reset_receipt else {})
 }
 (run/'RUN_STATE.json').write_text(json.dumps(state,indent=2)+'\n')
 program={'schema':1,'program_status':'ACTIVE','active_scenario':sid,'completed':[],'last_evidence':f'{sid} isolated workspace prepared','exact_next_action':state['exact_next_action']}
