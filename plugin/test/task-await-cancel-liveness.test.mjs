@@ -37,6 +37,23 @@ test('implicit process-lifecycle support requires a bounded objective and never 
   assert.deepEqual(task.obligation_ids,[]);assert.deepEqual(task.requiredEvidence,[]);assert.deepEqual(task.execution_profile.methodologies,[])
 })
 
+test('implicit process-lifecycle support without an explicit role uses the neutral runtime resource owner instead of mission routing',async()=>{
+  const {runtime,m}=setup()
+  m.identity.intent.taskKind='bug-fix';m.identity.intent.scope='multi-file';m.identity.intent.requiredCapabilities=['repository-analysis','implementation','verification']
+  const started=await runtime.start(m,{objective:'run inventory server on port 3100 for HTTP smoke testing',processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task&&worker)
+  assert.equal(task.role,'coder');assert.equal(worker.role,'coder')
+  assert.deepEqual(task.obligation_ids,[]);assert.deepEqual(task.requiredEvidence,[])
+  assert.ok(started.selection_reason.includes('implicit-process-support:canonical-runtime-resource-owner'))
+  assert.ok(!started.selection_reason.some(reason=>/repository diagnosis owner/i.test(reason)))
+})
+
+test('explicit repository-explorer process task keeps explicit specialist ownership',async()=>{
+  const {runtime,m}=setup()
+  const started=await runtime.start(m,{objective:'inspect repository while keeping a process available if needed',role:'repository-explorer',scope:['src/a.ts'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id);assert.equal(task.role,'repository-explorer')
+})
+
 test('implicit process-lifecycle support task owns only the runtime resource, not mission implementation or verification',async()=>{
   const {runtime,m}=setup()
   const verify=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verify);m.execution.verification_policy.requiredKinds=['targeted-tests','changed-surface-sanity','visual-check'];verify.requiredEvidence=[...m.execution.verification_policy.requiredKinds]

@@ -593,6 +593,8 @@ export class TaskRuntime {
                 throw new Error(`Exact resume role drift for task ${resumeTask.id}: stored canonical role is '${resumeTask.role}', requested '${requestedRole}'. Resume cannot change task ownership; create separate work only after the existing task is reconciled.`);
             role = resumeTask.role;
         }
+        else if (implicitProcessSupport && !requestedRole)
+            role = 'coder';
         else {
             if (requestedRole && (input.obligationIds?.length ?? 0) > 0) {
                 const requestedObligations = [...new Set(input.obligationIds ?? [])].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
@@ -607,6 +609,7 @@ export class TaskRuntime {
                 throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);
             role = canonicalRole;
         }
+        const roleSelectionReason = implicitProcessSupport && !requestedRole ? ['implicit-process-support:canonical-runtime-resource-owner'] : routed.reason;
         const requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds;
         const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), requiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence;
         if (ownedObligationEvidence.authoritative && JSON.stringify([...new Set(requestedEvidence)]) !== JSON.stringify(ownedObligationEvidence.requiredEvidence))
@@ -815,7 +818,7 @@ export class TaskRuntime {
             }
             ;
             bindAcceptedTask();
-            return { task_id: task.id, worker_id: worker.id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: [...routed.reason, ...selected.reason, ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), 'queued:runtime-capacity-or-prerequisite', ...skillPlan.reason], readiness: 'WAIT', preconditions: preflight.items };
+            return { task_id: task.id, worker_id: worker.id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: [...roleSelectionReason, ...selected.reason, ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), 'queued:runtime-capacity-or-prerequisite', ...skillPlan.reason], readiness: 'WAIT', preconditions: preflight.items };
         }
         bindAcceptedTask();
         const spawned = await run();
@@ -827,9 +830,9 @@ export class TaskRuntime {
             await this.cleanupWorkspaceForTask(m, task.id);
             appendLedger(m, 'worker.spawn.deduped', { worker_id: spawned.id, payload: { discarded_worker_id: worker.id, fingerprint: worker.fingerprint } });
             const spawnedTask = m.execution.tasks.find(t => t.id === spawned.task_id);
-            return { task_id: spawnedTask?.id ?? spawned.task_id, worker_id: spawned.id, session_id: spawned.session_id, model: spawned.model, methodologies: spawned.selected_methodologies, selection_reason: [...routed.reason, ...selected.reason, 'deduped:existing-spawn', ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), ...skillPlan.reason], readiness: 'READY', preconditions: preflight.items };
+            return { task_id: spawnedTask?.id ?? spawned.task_id, worker_id: spawned.id, session_id: spawned.session_id, model: spawned.model, methodologies: spawned.selected_methodologies, selection_reason: [...roleSelectionReason, ...selected.reason, 'deduped:existing-spawn', ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), ...skillPlan.reason], readiness: 'READY', preconditions: preflight.items };
         }
-        return { task_id: task.id, worker_id: spawned.id, session_id: spawned.session_id, model: spawned.model, methodologies: spawned.selected_methodologies, selection_reason: [...routed.reason, ...selected.reason, ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), ...skillPlan.reason], readiness: 'READY', preconditions: preflight.items };
+        return { task_id: task.id, worker_id: spawned.id, session_id: spawned.session_id, model: spawned.model, methodologies: spawned.selected_methodologies, selection_reason: [...roleSelectionReason, ...selected.reason, ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), ...skillPlan.reason], readiness: 'READY', preconditions: preflight.items };
     }
     async resume(m, taskID) {
         const task = m.execution.tasks.find(t => t.id === taskID);

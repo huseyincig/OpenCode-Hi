@@ -300,6 +300,19 @@ test('active parent cannot escape ProcessContract ownership through native backg
   assert.deepEqual(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').map(e=>e.payload.owner),['parent','parent','parent'])
 })
 
+test('resource-only process-support child cannot mutate repository even when neutral owner role is coder',async()=>{
+  const {createToolBeforeHook}=await import('../dist/hooks/tool-before.js')
+  const store=new MissionStore(process.cwd()),m=store.start('process-resource-mutation-guard','run a local server')
+  assess(store,'process-resource-mutation-guard',{required_capabilities:['implementation'],likely_targets:['app.py']})
+  const bg=new BackgroundRegistry(),worker={id:'w_resource_process',task_id:'t_resource_process',role:'coder',category:'standard',session_id:'child-resource-process',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation}
+  const task={id:worker.task_id,mission_id:m.identity.mission_id,objective:'run server',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'run server',scope:[],dependencies:[],required_evidence:[]},tools:['bash','edit',...HI_PROCESS_EXECUTION_TOOL_IDS],process_lifecycle:true,fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny',native:{decisions:{bash:'allow',edit:'allow'},source:'hi-default-invariants'}},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:worker.id}
+  m.execution.tasks.push(task);m.execution.workers.push(worker);bg.set(worker)
+  const hook=createToolBeforeHook(store,bg,process.cwd(),process.cwd())
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'edit'},{args:{filePath:'app.py',oldString:'a',newString:'b'}}),/process-support ownership guard.*cannot mutate repository/i)
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'printf x > app.py'}}),/process-support ownership guard.*cannot mutate repository/i)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.process-support-mutation-blocked'&&e.task_id===task.id))
+})
+
 test('active child without process_lifecycle cannot create an unowned native background job',async()=>{
   const store=new MissionStore(process.cwd()),m=store.start('child-background-guard','inspect and run')
   assess(store,'child-background-guard',{required_capabilities:['implementation']})
