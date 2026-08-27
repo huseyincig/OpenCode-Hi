@@ -68,12 +68,12 @@ function canonicalRoleForTask(m, routedRole, explicit = [], requestedRole = '') 
     if (owners.length === 1)
         return owners[0];
     if (requestedRole && isHiChildRole(requestedRole)) {
-        const hardVisual = m.identity.intent.requiredCapabilities.includes('visual-qa') || m.identity.intent.requiredCapabilities.includes('visual-review');
-        if (hardVisual && requestedRole !== 'visual-qa')
-            return routedRole;
         const exactOpenOwner = m.execution.obligations.some(o => o.status === 'open' && ownerForObligation(m, o.kind) === requestedRole);
         if (exactOpenOwner)
             return requestedRole;
+        const hardVisual = m.identity.intent.requiredCapabilities.includes('visual-qa') || m.identity.intent.requiredCapabilities.includes('visual-review');
+        if (hardVisual && requestedRole !== 'visual-qa')
+            return routedRole;
         // Backward-compatible additive support tasks: historical read-only specialists may inspect
         // without becoming the owner of implementation/review obligations. Their result remains
         // obligation/evidence fenced and cannot close a different canonical owner's work.
@@ -142,7 +142,7 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     if (requiredEvidence.length)
         kinds.push('verification');
     const out = [];
-    for (const kind of [...new Set(kinds)].filter(k => roleCanOwnObligation(role, k))) {
+    for (const kind of [...new Set(kinds)].filter(k => roleCanOwnObligation(role, k) && ownerForObligation(m, k) === role)) {
         const candidates = m.execution.obligations.filter(o => o.kind === kind && o.status === 'open');
         if (candidates.length === 1)
             out.push(candidates[0].id);

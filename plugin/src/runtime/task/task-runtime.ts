@@ -72,10 +72,10 @@ function canonicalRoleForTask(m:MissionState,routedRole:string,explicit:string[]
   if(owners.length>1)throw new Error(`Task spans multiple canonical role owners (${owners.join(', ')}); decompose the obligations into separate hi_task_start calls.`)
   if(owners.length===1)return owners[0]
   if(requestedRole&&isHiChildRole(requestedRole)){
-    const hardVisual=m.identity.intent.requiredCapabilities.includes('visual-qa')||m.identity.intent.requiredCapabilities.includes('visual-review')
-    if(hardVisual&&requestedRole!=='visual-qa')return routedRole
     const exactOpenOwner=m.execution.obligations.some(o=>o.status==='open'&&ownerForObligation(m,o.kind)===requestedRole)
     if(exactOpenOwner)return requestedRole
+    const hardVisual=m.identity.intent.requiredCapabilities.includes('visual-qa')||m.identity.intent.requiredCapabilities.includes('visual-review')
+    if(hardVisual&&requestedRole!=='visual-qa')return routedRole
     // Backward-compatible additive support tasks: historical read-only specialists may inspect
     // without becoming the owner of implementation/review obligations. Their result remains
     // obligation/evidence fenced and cannot close a different canonical owner's work.
@@ -120,7 +120,7 @@ function inferObligationIds(m:MissionState,role:string,requiredEvidence:string[]
   if(isHiReviewerRole(role))kinds.push('review')
   if(requiredEvidence.length)kinds.push('verification')
   const out:string[]=[]
-  for(const kind of [...new Set(kinds)].filter(k=>roleCanOwnObligation(role,k))){const candidates=m.execution.obligations.filter(o=>o.kind===kind&&o.status==='open');if(candidates.length===1)out.push(candidates[0].id)}
+  for(const kind of [...new Set(kinds)].filter(k=>roleCanOwnObligation(role,k)&&ownerForObligation(m,k)===role)){const candidates=m.execution.obligations.filter(o=>o.kind===kind&&o.status==='open');if(candidates.length===1)out.push(candidates[0].id)}
   return [...new Set(out)]
 }
 function unresolvedResultOwner(m:MissionState,obligationIds:string[],excludeTaskId?:string):MissionTask|undefined{

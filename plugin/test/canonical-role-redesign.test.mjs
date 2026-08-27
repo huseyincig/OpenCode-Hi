@@ -151,3 +151,30 @@ test('non-visual worker cannot contribute browser-derived proof',async()=>{
   const task=m.execution.tasks.find(t=>t.id===out.task_id)
   assert.equal(task.result?.evidence.some(e=>e.kind==='visual-evidence'),false,'wrong-role browser proof must be removed from the canonical Task result, not merely rejected from Evidence')
 })
+
+
+test('mixed visual plus security mission keeps implicit obligations on their mission-specific canonical owners',async()=>{
+  const x=runtime({browser:true}),store=new MissionStore(),m=startAssessedMission(store,'mixed-review-owners','build Flask UI and verify dependency safety',{task_kind:'implementation',scope:'multi-file',risk:'low',required_capabilities:['implementation','repository-analysis','verification','visual-qa','dependency-change','security-review'],likely_verification:['visual-check'],likely_targets:['app.py','requirements.txt','templates/index.html']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification')
+  assert.ok(implementation);assert.ok(verification)
+  implementation.status='closed';implementation.closedAt=Date.now()
+  m.execution.obligations.push({id:'o-dependency-review-fixture',kind:'review',summary:'Dependency graph changed; independent supply-chain/security review required',status:'open',requiredEvidence:['review-evidence']})
+  const review=m.execution.obligations.find(o=>o.id==='o-dependency-review-fixture');assert.ok(review)
+  const visual=await x.rt.start(m,{objective:'verify live UI',role:'visual-qa',category:'visual',scope:['app.py','templates/index.html'],requiredEvidence:['visual-check'],browserAllowedOrigins:['http://127.0.0.1:5000']})
+  const visualTask=m.execution.tasks.find(t=>t.id===visual.task_id);assert.ok(visualTask)
+  assert.equal(visualTask.role,'visual-qa')
+  assert.deepEqual(visualTask.obligation_ids,[verification.id],'visual verifier must not auto-claim the independent security/dependency review')
+  const security=await x.rt.start(m,{objective:'independently review dependency and security impact',role:'security-reviewer',category:'critical',scope:['requirements.txt','app.py'],requiredEvidence:['review-evidence'],obligationIds:[review.id]})
+  const securityTask=m.execution.tasks.find(t=>t.id===security.task_id);assert.ok(securityTask)
+  assert.equal(securityTask.role,'security-reviewer')
+  assert.deepEqual(securityTask.obligation_ids,[review.id])
+})
+
+test('pure visual review still owns its review obligation as well as visual verification',async()=>{
+  const x=runtime({browser:true}),store=new MissionStore(),m=startAssessedMission(store,'pure-visual-review-owner','review rendered UI',{task_kind:'review',scope:'local',risk:'medium',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['index.html']})
+  const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(review);assert.ok(verification)
+  const out=await x.rt.start(m,{objective:'review rendered UI',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task)
+  assert.equal(task.role,'visual-qa')
+  assert.deepEqual(new Set(task.obligation_ids),new Set([review.id,verification.id]))
+})
