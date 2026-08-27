@@ -166,7 +166,15 @@ export declare class TaskRuntime {
     recoverStagnation(m: MissionState, level: number, action?: 'same-worker-resume' | 'model-escalation'): Promise<boolean>;
     fail(m: MissionState, workerID: string, error: string): void;
     peek(m: MissionState, id: string): any;
+    private observeWorkerLiveness;
     awaitTask(m: MissionState, id: string, timeoutMs?: number): Promise<any>;
+    modelCancelAdmission(m: MissionState, id: string): Promise<{
+        allowed: boolean;
+        reason: string;
+        live_status?: 'idle' | 'busy' | 'retry' | 'unknown';
+        task_id?: string;
+        worker_id?: string;
+    }>;
     list(m: MissionState): any[];
     cancelAll(m: MissionState): Promise<number>;
     cancel(m: MissionState, id: string): Promise<boolean>;

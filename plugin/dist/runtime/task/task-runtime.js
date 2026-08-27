@@ -1078,9 +1078,43 @@ export class TaskRuntime {
     async recoverStagnation(m, level, action = 'same-worker-resume') { return this.#recovery.recoverStagnation(m, level, action); }
     fail(m, workerID, error) { this.#recovery.fail(m, workerID, error); }
     peek(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); return { task, worker }; }
+    async observeWorkerLiveness(m, worker) {
+        if (!worker.session_id || worker.generation_at_spawn !== m.continuation.generation)
+            return { live_status: 'unknown', progress_observed: false };
+        let live_status = 'unknown';
+        try {
+            live_status = await this.#child.status(worker.session_id);
+        }
+        catch { }
+        let progress_observed = false;
+        if ((live_status === 'busy' || live_status === 'retry') && this.readAssistantResult)
+            try {
+                const activity = (await this.readAssistantResult(worker.session_id, 12)).activity;
+                if (activity)
+                    progress_observed = recordAssistantProgress(m, { worker_id: worker.id, task_id: worker.task_id, session_id: worker.session_id, generation: worker.generation_at_spawn ?? m.continuation.generation, message_id: activity.message_id, observed_at: activity.observed_at, output_tokens: activity.output_tokens, reasoning_tokens: activity.reasoning_tokens, tool_calls: activity.tool_calls, text_chars: activity.text_chars });
+            }
+            catch { }
+        return { live_status, progress_observed };
+    }
     async awaitTask(m, id, timeoutMs = 30_000) { let current = this.peek(m, id), status = current?.task?.status ?? current?.worker?.status ?? 'unknown'; if (['completed', 'failed', 'cancelled', 'blocked'].includes(status))
-        return { ...current, status, terminal: true, changed: false, timed_out: false }; const worker = current?.worker; if (!worker)
-        return { ...current, status, terminal: false, changed: false, timed_out: false }; const changed = await this.registry.waitForChange(worker.id, timeoutMs); current = this.peek(m, id); status = current?.task?.status ?? current?.worker?.status ?? 'unknown'; const terminal = ['completed', 'failed', 'cancelled', 'blocked'].includes(status); return { ...current, status, terminal, changed, timed_out: !changed && !terminal }; }
+        return { ...current, status, terminal: true, changed: false, timed_out: false, live_status: 'idle', progress_observed: false }; const worker = current?.worker; if (!worker)
+        return { ...current, status, terminal: false, changed: false, timed_out: false, live_status: 'unknown', progress_observed: false }; await this.observeWorkerLiveness(m, worker); const changed = await this.registry.waitForChange(worker.id, timeoutMs); current = this.peek(m, id); status = current?.task?.status ?? current?.worker?.status ?? 'unknown'; const terminal = ['completed', 'failed', 'cancelled', 'blocked'].includes(status), observed = terminal ? { live_status: 'idle', progress_observed: false } : await this.observeWorkerLiveness(m, current?.worker ?? worker); if (!changed && !terminal && observed.progress_observed)
+        appendLedger(m, 'worker.await-progress-observed', { task_id: current?.task?.id, worker_id: (current?.worker ?? worker).id, payload: { session_id: (current?.worker ?? worker).session_id, attempt: (current?.worker ?? worker).attempt, live_status: observed.live_status } }); return { ...current, status, terminal, changed, timed_out: !changed && !terminal, ...observed }; }
+    async modelCancelAdmission(m, id) {
+        const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id), resolvedTask = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : task;
+        if (!worker)
+            return { allowed: false, reason: 'worker-not-found' };
+        if (['completed', 'failed', 'cancelled'].includes(worker.status) || ['completed', 'failed', 'cancelled'].includes(resolvedTask?.status ?? ''))
+            return { allowed: false, reason: 'task-already-terminal', task_id: resolvedTask?.id, worker_id: worker.id };
+        if (worker.status === 'ready' || worker.status === 'created' || worker.status === 'queued')
+            return { allowed: true, reason: 'non-running-task', task_id: resolvedTask?.id, worker_id: worker.id };
+        if (!worker.session_id)
+            return { allowed: false, reason: 'active-worker-session-unverified', live_status: 'unknown', task_id: resolvedTask?.id, worker_id: worker.id };
+        const observed = await this.observeWorkerLiveness(m, worker);
+        const reason = observed.live_status === 'busy' || observed.live_status === 'retry' ? 'healthy-worker-active' : observed.live_status === 'idle' ? 'child-result-reconcile-required' : 'active-worker-liveness-unverified';
+        appendLedger(m, 'worker.cancel.admission-blocked', { task_id: resolvedTask?.id, worker_id: worker.id, payload: { reason, live_status: observed.live_status, progress_observed: observed.progress_observed, session_id: worker.session_id, attempt: worker.attempt } });
+        return { allowed: false, reason, live_status: observed.live_status, task_id: resolvedTask?.id, worker_id: worker.id };
+    }
     list(m) { return m.execution.tasks.map(t => ({ task: t, worker: m.execution.workers.find(w => w.id === t.worker_id) })); }
     async cancelAll(m) { let n = 0; for (const w of [...m.execution.workers])
         if (['created', 'queued', 'starting', 'ready', 'busy'].includes(w.status))
