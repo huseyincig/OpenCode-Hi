@@ -12,10 +12,21 @@ function providerOf(model:string|undefined):string|undefined{return model&&model
 function unitID(worker:Pick<WorkerState,'task_id'>):string{return`eu:${worker.task_id}`}
 function lifecycle(m:MissionState){return m.execution.scheduler??(m.execution.scheduler=createSchedulerLifecycleState(m.identity.mission_id))}
 
-export interface TaskRuntimeSchedulingOverride {workerId:string;model?:string}
+export interface TaskRuntimeSchedulingOverride {workerId:string;model?:string;resumeTaskId?:string}
 
 export function taskRuntimeSchedulingSnapshot(m:MissionState,scheduler:ConcurrencyPolicySource,override?:TaskRuntimeSchedulingOverride,peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW):SchedulingSnapshot{
   const graph=projectMissionToWorkGraph(m,Date.now()),unitTraits:SchedulingSnapshot['unitTraits']={},resolvedResources:SchedulingSnapshot['resolvedResources']={}
+  if(override?.resumeTaskId){
+    const task=m.execution.tasks.find(item=>item.id===override.resumeTaskId),worker=m.execution.workers.find(item=>item.id===override.workerId&&item.task_id===override.resumeTaskId)
+    const resumable=Boolean(task&&worker&&worker.status==='ready'&&worker.session_id&&task.worker_id===worker.id&&task.result&&['FIX_REQUIRED','NEEDS_CONTEXT','BLOCKED'].includes(task.result.status))
+    if(resumable){
+      const node=graph.nodes.find(item=>item.id===override.resumeTaskId)
+      // Durable BLOCKED describes the previous attempt result. Only an explicit exact-task resume
+      // projects that retained node as scheduler-waiting so normal dependency/conflict/capacity
+      // policy can decide whether the next attempt may start. Durable task state remains unchanged.
+      if(node)node.status='waiting'
+    }
+  }
   for(const unit of graph.executionUnits){unitTraits[unit.id]={readOnly:isHiReadOnlyChildRole(unit.role)}}
   for(const worker of m.execution.workers){
     const model=worker.id===override?.workerId?override.model:worker.model,unit=unitID(worker)
@@ -30,16 +41,16 @@ export function taskRuntimeUnitDecision(m:MissionState,worker:WorkerState,model:
   return planScheduling(snapshot).units.find(item=>item.executionUnitId===unitID(worker))
 }
 
-export function taskRuntimeAdmittedModel(m:MissionState,worker:WorkerState,models:string[],scheduler:ConcurrencyPolicySource,peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW):string|undefined{
+export function taskRuntimeAdmittedModel(m:MissionState,worker:WorkerState,models:string[],scheduler:ConcurrencyPolicySource,peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW,resumeTaskId?:string):string|undefined{
   if(m.identity.status!=='active'||m.continuation.user_interrupted||m.identity.semantic_assessment.status!=='assessed'||worker.status==='cancelled')return undefined
   const state=lifecycle(m),id=unitID(worker)
-  return models.find(model=>planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model},peerView),state).executionUnitIds.includes(id))
+  return models.find(model=>planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model,resumeTaskId},peerView),state).executionUnitIds.includes(id))
 }
 
 export interface TaskRuntimeReservationResult extends SchedulerLifecycleResult {attempt?:ExecutionAttemptIdentity;reservation?:SchedulerReservation}
 
-export function reserveTaskRuntimeDispatch(m:MissionState,worker:WorkerState,model:string|undefined,scheduler:ConcurrencyPolicySource,at=Date.now(),peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW):TaskRuntimeReservationResult{
-  const state=lifecycle(m),snapshot=taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model},peerView),attempt=executionAttemptIdentity({executionUnitId:unitID(worker),workerId:worker.id,ordinal:(worker.attempt??0)+1,generation:m.continuation.generation})
+export function reserveTaskRuntimeDispatch(m:MissionState,worker:WorkerState,model:string|undefined,scheduler:ConcurrencyPolicySource,at=Date.now(),peerView:ProjectSchedulingPeerView=EMPTY_PROJECT_SCHEDULING_PEER_VIEW,resumeTaskId?:string):TaskRuntimeReservationResult{
+  const state=lifecycle(m),snapshot=taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model,resumeTaskId},peerView),attempt=executionAttemptIdentity({executionUnitId:unitID(worker),workerId:worker.id,ordinal:(worker.attempt??0)+1,generation:m.continuation.generation})
   const out=reserveSchedulerUnit(snapshot,state,{executionUnitId:unitID(worker),workerId:worker.id,attempt,at})
   if(out.accepted)m.execution.scheduler=out.state
   return{...out,attempt,reservation:out.reservation}

@@ -223,6 +223,35 @@ export class TaskRuntime {
         await this.cleanupWorkspaceForTask(m, worker.task_id);
         return { applied: true, reason: 'host-idle-runtime-failed', wakeResult: 'FAILED', failureKind: worker.last_runtime_failure_kind };
     }
+    async settleHostIdlePermissionDenial(m, worker) {
+        const denial = worker.pending_native_permission_denial, task = m.execution.tasks.find(t => t.id === worker.task_id);
+        if (!denial)
+            return { applied: false, reason: 'native-permission-denial-not-recorded' };
+        if (!task) {
+            delete worker.pending_native_permission_denial;
+            return { applied: false, reason: 'task-not-found' };
+        }
+        const current = denial.session_id === worker.session_id && denial.attempt === worker.attempt && denial.generation === (worker.generation_at_spawn ?? m.continuation.generation);
+        if (!current) {
+            appendLedger(m, 'worker.permission-denial.stale-attempt-ignored', { task_id: task.id, worker_id: worker.id, payload: { permission_id: denial.permission_id, receipt_session_id: denial.session_id, worker_session_id: worker.session_id, receipt_attempt: denial.attempt, worker_attempt: worker.attempt, receipt_generation: denial.generation, worker_generation: worker.generation_at_spawn } });
+            delete worker.pending_native_permission_denial;
+            return { applied: false, reason: 'native-permission-denial-stale-attempt' };
+        }
+        const marker = `permission-denied:${denial.permission_id}`, patternSummary = denial.patterns.slice(0, 6).join(' | ') || 'native action withheld by OpenCode permission policy';
+        let result = { status: 'NEEDS_CONTEXT', summary: 'OpenCode denied a native action and ended this child turn before a structured WorkerResult could be emitted.', changed_files: [], evidence: [], open_issues: [marker], needs_context: [`native-permission-denied: ${patternSummary}. Do not retry or bypass the denied action. Resume this exact task/session only with an allowed materially different path, or report BLOCKED if the denied action is required.`] };
+        result = await this.reconcileNativeResult(m, worker.id, result);
+        result = await this.reintegrateWorkspaceResult(m, worker.id, result);
+        delete worker.pending_native_permission_denial;
+        appendLedger(m, 'worker.permission-denial.settling', { task_id: task.id, worker_id: worker.id, payload: { permission_id: denial.permission_id, session_id: denial.session_id, attempt: denial.attempt, generation: denial.generation, patterns: denial.patterns.slice(0, 12), policy: 'preserve-native-deny-no-auto-retry' } });
+        this.applyResult(m, worker.id, result);
+        worker.restart_reconcile_pending = false;
+        if (['completed', 'failed', 'cancelled'].includes(worker.status))
+            this.registry.delete(worker.id);
+        else
+            this.registry.set(worker);
+        appendLedger(m, 'worker.permission-denial.settled', { task_id: task.id, worker_id: worker.id, payload: { permission_id: denial.permission_id, status: result.status, attempt: denial.attempt, generation: denial.generation } });
+        return { applied: true, reason: 'host-idle-native-permission-denied', result };
+    }
     async settleHostIdleAssistantResult(m, worker, assistant) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
@@ -286,13 +315,13 @@ export class TaskRuntime {
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
     async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
     projectPeerView(m) { return projectSchedulingPeerView(m, this.getProjectMissions()); }
-    admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler, this.projectPeerView(m)); }
-    reserveExistingSessionAttempt(m, worker, model) {
+    admittedModel(m, worker, chain, resumeTaskId) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler, this.projectPeerView(m), resumeTaskId); }
+    reserveExistingSessionAttempt(m, worker, model, resumeTaskId) {
         if (!model || !worker.session_id)
             return { ok: false, reason: 'model-or-session-missing' };
-        if (this.admittedModel(m, worker, [model]) !== model)
+        if (this.admittedModel(m, worker, [model], resumeTaskId) !== model)
             return { ok: false, reason: 'scheduler-not-admitted' };
-        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.projectPeerView(m));
+        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.projectPeerView(m), resumeTaskId);
         if (!reservation.accepted)
             return { ok: false, reason: reservation.reason };
         const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
@@ -643,10 +672,10 @@ export class TaskRuntime {
                     if (restart === 'TERMINAL')
                         return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['restart-reconciliation:terminal-result-recovered'], readiness: 'READY', preconditions: preflight.items };
                 }
-                const nextModel = this.admittedModel(m, existing, chain) ?? existing.model;
+                const nextModel = this.admittedModel(m, existing, chain, oldTask.id) ?? existing.model;
                 if (!nextModel)
                     throw new Error('Worker resume scheduler admission unavailable');
-                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel);
+                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel, oldTask.id);
                 if (!resumeAdmission.ok)
                     throw new Error(`Worker resume scheduler admission unavailable: ${resumeAdmission.reason}`);
                 const previousModel = existing.model, attemptBaseline = await this.captureNativeDiff(existing, 'baseline');

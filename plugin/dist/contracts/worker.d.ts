@@ -1,6 +1,14 @@
 import type { ExecutionUsageObservation } from './execution-usage.js';
 export declare const WORKER_STATUSES: readonly ["created", "queued", "starting", "ready", "busy", "completed", "failed", "cancelled"];
 export type WorkerContractStatus = typeof WORKER_STATUSES[number];
+export interface NativePermissionDenialReceipt {
+    permission_id: string;
+    session_id: string;
+    patterns: string[];
+    attempt: number;
+    generation: number;
+    observed_at: number;
+}
 export interface WorkerContract {
     id: string;
     task_id: string;
@@ -57,5 +65,6 @@ export interface WorkerContract {
     effective_model_observed_at?: number;
     semantic_pause_revision?: number;
     usage_observations?: ExecutionUsageObservation[];
+    pending_native_permission_denial?: NativePermissionDenialReceipt;
 }
 export declare function isWorkerContract(v: unknown): v is WorkerContract;

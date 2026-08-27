@@ -109,8 +109,10 @@ export class RuntimeEventController {
         }
         if (ev.kind === 'permission-asked' && nativePermissionID && mission)
             pendingNativePermissions.set(nativePermissionKey(sid, nativePermissionID), ev.permission?.patterns ?? []);
+        let repliedPermissionPatterns = [];
         if (ev.kind === 'permission-replied' && nativePermissionID && mission) {
             const key = nativePermissionKey(sid, nativePermissionID), patterns = [...new Set([...(pendingNativePermissions.get(key) ?? []), ...(ev.permission?.patterns ?? [])])];
+            repliedPermissionPatterns = patterns;
             if (ev.permission?.reply === 'always') {
                 const cls = authorityClassForPatterns(patterns);
                 if (cls) {
@@ -143,7 +145,11 @@ export class RuntimeEventController {
         if (ev.kind === 'permission-replied' && mission) {
             const pid = ev.permission?.id;
             mission.authority.pending_permission_ids ??= [];
-            const idx = pid ? mission.authority.pending_permission_ids.indexOf(pid) : -1;
+            const idx = pid ? mission.authority.pending_permission_ids.indexOf(pid) : -1, priorReply = Boolean(pid && mission.execution.ledger.some(e => e.type === 'permission.replied' && e.payload?.permission_id === pid));
+            if (child && pid && ev.permission?.decision === 'deny' && !priorReply && !child.pending_native_permission_denial) {
+                child.pending_native_permission_denial = { permission_id: pid, session_id: sid, patterns: repliedPermissionPatterns.slice(0, 32).map(x => x.slice(0, 1000)), attempt: child.attempt, generation: child.generation_at_spawn ?? mission.continuation.generation, observed_at: Date.now() };
+                appendLedger(mission, 'worker.permission-denial.recorded', { task_id: child.task_id, worker_id: child.id, payload: { permission_id: pid, session_id: sid, attempt: child.attempt, generation: child.generation_at_spawn, patterns: repliedPermissionPatterns.slice(0, 12), policy: 'native-deny-may-stop-opencode-generation' } });
+            }
             if (pid && idx < 0) {
                 appendLedger(mission, 'permission.duplicate-ignored', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, event: 'replied' } });
             }
@@ -242,6 +248,15 @@ export class RuntimeEventController {
             if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled')
                 return;
             try {
+                if (child.pending_native_permission_denial) {
+                    const denied = await tasks.settleHostIdlePermissionDenial(m, child);
+                    if (denied.applied) {
+                        store.updateProgress(m);
+                        await afterChildWake(denied.result?.status ?? 'NEEDS_CONTEXT', 'child-permission-denied');
+                        persistence.save(store.all());
+                        return;
+                    }
+                }
                 const assistant = await host.readAssistantResult(sid, 12), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
                 if (!settled.applied) {
                     appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });

@@ -9,6 +9,18 @@ function unitID(worker) { return `eu:${worker.task_id}`; }
 function lifecycle(m) { return m.execution.scheduler ?? (m.execution.scheduler = createSchedulerLifecycleState(m.identity.mission_id)); }
 export function taskRuntimeSchedulingSnapshot(m, scheduler, override, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
     const graph = projectMissionToWorkGraph(m, Date.now()), unitTraits = {}, resolvedResources = {};
+    if (override?.resumeTaskId) {
+        const task = m.execution.tasks.find(item => item.id === override.resumeTaskId), worker = m.execution.workers.find(item => item.id === override.workerId && item.task_id === override.resumeTaskId);
+        const resumable = Boolean(task && worker && worker.status === 'ready' && worker.session_id && task.worker_id === worker.id && task.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(task.result.status));
+        if (resumable) {
+            const node = graph.nodes.find(item => item.id === override.resumeTaskId);
+            // Durable BLOCKED describes the previous attempt result. Only an explicit exact-task resume
+            // projects that retained node as scheduler-waiting so normal dependency/conflict/capacity
+            // policy can decide whether the next attempt may start. Durable task state remains unchanged.
+            if (node)
+                node.status = 'waiting';
+        }
+    }
     for (const unit of graph.executionUnits) {
         unitTraits[unit.id] = { readOnly: isHiReadOnlyChildRole(unit.role) };
     }
@@ -23,14 +35,14 @@ export function taskRuntimeUnitDecision(m, worker, model, scheduler, peerView = 
     const snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }, peerView);
     return planScheduling(snapshot).units.find(item => item.executionUnitId === unitID(worker));
 }
-export function taskRuntimeAdmittedModel(m, worker, models, scheduler, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
+export function taskRuntimeAdmittedModel(m, worker, models, scheduler, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW, resumeTaskId) {
     if (m.identity.status !== 'active' || m.continuation.user_interrupted || m.identity.semantic_assessment.status !== 'assessed' || worker.status === 'cancelled')
         return undefined;
     const state = lifecycle(m), id = unitID(worker);
-    return models.find(model => planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }, peerView), state).executionUnitIds.includes(id));
+    return models.find(model => planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model, resumeTaskId }, peerView), state).executionUnitIds.includes(id));
 }
-export function reserveTaskRuntimeDispatch(m, worker, model, scheduler, at = Date.now(), peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
-    const state = lifecycle(m), snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }, peerView), attempt = executionAttemptIdentity({ executionUnitId: unitID(worker), workerId: worker.id, ordinal: (worker.attempt ?? 0) + 1, generation: m.continuation.generation });
+export function reserveTaskRuntimeDispatch(m, worker, model, scheduler, at = Date.now(), peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW, resumeTaskId) {
+    const state = lifecycle(m), snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model, resumeTaskId }, peerView), attempt = executionAttemptIdentity({ executionUnitId: unitID(worker), workerId: worker.id, ordinal: (worker.attempt ?? 0) + 1, generation: m.continuation.generation });
     const out = reserveSchedulerUnit(snapshot, state, { executionUnitId: unitID(worker), workerId: worker.id, attempt, at });
     if (out.accepted)
         m.execution.scheduler = out.state;

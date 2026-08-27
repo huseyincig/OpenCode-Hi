@@ -90,6 +90,11 @@ export declare class TaskRuntime {
         wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED';
         failureKind?: WorkerState['last_runtime_failure_kind'];
     }>;
+    settleHostIdlePermissionDenial(m: MissionState, worker: WorkerState): Promise<{
+        applied: boolean;
+        reason: string;
+        result?: WorkerResult;
+    }>;
     settleHostIdleAssistantResult(m: MissionState, worker: WorkerState, assistant: HostAssistantResult): Promise<{
         applied: boolean;
         reason: string;

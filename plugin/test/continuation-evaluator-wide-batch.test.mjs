@@ -265,6 +265,40 @@ test('child permission session-error becomes explicit user action and never pare
 })
 
 
+test('native child permission reject is causally settled as resumable NEEDS_CONTEXT before generic WorkerResult parsing',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hi-native-permission-deny-'))
+  const {client,promptCalls}=baseClient(['child-native-deny'])
+  client.session.messages=async()=>({data:[{info:{id:'assistant-before-deny',role:'assistant',providerID:'p',modelID:'primary',time:{created:100}},parts:[{type:'text',text:'I will install dependencies now.'},{type:'tool',tool:'bash',state:{status:'error',input:{command:'pip install -r requirements.txt'}}}]}]})
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
+  try{
+    await hooks['chat.message']({sessionID:'parent-native-deny'},{message:{role:'user'},parts:[{type:'text',text:'implement the local app'}]})
+    await assessPluginMission(hooks,'parent-native-deny',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_verification:[],likely_targets:['app.py']})
+    const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implement app',role:'coder',category:'standard',scope:'app.py'},{sessionID:'parent-native-deny'}));assert.ok(started.worker_id)
+    const initialChildPrompts=promptCalls.filter(x=>x.path?.id==='child-native-deny').length;assert.equal(initialChildPrompts,1)
+    await hooks.event({event:{type:'permission.asked',properties:{id:'perm-native-deny',sessionID:'child-native-deny',permission:'bash',patterns:['pip install -r requirements.txt']}}})
+    await hooks.event({event:{type:'permission.replied',properties:{id:'perm-native-deny',sessionID:'child-native-deny',decision:'deny'}}})
+    let rows=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'parent-native-deny'})),row=rows.find(x=>x.task.id===started.task_id)
+    assert.deepEqual(row.worker.pending_native_permission_denial?.patterns,['pip install -r requirements.txt'])
+    assert.equal(row.worker.pending_native_permission_denial?.permission_id,'perm-native-deny')
+    await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-native-deny'}}})
+    rows=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'parent-native-deny'}));row=rows.find(x=>x.task.id===started.task_id)
+    assert.equal(row.task.result.status,'NEEDS_CONTEXT');assert.equal(row.task.status,'blocked');assert.equal(row.worker.status,'ready')
+    assert.ok(row.task.result.open_issues.includes('permission-denied:perm-native-deny'))
+    assert.equal(row.task.result.open_issues.includes('worker-result-contract-invalid'),false,'causal native deny must not be misclassified as malformed model output')
+    assert.ok(row.task.result.needs_context.some(x=>/Do not retry or bypass the denied action/i.test(x)))
+    assert.equal(row.worker.pending_native_permission_denial,undefined,'denial receipt is consumed exactly once at accepted terminal idle')
+    assert.equal(promptCalls.filter(x=>x.path?.id==='child-native-deny').length,1,'deny settlement must never automatically retry the child or denied action')
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:220},{sessionID:'parent-native-deny'}))
+    assert.ok(ledger.events.some(e=>e.type==='worker.permission-denial.recorded'&&e.payload?.permission_id==='perm-native-deny'))
+    assert.ok(ledger.events.some(e=>e.type==='worker.permission-denial.settled'&&e.payload?.status==='NEEDS_CONTEXT'))
+    assert.equal(ledger.events.some(e=>e.type==='worker.result-contract-retryable'&&e.worker_id===started.worker_id),false)
+    const resumed=JSON.parse(await hooks.tool.hi_task_start.execute({task_id:started.task_id},{sessionID:'parent-native-deny'}));assert.equal(resumed.task_id,started.task_id);assert.equal(resumed.session_id,'child-native-deny')
+    assert.equal(promptCalls.filter(x=>x.path?.id==='child-native-deny').length,2)
+    const correction=promptCalls.filter(x=>x.path?.id==='child-native-deny').at(-1).body.parts[0].text
+    assert.match(correction,/permission-denied:perm-native-deny|native-permission-denied/i);assert.match(correction,/do not retry or bypass/i)
+  }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
+})
+
 test('session.error defers to OpenCode while the exact child remains busy or retrying',async()=>{
   for(const hostStatus of ['busy','retry']){
     const dir=mkdtempSync(join(tmpdir(),`hi-error-${hostStatus}-`))

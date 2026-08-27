@@ -8,6 +8,7 @@ import { startAssessedMission } from './helpers/semantic.mjs'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import { opencodeChildPort } from './helpers/host-port.mjs'
 import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
+import { taskRuntimeUnitDecision } from '../dist/runtime/scheduler/task-runtime-adapter.js'
 
 function workerResult(status='DONE'){return{status,summary:'done',changed_files:[],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]}}
 function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,onCreate}={}){
@@ -82,6 +83,18 @@ test('corrective same-session resume is scheduler-reserved as the next attempt',
   assert.equal(worker.status,'ready');assert.equal(task.status,'waiting');assert.equal(m.execution.scheduler.reservations.length,0)
   const resumed=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
   assert.equal(resumed.worker_id,worker.id);assert.equal(worker.attempt,2);assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+})
+
+test('explicit NEEDS_CONTEXT resume projects only the retained exact task as scheduler-runnable for its next attempt',async()=>{
+  const {runtime,m,scheduler}=setup();const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  runtime.applyResult(m,started.worker_id,{status:'NEEDS_CONTEXT',summary:'native permission denied',changed_files:[],evidence:[],open_issues:['permission-denied:p1'],needs_context:['use an allowed materially different path; do not retry the denied action']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  assert.equal(worker.status,'ready');assert.equal(task.status,'blocked');assert.equal(m.execution.scheduler.reservations.length,0)
+  assert.equal(taskRuntimeUnitDecision(m,worker,worker.model,scheduler).disposition,'BLOCKED_STATE','ordinary scheduler projection must keep a blocked task blocked')
+  const resumed=await runtime.resume(m,task.id)
+  assert.equal(resumed.task_id,task.id);assert.equal(resumed.worker_id,worker.id);assert.equal(resumed.session_id,started.session_id)
+  assert.equal(worker.attempt,2);assert.equal(task.status,'running');assert.equal(worker.status,'busy')
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
 })
 
 
