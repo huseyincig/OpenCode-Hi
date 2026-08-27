@@ -25,6 +25,27 @@ function setup(){
   return{runtime,m,setStatus:value=>{liveStatus=value},aborts:()=>aborts,activityReads:()=>activityRead}
 }
 
+
+test('implicit process-lifecycle support task owns only the runtime resource, not mission implementation or verification',async()=>{
+  const {runtime,m}=setup()
+  const verify=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verify);m.execution.verification_policy.requiredKinds=['targeted-tests','changed-surface-sanity','visual-check'];verify.requiredEvidence=[...m.execution.verification_policy.requiredKinds]
+  const started=await runtime.start(m,{objective:'run and keep server for verification',role:'coder',scope:['app.py'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id);assert.ok(task)
+  assert.deepEqual(task.requiredEvidence,[])
+  assert.deepEqual(task.obligation_ids,[])
+  assert.deepEqual(task.execution_profile.task.required_evidence,[])
+  assert.deepEqual(task.execution_profile.verification_policy.requiredKinds,['targeted-tests','changed-surface-sanity','visual-check'],'mission policy remains visible as policy but is not task-owned evidence')
+})
+
+test('process-lifecycle task preserves explicit mission evidence and obligation ownership',async()=>{
+  const {runtime,m}=setup()
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation&&verification)
+  const started=await runtime.start(m,{objective:'run server and own explicit verification',role:'coder',scope:['app.py'],processLifecycle:true,requiredEvidence:['targeted-tests'],obligationIds:[implementation.id,verification.id]})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id);assert.ok(task)
+  assert.deepEqual(task.requiredEvidence,['targeted-tests'])
+  assert.deepEqual(task.obligation_ids,[implementation.id,verification.id])
+})
+
 test('await timeout reconciles exact busy child activity without redefining registry changed semantics',async()=>{
   const {runtime,m}=setup()
   const started=await runtime.start(m,{objective:'run owned server',role:'coder',scope:['app.py'],processLifecycle:true})

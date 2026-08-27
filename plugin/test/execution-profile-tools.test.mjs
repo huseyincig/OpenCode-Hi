@@ -1,4 +1,5 @@
 import test from 'node:test'
+import {readFileSync} from 'node:fs'
 import assert from 'node:assert/strict'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
@@ -211,6 +212,13 @@ test('child workers cannot invoke any Hi control-plane custom tool, including co
   for(const tool of ['hi_direct_progress','hi_task_cancel','hi_ledger','hi_status','hi_context_artifact_add']){
     await assert.rejects(()=>hook({sessionID:'child',tool},{args:{}}),/child workers cannot invoke Hi control-plane tool/)
   }
+})
+
+
+test('process lifecycle handoff separates resource ownership from mission-wide verification by default',()=>{
+  const source=readFileSync(new URL('../src/runtime/task/queued-worker-dispatcher.ts',import.meta.url),'utf8')
+  assert.match(source,/lifecycle-support task with no required_evidence\/obligation ownership must not run mission-wide test\/build\/review suites/i)
+  assert.match(source,/parent or a separately admitted verification owner/i)
 })
 
 test('child process admission is exact-task/same-worker and blocks native background bypass',async()=>{

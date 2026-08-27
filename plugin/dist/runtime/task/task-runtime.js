@@ -582,7 +582,8 @@ export class TaskRuntime {
                 throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);
             role = canonicalRole;
         }
-        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
+        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length;
+        const requiredEvidence = explicitEvidence.length ? explicitEvidence : implicitProcessSupport ? [] : m.execution.verification_policy.requiredKinds, obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requiredEvidence, explicitObligations);
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);
@@ -593,7 +594,6 @@ export class TaskRuntime {
         const requestedMcpServers = [...new Set(input.mcpServers ?? [])].map(x => String(x).trim()).filter(Boolean).slice(0, 8);
         if (requestedMcpServers.length && !m.identity.intent.requiredCapabilities.includes('mcp'))
             throw new Error('Exact MCP server use requires semantic capability mcp');
-        const processLifecycleRequested = input.processLifecycle === true;
         let mcpExposure;
         try {
             mcpExposure = resolveMcpServerExposure(hostConfig, requestedMcpServers);
