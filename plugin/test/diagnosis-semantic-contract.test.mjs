@@ -74,6 +74,28 @@ test('diagnosis owns root-cause semantics and suppresses redundant intent.debugg
   assert.deepEqual(assessed.payload.runtime_suppressed_intent_signals,['intent.debugging'])
 })
 
+
+test('MissionStore and durable envelope reject diagnosis plus implementation capability even if parser is bypassed',()=>{
+  const store=new MissionStore(),m=store.start('diag-contradictory','diagnose and fix')
+  assert.throws(()=>store.applyInitialSemanticAssessment('diag-contradictory',{...diagnosis,required_capabilities:['repository-analysis','implementation','verification']}),/diagnosis.*write capability.*implementation/)
+  assert.equal(m.identity.semantic_assessment.status,'pending');assert.deepEqual(m.execution.obligations,[])
+
+  const validStore=new MissionStore(),valid=validStore.start('diag-envelope','diagnose only');validStore.applyInitialSemanticAssessment('diag-envelope',diagnosis)
+  valid.identity.intent.requiredCapabilities.push('implementation')
+  assert.equal(validateMissionEnvelope(valid),false,'durable restore must fail closed on contradictory diagnosis/write state')
+})
+
+test('plugin semantic admission keeps the same revision pending after contradictory diagnosis and accepts corrected bug-fix',async()=>{
+  const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='diag-corrective-admission'
+  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Find the root cause and fix src/a.ts, then run npm test.'}]})
+  const invalid=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...diagnosis,scope:'multi-file',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:['src/a.ts']})},{sessionID:sid}))
+  assert.equal(invalid.status,'INVALID_ASSESSMENT');assert.match(invalid.error,/diagnosis.*write capability.*implementation/)
+  const corrected=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...diagnosis,task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:['src/a.ts']})},{sessionID:sid}))
+  assert.equal(corrected.status,'ASSESSED');assert.equal(corrected.task_kind,'bug-fix')
+  const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:80},{sessionID:sid}));assert.ok(ledger.obligations.some(o=>o.kind==='analysis'));assert.ok(ledger.obligations.some(o=>o.kind==='implementation'));assert.ok(ledger.obligations.some(o=>o.kind==='verification'))
+  await hooks.dispose?.()
+})
+
 test('ordinary bug-fix still requires implementation and verification',()=>{
   const store=new MissionStore(),m=store.start('bug','fix it');store.applyInitialSemanticAssessment('bug',{...diagnosis,task_kind:'bug-fix',required_capabilities:['implementation','verification'],likely_targets:['src/a.ts']})
   assert.ok(m.execution.obligations.some(o=>o.kind==='implementation'))

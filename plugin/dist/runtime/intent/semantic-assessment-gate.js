@@ -16,7 +16,7 @@ export function renderSemanticAssessmentGate(m) {
         ...atomLines,
         `C=${SEMANTIC_CAPABILITIES.join('|')}; X=${SEMANTIC_EXTERNAL_ACTIONS.join('|')}; V=${SEMANTIC_VERIFICATION_KINDS.join('|')}. intent_signals=[] by default; intent.<slug>:intent.tdd; unknown signals reject; capability-named signals reject.`,
         'scope and dependency_class describe material implementation/change work units; multi-file=>2+ material targets; not test files that the user says must remain unchanged; sequential=2+ ordered units; one implementation change followed by verification is not a sequential dependency.',
-        'intent.tdd=test-first; test command=verification. diagnosis is read-only root cause/no fix; otherwise intent.debugging requires material diagnosis + repository-analysis. independent-review only for explicit user independence or risk/policy requirement. interactive-process=persistent; mcp=exact child MCP; bounded=native shell. X nonempty=>risk=authority-boundary.',
+        'intent.tdd=test-first; test command=verification. diagnosis is read-only root cause/no fix; C=read-only; otherwise intent.debugging requires material diagnosis + repository-analysis. independent-review only for explicit user independence or risk/policy requirement. interactive-process=persistent; mcp=exact child MCP; bounded=native shell. X nonempty=>risk=authority-boundary.',
         phaseRule,
     ].join('\n');
 }

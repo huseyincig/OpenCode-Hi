@@ -12,6 +12,9 @@ export const SEMANTIC_EXTERNAL_ACTIONS=['git-push','release-create','package-pub
 export type SemanticExternalAction=typeof SEMANTIC_EXTERNAL_ACTIONS[number]
 export const SEMANTIC_VERIFICATION_KINDS=['targeted-tests','typecheck','lint','build','changed-surface-sanity','visual-check','review-evidence'] as const
 export type SemanticVerificationKind=typeof SEMANTIC_VERIFICATION_KINDS[number]
+const DIAGNOSIS_WRITE_CAPABILITIES=new Set<SemanticCapability>(['implementation','documentation','test-authoring','dependency-change'])
+export function diagnosisWriteCapabilities(taskKind:string,capabilities:readonly string[]):string[]{return taskKind==='diagnosis'?[...new Set(capabilities.filter(cap=>DIAGNOSIS_WRITE_CAPABILITIES.has(cap as SemanticCapability)))]:[]}
+export function assertSemanticTaskCapabilityConsistency(taskKind:string,capabilities:readonly string[]):void{const conflicting=diagnosisWriteCapabilities(taskKind,capabilities);if(conflicting.length)throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${conflicting.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`)}
 export interface SemanticIntentAssessment{
   material:boolean
   message_kind:SemanticMessageKind
@@ -153,9 +156,10 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   if(semanticSignals.includes('intent.documentation')&&!requiredCapabilities.includes('documentation'))requiredCapabilities.push('documentation')
   if(semanticSignals.includes('intent.tdd')&&!requiredCapabilities.includes('test-authoring'))requiredCapabilities.push('test-authoring')
   if(effectiveVerification.includes('visual-check')&&!requiredCapabilities.includes('visual-qa'))requiredCapabilities.push('visual-qa')
+  const taskKind=take('task_kind',taskKinds);assertSemanticTaskCapabilityConsistency(taskKind,requiredCapabilities)
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
-    task_kind:take('task_kind',taskKinds),scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
+    task_kind:taskKind,scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
     required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],

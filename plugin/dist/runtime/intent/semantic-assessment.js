@@ -4,6 +4,10 @@ import { isConstraintAtomDraft } from '../../contracts/constraint-atom.js';
 export const SEMANTIC_CAPABILITIES = ['implementation', 'repository-analysis', 'review', 'verification', 'independent-review', 'security-review', 'visual-qa', 'design-exploration', 'multi-stream-delegation', 'source-verification', 'external-research', 'documentation', 'test-authoring', 'qa-review', 'dependency-change', 'interactive-process', 'mcp'];
 export const SEMANTIC_EXTERNAL_ACTIONS = ['git-push', 'release-create', 'package-publish', 'deploy'];
 export const SEMANTIC_VERIFICATION_KINDS = ['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity', 'visual-check', 'review-evidence'];
+const DIAGNOSIS_WRITE_CAPABILITIES = new Set(['implementation', 'documentation', 'test-authoring', 'dependency-change']);
+export function diagnosisWriteCapabilities(taskKind, capabilities) { return taskKind === 'diagnosis' ? [...new Set(capabilities.filter(cap => DIAGNOSIS_WRITE_CAPABILITIES.has(cap)))] : []; }
+export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities) { const conflicting = diagnosisWriteCapabilities(taskKind, capabilities); if (conflicting.length)
+    throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${conflicting.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`); }
 const PATH = /((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|txt|css|yml)))(?![\w.-])/gi;
 const HTTP_TARGET = /^https?:\/\/[^\s]+$/i;
 const TECHNICAL_VERIFIER_PATTERNS = [
@@ -170,9 +174,11 @@ export function parseSemanticIntentAssessment(raw) {
         requiredCapabilities.push('test-authoring');
     if (effectiveVerification.includes('visual-check') && !requiredCapabilities.includes('visual-qa'))
         requiredCapabilities.push('visual-qa');
+    const taskKind = take('task_kind', taskKinds);
+    assertSemanticTaskCapabilityConsistency(taskKind, requiredCapabilities);
     const assessment = {
         material: v.material, message_kind: messageKind,
-        task_kind: take('task_kind', taskKinds), scope: take('scope', scopes), risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
+        task_kind: taskKind, scope: take('scope', scopes), risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
         required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, likely_targets: semanticTargets(v.likely_targets, 20),
         intent_signals: semanticSignals, suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))

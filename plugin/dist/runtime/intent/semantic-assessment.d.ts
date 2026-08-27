@@ -9,6 +9,8 @@ export declare const SEMANTIC_EXTERNAL_ACTIONS: readonly ["git-push", "release-c
 export type SemanticExternalAction = typeof SEMANTIC_EXTERNAL_ACTIONS[number];
 export declare const SEMANTIC_VERIFICATION_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "visual-check", "review-evidence"];
 export type SemanticVerificationKind = typeof SEMANTIC_VERIFICATION_KINDS[number];
+export declare function diagnosisWriteCapabilities(taskKind: string, capabilities: readonly string[]): string[];
+export declare function assertSemanticTaskCapabilityConsistency(taskKind: string, capabilities: readonly string[]): void;
 export interface SemanticIntentAssessment {
     material: boolean;
     message_kind: SemanticMessageKind;

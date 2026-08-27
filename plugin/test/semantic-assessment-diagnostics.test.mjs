@@ -15,3 +15,8 @@ test('task_kind remains independently field-specific and invalid intent signals 
   assert.throws(()=>parseSemanticIntentAssessment({...base,task_kind:'diagnosis-capability'}),/task_kind must be one of/)
   assert.throws(()=>parseSemanticIntentAssessment({...base,intent_signals:['intent.diagnosis']}),/unsupported semantic intent signal\(s\): intent.diagnosis/)
 })
+
+test('diagnosis rejects write capabilities instead of admitting a contradictory analysis-only mission',()=>{
+  for(const capability of ['implementation','documentation','test-authoring','dependency-change'])assert.throws(()=>parseSemanticIntentAssessment({...base,required_capabilities:['repository-analysis',capability]}),new RegExp(`task_kind=diagnosis.*write capability.*${capability}`))
+  assert.equal(parseSemanticIntentAssessment({...base,required_capabilities:['repository-analysis','verification','review']}).task_kind,'diagnosis')
+})

@@ -6,7 +6,7 @@ import { isHumanDecisionContract } from '../../contracts/human-decision.js'
 import { isAuthorityStateContract } from '../../contracts/authority.js'
 import { isExternalActionType } from '../../contracts/external-action.js'
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js'
-import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js'
+import { diagnosisWriteCapabilities, SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js'
 import { isProcessContract } from '../../contracts/process.js'
 import { isIsolationDecisionContract,isWorkspaceLeaseContract } from '../../contracts/workspace.js'
 import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js'
@@ -80,6 +80,7 @@ function validIntent(value:unknown):value is NormalizedMissionIntent{
     &&['none','resolvable','contract-critical'].includes(String(value.ambiguity))
     &&['independent','sequential','external-gated','unknown','independent-multi'].includes(String(value.dependencyClass))
     &&stringArray(value.requiredCapabilities)&&value.requiredCapabilities.every(x=>(SEMANTIC_CAPABILITIES as readonly string[]).includes(x))
+    &&diagnosisWriteCapabilities(String(value.taskKind),value.requiredCapabilities).length===0
     &&Array.isArray(value.requestedExternalActions)&&value.requestedExternalActions.every(isExternalActionType)
     &&stringArray(value.likelyVerification)&&value.likelyVerification.every(x=>(SEMANTIC_VERIFICATION_KINDS as readonly string[]).includes(x))
     &&stringArray(value.avoid)
