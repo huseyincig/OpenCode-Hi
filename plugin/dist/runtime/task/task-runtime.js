@@ -7,7 +7,7 @@ import { createTask, createWorker, beginWorkerAttempt, retireTaskResultIssues, w
 import { parseWorkerResult } from './result-parser.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
-import { bindMethodologyNeeds, methodologyNames, releaseCancelledTaskMethodologyNeeds, releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js';
+import { bindMethodologyNeeds, methodologyNames, reconcileTaskEvidenceMethodologyNeeds, releaseCancelledTaskMethodologyNeeds, releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { methodologyProvenance, ownershipContract } from '../skills/methodology.js';
 import { DEFAULT_CONTEXT_BUDGET, clipText } from '../context/budget.js';
@@ -604,6 +604,7 @@ export class TaskRuntime {
         const requiredEvidence = implicitProcessSupport ? [] : obligationEvidence.authoritative ? obligationEvidence.requiredEvidence : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds, obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requiredEvidence, explicitObligations);
         if (obligationEvidence.authoritative && explicitEvidence.length && JSON.stringify([...new Set(explicitEvidence)]) !== JSON.stringify(obligationEvidence.requiredEvidence))
             appendLedger(m, 'task.evidence-contract-reconciled', { payload: { role, obligation_ids: explicitObligations, requested_evidence: [...new Set(explicitEvidence)], authoritative_evidence: obligationEvidence.requiredEvidence, policy: 'exact-open-obligation-contract-wins' } });
+        reconcileTaskEvidenceMethodologyNeeds(m, this.projectRoot, { requiredEvidence, obligationIds });
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);

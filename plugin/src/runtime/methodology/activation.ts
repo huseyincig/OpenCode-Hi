@@ -49,6 +49,38 @@ export function methodologyNames(needs:readonly HiMethodologyNeed[]):string[]{
   return [...new Set(needs.map(item=>item.name))]
 }
 
+const TASK_EVIDENCE_METHODOLOGY_SIGNALS:Readonly<Record<string,readonly HiMethodologySignalName[]>>={
+  'visual-check':['verification.visual'],
+}
+
+export function reconcileTaskEvidenceMethodologyNeeds(
+  mission:MissionState,
+  projectRoot:string|undefined,
+  input:{requiredEvidence:readonly string[];obligationIds:readonly string[]},
+):string[]{
+  const required=new Set(input.requiredEvidence.map(item=>String(item).trim()).filter(Boolean)),activated:string[]=[]
+  for(const obligationId of [...new Set(input.obligationIds)]){
+    const obligation=mission.execution.obligations.find(item=>item.id===obligationId&&item.status==='open')
+    if(!obligation||obligation.kind!=='verification')continue
+    const contract=new Set((obligation.requiredEvidence??[]).map(item=>String(item).trim()).filter(Boolean))
+    for(const kind of required){
+      if(!contract.has(kind))continue
+      for(const signal of TASK_EVIDENCE_METHODOLOGY_SIGNALS[kind]??[]){
+        for(const entry of methodologiesForSignal(signal,projectRoot)){
+          const existing=mission.methodology.methodology_needs.find(need=>need.name===entry.name&&need.signal===signal&&need.producer==='verification'&&!need.task_id&&(!need.obligation_id||need.obligation_id===obligation.id))
+          if(existing){
+            if(!existing.obligation_id){existing.obligation_id=obligation.id;appendLedger(mission,'methodology.obligation-reconciled',{payload:{name:existing.name,signal:existing.signal,producer:existing.producer,obligation_id:obligation.id,reason:'current-open-obligation-evidence-contract'}})}
+            continue
+          }
+          const need=createMethodologyNeed(entry.name,signal,'verification',`Current open ${obligation.id} evidence contract requires ${kind}.`,{obligation_id:obligation.id},projectRoot)
+          if(addNeed(mission,need))activated.push(entry.name)
+        }
+      }
+    }
+  }
+  return [...new Set(activated)]
+}
+
 export function bindMethodologyNeeds(
   mission:MissionState,
   names:readonly string[],

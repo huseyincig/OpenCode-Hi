@@ -9,6 +9,10 @@ export declare function activateMethodologySignal(mission: MissionState, project
     obligationId?: string;
 }): string[];
 export declare function methodologyNames(needs: readonly HiMethodologyNeed[]): string[];
+export declare function reconcileTaskEvidenceMethodologyNeeds(mission: MissionState, projectRoot: string | undefined, input: {
+    requiredEvidence: readonly string[];
+    obligationIds: readonly string[];
+}): string[];
 export declare function bindMethodologyNeeds(mission: MissionState, names: readonly string[], input: {
     taskId: string;
     obligationIds?: readonly string[];

@@ -10,6 +10,9 @@ import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurren
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {addEvidence,markMutation} from '../dist/runtime/evidence/evidence-runtime.js'
+import {evidenceProducerAttemptForWorker} from '../dist/runtime/evidence/applicability.js'
+import {reconcileTaskEvidenceMethodologyNeeds} from '../dist/runtime/methodology/activation.js'
 
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const context=(task,owner,origins=['http://127.0.0.1:4173'])=>({task_id:task,execution_owner_ref:owner,executor_version:'hi-playwright-browser@1',allowed_origins:origins})
@@ -91,6 +94,47 @@ test('cancelled visual verification task releases open-obligation methodology ow
   assert.equal(replacementTask.execution_profile.browser_backend,'bounded-playwright')
   assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_preview_open'))
   assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_screenshot'))
+})
+
+
+test('fresh visual task reactivates canonical methodology and browser surface after prior PASS becomes stale',async()=>{
+  let childN=0
+  const client={session:{create:async()=>({data:{id:`child-stale-visual-${++childN}`}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const browserExecutor={health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},cleanup:async()=>({cleaned:true,reason:'cleaned'})}
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),browserExecutor)
+  const store=new MissionStore(repoRoot),m=store.start('m13-stale-visual-reactivation','verify local browser again after mutation')
+  store.applyInitialSemanticAssessment('m13-stale-visual-reactivation',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['index.html'],intent_signals:[],suppressed_intent_signals:[]})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now()
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);assert.equal(verification.status,'open');assert.deepEqual(verification.requiredEvidence,['visual-check'])
+  const first=await runtime.start(m,{objective:'verify first current visual state',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],obligationIds:[verification.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const firstTask=m.execution.tasks.find(t=>t.id===first.task_id),firstWorker=m.execution.workers.find(w=>w.id===first.worker_id);assert.ok(firstTask);assert.ok(firstWorker)
+  firstWorker.loaded_methodologies=['hi-visual-qa']
+  const producer=evidenceProducerAttemptForWorker(m,firstWorker),observation=addEvidence(m,{kind:'browser-evidence',summary:'current browser observation',scope:['index.html'],source:'browser:bo_stale_visual_fixture',trusted_source_class:'browser-observation',source_session_id:firstWorker.session_id,source_state_hash:'a'.repeat(64),task_id:firstTask.id,obligation_ids:[verification.id],producer_attempt:producer,outcome:'pending',reason:'browser-observation-only'})
+  addEvidence(m,{kind:'visual-evidence',summary:'first visual state passed',scope:['index.html'],source:`browser-derived:${firstWorker.id}`,trusted_source_class:'browser-observation',source_session_id:firstWorker.session_id,source_state_hash:'b'.repeat(64),task_id:firstTask.id,obligation_ids:[verification.id],producer_attempt:producer,evidence_refs:[observation.id],outcome:'passed',pass:true})
+  runtime.applyResult(m,firstWorker.id,{status:'DONE',summary:'first visual verification passed',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(firstTask.status,'completed');assert.equal(verification.status,'closed')
+  assert.equal(m.methodology.methodology_needs.some(n=>n.name==='hi-visual-qa'),false,'successful methodology exit should consume the first need')
+  markMutation(m,['index.html'],'test-current-visual-mutation')
+  assert.equal(verification.status,'open');assert.equal(m.methodology.methodology_needs.some(n=>n.name==='hi-visual-qa'),false,'freshness invalidation alone does not mutate methodology procedure state')
+  const replacement=await runtime.start(m,{objective:'verify fresh visual state after mutation',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],obligationIds:[verification.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const replacementTask=m.execution.tasks.find(t=>t.id===replacement.task_id);assert.ok(replacementTask)
+  assert.ok(replacement.methodologies.includes('hi-visual-qa'))
+  assert.equal(replacementTask.execution_profile.browser_backend,'bounded-playwright')
+  assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_open'))
+  assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_screenshot'))
+  assert.ok(m.methodology.methodology_needs.some(n=>n.name==='hi-visual-qa'&&n.task_id===replacement.task_id&&n.obligation_id===verification.id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='methodology.activated'&&e.payload?.name==='hi-visual-qa'&&e.payload?.obligation_id===verification.id))
+})
+
+test('task evidence methodology reconciliation ignores closed and unrelated obligations',()=>{
+  const store=new MissionStore(repoRoot),m=store.start('m13-no-stale-reactivation','review without current visual obligation')
+  store.applyInitialSemanticAssessment('m13-no-stale-reactivation',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['index.html'],intent_signals:[],suppressed_intent_signals:[]})
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);verification.status='closed';verification.closedAt=Date.now();m.methodology.methodology_needs=[]
+  assert.deepEqual(reconcileTaskEvidenceMethodologyNeeds(m,repoRoot,{requiredEvidence:['visual-check'],obligationIds:[verification.id]}),[])
+  assert.equal(m.methodology.methodology_needs.length,0)
+  const review={id:'o-unrelated-review',status:'open',kind:'review',summary:'independent review',requiredEvidence:['review-evidence']};m.execution.obligations.push(review)
+  assert.deepEqual(reconcileTaskEvidenceMethodologyNeeds(m,repoRoot,{requiredEvidence:['visual-check'],obligationIds:[review.id]}),[])
+  assert.equal(m.methodology.methodology_needs.length,0)
 })
 
 
