@@ -30,6 +30,7 @@ export declare class ProcessRuntime {
     wait(m: MissionState, id: string): Promise<ProcessContract>;
     kill(m: MissionState, id: string, signal?: 'SIGTERM' | 'SIGINT'): Promise<ProcessContract>;
     cleanup(m: MissionState, id: string): Promise<void>;
+    settleTaskOwner(m: MissionState, taskID: string, workerID: string): Promise<number>;
     list(m: MissionState): ProcessContract[];
     livenessObservations(m: MissionState): Record<string, ProcessLivenessObservation>;
     stopMission(m: MissionState): Promise<number>;

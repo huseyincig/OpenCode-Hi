@@ -37,6 +37,9 @@ export interface StartTaskInput {
     processLifecycle?: boolean;
     resumeTaskId?: string;
 }
+interface TaskProcessCustody {
+    settleTaskOwner(m: MissionState, taskID: string, workerID: string): Promise<number>;
+}
 export declare class TaskRuntime {
     #private;
     private childHost;
@@ -56,6 +59,7 @@ export declare class TaskRuntime {
     private readonly readAssistantResult?;
     private readonly previewManager?;
     private readonly getProjectMissions;
+    private readonly processCustody?;
     constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyPolicySource, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined, ensureBrowserResource?: (() => Promise<{
         available: boolean;
         attempted?: boolean;
@@ -64,7 +68,7 @@ export declare class TaskRuntime {
         status?: string;
         scope?: string;
         receiptPath?: string;
-    }>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined, previewManager?: LocalPreviewManager | undefined, getProjectMissions?: () => readonly MissionState[]);
+    }>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined, previewManager?: LocalPreviewManager | undefined, getProjectMissions?: () => readonly MissionState[], processCustody?: TaskProcessCustody | undefined);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;
@@ -180,3 +184,4 @@ export declare class TaskRuntime {
     cancelAll(m: MissionState): Promise<number>;
     cancel(m: MissionState, id: string): Promise<boolean>;
 }
+export {};

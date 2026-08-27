@@ -167,6 +167,19 @@ export class ProcessRuntime {
         appendLedger(m, 'process.cleanup-failed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, error: String(error), marker } });
         throw error;
     } }
+    async settleTaskOwner(m, taskID, workerID) { let settled = 0; const owned = [...m.execution.processes].filter(process => process.task_id === taskID && process.worker_id === workerID && process.cleanup_state !== 'CLEANED'); for (const process of owned) {
+        let current = m.execution.processes.find(item => item.process_id === process.process_id);
+        if (current.status === 'RUNNING')
+            await this.kill(m, current.process_id, 'SIGTERM');
+        current = m.execution.processes.find(item => item.process_id === process.process_id);
+        if (current.status === 'RUNNING' || current.status === 'ORPHANED')
+            throw new Error(`Exact task-owned process ${current.process_id} could not be settled safely from status ${current.status}`);
+        if (current.cleanup_state !== 'CLEANED') {
+            await this.cleanup(m, current.process_id);
+            settled++;
+        }
+    } if (owned.length)
+        appendLedger(m, 'process.task-owner-settled', { task_id: taskID, worker_id: workerID, payload: { process_ids: owned.map(process => process.process_id), settled } }); return settled; }
     list(m) { return m.execution.processes.map(item => structuredClone(item)); }
     livenessObservations(m) { const out = {}; for (const process of m.execution.processes) {
         if (process.status === 'RUNNING')

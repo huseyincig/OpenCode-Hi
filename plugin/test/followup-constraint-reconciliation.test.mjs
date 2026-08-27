@@ -34,7 +34,17 @@ test('structured verification follow-up updates verification state without creat
   store.applyFollowupSemanticAssessment('verify-followup',{material:true,message_kind:'verification',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests','typecheck'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
   assert.equal(m.execution.obligations.filter(o=>o.kind==='implementation').length,implementationBefore)
   assert.equal(m.execution.obligations.find(o=>o.kind==='verification')?.status,'open')
-  assert.deepEqual(m.execution.verification_policy.requiredKinds,['targeted-tests','typecheck'])
+  assert.deepEqual(m.execution.verification_policy.requiredKinds,['targeted-tests'],'model-inferred typecheck is dropped when the repository exposes test/check but no typecheck route')
+})
+
+
+
+test('structured verification follow-up preserves explicit user_verification even without a repo route',async()=>{
+  const store=new MissionStore(),m=initial(store,'verify-followup-explicit')
+  await callHook(createChatMessageHook(store),'verify-followup-explicit','Run `npm run typecheck` as the requested verification.')
+  store.applyFollowupSemanticAssessment('verify-followup-explicit',{material:true,message_kind:'verification',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests','typecheck'],user_verification:['typecheck'],verification_ceiling:false,likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.deepEqual(m.execution.verification_policy.requiredKinds,['typecheck'])
+  assert.deepEqual(m.execution.obligations.find(o=>o.kind==='verification')?.requiredEvidence,['typecheck'])
 })
 
 test('structured constraint follow-up rebases a busy worker onto a fresh session without duplicate identity',async()=>{

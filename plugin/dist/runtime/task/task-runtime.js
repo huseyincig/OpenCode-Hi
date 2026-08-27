@@ -173,6 +173,7 @@ export class TaskRuntime {
     readAssistantResult;
     previewManager;
     getProjectMissions;
+    processCustody;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -181,7 +182,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult, previewManager, getProjectMissions = () => []) {
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult, previewManager, getProjectMissions = () => [], processCustody) {
         this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -199,6 +200,7 @@ export class TaskRuntime {
         this.readAssistantResult = readAssistantResult;
         this.previewManager = previewManager;
         this.getProjectMissions = getProjectMissions;
+        this.processCustody = processCustody;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
@@ -612,7 +614,7 @@ export class TaskRuntime {
         const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);
         if (selected.rejected.length)
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => input.resumeTaskId ? need.task_id === input.resumeTaskId || (!need.task_id && (!need.obligation_id || obligationIds.includes(need.obligation_id))) : !need.task_id && (!need.obligation_id || obligationIds.includes(need.obligation_id)));
+        const taskMethodologyNeeds = implicitProcessSupport ? [] : m.methodology.methodology_needs.filter(need => input.resumeTaskId ? need.task_id === input.resumeTaskId || (!need.task_id && (!need.obligation_id || obligationIds.includes(need.obligation_id))) : !need.task_id && (!need.obligation_id || obligationIds.includes(need.obligation_id)));
         const catalog = methodologyCatalog(this.projectRoot), requestedMethodologyNames = methodologyNames(taskMethodologyNeeds);
         const requestedMcpServers = [...new Set(input.mcpServers ?? [])].map(x => String(x).trim()).filter(Boolean).slice(0, 8);
         if (requestedMcpServers.length && !m.identity.intent.requiredCapabilities.includes('mcp'))
@@ -1167,7 +1169,14 @@ export class TaskRuntime {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'browser-cleanup-failed' } });
             return false;
         }
-    } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
+    } if (this.processCustody)
+        try {
+            await this.processCustody.settleTaskOwner(m, worker.task_id, worker.id);
+        }
+        catch (error) {
+            appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'process-cleanup-failed', error: String(error) } });
+            return false;
+        } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
     } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id), cancelledIssues = [...(t?.result?.open_issues ?? [])]; if (t)

@@ -11,12 +11,12 @@ import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 import { taskRuntimeUnitDecision } from '../dist/runtime/scheduler/task-runtime-adapter.js'
 
 function workerResult(status='DONE'){return{status,summary:'done',changed_files:[],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]}}
-function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,onCreate}={}){
+function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,onCreate,processCustody}={}){
   let seq=0
   const session={create:async()=>{onCreate?.();return{data:{id:`child-${++seq}`}}},promptAsync:prompt,diff:async()=>({data:[]})}
   if(withAbort)session.abort=abort
   const scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
-  const runtime=new TaskRuntime(opencodeChildPort({session}),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort({session}),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,undefined,undefined,()=>[],processCustody)
   const m=startAssessedMission(new MissionStore(),'cutover-parent','implement bounded change',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_verification:[]})
   return{runtime,scheduler,m}
 }
@@ -160,4 +160,26 @@ test('assistant creation time is a secondary stale-attempt fence when host ances
   const stale={text:JSON.stringify(workerResult('DONE')),model:{model:'p/code',message_id:'msg_time_old',created_at:(worker.started_at??1)-1}}
   const out=await runtime.settleHostIdleAssistantResult(m,worker,stale)
   assert.equal(out.applied,false);assert.equal(out.reason,'assistant-result-stale-attempt-message');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+})
+
+
+test('TaskRuntime cancellation settles exact process custody before terminal task state',async()=>{
+  const calls=[];let mRef
+  const processCustody={settleTaskOwner:async(m,taskID,workerID)=>{calls.push(['process',taskID,workerID]);const task=m.execution.tasks.find(t=>t.id===taskID),worker=m.execution.workers.find(w=>w.id===workerID);assert.equal(task.status,'running');assert.equal(worker.status,'busy');return 1}}
+  const {runtime,m}=setup({abort:async()=>{calls.push(['abort']);return{data:true}},processCustody});mRef=m
+  const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  assert.equal(await runtime.cancel(m,started.worker_id),true)
+  assert.equal(calls[0][0],'abort');assert.equal(calls[1][0],'process')
+  assert.equal(m.execution.tasks.find(t=>t.id===started.task_id).status,'cancelled')
+  assert.equal(m.execution.workers.find(w=>w.id===started.worker_id).status,'cancelled')
+})
+
+test('TaskRuntime cancellation fails closed when exact process custody cleanup fails',async()=>{
+  const processCustody={settleTaskOwner:async()=>{throw new Error('owned process cleanup failed')}}
+  const {runtime,m}=setup({processCustody});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  assert.equal(await runtime.cancel(m,started.worker_id),false)
+  assert.equal(m.execution.tasks.find(t=>t.id===started.task_id).status,'running')
+  assert.equal(m.execution.workers.find(w=>w.id===started.worker_id).status,'busy')
+  assert.equal(m.execution.scheduler.reservations.length,1,'reservation stays owned because cancellation did not settle')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.blocked'&&e.payload?.reason==='process-cleanup-failed'))
 })

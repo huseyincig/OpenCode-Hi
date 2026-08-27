@@ -225,3 +225,29 @@ test('semantic target keeps plain-text project files instead of falling back to 
   assert.deepEqual(mission.identity.intent.likelyTargets,['note.txt'])
   assert.deepEqual(mission.identity.intent.likelyVerification,['review-evidence'])
 })
+
+
+test('bounded implementation drops model-inferred lint when repository exposes only tests',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-verifier-capability-'))
+  try{
+    writeFileSync(join(root,'package.json'),JSON.stringify({scripts:{test:'node --test'}}))
+    mkdirSync(join(root,'src'));writeFileSync(join(root,'src','a.js'),'export const a=1\n')
+    const store=new MissionStore(root),mission=store.start('repo-capability-filter','Fix src/a.js without naming a verifier')
+    store.applyInitialSemanticAssessment('repo-capability-filter',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'local',risk:'medium',likely_targets:['src/a.js'],likely_verification:['targeted-tests','lint'],user_verification:[],verification_ceiling:false}))
+    assert.deepEqual(mission.identity.intent.likelyVerification,['targeted-tests'])
+    assert.deepEqual(mission.execution.verification_policy.requiredKinds,['targeted-tests'])
+    assert.deepEqual(mission.execution.obligations.find(o=>o.kind==='verification')?.requiredEvidence,['targeted-tests'])
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('explicit user lint remains authoritative even when repository has no lint route',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-explicit-lint-'))
+  try{
+    writeFileSync(join(root,'package.json'),JSON.stringify({scripts:{test:'node --test'}}))
+    mkdirSync(join(root,'src'));writeFileSync(join(root,'src','a.js'),'export const a=1\n')
+    const store=new MissionStore(root),mission=store.start('explicit-lint','Fix src/a.js. Run `npm run lint` and stop when it passes.')
+    store.applyInitialSemanticAssessment('explicit-lint',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'local',risk:'medium',likely_targets:['src/a.js'],likely_verification:['targeted-tests','lint'],user_verification:[],verification_ceiling:false}))
+    assert.deepEqual(mission.identity.intent.likelyVerification,['lint'])
+    assert.equal(mission.execution.ledger.find(e=>e.type==='semantic.assessed')?.payload?.technical_verification_ceiling_applied,true)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

@@ -37,3 +37,27 @@ test('does not dispatch a child when its only role-compatible required methodolo
     assert.ok(m.methodology.methodology_needs.some(need=>need.name==='hi-test-driven-development'))
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('implicit process-support task does not inherit unrelated unbound mission methodology',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-process-support-methodology-'))
+  try{
+    const host={};projectHiOpenCodeAgents(host,{coder:clone(PACKAGED_HI_AGENTS.coder)})
+    const prompts=[]
+    const client={session:{create:async()=>({data:{id:'process-child'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},diff:async()=>({data:[]}),abort:async()=>({data:true})}}
+    const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,hiRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>host)
+    const store=new MissionStore(root),m=store.start('process-support-methodology','Implement a bounded change and later run a local service')
+    store.applyInitialSemanticAssessment('process-support-methodology',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','interactive-process'],requested_external_actions:[],likely_verification:[],likely_targets:['src/value.ts'],intent_signals:[],suppressed_intent_signals:[]})
+    m.methodology.methodology_needs.push({name:'hi-implementation-planning',signal:'architecture.dependency-structure',trigger_source:'dependency-structure',producer:'architecture',reason:'mission-wide planning need',created_at:Date.now()})
+    const started=await runtime.start(m,{objective:'Start the already-defined local service for smoke verification',role:'coder',processLifecycle:true})
+    const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id)
+    assert.deepEqual(started.methodologies,[])
+    assert.deepEqual(task.requiredEvidence,[])
+    assert.deepEqual(task.obligation_ids,[])
+    assert.equal(task.execution_profile.process_lifecycle,true)
+    assert.deepEqual(worker.selected_methodologies,[])
+    assert.equal(m.methodology.methodology_needs.some(need=>need.name==='hi-implementation-planning'&&!need.task_id),true,'mission need remains available for a genuinely relevant task')
+    assert.equal(prompts.length,1)
+    assert.doesNotMatch(JSON.stringify(prompts[0]),/hi-implementation-planning/)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

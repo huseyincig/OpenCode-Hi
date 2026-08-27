@@ -147,3 +147,28 @@ test('terminal cleanup-only continuation is not reasoning stagnation and resets 
   m.continuation.stagnation_count=2
   const decision=evaluateIdle(m);assert.equal(decision.decision,'CONTINUE');assert.equal(decision.reason_code,'process-cleanup-pending');assert.equal(shouldCountStagnation(decision),false);assert.equal(m.continuation.stagnation_count,0);assert.match(decision.prompt??'',/cleanup-terminal-process:proc_cleanup_only/)
 })
+
+
+test('exact task-owner settlement kills and cleans only matching ProcessContracts',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host())
+  const a=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['a'],cwd:'/repo'}),b=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['b'],cwd:'/repo'})
+  const otherTask=createTask(m,{objective:'other process',role:'coder',category:'standard',scope:[],requiredEvidence:[],obligationIds:[]}),otherWorker=createWorker(m,otherTask,'host-default');otherWorker.status='busy';otherTask.status='running'
+  const other=await runtime.spawn(m,{worker_id:otherWorker.id,command:'node',args:['other'],cwd:'/repo'})
+  assert.equal(await runtime.settleTaskOwner(m,worker.task_id,worker.id),2)
+  assert.equal(m.execution.processes.find(p=>p.process_id===a.process_id).status,'TERMINATED')
+  assert.equal(m.execution.processes.find(p=>p.process_id===a.process_id).cleanup_state,'CLEANED')
+  assert.equal(m.execution.processes.find(p=>p.process_id===b.process_id).cleanup_state,'CLEANED')
+  assert.equal(m.execution.processes.find(p=>p.process_id===other.process_id).status,'RUNNING')
+  assert.equal(m.execution.processes.find(p=>p.process_id===other.process_id).cleanup_state,'ACTIVE')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.task-owner-settled'&&e.task_id===worker.task_id&&e.worker_id===worker.id))
+})
+
+test('exact task-owner settlement fails closed when cleanup cannot complete',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  fake.cleanup=async()=>{throw new Error('cleanup transport unavailable')}
+  await assert.rejects(()=>runtime.settleTaskOwner(m,worker.task_id,worker.id),/cleanup transport unavailable/)
+  const durable=m.execution.processes.find(x=>x.process_id===p.process_id)
+  assert.equal(durable.status,'TERMINATED')
+  assert.equal(durable.cleanup_state,'CLEANUP_PENDING')
+  assert.ok(m.execution.blockers.includes(`process-cleanup:${p.process_id}`))
+})
