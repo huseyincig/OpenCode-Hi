@@ -44,9 +44,9 @@ export function createRuntimeServices(input) {
         if (ports.browserTool)
             try {
                 browserToolReceipt = await operationalTools.ensure('browser-execution', { authority: { source: 'task-requirement', ref: 'semantic:browser-execution' } });
-                const health = await browserExecutor.health();
-                setBrowserAvailable(health.available);
-                return { available: health.available, attempted: browserToolReceipt.status === 'provisioned', reason: health.available ? undefined : health.reason, implementationId: browserToolReceipt.implementation_id, status: browserToolReceipt.status, scope: browserToolReceipt.scope, receiptPath: browserToolReceipt.receipt_path };
+                const available = browserToolReceipt.smoke.ok === true;
+                setBrowserAvailable(available);
+                return { available, attempted: browserToolReceipt.status === 'provisioned', reason: available ? undefined : (browserToolReceipt.smoke.detail ?? 'browser operational-tool smoke failed'), implementationId: browserToolReceipt.implementation_id, status: browserToolReceipt.status, scope: browserToolReceipt.scope, receiptPath: browserToolReceipt.receipt_path };
             }
             catch (error) {
                 setBrowserAvailable(false);

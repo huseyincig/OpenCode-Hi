@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { browserObservationId } from '../contracts/browser-observation.js';
 import { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
 export { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
@@ -40,31 +42,54 @@ export class PlaywrightBrowserAdapter {
     persistScreenshot;
     loadPlaywright;
     executableExists;
+    launchTempBase;
     sessions = new Map();
-    constructor(options = {}) { this.executableExists = options.executable_exists ?? existsSync; this.explicitExecutable = Boolean(options.executable_path); this.browserCachePaths = [...new Set(options.browser_cache_paths ?? [])]; this.executablePath = options.executable_path ?? discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); this.headless = options.headless ?? true; this.timeoutMs = Math.min(Math.max(options.timeout_ms ?? 15000, 1000), 30000); this.persistScreenshot = options.persist_screenshot; this.loadPlaywright = options.load_playwright ?? (() => import('playwright-core')); }
+    constructor(options = {}) { this.executableExists = options.executable_exists ?? existsSync; this.explicitExecutable = Boolean(options.executable_path); this.browserCachePaths = [...new Set(options.browser_cache_paths ?? [])]; this.executablePath = options.executable_path ?? discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); this.headless = options.headless ?? true; this.timeoutMs = Math.min(Math.max(options.timeout_ms ?? 15000, 1000), 30000); this.persistScreenshot = options.persist_screenshot; this.loadPlaywright = options.load_playwright ?? (() => import('playwright-core')); this.launchTempBase = options.launch_temp_base ?? (process.platform === 'win32' ? tmpdir() : '/tmp'); }
     refreshExecutable() { if (this.executablePath && this.executableExists(this.executablePath))
         return this.executablePath; if (this.explicitExecutable)
         return undefined; this.executablePath = discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); return this.executablePath; }
+    createTempRoot() { return mkdtempSync(join(this.launchTempBase, 'hi-br-')); }
+    launchOptions(executablePath, temp) { return { executablePath, headless: this.headless, timeout: this.timeoutMs, args: ['--no-sandbox'], env: { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp } }; }
+    async closeSession(taskID, s) { await boundedBrowserClose(s.browser); if (this.sessions.get(taskID) === s)
+        this.sessions.delete(taskID); rmSync(s.launchTempRoot, { recursive: true, force: true }); }
     async ensure(c) { const current = this.sessions.get(c.task_id); if (current && current.executionOwnerRef === c.execution_owner_ref)
-        return current; if (current) {
-        try {
-            await boundedBrowserClose(current.browser);
-        }
-        catch { }
-        this.sessions.delete(c.task_id);
-    } if (!c.execution_owner_ref.trim())
+        return current; if (current)
+        await this.closeSession(c.task_id, current); if (!c.execution_owner_ref.trim())
         throw new Error('Browser execution owner identity is required'); const executablePath = this.refreshExecutable(); if (!executablePath)
-        throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), browser = await chromium.launch({ executablePath, headless: this.headless, args: ['--no-sandbox'] }), context = await browser.newContext({ acceptDownloads: false, ignoreHTTPSErrors: false }); if (typeof context.route !== 'function')
-        throw new Error('Playwright request routing is required for browser origin confinement'); await context.route('**/*', async (route) => { try {
-        plannedUrl(c, String(route.request().url()));
-        await route.continue();
+        throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), launchTempRoot = this.createTempRoot(); let browser; try {
+        browser = await chromium.launch(this.launchOptions(executablePath, launchTempRoot));
+        const context = await browser.newContext({ acceptDownloads: false, ignoreHTTPSErrors: false });
+        if (typeof context.route !== 'function')
+            throw new Error('Playwright request routing is required for browser origin confinement');
+        await context.route('**/*', async (route) => { try {
+            plannedUrl(c, String(route.request().url()));
+            await route.continue();
+        }
+        catch {
+            await route.abort('blockedbyclient');
+        } });
+        const page = await context.newPage(), s = { browser, page, refs: new Map(), consoleErrors: [], networkErrors: [], executionOwnerRef: c.execution_owner_ref, launchTempRoot };
+        page.setDefaultTimeout(this.timeoutMs);
+        page.on('console', (msg) => { if (msg.type() === 'error')
+            s.consoleErrors.push(bounded(String(msg.text()), 1000)); if (s.consoleErrors.length > MAX_ERRORS)
+            s.consoleErrors.splice(0, s.consoleErrors.length - MAX_ERRORS); });
+        page.on('requestfailed', (req) => { s.networkErrors.push(bounded(`${req.method()} ${req.url()} ${req.failure()?.errorText ?? 'failed'}`, 1000)); if (s.networkErrors.length > MAX_ERRORS)
+            s.networkErrors.splice(0, s.networkErrors.length - MAX_ERRORS); });
+        page.on('download', (download) => void download.cancel().catch(() => { }));
+        this.sessions.set(c.task_id, s);
+        return s;
     }
-    catch {
-        await route.abort('blockedbyclient');
-    } }); const page = await context.newPage(), s = { browser, page, refs: new Map(), consoleErrors: [], networkErrors: [], executionOwnerRef: c.execution_owner_ref }; page.setDefaultTimeout(this.timeoutMs); page.on('console', (msg) => { if (msg.type() === 'error')
-        s.consoleErrors.push(bounded(String(msg.text()), 1000)); if (s.consoleErrors.length > MAX_ERRORS)
-        s.consoleErrors.splice(0, s.consoleErrors.length - MAX_ERRORS); }); page.on('requestfailed', (req) => { s.networkErrors.push(bounded(`${req.method()} ${req.url()} ${req.failure()?.errorText ?? 'failed'}`, 1000)); if (s.networkErrors.length > MAX_ERRORS)
-        s.networkErrors.splice(0, s.networkErrors.length - MAX_ERRORS); }); page.on('download', (download) => void download.cancel().catch(() => { })); this.sessions.set(c.task_id, s); return s; }
+    catch (error) {
+        if (browser)
+            try {
+                await boundedBrowserClose(browser);
+                rmSync(launchTempRoot, { recursive: true, force: true });
+            }
+            catch { }
+        else
+            rmSync(launchTempRoot, { recursive: true, force: true });
+        throw error;
+    } }
     observation(c, s, action, url, result, dom, screenshotRef, error) { const timestamp = Date.now(), doc = dom ? sha(dom) : undefined, console_errors = s?.consoleErrors.slice(-MAX_ERRORS) ?? [], network_errors = [...(s?.networkErrors.slice(-MAX_ERRORS) ?? []), ...(error ? [bounded(error, 1000)] : [])].slice(-MAX_ERRORS), viewport = s?.page?.viewportSize?.() ?? undefined, o = { observation_id: '', task_id: c.task_id, executor_version: c.executor_version, url, action, timestamp, ...(viewport ? { viewport: { width: Number(viewport.width), height: Number(viewport.height) } } : {}), ...(doc ? { document_identity: doc } : {}), ...(dom ? { dom_summary: bounded(dom) } : {}), console_errors, network_errors, ...(screenshotRef ? { screenshot_artifact_ref: screenshotRef } : {}), result }; o.observation_id = browserObservationId(o); return o; }
     async snapshot(c, action) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); try {
@@ -77,15 +102,31 @@ export class PlaywrightBrowserAdapter {
     catch (error) {
         return this.observation(c, s, action, s.url, 'FAILED', undefined, undefined, String(error));
     } }
-    async health() { try {
+    async health() { let browser, launchTempRoot; try {
         const executablePath = this.refreshExecutable();
         if (!executablePath)
             return { available: false, reason: 'Playwright Chromium executable unavailable' };
         const pw = await this.loadPlaywright();
-        return { available: Boolean(pw?.chromium), version: `playwright-core:${executablePath}` };
+        if (typeof pw?.chromium?.launch !== 'function')
+            return { available: false, reason: 'Playwright Chromium launch primitive unavailable' };
+        launchTempRoot = this.createTempRoot();
+        browser = await pw.chromium.launch(this.launchOptions(executablePath, launchTempRoot));
+        await boundedBrowserClose(browser);
+        browser = undefined;
+        rmSync(launchTempRoot, { recursive: true, force: true });
+        launchTempRoot = undefined;
+        return { available: true, version: `playwright-core:${executablePath}` };
     }
     catch (error) {
-        return { available: false, reason: String(error) };
+        if (browser)
+            try {
+                await boundedBrowserClose(browser);
+                browser = undefined;
+            }
+            catch { }
+        if (!browser && launchTempRoot)
+            rmSync(launchTempRoot, { recursive: true, force: true });
+        return { available: false, reason: `Playwright Chromium launch health failed: ${String(error)}` };
     } }
     async open(c, url) { const u = plannedUrl(c, url); let s; try {
         s = await this.ensure(c);
@@ -160,9 +201,7 @@ export class PlaywrightBrowserAdapter {
         throw new Error('Browser wait must be 0..30000ms'); await s.page.waitForTimeout(request.milliseconds); return this.snapshot(c, 'wait'); }
     async close(c) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); const url = s.url; try {
-        await boundedBrowserClose(s.browser);
-        if (this.sessions.get(c.task_id) === s)
-            this.sessions.delete(c.task_id);
+        await this.closeSession(c.task_id, s);
         return this.observation(c, s, 'close', url, 'OBSERVED', 'browser session closed');
     }
     catch (error) {
@@ -171,19 +210,15 @@ export class PlaywrightBrowserAdapter {
     async cleanup(c) { const s = this.sessions.get(c.task_id); if (!s)
         return { cleaned: false, reason: 'not-found' }; if (s.executionOwnerRef !== c.execution_owner_ref)
         return { cleaned: false, reason: 'owner-mismatch' }; try {
-        await boundedBrowserClose(s.browser);
-        if (this.sessions.get(c.task_id) === s)
-            this.sessions.delete(c.task_id);
+        await this.closeSession(c.task_id, s);
         return { cleaned: true, reason: 'cleaned' };
     }
     catch (error) {
         return { cleaned: false, reason: 'close-failed', error: String(error) };
     } }
-    async dispose() { for (const [id, s] of this.sessions) {
+    async dispose() { for (const [id, s] of [...this.sessions])
         try {
-            await boundedBrowserClose(s.browser);
+            await this.closeSession(id, s);
         }
-        catch { }
-        this.sessions.delete(id);
-    } }
+        catch { } }
 }

@@ -9,6 +9,7 @@ export interface PlaywrightBrowserAdapterOptions {
     load_playwright?: () => Promise<any>;
     executable_exists?: (path: string) => boolean;
     browser_cache_paths?: string[];
+    launch_temp_base?: string;
 }
 export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     private executablePath?;
@@ -19,9 +20,13 @@ export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     private readonly persistScreenshot?;
     private readonly loadPlaywright;
     private readonly executableExists;
+    private readonly launchTempBase;
     private readonly sessions;
     constructor(options?: PlaywrightBrowserAdapterOptions);
     private refreshExecutable;
+    private createTempRoot;
+    private launchOptions;
+    private closeSession;
     private ensure;
     private observation;
     private snapshot;

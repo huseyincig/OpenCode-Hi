@@ -35,7 +35,7 @@ export const HiPlugin:Plugin=async(ctx)=>{
   const services=createRuntimeServices({ports:{nativeContext:{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree},childSession,readAssistantResult:host.readAssistantResult,hostCapabilities:host.capabilities.contracts,process:processExecutor,workspace:workspaceExecutor,createBrowser:persist=>new PlaywrightBrowserAdapter({persist_screenshot:persist,browser_cache_paths:[browserBootstrap.cachePath]}),bootstrapBrowser:()=>browserBootstrap.ensure(),browserTool:{implementationId:'playwright-chromium',version:browserBootstrap.version,cachePath:browserBootstrap.cachePath,discover:()=>discoverPlaywrightChromium(undefined,[browserBootstrap.cachePath])},onBrowserAvailability:ownedCapabilities.setBrowserAvailable},projectRoot,packageRoot,getConfig:()=>state.config,getModels:host.getModels,getHostConfig:()=>state.hostConfig})
   await services.workspaceRuntime.reconcileRestored(services.store.all())
   await services.processRuntime.reconcileRestored(services.store.all())
-  const browserHealth=await services.browserExecutor.health();services.setBrowserAvailable(browserHealth.available);ownedCapabilities.setBrowserAvailable(browserHealth.available);services.tasks.rehydrateQueued(services.store.all())
+  const browserHealth={available:false,reason:'not-probed-during-initialization; browser execution is health-checked lazily on task/doctor demand'};services.tasks.rehydrateQueued(services.store.all())
   setTimeout(()=>{void Promise.all([ownedCapabilities.observe('process-lifecycle'),ownedCapabilities.observe('workspace-isolation-binding')]).catch(()=>{})},0)
   services.persistence.save(services.store.all())
   const pendingNativePermissions=new Map<string,string[]>()

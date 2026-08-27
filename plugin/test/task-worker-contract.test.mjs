@@ -32,6 +32,7 @@ test('TaskContract rejects missing mission identity, unknown fields and malforme
   assert.equal(isTaskContract(withoutMission),false)
   assert.equal(isTaskContract({...task,unexpected:true}),false)
   assert.equal(isTaskContract({...task,execution_profile:{role:'coder'}}),false)
+  assert.equal(isTaskContract({...task,requiredEvidence:['Root cause understood']}),false,'task evidence IDs are a closed canonical contract')
 })
 
 test('WorkerContract starts at attempt zero and beginWorkerAttempt preserves identity while advancing lifecycle',()=>{

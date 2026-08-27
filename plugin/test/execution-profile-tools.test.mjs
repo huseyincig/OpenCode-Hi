@@ -75,6 +75,17 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
 
 
 
+
+test('noncanonical required evidence is rejected before Task or Worker creation while obligation-owned canonicalization remains available',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('closed-task-evidence','inspect one file before implementation')
+  assess(store,'closed-task-evidence',{task_kind:'bug-fix',scope:'multi-file',required_capabilities:['repository-analysis','implementation'],likely_targets:['index.html']})
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+  await assert.rejects(()=>runtime.start(m,{objective:'inspect index.html',role:'repository-explorer',scope:['index.html'],requiredEvidence:['Root cause understood'],obligationIds:[analysis.id]}),/Unsupported Hi required evidence kind.*Root cause understood/)
+  assert.equal(m.execution.tasks.length,0);assert.equal(m.execution.workers.length,0);assert.equal(created.length,0);assert.equal(prompts.length,0)
+})
+
 test('verification-only coder task loses repository mutation surface and tool guard fails closed',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)

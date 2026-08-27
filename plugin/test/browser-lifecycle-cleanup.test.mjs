@@ -1,7 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {resolve,dirname} from 'node:path'
+import {resolve,dirname,join} from 'node:path'
 import {fileURLToPath} from 'node:url'
+import {mkdtempSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
 import {PlaywrightBrowserAdapter} from '../dist/opencode/playwright-browser-adapter.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
@@ -158,21 +160,23 @@ test('failed visual verification task releases open-obligation methodology owner
 
 
 test('browser cleanup is bounded when Playwright browser.close never settles',async()=>{
-  const never=new Promise(()=>{})
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-hung-close-test-')),never=new Promise(()=>{})
   const module={chromium:{launch:async()=>{
     const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
     return{newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>never}
   }}}
-  const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000})
-  const owner=context('hung-close','m:w:s:g1')
-  await adapter.open(owner,'http://127.0.0.1:4173/')
-  const outcome=await Promise.race([
-    adapter.cleanup(owner).then(value=>({kind:'result',value})),
-    new Promise(resolve=>setTimeout(()=>resolve({kind:'timeout'}),3500)),
-  ])
-  assert.equal(outcome.kind,'result','browser cleanup must not wait forever for Playwright browser.close')
-  assert.equal(outcome.value.cleaned,false)
-  assert.equal(outcome.value.reason,'close-failed')
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('hung-close','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    const outcome=await Promise.race([
+      adapter.cleanup(owner).then(value=>({kind:'result',value})),
+      new Promise(resolve=>setTimeout(()=>resolve({kind:'timeout'}),3500)),
+    ])
+    assert.equal(outcome.kind,'result','browser cleanup must not wait forever for Playwright browser.close')
+    assert.equal(outcome.value.cleaned,false)
+    assert.equal(outcome.value.reason,'close-failed')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
 })
 
 

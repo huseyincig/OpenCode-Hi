@@ -1,6 +1,9 @@
 export type EvidenceOutcome = 'pending'|'passed'|'failed'|'environment-issue'
 export const WORKER_EVIDENCE_KINDS=['targeted-tests','typecheck','lint','build','changed-surface-sanity','review-evidence','decision-evidence','diagnostic-evidence','measurement-evidence','browser-evidence','visual-evidence','accessibility-evidence','source-provenance-evidence'] as const
 export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number]
+export const TASK_REQUIRED_EVIDENCE_KINDS=[...WORKER_EVIDENCE_KINDS,'visual-check'] as const
+export type TaskRequiredEvidenceKind=typeof TASK_REQUIRED_EVIDENCE_KINDS[number]
+export function isTaskRequiredEvidenceKind(value:unknown):value is TaskRequiredEvidenceKind{return typeof value==='string'&&(TASK_REQUIRED_EVIDENCE_KINDS as readonly string[]).includes(value)}
 export const EVIDENCE_OUTCOMES=['pending','passed','failed','environment-issue'] as const
 
 /**

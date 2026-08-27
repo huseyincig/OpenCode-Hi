@@ -41,16 +41,39 @@ test('Playwright adapter is local-scope, task-isolated and emits bounded observa
   const a=await adapter.open(ctx('t1'),'http://127.0.0.1:4173/')
   const b=await adapter.open(ctx('t2',undefined,['http://localhost:4174']),'http://localhost:4174/')
   assert.equal(a.result,'OBSERVED');assert.equal(b.result,'OBSERVED');assert.ok(isBrowserObservationContract(a));assert.match(a.dom_summary,/@e1 <button> Ready/)
-  assert.equal(pw.sessions.length,2)
+  assert.equal(pw.sessions.length,3,'health performs one real launch probe before two task-owned launches')
   await adapter.click(ctx('t1'),{value:'@e1'});await adapter.type(ctx('t1'),{value:'@e2'},'hello');const key=await adapter.key(ctx('t1'),{key:'ArrowRight'})
-  assert.equal(key.action,'key');assert.equal(key.result,'OBSERVED');assert.equal(pw.sessions[0].page.lastKey,'ArrowRight');assert.equal(pw.sessions[0].page.lastFill,'hello');assert.equal(pw.sessions[1].page.lastFill,undefined)
+  assert.equal(key.action,'key');assert.equal(key.result,'OBSERVED');assert.equal(pw.sessions[1].page.lastKey,'ArrowRight');assert.equal(pw.sessions[1].page.lastFill,'hello');assert.equal(pw.sessions[2].page.lastFill,undefined)
   await assert.rejects(()=>adapter.navigate(ctx('t1'),'https://example.com/'),/outside supported local scope/)
   await assert.rejects(()=>adapter.navigate(ctx('t1'),'http://127.0.0.1:4174/'),/outside the task plan/)
-  await adapter.close(ctx('t1'));assert.equal(pw.sessions[0].page.closed,true);assert.equal(pw.sessions[1].page.closed,false)
-  await adapter.dispose();assert.equal(pw.sessions[1].page.closed,true)
+  await adapter.close(ctx('t1'));assert.equal(pw.sessions[1].page.closed,true);assert.equal(pw.sessions[2].page.closed,false)
+  await adapter.dispose();assert.equal(pw.sessions[2].page.closed,true)
 })
 
 
+
+
+test('browser health performs a real launch with an adapter-owned short temp environment and dispose removes it',async()=>{
+  const base=mkdtempSync(join(tmpdir(),'hi-browser-launch-base-')),launches=[],prior=process.env.TMPDIR
+  process.env.TMPDIR='/workspace/a/very/long/inherited/test/runtime/path/that/must/not/reach/chromium'
+  try{
+    const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,launch_temp_base:base}),launches=pw.launches
+    const health=await adapter.health();assert.equal(health.available,true);assert.equal(launches.length,1)
+    const healthTmp=launches[0].env.TMPDIR;assert.equal(healthTmp.startsWith(join(base,'hi-br-')),true);assert.notEqual(healthTmp,process.env.TMPDIR);assert.equal(existsSync(healthTmp),false,'successful health probe releases its exact ephemeral temp root immediately')
+    assert.equal(launches[0].env.TMP,healthTmp);assert.equal(launches[0].env.TEMP,healthTmp)
+    const owner=ctx('temp-owner');await adapter.open(owner,'http://127.0.0.1:4173/');assert.equal(launches.length,2);const sessionTmp=launches[1].env.TMPDIR;assert.equal(existsSync(sessionTmp),true);assert.notEqual(sessionTmp,healthTmp)
+    await adapter.close(owner);assert.equal(existsSync(sessionTmp),false,'task-owned browser close releases the exact session temp root')
+    await adapter.dispose()
+  }finally{if(prior===undefined)delete process.env.TMPDIR;else process.env.TMPDIR=prior;rmSync(base,{recursive:true,force:true})}
+})
+
+test('browser health fails closed when Chromium cannot actually launch',async()=>{
+  const base=mkdtempSync(join(tmpdir(),'hi-browser-health-fail-'))
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>({chromium:{launch:async()=>{throw new Error('TargetClosed: singleton socket path too long')}}}),launch_temp_base:base})
+    const health=await adapter.health();assert.equal(health.available,false);assert.match(health.reason,/launch health failed.*singleton socket path too long/i);await adapter.dispose()
+  }finally{rmSync(base,{recursive:true,force:true})}
+})
 
 test('browser session state cannot cross execution-owner identity for the same Task',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
@@ -79,15 +102,15 @@ test('browser snapshot refreshes client-side route state and fails closed on ext
 })
 
 test('screenshot bytes are retained by the existing canonical artifact owner before observation succeeds',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-browser-artifact-')),store=new ContextArtifactStore(root),pw=fakePlaywright()
+  const root=mkdtempSync(join(tmpdir(),'hi-browser-artifact-')),store=new ContextArtifactStore(root),pw=fakePlaywright();let adapter
   try{
-    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:(bytes,c)=>{const a=store.addBinary('browser-screenshot',`screenshot ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`}})
+    adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:(bytes,c)=>{const a=store.addBinary('browser-screenshot',`screenshot ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`}})
     await adapter.open(ctx('task_screen',undefined,['http://127.0.0.1:3000']),'http://127.0.0.1:3000/')
     const shot=await adapter.screenshot(ctx('task_screen',undefined,['http://127.0.0.1:3000']))
     assert.equal(shot.result,'OBSERVED');assert.ok(isBrowserObservationContract(shot));assert.match(shot.screenshot_artifact_ref,/^hi-artifact:a_[a-f0-9]{24}$/)
     const id=shot.screenshot_artifact_ref.slice('hi-artifact:'.length),manifest=store.get(id);assert.ok(manifest);const meta=JSON.parse(manifest.content)
     const binary=durableArtifactBinaryPath(root,'browser-screenshot',id,'png');assert.equal(existsSync(binary),true);assert.equal(readFileSync(binary).length,7);assert.equal(meta.byte_size,7);assert.match(meta.byte_sha256,/^[a-f0-9]{64}$/)
-  }finally{rmSync(root,{recursive:true,force:true})}
+  }finally{await adapter?.dispose();rmSync(root,{recursive:true,force:true})}
 })
 
 test('browser execution custom tools are default-off and only active visual workers may pass the child guard',async()=>{

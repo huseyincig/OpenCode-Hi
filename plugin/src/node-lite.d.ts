@@ -6,6 +6,7 @@ declare module 'node:crypto' {
 }
 declare module 'node:fs' {
   export function existsSync(path:any): boolean
+  export function mkdtempSync(prefix:string, options?:any): string
   export function readFileSync(path:any): any
   export function readFileSync(path:any, encoding:'utf8'): string
   export function createReadStream(path:any): { on(event:'error',listener:(error:Error)=>void):any; pipe(destination:any):any }

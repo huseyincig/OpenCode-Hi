@@ -37,7 +37,7 @@ test('failed Chromium bootstrap is one-shot and never loops on unchanged resourc
 
 test('adapter refreshes discovery after a lazy bootstrap creates the executable',async()=>{
   const f=fixture();let ready=false
-  try{const executable=join(f.root,'cache','chromium-1','chrome-linux','chrome'),adapter=new PlaywrightBrowserAdapter({browser_cache_paths:[join(f.root,'cache')],executable_exists:p=>ready&&p===executable,load_playwright:async()=>({chromium:{}})});assert.equal((await adapter.health()).available,false);mkdirSync(join(f.root,'cache','chromium-1','chrome-linux'),{recursive:true});writeFileSync(executable,'');ready=true;assert.equal((await adapter.health()).available,true)}finally{f.cleanup()}
+  try{const executable=join(f.root,'cache','chromium-1','chrome-linux','chrome'),adapter=new PlaywrightBrowserAdapter({browser_cache_paths:[join(f.root,'cache')],executable_exists:p=>ready&&p===executable,load_playwright:async()=>({chromium:{launch:async()=>({close:async()=>{}})}})});assert.equal((await adapter.health()).available,false);mkdirSync(join(f.root,'cache','chromium-1','chrome-linux'),{recursive:true});writeFileSync(executable,'');ready=true;assert.equal((await adapter.health()).available,true)}finally{f.cleanup()}
 })
 
 test('legacy standalone browser cache helper remains user-cache scoped when no project owner is supplied',()=>{
