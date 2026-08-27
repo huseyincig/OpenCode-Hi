@@ -349,6 +349,7 @@ export class OpenCodePtyAdapter {
         throw new Error('Process input exceeds 64KiB bound'); if (!state.socket || state.socket.readyState !== 1)
         await this.#connect(state, state.availableEnd); state.socket?.send(input); }
     async read(processId, window = {}) { const state = this.#state(processId); await this.#refresh(state); const requested = Number.isSafeInteger(window.cursor) ? Math.max(0, window.cursor) : state.availableStart, max = Math.max(1, Math.min(this.maxReadChars, Number.isFinite(window.max_chars) ? Math.floor(window.max_chars) : 8192)), start = Math.min(state.availableEnd, Math.max(state.availableStart, requested)), offset = start - state.availableStart, text = state.buffer.slice(offset, offset + max), end = start + text.length; return { text, start_cursor: start, end_cursor: end, available_start_cursor: state.availableStart, available_end_cursor: state.availableEnd, truncated: requested < state.availableStart || end < state.availableEnd, status: state.contract.status }; }
+    async observe(processId) { const state = this.#state(processId); await this.#refresh(state); return cloneContract(state.contract); }
     async wait(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status !== 'RUNNING')
         return { contract: cloneContract(state.contract) }; return state.exitPromise; }
     async kill(processId, signal = 'SIGTERM') { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status !== 'RUNNING')

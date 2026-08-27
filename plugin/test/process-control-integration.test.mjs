@@ -43,7 +43,7 @@ test('model-facing process tools distinguish persistent services from hard-deadl
   const {store,m,task,worker}=processOwnedChildFixture();let waits=0
   const persistent={process_id:'proc-persistent',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'a'.repeat(64),cwd:'/repo',authority_ref:'native',pid:42,process_group_id:42,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],cleanup_state:'ACTIVE'}
   m.execution.processes.push(persistent)
-  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async()=>({}),read:async()=>({}),write:async()=>{},wait:async()=>{waits++;return persistent},kill:async()=>({}),cleanup:async()=>{}}
+  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async()=>({}),read:async()=>({}),write:async()=>{},observe:async()=>persistent,wait:async()=>{waits++;return persistent},kill:async()=>({}),cleanup:async()=>{}}
   const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   assert.match(toolSurface.hi_process_spawn.description,/timeout_ms is an optional HARD wall-clock termination deadline/i)
@@ -55,9 +55,20 @@ test('model-facing process tools distinguish persistent services from hard-deadl
   await toolSurface.hi_process_wait.execute({id:persistent.process_id},{sessionID:worker.session_id});assert.equal(waits,1,'explicit hard-deadline process remains eligible for event-driven terminal wait')
 })
 
+test('model-facing process wait reobserves native terminal truth before persistent-service classification',async()=>{
+  const {store,m,task,worker}=processOwnedChildFixture();let waits=0,observes=0
+  const stale={process_id:'proc-short',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,host:'opencode',command_identity:'c'.repeat(64),cwd:'/repo',authority_ref:'native',pid:43,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],cleanup_state:'ACTIVE'};m.execution.processes.push(stale)
+  const terminal={...stale,status:'EXITED',ended_at:Date.now(),exit_code:0,cleanup_state:'CLEANUP_PENDING'}
+  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,observe:async(_m,id)=>{assert.equal(id,stale.process_id);observes++;Object.assign(stale,terminal);return terminal},wait:async()=>{waits++;return terminal},spawn:async()=>({}),read:async()=>({}),write:async()=>{},kill:async()=>({}),cleanup:async()=>{}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const out=JSON.parse(await toolSurface.hi_process_wait.execute({id:stale.process_id},{sessionID:worker.session_id}))
+  assert.equal(observes,1);assert.equal(waits,0);assert.equal(out.status,'EXITED');assert.equal(out.exit_code,0);assert.notEqual(out.reason,'persistent-process-still-running')
+})
+
 test('child process tool surface resolves parent mission and enforces exact worker ownership',async()=>{
   const {store,m,task,worker}=processOwnedChildFixture(),calls=[]
-  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(['spawn',input.worker_id]);const p={process_id:'proc-own',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'x',cwd:'/repo',authority_ref:'native',pid:42,process_group_id:42,status:'RUNNING',started_at:Date.now(),cleanup_state:'ACTIVE'};m.execution.processes.push(p);return p},read:async()=>({text:'ok',start_cursor:0,end_cursor:2,available_start_cursor:0,available_end_cursor:2,truncated:false}),write:async()=>{},wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{}}
+  const processRuntime={list:mission=>mission.execution.processes,stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(['spawn',input.worker_id]);const p={process_id:'proc-own',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'x',cwd:'/repo',authority_ref:'native',pid:42,process_group_id:42,status:'RUNNING',started_at:Date.now(),cleanup_state:'ACTIVE'};m.execution.processes.push(p);return p},read:async()=>({text:'ok',start_cursor:0,end_cursor:2,available_start_cursor:0,available_end_cursor:2,truncated:false}),write:async()=>{},observe:async(_m,id)=>m.execution.processes.find(p=>p.process_id===id),wait:async()=>({}),kill:async()=>({}),cleanup:async()=>{}}
   const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
   const spawned=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'python',args_json:'["app.py"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo',ask:async()=>{}}))

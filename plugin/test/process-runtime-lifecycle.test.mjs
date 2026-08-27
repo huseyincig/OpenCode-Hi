@@ -28,6 +28,7 @@ class FakeExecutor{
   async spawn(req){const c=contract(req,`proc_${this.spawned.length+1}`,5001+this.spawned.length);this.states.set(c.process_id,c);this.spawned.push(structuredClone(req));return{contract:structuredClone(c),host_process_id:`pty-${c.pid}`}}
   async write(id,input){if(!this.states.has(id))throw new Error('missing');this.writes.push([id,input])}
   async read(id,{cursor=0,max_chars=64}={}){const c=this.states.get(id);if(!c)throw new Error('missing');const text='secret-output-1234567890';const start=Math.max(0,cursor),slice=text.slice(start,start+max_chars);return{text:slice,start_cursor:start,end_cursor:start+slice.length,available_start_cursor:0,available_end_cursor:text.length,truncated:start+slice.length<text.length,status:c.status}}
+  async observe(id){const c=this.states.get(id);if(!c)throw new Error('missing');return structuredClone(c)}
   async wait(id){const c=this.states.get(id);if(!c)throw new Error('missing');if(c.status!=='RUNNING')return{contract:structuredClone(c)};return await new Promise((resolve,reject)=>this.waiters.set(id,{resolve,reject}))}
   exit(id,code=0){const c=this.states.get(id);Object.assign(c,{status:'EXITED',ended_at:Date.now(),exit_code:code,cleanup_state:'CLEANUP_PENDING'});this.waiters.get(id)?.resolve({contract:structuredClone(c)});this.waiters.delete(id)}
   async kill(id,signal='SIGTERM'){const c=this.states.get(id);if(!c)throw new Error('missing');Object.assign(c,{status:'TERMINATED',ended_at:Date.now(),termination_reason:`signal:${signal}`,cleanup_state:'CLEANUP_PENDING'});this.waiters.get(id)?.resolve({contract:structuredClone(c)});this.waiters.delete(id);return{contract:structuredClone(c)}}
@@ -57,6 +58,16 @@ test('explicit permission deny never asks and never spawns',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host('deny'));let asks=0
   await assert.rejects(()=>runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo',ask:async()=>{asks++}}),e=>e instanceof ProcessSpawnPermissionError&&e.decision==='DENY')
   assert.equal(asks,0);assert.equal(fake.spawned.length,0)
+})
+
+test('authoritative process observation updates stale durable RUNNING to terminal without producing output evidence',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  fake.exit(p.process_id,0)
+  assert.equal(m.execution.processes.find(x=>x.process_id===p.process_id).status,'RUNNING','durable state remains stale until host observation')
+  const observed=await runtime.observe(m,p.process_id)
+  assert.equal(observed.status,'EXITED');assert.equal(observed.exit_code,0);assert.equal(m.execution.processes.find(x=>x.process_id===p.process_id).status,'EXITED')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.status-observed'&&e.payload?.process_id===p.process_id&&e.payload?.status==='EXITED'))
+  assert.equal(m.execution.evidence.items.filter(e=>String(e.source??'').startsWith(`process:${p.process_id}:`)).length,0,'status observation must not fabricate output evidence')
 })
 
 test('hard-deadline running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{

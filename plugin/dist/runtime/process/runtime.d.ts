@@ -23,6 +23,7 @@ export declare class ProcessRuntime {
     private contract;
     spawn(m: MissionState, input: ProcessStartInput): Promise<ProcessContract>;
     write(m: MissionState, id: string, input: string): Promise<void>;
+    observe(m: MissionState, id: string): Promise<ProcessContract>;
     read(m: MissionState, id: string, cursor?: number, maxChars?: number): Promise<ProcessOutput>;
     private noteExit;
     wait(m: MissionState, id: string): Promise<ProcessContract>;

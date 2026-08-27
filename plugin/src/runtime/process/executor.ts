@@ -29,6 +29,7 @@ export interface ProcessExecutor{
   spawn(request:ProcessSpawnRequest):Promise<ProcessHandle>
   write(processId:string,input:string):Promise<void>
   read(processId:string,window?:ProcessOutputWindow):Promise<ProcessOutput>
+  observe(processId:string):Promise<ProcessContract>
   wait(processId:string):Promise<ProcessExit>
   kill(processId:string,signal?:'SIGTERM'|'SIGINT'):Promise<ProcessExit>
   cleanup(processId:string):Promise<void>

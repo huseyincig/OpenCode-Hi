@@ -94,6 +94,11 @@ export class ProcessRuntime {
         throw new Error('Hi process native permission resolution exceeded bounded attempts');
     }
     async write(m, id, input) { this.contract(m, id); await this.executor.write(id, input); appendLedger(m, 'process.stdin', { payload: { process_id: id, chars: input.length } }); }
+    async observe(m, id) { const before = this.contract(m, id), observed = await this.executor.observe(id); if (observed.process_id !== before.process_id || observed.mission_id !== before.mission_id || observed.task_id !== before.task_id || observed.worker_id !== before.worker_id)
+        throw new Error(`Hi process observation identity mismatch: ${id}`); if (observed.status !== 'RUNNING')
+        this.noteExit(m, observed);
+    else
+        replaceProcess(m, observed); appendLedger(m, 'process.status-observed', { task_id: observed.task_id, worker_id: observed.worker_id, payload: { process_id: id, status: observed.status, cleanup_state: observed.cleanup_state } }); return structuredClone(observed); }
     async read(m, id, cursor, maxChars) { const current = this.contract(m, id), out = await this.executor.read(id, { cursor, max_chars: maxChars }); if (out.status !== 'RUNNING') {
         const terminal = await this.executor.wait(id);
         this.noteExit(m, terminal.contract);

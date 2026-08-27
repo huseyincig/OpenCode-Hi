@@ -708,8 +708,10 @@ export function createHiToolSurface(input) {
             if (!cx)
                 return 'No active Hi mission';
             assertChildProcessOwner(cx, String(a.id));
-            const current = cx.m.execution.processes.find((item) => item.process_id === String(a.id));
-            if (current?.status === 'RUNNING' && current.timeout_at === undefined)
+            const current = await processRuntime.observe(cx.m, String(a.id));
+            if (current.status !== 'RUNNING')
+                return JSON.stringify(current);
+            if (current.timeout_at === undefined)
                 return JSON.stringify({ status: 'BLOCKED', reason: 'persistent-process-still-running', process_id: String(a.id), deadline_policy: 'none', retry_wait: false, next_tools: ['hi_process_read', 'hi_process_kill', 'hi_process_cleanup'], instruction: 'This process has no hard deadline and is therefore in persistent-service mode. Keep it running while exercising/health-checking the service; do not wait for exit. When verification is complete, kill the exact owned process and then cleanup it.' });
             return JSON.stringify(await processRuntime.wait(cx.m, String(a.id)));
         }

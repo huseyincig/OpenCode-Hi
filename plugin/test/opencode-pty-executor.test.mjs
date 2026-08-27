@@ -146,6 +146,14 @@ test('concurrent owned PTYs keep output cursors and buffers isolated',async()=>{
   assert.equal(oa.text,'alpha-on');assert.equal(ob.text,'beta-onl');assert.doesNotMatch(oa.text,/beta/);assert.doesNotMatch(ob.text,/alpha/)
 })
 
+test('observe rechecks native PTY status and returns terminal truth without blocking',async()=>{
+  const h=harness(),handle=await spawned(h),id=handle.contract.process_id
+  h.exit(handle.host_process_id,0)
+  const observed=await h.adapter.observe(id)
+  assert.equal(observed.status,'EXITED');assert.equal(observed.exit_code,0);assert.equal(observed.cleanup_state,'CLEANUP_PENDING')
+  assert.equal(h.removed.length,0,'observation must not cleanup or terminate the process')
+})
+
 test('natural exit records nonzero exit code and cleanup is separate from exit',async()=>{
   const h=harness(),handle=await spawned(h),ws=h.sockets[0],id=handle.contract.process_id
   h.exit(handle.host_process_id,7);ws.close()
