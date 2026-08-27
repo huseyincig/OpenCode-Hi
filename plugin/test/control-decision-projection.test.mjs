@@ -117,6 +117,24 @@ test('route projection reports no admissible verifier instead of inviting arbitr
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+test('hi_task_start cannot invent a generic technical verifier when canonical route is none',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-p6-no-route-admission-'))
+  try{
+    writeFileSync(join(root,'package.json'),JSON.stringify({private:true}))
+    const {store,m}=localMission('phase6-no-route-admission');closeImplementation(m)
+    let starts=0
+    const tasks={start:async()=>{starts++;throw new Error('must not dispatch')},awaitTask:async()=>({status:'waiting',terminal:false,changed:false,timed_out:true})}
+    const processRuntime={stopMission:async()=>0,list:()=>[]}
+    const state={config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.23'}
+    const {toolSurface}=createHiToolSurface({state,store,tasks,processRuntime,projectRoot:root,workingDirectory:root,capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}})
+    const out=JSON.parse(await toolSurface.hi_task_start.execute({objective:'invent a verifier',role:'coder',scope:'phase6.txt',required_evidence:'changed-surface-sanity'},{sessionID:m.identity.session_id}))
+    assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'no-admissible-repo-native-verifier');assert.equal(out.retry_same_start,false);assert.equal(starts,0)
+    assert.match(out.instruction,/Do not invent a test file, verifier command, or generic verifier child/i)
+    assert.ok(m.execution.ledger.some(e=>e.type==='verification.worker-admission-blocked'&&e.payload?.reason==='no-admissible-repo-native-verifier'))
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('route projection exposes only declared admissible repo-native verification scripts',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p6-route-'))
   try{

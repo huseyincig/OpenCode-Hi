@@ -27,6 +27,11 @@ export function unaccountedExecutionPermissionKeys(hostConfig, role) {
     const known = new Set(HI_ACCOUNTED_PERMISSION_KEYS);
     return Object.keys(permission).filter(key => !known.has(key)).sort();
 }
+export function verificationOnlyExecutionSurface(surface) {
+    const decisions = { ...surface.permissions.decisions, edit: 'deny' };
+    const tools = surface.tools.filter(id => !['edit', 'write', 'apply_patch', 'patch', 'multiedit'].includes(id));
+    return { tools, permissions: { ...surface.permissions, decisions } };
+}
 export function effectiveExecutionSurface(hostConfig, role, skillToolEnabled) {
     const agents = isRecord(hostConfig.agent) ? hostConfig.agent : {};
     const def = isRecord(agents[role]) ? agents[role] : undefined;

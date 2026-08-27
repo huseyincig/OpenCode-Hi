@@ -1,5 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { parseSemanticIntentAssessment, technicalVerificationKinds } from '../dist/runtime/intent/semantic-assessment.js'
 import { assessChangedFileOwnership } from '../dist/runtime/task/diff-ownership.js'
@@ -164,6 +167,20 @@ test('adaptive verification does not promote inferred code tests for bounded rea
   assert.deepEqual(mission.execution.verification_policy.requiredKinds,['review-evidence'])
   assert.deepEqual(mission.execution.obligations.find(o=>o.id==='o-review')?.requiredEvidence,['review-evidence'])
   assert.deepEqual(mission.execution.obligations.find(o=>o.id==='o-verification')?.requiredEvidence,['review-evidence'])
+})
+
+
+test('bounded multi-file visual work keeps only repo-available technical verification plus visual proof',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-multifile-visual-capability-'))
+  try{
+    mkdirSync(join(root,'.opencode'))
+    writeFileSync(join(root,'opencode.json'),'{}')
+    const store=new MissionStore(root)
+    const mission=store.start('multi-file-visual-capability','Build a small visual app and exercise its behavior without naming a test runner.')
+    store.applyInitialSemanticAssessment('multi-file-visual-capability',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'multi-file',risk:'low',required_capabilities:['implementation','verification','visual-qa'],likely_verification:['targeted-tests','changed-surface-sanity','visual-check'],user_verification:[],verification_ceiling:false,likely_targets:['app.py','templates/index.html']}))
+    assert.deepEqual(mission.identity.intent.likelyVerification,['visual-check'])
+    assert.deepEqual(mission.execution.verification_policy.requiredKinds,['visual-check'])
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('adaptive verification preserves exact user verifier and high-risk or visual widening',()=>{

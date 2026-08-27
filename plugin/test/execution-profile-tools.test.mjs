@@ -74,6 +74,26 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
 })
 
 
+
+test('verification-only coder task loses repository mutation surface and tool guard fails closed',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('verification-only-coder','implementation done; run exact verification only')
+  assess(store,'verification-only-coder',{likely_targets:['src/app.ts'],likely_verification:['targeted-tests']})
+  const implementation=m.execution.obligations.find(o=>o.id==='o-implementation'),verification=m.execution.obligations.find(o=>o.id==='o-verification');implementation.status='closed';implementation.closedAt=Date.now()
+  const out=await runtime.start(m,{objective:'run targeted verifier only',role:'coder',category:'quick',scope:['src/app.ts'],requiredEvidence:['targeted-tests'],obligationIds:[verification.id]})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id),profile=task.execution_profile
+  assert.deepEqual(task.obligation_ids,[verification.id]);assert.deepEqual(task.requiredEvidence,['targeted-tests'])
+  assert.equal(profile.permission_profile.native.decisions.edit,'deny')
+  for(const id of ['edit','write','apply_patch'])assert.ok(!profile.tools.includes(id),id)
+  assert.equal(prompts[0].body.tools.edit,false);assert.equal(prompts[0].body.tools.write,false);assert.equal(prompts[0].body.tools.apply_patch,false)
+  assert.ok(profile.tools.includes('bash'),'non-mutating admitted verifier execution remains available')
+  const bg=new BackgroundRegistry();bg.set(worker);const hook=createToolBeforeHook(store,bg,process.cwd(),process.cwd())
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'edit'},{args:{filePath:'src/app.ts'}}),/verification ownership guard/)
+  await hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'node --test test/app.test.mjs'}})
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.verification-only-mutation-blocked'&&e.task_id===task.id))
+})
+
 test('process lifecycle is an exact task-level opt-in and survives child handoff',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)

@@ -27,8 +27,8 @@ export function resolveAdaptiveVerificationAssessment(assessment, userText, repo
     const boundedExplicit = explicitUserVerification.length > 0 && assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness';
     if (boundedExplicit)
         return { assessment: { ...assessment, likely_verification: [...explicitUserVerification], user_verification: [...explicitUserVerification], verification_ceiling: true }, explicitUserVerification, ceilingApplied: true, policy: 'explicit-user-verifier' };
-    const boundedLocalVisual = assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && assessment.required_capabilities.includes('visual-qa') && assessment.likely_verification.includes('visual-check') && repo !== undefined && repo.markers.includes('.opencode/');
-    if (boundedLocalVisual) {
+    const boundedVisualCapabilitySurface = ['local', 'multi-file'].includes(assessment.scope) && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && assessment.required_capabilities.includes('visual-qa') && assessment.likely_verification.includes('visual-check') && repo !== undefined && repo.markers.includes('.opencode/');
+    if (boundedVisualCapabilitySurface) {
         const repoKinds = new Set(repo.likelyVerification.map(kind => kind === 'test' ? 'targeted-tests' : kind));
         const reviewKinds = assessment.task_kind === 'review' ? ['review-evidence'] : [], likelyVerification = [...reviewKinds, ...assessment.likely_verification.filter(kind => kind === 'visual-check' || kind === 'review-evidence' || repoKinds.has(kind))];
         return { assessment: { ...assessment, likely_verification: [...new Set(likelyVerification)] }, explicitUserVerification, ceilingApplied: false, policy: 'local-capability-surface' };

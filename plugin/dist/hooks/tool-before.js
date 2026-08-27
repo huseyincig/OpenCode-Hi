@@ -46,12 +46,17 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         const tool = String(input?.tool ?? ''), rawArgs = output?.args ?? input?.args ?? {}, args = HI_PROCESS_EXECUTION_TOOL_IDS.includes(tool) && rawArgs?.input && typeof rawArgs.input === 'object' && !Array.isArray(rawArgs.input) ? { ...rawArgs, ...rawArgs.input } : rawArgs;
         if (!child && !NON_MATERIAL_CONTROL_TOOLS.has(tool) && store.reopenContradictedNonMaterial(String(sid), tool))
             throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`);
+        const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, verificationOnlyChild = Boolean(childTask?.obligation_ids.length && childTask.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification')));
         if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args)) {
             appendLedger(m, 'worker.read-only-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'read-only-role-contract' } });
             throw new Error(`Hi read-only role guard: ${child.role} cannot perform mutating '${tool}' execution. Use read/browser observations only and return the structured WorkerResult directly in assistant text; do not create temporary result files.`);
         }
+        if (child && verificationOnlyChild && toolMayMutate(tool, args)) {
+            appendLedger(m, 'worker.verification-only-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'verification-obligation-has-no-mutation-authority' } });
+            throw new Error(`Hi verification ownership guard: task ${child.task_id} owns verification only and cannot mutate repository state through '${tool}'. Run only an admitted non-mutating verifier or return the exact verifier gap; test-source mutation requires a separate test-authoring obligation.`);
+        }
         if (child && toolMayMutate(tool, args) && ['technical-writer', 'test-engineer'].includes(child.role)) {
-            const task = m.execution.tasks.find(t => t.id === child.task_id);
+            const task = childTask;
             if (!specialistMutationAllowed(child.role, task, tool, args, projectRoot, workingDirectory)) {
                 appendLedger(m, 'worker.specialist-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'specialist-write-scope', scope: exactParentMutationSurface(args, projectRoot, workingDirectory) } });
                 throw new Error(`Hi specialist write guard: ${child.role} cannot mutate outside its canonical ${child.role === 'technical-writer' ? 'documentation' : 'test-source'} surface.`);

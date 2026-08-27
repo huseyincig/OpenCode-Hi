@@ -29,6 +29,13 @@ export function unaccountedExecutionPermissionKeys(hostConfig:Record<string,unkn
 export interface NativePermissionSnapshot{mode?:string;decisions:Record<string,NativePermissionDecision>;source:'effective-opencode-agent'|'hi-default-invariants'}
 export interface EffectiveExecutionSurface{tools:string[];permissions:NativePermissionSnapshot}
 
+
+export function verificationOnlyExecutionSurface(surface:EffectiveExecutionSurface):EffectiveExecutionSurface{
+  const decisions={...surface.permissions.decisions,edit:'deny' as NativePermissionDecision}
+  const tools=surface.tools.filter(id=>!['edit','write','apply_patch','patch','multiedit'].includes(id))
+  return{tools,permissions:{...surface.permissions,decisions}}
+}
+
 export function effectiveExecutionSurface(hostConfig:Record<string,unknown>,role:string,skillToolEnabled:boolean):EffectiveExecutionSurface{
   const agents=isRecord(hostConfig.agent)?hostConfig.agent:{}
   const def=isRecord(agents[role])?agents[role] as Record<string,unknown>:undefined
