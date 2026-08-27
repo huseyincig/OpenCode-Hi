@@ -14,7 +14,7 @@
         "id": "hi.permission.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "556c85850c63293f411450cbb89c84ee3032dd237bfa3fe9b2a8a052239243c9"
+          "value": "485fefb28efa89674980bb8bb85ee44f0354412f2aaab60c9fde0d5fee5bbd5e"
         }
       },
       {
@@ -37,7 +37,7 @@
     "outputPath": "plugin/src/generated/agent-config.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "edac27600948a0405d8372f0037d2d34366d5cc27bd19ebe3424424b70372d7d"
+      "value": "1d94e63c1da50198e02cd2c81b6b54ba0a9f49f3ff898aeb8099133afbe30aff"
     }
   },
   {
@@ -95,7 +95,7 @@
         "id": "hi.permission.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "556c85850c63293f411450cbb89c84ee3032dd237bfa3fe9b2a8a052239243c9"
+          "value": "485fefb28efa89674980bb8bb85ee44f0354412f2aaab60c9fde0d5fee5bbd5e"
         }
       }
     ],
@@ -104,7 +104,7 @@
     "outputPath": "plugin/src/generated/permission-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "82336acabb9d63b306906b062159ea64cffa1ac6948f66cd886408404830d49d"
+      "value": "ea32f3bcda79df16a7c4d1c725644be6a8c1b2d13bdff843720bf58151346913"
     }
   },
   {

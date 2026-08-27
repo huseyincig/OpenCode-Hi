@@ -61,6 +61,18 @@ test('V1 composition does not create host-global default_agent or subagent_depth
   const dir=root();try{const config={plugin:['opencode-hi']},authority=new ProjectAuthorityStore(dir);const out=projectHiV1Composition({config,packagedAgents:PACKAGED_HI_AGENTS,packagedSkillsDir:join(dir,'missing'),projectRoot:dir,projectAuthority:authority});assert.deepEqual(out.agentProjection.collisions,[]);assert.equal('default_agent' in config,false);assert.equal('subagent_depth' in config,false)}finally{rmSync(dir,{recursive:true,force:true})}
 })
 
+test('canonical child bash stays inherited while final global user and Hi authority permission remains native-authoritative',()=>{
+  const dir=root();try{
+    const config={plugin:['opencode-hi'],permission:{bash:{'*':'allow','python3 *':'deny','git push *':'ask'}}},authority=new ProjectAuthorityStore(dir)
+    const out=projectHiV1Composition({config,packagedAgents:PACKAGED_HI_AGENTS,packagedSkillsDir:join(dir,'missing'),projectRoot:dir,projectAuthority:authority})
+    assert.deepEqual(out.agentProjection.collisions,[])
+    assert.equal(Object.hasOwn(config.agent.coder.permission,'bash'),false)
+    assert.equal(config.permission.bash['python3 *'],'deny')
+    assert.equal(config.permission.bash['git push *'],'ask')
+    assert.equal(config.permission.bash['*'],'allow')
+  }finally{rmSync(dir,{recursive:true,force:true})}
+})
+
 test('V1 composition disables the competing native task runtime only on built-in primary agents',()=>{
   const dir=root();try{
     const config={plugin:['opencode-hi'],agent:{build:{tools:{task:true,external_tool:true}},external:{tools:{task:true}}}},authority=new ProjectAuthorityStore(dir)

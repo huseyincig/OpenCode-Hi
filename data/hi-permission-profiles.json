@@ -184,26 +184,6 @@
           "action": "allow"
         },
         {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
-        },
-        {
           "capability": "task",
           "action": "deny"
         },
@@ -268,26 +248,6 @@
         {
           "capability": "lsp",
           "action": "allow"
-        },
-        {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
         },
         {
           "capability": "task",
@@ -356,26 +316,6 @@
           "action": "allow"
         },
         {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
-        },
-        {
           "capability": "task",
           "action": "deny"
         },
@@ -440,36 +380,6 @@
         {
           "capability": "lsp",
           "action": "allow"
-        },
-        {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git ls-files*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "rg *"
         },
         {
           "capability": "task",
@@ -538,26 +448,6 @@
           "action": "allow"
         },
         {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
-        },
-        {
           "capability": "task",
           "action": "deny"
         },
@@ -622,26 +512,6 @@
         {
           "capability": "lsp",
           "action": "allow"
-        },
-        {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
         },
         {
           "capability": "task",
@@ -710,26 +580,6 @@
           "action": "allow"
         },
         {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git log*"
-        },
-        {
           "capability": "task",
           "action": "deny"
         },
@@ -790,21 +640,6 @@
         {
           "capability": "grep",
           "action": "allow"
-        },
-        {
-          "capability": "bash",
-          "action": "ask",
-          "pattern": "*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git status*"
-        },
-        {
-          "capability": "bash",
-          "action": "allow",
-          "pattern": "git diff*"
         },
         {
           "capability": "task",

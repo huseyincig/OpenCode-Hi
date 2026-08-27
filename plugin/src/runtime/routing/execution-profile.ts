@@ -33,10 +33,11 @@ export function effectiveExecutionSurface(hostConfig:Record<string,unknown>,role
   const agents=isRecord(hostConfig.agent)?hostConfig.agent:{}
   const def=isRecord(agents[role])?agents[role] as Record<string,unknown>:undefined
   const permission=def&&isRecord(def.permission)?def.permission:{}
+  const globalPermission=isRecord(hostConfig.permission)?hostConfig.permission:{}
   const globalTools=isRecord(hostConfig.tools)?hostConfig.tools:{}
   const roleTools=def&&isRecord(def.tools)?def.tools:{}
   const decisions:Record<string,NativePermissionDecision>={}
-  for(const key of TOOL_KEYS)decisions[key]=decision(permission[key])
+  for(const key of TOOL_KEYS){const roleDecision=decision(permission[key]),globalDecision=decision(globalPermission[key]);decisions[key]=roleDecision!=='unknown'?roleDecision:globalDecision}
   // Skill permissions are deny-by-default pattern maps. A wildcard deny plus one or
   // more explicit allowed methodologies means the native skill tool itself must stay
   // available so OpenCode can enforce the exact selected skill name at invocation.

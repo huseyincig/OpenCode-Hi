@@ -35,8 +35,17 @@ test('deny-by-default skill map keeps native skill tool available when exact Hi 
   const visual=effectiveExecutionSurface(host,'visual-qa',true)
   assert.equal(visual.permissions.decisions.skill,'allow')
   assert.ok(visual.tools.includes('skill'))
-  assert.equal(visual.permissions.decisions.bash,'ask')
+  assert.equal(visual.permissions.decisions.bash,'unknown')
   assert.equal(visual.permissions.decisions.edit,'deny')
+})
+
+test('child bash inherits host-global native ASK/DENY instead of shadowing it with a Hi role rule',()=>{
+  for(const value of ['ask','deny']){
+    const inherited=effectiveExecutionSurface({permission:{bash:{'*':value}},agent:PACKAGED_HI_AGENTS},'coder',false)
+    assert.equal(inherited.permissions.decisions.bash,value)
+    assert.equal(inherited.tools.includes('bash'),value!=='deny')
+  }
+  assert.equal(Object.hasOwn(PACKAGED_HI_AGENTS.coder.permission,'bash'),false,'canonical child must not own bash permission')
 })
 
 test('zero-skill task gets a complete bounded execution profile and per-message tool minimization',async()=>{
@@ -50,17 +59,17 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
   assert.equal(profile.task.objective,'fix the README typo');assert.deepEqual(profile.task.scope,['README.md'])
   assert.deepEqual(profile.task.dependencies,[]);assert.ok(Array.isArray(profile.task.required_evidence))
   assert.deepEqual(profile.methodologies,[])
-  assert.ok(profile.tools.includes('edit'));assert.ok(profile.tools.includes('write'));assert.ok(profile.tools.includes('bash'),'ask-gated bash remains OpenCode-owned rather than being hidden by Hi');assert.ok(!profile.tools.includes('skill'));assert.ok(!profile.tools.includes('task'))
+  assert.ok(profile.tools.includes('edit'));assert.ok(profile.tools.includes('write'));assert.ok(profile.tools.includes('bash'),'inherited native bash remains OpenCode-owned rather than being hidden by Hi');assert.ok(!profile.tools.includes('skill'));assert.ok(!profile.tools.includes('task'))
   assert.equal(profile.permission_profile.native.source,'effective-opencode-agent')
   assert.equal(profile.permission_profile.native.decisions.edit,'allow')
+  assert.equal(profile.permission_profile.native.decisions.bash,'unknown','raw packaged child profile intentionally leaves bash to OpenCode inheritance')
   assert.equal(profile.permission_profile.native.decisions.task,'deny')
   assert.equal(prompts.length,1)
   const tools=prompts[0].body.tools
   assert.equal(tools.skill,false);assert.equal(tools.task,false);assert.equal(tools.bash,undefined);assert.equal(tools.webfetch,false);assert.equal(tools.websearch,false)
   assert.equal(tools.hi_direct_progress,false);assert.equal(tools.hi_task_start,false);assert.equal(tools.hi_task_cancel,false);assert.equal(tools.hi_team_create,undefined)
   assert.equal(tools.edit,undefined);assert.equal(tools.write,undefined)
-  assert.match(JSON.stringify(prompts[0]),/host ask-gated tools remain available under OpenCode native permission control: bash/i)
-  assert.match(JSON.stringify(prompts[0]),/Use them only when materially required/i)
+  assert.doesNotMatch(JSON.stringify(prompts[0]),/host ask-gated tools remain available under OpenCode native permission control: bash/i)
 })
 
 

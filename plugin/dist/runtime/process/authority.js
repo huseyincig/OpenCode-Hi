@@ -6,11 +6,8 @@ import { evaluateShellCommand } from './shell-policy.js';
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function wildcard(input, pattern) { const normalized = input.replaceAll('\\', '/'), source = pattern.replaceAll('\\', '/'); let escaped = source.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.'); if (escaped.endsWith(' .*'))
     escaped = escaped.slice(0, -3) + '( .*)?'; return new RegExp('^' + escaped + '$', process.platform === 'win32' ? 'si' : 's').test(normalized); }
-function permissionDecision(hostConfig, role, permission, pattern) {
-    const agents = record(hostConfig['agent']) ? hostConfig['agent'] : {};
-    const roleValue = agents[role], agent = record(roleValue) ? roleValue : {};
-    const permissionValue = agent['permission'], permissions = record(permissionValue) ? permissionValue : {};
-    let result = 'ask';
+function applyPermissionRules(initial, permissions, permission, pattern) {
+    let result = initial;
     for (const permissionKey of Object.keys(permissions)) {
         if (!wildcard(permission, permissionKey))
             continue;
@@ -26,6 +23,17 @@ function permissionDecision(hostConfig, role, permission, pattern) {
                 result = action;
     }
     return result;
+}
+function permissionDecision(hostConfig, role, permission, pattern) {
+    // OpenCode stable evaluates custom agents as native defaults -> global user config -> agent config, with last matching rule winning.
+    // Mirror only the two native permission classes ProcessRuntime actually owns instead of inventing a second generic permission engine.
+    const nativeDefault = permission === 'external_directory' ? 'ask' : 'allow';
+    const globalPermissions = record(hostConfig['permission']) ? hostConfig['permission'] : {};
+    const afterGlobal = applyPermissionRules(nativeDefault, globalPermissions, permission, pattern);
+    const agents = record(hostConfig['agent']) ? hostConfig['agent'] : {};
+    const roleValue = agents[role], agent = record(roleValue) ? roleValue : {};
+    const permissionValue = agent['permission'], agentPermissions = record(permissionValue) ? permissionValue : {};
+    return applyPermissionRules(afterGlobal, agentPermissions, permission, pattern);
 }
 function quoted(value) { return /^[A-Za-z0-9_./:@%+=,-]+$/.test(value) ? value : `'${value.replaceAll("'", `'\\''`)}'`; }
 export function processCommandLine(request) { return [request.command, ...request.args ?? []].map(quoted).join(' '); }

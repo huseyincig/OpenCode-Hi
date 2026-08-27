@@ -131,22 +131,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
         readonly capability: "lsp";
         readonly action: "allow";
     }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
-    }, {
         readonly capability: "task";
         readonly action: "deny";
     }, {
@@ -195,22 +179,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
     }, {
         readonly capability: "lsp";
         readonly action: "allow";
-    }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
     }, {
         readonly capability: "task";
         readonly action: "deny";
@@ -261,22 +229,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
         readonly capability: "lsp";
         readonly action: "allow";
     }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
-    }, {
         readonly capability: "task";
         readonly action: "deny";
     }, {
@@ -325,30 +277,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
     }, {
         readonly capability: "lsp";
         readonly action: "allow";
-    }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git ls-files*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "rg *";
     }, {
         readonly capability: "task";
         readonly action: "deny";
@@ -399,22 +327,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
         readonly capability: "lsp";
         readonly action: "allow";
     }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
-    }, {
         readonly capability: "task";
         readonly action: "deny";
     }, {
@@ -463,22 +375,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
     }, {
         readonly capability: "lsp";
         readonly action: "allow";
-    }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
     }, {
         readonly capability: "task";
         readonly action: "deny";
@@ -529,22 +425,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
         readonly capability: "lsp";
         readonly action: "allow";
     }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git log*";
-    }, {
         readonly capability: "task";
         readonly action: "deny";
     }, {
@@ -590,18 +470,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
     }, {
         readonly capability: "grep";
         readonly action: "allow";
-    }, {
-        readonly capability: "bash";
-        readonly action: "ask";
-        readonly pattern: "*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git status*";
-    }, {
-        readonly capability: "bash";
-        readonly action: "allow";
-        readonly pattern: "git diff*";
     }, {
         readonly capability: "task";
         readonly action: "deny";

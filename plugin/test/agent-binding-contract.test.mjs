@@ -55,8 +55,7 @@ test('canonical Hi agent permits harmless metadata and permission narrowing with
   actual.hidden=true
   actual.steps=Math.max(1,actual.steps-1)
   actual.permission.edit='deny'
-  actual.permission.bash['git diff*']='ask'
-  actual.permission.bash['rm -rf *']='deny'
+  actual.permission.read['private/**']='deny'
   assert.equal(matchesHiOpenCodeAgent(actual,PACKAGED_HI_AGENTS.coder),true)
   const cfg={agent:{coder:actual,external:{description:'foreign agent',mode:'subagent'}}}
   assert.deepEqual(collisions(cfg,{coder:PACKAGED_HI_AGENTS.coder}),[])

@@ -3,12 +3,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Read-only architecture, contract, and data-model design specialist";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "deny";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -43,12 +37,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Implements scoped production changes, refactors, and bug fixes";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "allow";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -112,12 +100,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Independently reviews diffs, tests, and acceptance criteria for regressions";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "deny";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -151,14 +133,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Maps only the repository context needed for the current decision";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git ls-files*": "allow";
-                readonly "git status*": "allow";
-                readonly "rg *": "allow";
-            };
             readonly edit: "deny";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -188,12 +162,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Researches external references and synthesizes source-provenance evidence";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "deny";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -221,12 +189,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Reviews real security-boundary changes through data flow and authority";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "deny";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -258,12 +220,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Authors and maintains documentation within documentation-bounded repository surfaces";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "allow";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -291,12 +247,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Authors test sources and performs targeted test execution for the assigned behavior";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git log*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "allow";
             readonly external_directory: "deny";
             readonly glob: "allow";
@@ -325,11 +275,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly description: "Verifies UI changes with browser, responsive, console, and network evidence";
         readonly mode: "subagent";
         readonly permission: {
-            readonly bash: {
-                readonly "*": "ask";
-                readonly "git diff*": "allow";
-                readonly "git status*": "allow";
-            };
             readonly edit: "deny";
             readonly external_directory: "deny";
             readonly glob: "allow";

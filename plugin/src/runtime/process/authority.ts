@@ -9,11 +9,8 @@ export interface ProcessPermissionRequest{permission:'bash'|'external_directory'
 export interface ProcessSpawnAuthorityResult{decision:'ALLOW'|'ASK'|'DENY';reason:string;command_line:string;external_cwd:boolean;permission_request?:ProcessPermissionRequest}
 function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
 function wildcard(input:string,pattern:string):boolean{const normalized=input.replaceAll('\\','/'),source=pattern.replaceAll('\\','/');let escaped=source.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.');if(escaped.endsWith(' .*'))escaped=escaped.slice(0,-3)+'( .*)?';return new RegExp('^'+escaped+'$',process.platform==='win32'?'si':'s').test(normalized)}
-function permissionDecision(hostConfig:Record<string,unknown>,role:string,permission:string,pattern:string):ProcessPermissionDecision{
-  const agents:Record<string,unknown>=record(hostConfig['agent'])?hostConfig['agent']:{}
-  const roleValue=agents[role],agent:Record<string,unknown>=record(roleValue)?roleValue:{}
-  const permissionValue=agent['permission'],permissions:Record<string,unknown>=record(permissionValue)?permissionValue:{}
-  let result:ProcessPermissionDecision='ask'
+function applyPermissionRules(initial:ProcessPermissionDecision,permissions:Record<string,unknown>,permission:string,pattern:string):ProcessPermissionDecision{
+  let result=initial
   for(const permissionKey of Object.keys(permissions)){
     if(!wildcard(permission,permissionKey))continue
     const value=permissions[permissionKey]
@@ -22,6 +19,17 @@ function permissionDecision(hostConfig:Record<string,unknown>,role:string,permis
     for(const [rulePattern,action] of Object.entries(value))if(wildcard(pattern,rulePattern)&&(action==='allow'||action==='ask'||action==='deny'))result=action
   }
   return result
+}
+function permissionDecision(hostConfig:Record<string,unknown>,role:string,permission:'bash'|'external_directory',pattern:string):ProcessPermissionDecision{
+  // OpenCode stable evaluates custom agents as native defaults -> global user config -> agent config, with last matching rule winning.
+  // Mirror only the two native permission classes ProcessRuntime actually owns instead of inventing a second generic permission engine.
+  const nativeDefault:ProcessPermissionDecision=permission==='external_directory'?'ask':'allow'
+  const globalPermissions:Record<string,unknown>=record(hostConfig['permission'])?hostConfig['permission']:{}
+  const afterGlobal=applyPermissionRules(nativeDefault,globalPermissions,permission,pattern)
+  const agents:Record<string,unknown>=record(hostConfig['agent'])?hostConfig['agent']:{}
+  const roleValue=agents[role],agent:Record<string,unknown>=record(roleValue)?roleValue:{}
+  const permissionValue=agent['permission'],agentPermissions:Record<string,unknown>=record(permissionValue)?permissionValue:{}
+  return applyPermissionRules(afterGlobal,agentPermissions,permission,pattern)
 }
 function quoted(value:string):string{return /^[A-Za-z0-9_./:@%+=,-]+$/.test(value)?value:`'${value.replaceAll("'",`'\\''`)}'`}
 export function processCommandLine(request:Pick<ProcessSpawnRequest,'command'|'args'>):string{return[request.command,...request.args??[]].map(quoted).join(' ')}

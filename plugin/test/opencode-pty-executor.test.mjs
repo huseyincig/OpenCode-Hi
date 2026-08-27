@@ -64,7 +64,19 @@ test('authority evaluator mirrors OpenCode last-match wildcard semantics and fai
   assert.equal(processCommandLine(request),"node -e 'console.log(1)'")
   assert.equal(evaluateProcessSpawnAuthority(request,'/repo',host({bash:{'*':'allow','node *':'deny'},external_directory:{'*':'ask'}})).decision,'DENY')
   assert.equal(evaluateProcessSpawnAuthority(request,'/repo',host({bash:{'*':'deny','node *':'allow'},external_directory:{'*':'ask'}})).decision,'ALLOW')
-  assert.equal(evaluateProcessSpawnAuthority(request,'/repo',host({bash:{'git *':'allow'},external_directory:{'*':'ask'}})).decision,'ASK')
+  assert.equal(evaluateProcessSpawnAuthority(request,'/repo',host({bash:{'git *':'allow'},external_directory:{'*':'ask'}})).decision,'ALLOW')
+})
+
+test('process authority mirrors OpenCode native default then global then agent permission inheritance',()=>{
+  const request=baseRequest()
+  const inherited={permission:{bash:{'*':'ask','node *':'deny'}},agent:{coder:{permission:{external_directory:'deny'}}}}
+  assert.equal(evaluateProcessSpawnAuthority(request,'/repo',inherited).decision,'DENY','global node deny survives omitted role bash')
+  const broadAsk={permission:{bash:{'*':'ask'}},agent:{coder:{permission:{external_directory:'deny'}}}}
+  assert.equal(evaluateProcessSpawnAuthority(request,'/repo',broadAsk).decision,'ASK','global ask survives omitted role bash')
+  const nativeDefault={agent:{coder:{permission:{external_directory:'deny'}}}}
+  assert.equal(evaluateProcessSpawnAuthority(request,'/repo',nativeDefault).decision,'ALLOW','ordinary local bash inherits OpenCode native allow default')
+  const roleNarrow={permission:{bash:{'*':'allow'}},agent:{coder:{permission:{bash:{'node *':'deny'},external_directory:'deny'}}}}
+  assert.equal(evaluateProcessSpawnAuthority(request,'/repo',roleNarrow).decision,'DENY','agent-specific narrowing remains last-match authoritative')
 })
 
 test('external cwd requires explicit external_directory allow and external effects require matching ExternalAction authority',()=>{
