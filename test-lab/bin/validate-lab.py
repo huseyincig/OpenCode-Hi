@@ -5,10 +5,12 @@ ROOT=Path(__file__).resolve().parents[2]
 LAB=ROOT/'test-lab'
 errors=[]
 pool=json.loads((LAB/'config/model-pool.json').read_text())
-allowed=pool['cost_priority']
+allowed=pool['allowed_models']
+cost=pool['cost_priority']
+if allowed!=cost: errors.append('allowed_models must exactly equal cost_priority')
 if len(allowed)!=len(set(allowed)): errors.append('model pool contains duplicates')
-for expected in pool['user_cost_order']:
-    if expected not in allowed: errors.append(f'user model missing from allowed pool: {expected}')
+profile=pool.get('execution_profile',{})
+if profile.get('executionPolicy')!='adaptive' or profile.get('topology')!='adaptive' or profile.get('roleModels')!={}: errors.append('model pool execution profile must be adaptive/adaptive with empty roleModels')
 ids=[]
 for d in sorted((LAB/'scenarios').iterdir()):
     if not d.is_dir(): continue
