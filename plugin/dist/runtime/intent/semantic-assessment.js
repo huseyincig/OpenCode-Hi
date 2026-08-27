@@ -76,10 +76,39 @@ export function semanticTargets(value, max = 20) {
 }
 function testLikeTarget(path) { return /(^|\/)(?:test|tests|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path); }
 export function materialSemanticTargets(assessment) { const verificationOwnsTests = assessment.likely_verification.includes('targeted-tests') && !assessment.intent_signals.includes('intent.tdd'); return assessment.likely_targets.filter(path => !(verificationOwnsTests && testLikeTarget(path))); }
+function normalizedDirectiveText(text) { return text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim(); }
+function preservationContextForPath(text, path) {
+    const target = path.toLowerCase();
+    let from = 0;
+    while (from < text.length) {
+        const at = text.indexOf(target, from);
+        if (at < 0)
+            break;
+        const before = text.slice(Math.max(0, at - 120), at).trim(), after = text.slice(at + target.length, Math.min(text.length, at + target.length + 120)).trim();
+        const deniedBefore = /(?:^|\b)(?:do not|don't|must not|never)\s+(?:modify|edit|change|write|update|touch|overwrite|replace)(?:\s+the)?\s*$/.test(before) || /(?:^|\b)without\s+(?:modifying|editing|changing|writing|updating|touching|overwriting|replacing)(?:\s+the)?\s*$/.test(before);
+        const preserveBefore = /(?:^|\b)(?:keep|leave|preserve)(?:\s+the)?\s*$/.test(before);
+        const preservedAfter = /^(?:unchanged|unmodified|untouched|intact)\b/.test(after) || /^(?:at|as)\s+(?:the\s+)?(?:exact\s+)?(?:tracked\s+)?baseline\b/.test(after) || /^(?:must|should)\s+(?:remain|stay)\s+(?:unchanged|unmodified|untouched|intact)\b/.test(after);
+        if (deniedBefore || preserveBefore || preservedAfter)
+            return true;
+        from = at + target.length;
+    }
+    return false;
+}
+/**
+ * A path may be technically relevant without being an implementation target.
+ * Keep explicit preservation / mutation-denial directives out of requiredTargets
+ * while retaining the path in likelyTargets for context, safety and verification.
+ */
+export function preservationOnlyTargets(userText) {
+    const text = normalizedDirectiveText(userText);
+    if (!text)
+        return [];
+    return [...new Set(technicalTargets(userText).map(path => normalizeBoundedProjectPath(path)).filter((path) => Boolean(path) && preservationContextForPath(text, path)))];
+}
 export function userRequiredMaterialTargets(userText, assessment) {
-    const material = new Set(materialSemanticTargets(assessment).map(path => normalizeBoundedProjectPath(path)).filter((path) => Boolean(path)));
+    const material = new Set(materialSemanticTargets(assessment).map(path => normalizeBoundedProjectPath(path)).filter((path) => Boolean(path))), preserved = new Set(preservationOnlyTargets(userText));
     const explicit = technicalTargets(userText).map(path => normalizeBoundedProjectPath(path)).filter((path) => Boolean(path));
-    return [...new Set(explicit.filter(path => material.has(path)))];
+    return [...new Set(explicit.filter(path => material.has(path) && !preserved.has(path)))];
 }
 export function provisionalIntent(text, repo) {
     const objective = text.trim().replace(/\s+/g, ' '), targets = technicalTargets(text), explicitVerification = technicalVerificationKinds(text);

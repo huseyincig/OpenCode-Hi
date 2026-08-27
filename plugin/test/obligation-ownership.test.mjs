@@ -168,6 +168,19 @@ test('implementation required-target traceability is user-grounded and excludes 
 
   const contextOnly=assessedMission('ownership-required-targets-context','Inspect src/b.ts for context, but change only src/a.ts.',{scope:'local',risk:'low',likely_targets:['src/a.ts']})
   assert.deepEqual(contextOnly.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
+
+
+  const preservedData=assessedMission('ownership-required-targets-preserve-data','Fix src/server.js. Keep data.json at the exact tracked baseline; do not modify data.json.',{scope:'multi-file',risk:'low',ambiguity:'resolvable',likely_targets:['src/server.js','data.json']})
+  assert.deepEqual(preservedData.identity.intent.likelyTargets,['src/server.js','data.json'],'preserved path remains context/safety-relevant')
+  assert.deepEqual(preservedData.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/server.js'],'preservation-only path is not required mutation work')
+  assert.deepEqual(preservedData.execution.ledger.findLast(e=>e.type==='semantic.assessed')?.payload?.required_material_targets,['src/server.js'])
+
+  const unchangedConfig=assessedMission('ownership-required-targets-unchanged-config','Change src/a.ts; config.json must remain unchanged.',{scope:'multi-file',risk:'low',ambiguity:'resolvable',likely_targets:['src/a.ts','config.json']})
+  assert.deepEqual(unchangedConfig.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
+
+
+  const deniedConfig=assessedMission('ownership-required-targets-denied-config','Change src/a.ts, but do not modify config.json.',{scope:'multi-file',risk:'low',ambiguity:'resolvable',likely_targets:['src/a.ts','config.json']})
+  assert.deepEqual(deniedConfig.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
 })
 
 test('worker implementation completion accumulates required-target coverage without prematurely closing the mission obligation',()=>{
