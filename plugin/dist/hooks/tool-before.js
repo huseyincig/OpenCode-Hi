@@ -1,7 +1,7 @@
 import { isVerificationCommand, normalizeProjectPath, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
 import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
 import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
-import { hasTopLevelPosixBackgroundOperator } from '../runtime/safety/execution-projection.js';
+import { hasProjectedPosixBackgroundExecution } from '../runtime/safety/execution-projection.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
 import { assertSafeGitMutation, invalidateStagingProof, invalidateGitTopologyProof, beginGitTopologyMutation, mutatesGitIndex, isGitTopologyMutation } from '../runtime/safety/staging-safety.js';
 import { assertReleaseChainPrecondition, isPackagePublish, isReleaseCreate } from '../runtime/safety/release-chain.js';
@@ -138,7 +138,7 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             else if (name)
                 assertParentMethodologyLoad(m, name, projectRoot);
         }
-        if (m.identity.status === 'active' && tool === 'bash' && typeof args?.command === 'string' && hasTopLevelPosixBackgroundOperator(args.command)) {
+        if (m.identity.status === 'active' && tool === 'bash' && typeof args?.command === 'string' && hasProjectedPosixBackgroundExecution(args.command)) {
             appendLedger(m, 'process.native-background-blocked', { task_id: child?.task_id, worker_id: child?.id, payload: { owner: child ? 'child' : 'parent', reason: 'process-contract-requires-task-worker-owner', command: String(args.command).slice(0, 180), required_tool: child ? 'hi_process_spawn' : 'hi_task_start' } });
             throw new Error(child ? 'Hi process ownership: active child workers cannot create native background shell jobs. Return the long-running-process requirement to the parent unless this exact task owns process_lifecycle=true; process-owning workers must use hi_process_spawn.' : 'Hi process ownership: active parent sessions cannot create native background shell jobs. Create or resume the exact Task with process_lifecycle=true, then let that Task worker use hi_process_spawn.');
         }

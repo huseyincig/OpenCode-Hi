@@ -17,3 +17,5 @@ export interface ExecutionProjection {
 }
 export declare function hasTopLevelPosixBackgroundOperator(source: string): boolean;
 export declare function projectExecutionSurface(command: string, dialect?: 'auto' | ExecutionDialect): ExecutionProjection;
+/** True when the bounded executable projection contains an actual POSIX background job. Inert quoted/output text is not projected as executable child code. */
+export declare function hasProjectedPosixBackgroundExecution(command: string): boolean;

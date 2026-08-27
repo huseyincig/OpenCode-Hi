@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {evaluateShellCommand} from '../dist/runtime/process/shell-policy.js'
-import {hasTopLevelPosixBackgroundOperator,projectExecutionSurface} from '../dist/runtime/safety/execution-projection.js'
+import {hasProjectedPosixBackgroundExecution,hasTopLevelPosixBackgroundOperator,projectExecutionSurface} from '../dist/runtime/safety/execution-projection.js'
 import {externalEffectCommand,canonicalExternalCommand} from '../dist/runtime/safety/command-classifier.js'
 
 function restricted(command){const shell=evaluateShellCommand(command);return shell.decision==='DENY'||shell.decision==='USER_ACTION_REQUIRED'||externalEffectCommand(command)}
@@ -18,6 +18,15 @@ test('top-level background detection distinguishes shell control from quoted com
   assert.equal(hasTopLevelPosixBackgroundOperator('echo ok 2>&1'),false)
   assert.equal(hasTopLevelPosixBackgroundOperator('echo ok |& cat'),false)
   assert.equal(hasTopLevelPosixBackgroundOperator('echo foo\\&bar'),false)
+})
+
+test('projected background detection follows executable carriers without treating inert text as execution',()=>{
+  assert.equal(hasProjectedPosixBackgroundExecution('python3 app.py &'),true)
+  assert.equal(hasProjectedPosixBackgroundExecution(`node -e "const {execSync}=require('child_process'); execSync('PORT=3100 node src/server.js &')"`),true)
+  assert.equal(hasProjectedPosixBackgroundExecution(`node -e "console.log('PORT=3100 node src/server.js &')"`),false)
+  assert.equal(hasProjectedPosixBackgroundExecution('echo "node src/server.js &"'),false)
+  assert.equal(hasProjectedPosixBackgroundExecution("# inert & text\necho '&lt;script&gt;'"),false)
+  assert.equal(hasProjectedPosixBackgroundExecution("# Check if script tags are escaped in the HTML (should appear as &lt;script&gt;)\ncurl -s http://localhost:5000/ | grep -o '&lt;script&gt;' | head -3"),false)
 })
 
 const HOLDOUT=[

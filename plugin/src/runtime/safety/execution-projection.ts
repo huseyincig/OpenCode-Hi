@@ -325,3 +325,9 @@ export function projectExecutionSurface(command:string,dialect:'auto'|ExecutionD
   CACHE.set(key,value);if(CACHE.size>CACHE_MAX)CACHE.delete(CACHE.keys().next().value as string)
   return cloneProjection(value)
 }
+
+/** True when the bounded executable projection contains an actual POSIX background job. Inert quoted/output text is not projected as executable child code. */
+export function hasProjectedPosixBackgroundExecution(command:string):boolean{
+  if(hasTopLevelPosixBackgroundOperator(command))return true
+  return projectExecutionSurface(command,'posix').fragments.some(fragment=>fragment.origin!=='root'&&fragment.dialect==='posix'&&hasTopLevelPosixBackgroundOperator(fragment.text))
+}

@@ -785,3 +785,9 @@ export function projectExecutionSurface(command, dialect = 'auto') {
         CACHE.delete(CACHE.keys().next().value);
     return cloneProjection(value);
 }
+/** True when the bounded executable projection contains an actual POSIX background job. Inert quoted/output text is not projected as executable child code. */
+export function hasProjectedPosixBackgroundExecution(command) {
+    if (hasTopLevelPosixBackgroundOperator(command))
+        return true;
+    return projectExecutionSurface(command, 'posix').fragments.some(fragment => fragment.origin !== 'root' && fragment.dialect === 'posix' && hasTopLevelPosixBackgroundOperator(fragment.text));
+}

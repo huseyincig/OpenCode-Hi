@@ -283,11 +283,13 @@ test('active parent cannot escape ProcessContract ownership through native backg
   const hook=createToolBeforeHook(store,undefined,()=>resolveHiConfig({}),process.cwd())
   await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'python3 app.py &'}}),/Create or resume the exact Task with process_lifecycle=true/i)
   await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'nohup python3 app.py > flask.log 2>&1 &'}}),/native background shell jobs/i)
+  await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:`node -e "const {execSync}=require('child_process'); execSync('PORT=3100 node src/server.js &')"`}}),/native background shell jobs/i)
+  await hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:`node -e "console.log('PORT=3100 node src/server.js &')"`}})
   await hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'echo "a & b" && echo done'}})
   await hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:"# Check if script tags are escaped in the HTML (should appear as &lt;script&gt;)\ncurl -s http://localhost:5000/ | grep -o '&lt;script&gt;' | head -3"}})
   await hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'echo ok &>flask.log'}})
-  assert.equal(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').length,2)
-  assert.deepEqual(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').map(e=>e.payload.owner),['parent','parent'])
+  assert.equal(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').length,3)
+  assert.deepEqual(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').map(e=>e.payload.owner),['parent','parent','parent'])
 })
 
 test('active child without process_lifecycle cannot create an unowned native background job',async()=>{
