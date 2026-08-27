@@ -43,7 +43,7 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             return;
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
-        const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
+        const tool = String(input?.tool ?? ''), rawArgs = output?.args ?? input?.args ?? {}, args = HI_PROCESS_EXECUTION_TOOL_IDS.includes(tool) && rawArgs?.input && typeof rawArgs.input === 'object' && !Array.isArray(rawArgs.input) ? { ...rawArgs, ...rawArgs.input } : rawArgs;
         if (!child && !NON_MATERIAL_CONTROL_TOOLS.has(tool) && store.reopenContradictedNonMaterial(String(sid), tool))
             throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`);
         if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args)) {
