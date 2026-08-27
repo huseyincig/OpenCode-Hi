@@ -30,6 +30,19 @@ test('ablation: accepted sessionless queued task survives restart as pending wor
 })
 
 
+test('queued recipe is invalidated before dispatch when an earlier canonical owner settles FIX_REQUIRED',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-owner-race','one canonical implementation obligation with queued follow-up',{scope:'local',dependency_class:'independent',required_capabilities:['implementation'],likely_verification:[]})
+  const created=[],rt=runtime(created),first=await rt.start(m,{objective:'run service owner',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'queued replacement',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
+  assert.equal(first.readiness,'READY');assert.equal(second.readiness,'WAIT');assert.equal(rt.queueDepth(),1);assert.deepEqual(created,['child-1'])
+  const firstTask=m.execution.tasks.find(t=>t.id===first.task_id),firstWorker=m.execution.workers.find(w=>w.id===first.worker_id),queuedTask=m.execution.tasks.find(t=>t.id===second.task_id),queuedWorker=m.execution.workers.find(w=>w.id===second.worker_id)
+  assert.deepEqual(firstTask.obligation_ids,queuedTask.obligation_ids)
+  rt.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'canonical correction remains',changed_files:[],scope_expansions:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:[]})
+  await new Promise(resolve=>setImmediate(resolve))
+  assert.equal(firstTask.status,'waiting');assert.equal(firstWorker.status,'ready');assert.equal(queuedTask.status,'cancelled');assert.equal(queuedWorker.status,'cancelled');assert.equal(rt.queueDepth(),0);assert.deepEqual(created,['child-1'])
+  const invalidated=m.execution.ledger.findLast(e=>e.type==='worker.queue-reconcile-invalidated'&&e.task_id===second.task_id);assert.equal(invalidated?.payload?.owner_task_id,first.task_id);assert.equal(invalidated?.payload?.owner_status,'FIX_REQUIRED');assert.deepEqual(invalidated?.payload?.overlapping_obligations,firstTask.obligation_ids)
+  const resumed=await rt.resume(m,first.task_id);assert.equal(resumed.task_id,first.task_id);assert.equal(resumed.worker_id,first.worker_id);assert.equal(firstWorker.status,'busy');assert.equal(created.length,1,'same-session correction must win instead of spawning queued replacement')
+})
+
 test('ablation: durable queued recipe rehydrates and dispatches the exact existing Task/Worker identity',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-dispatch','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}

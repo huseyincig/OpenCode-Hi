@@ -113,11 +113,11 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     }
     return [...new Set(out)];
 }
-function unresolvedResultOwner(m, obligationIds, resumeTaskId) {
-    if (resumeTaskId || !obligationIds.length)
+function unresolvedResultOwner(m, obligationIds, excludeTaskId) {
+    if (!obligationIds.length)
         return undefined;
     const owned = new Set(obligationIds);
-    return m.execution.tasks.find(task => task.status !== 'cancelled' && task.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT'].includes(task.result.status) && task.obligation_ids.some(id => owned.has(id)));
+    return m.execution.tasks.find(task => task.id !== excludeTaskId && task.status !== 'cancelled' && task.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT'].includes(task.result.status) && task.obligation_ids.some(id => owned.has(id)));
 }
 export class TaskRuntime {
     childHost;
@@ -393,6 +393,31 @@ export class TaskRuntime {
         syncMissionGates(m);
         return true;
     }
+    async invalidateQueuedForUnresolvedOwner(m, task, worker, owner) {
+        const cleaned = await this.cleanupWorkspaceForTask(m, task.id), now = Date.now();
+        this.registry.delete(worker.id);
+        releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
+        if (!cleaned) {
+            const marker = `queue-invalidation-cleanup-failed:${task.id}`;
+            worker.status = 'failed';
+            worker.completed_at = now;
+            task.status = 'blocked';
+            task.updated_at = now;
+            task.result = { status: 'BLOCKED', summary: `Queued task cannot dispatch because canonical task ${owner.id} now owns unresolved ${owner.result?.status ?? 'result'} state, and queued workspace cleanup failed.`, changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile queued workspace ownership before retrying or replacing this task'] };
+            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            releaseFailedTaskMethodologyNeeds(m, task.id);
+            appendLedger(m, 'worker.queue-invalidation-cleanup-blocked', { task_id: task.id, worker_id: worker.id, payload: { owner_task_id: owner.id, owner_status: owner.result?.status, overlapping_obligations: task.obligation_ids.filter(id => owner.obligation_ids.includes(id)) } });
+            syncMissionGates(m);
+            return;
+        }
+        worker.status = 'cancelled';
+        worker.completed_at = now;
+        task.status = 'cancelled';
+        task.updated_at = now;
+        releaseCancelledTaskMethodologyNeeds(m, task.id);
+        appendLedger(m, 'worker.queue-reconcile-invalidated', { task_id: task.id, worker_id: worker.id, payload: { owner_task_id: owner.id, owner_status: owner.result?.status, overlapping_obligations: task.obligation_ids.filter(id => owner.obligation_ids.includes(id)), reason: 'canonical-unresolved-owner-before-dispatch' } });
+        syncMissionGates(m);
+    }
     async queuedRuntimeResourcesReady(m, task, worker) {
         if (task.execution_profile?.browser_backend !== 'bounded-playwright')
             return true;
@@ -431,6 +456,13 @@ export class TaskRuntime {
                     continue;
                 if (!t) {
                     this.#queue.splice(i--, 1);
+                    continue;
+                }
+                const unresolvedOwner = unresolvedResultOwner(e.mission, t.obligation_ids, t.id);
+                if (unresolvedOwner) {
+                    this.#queue.splice(i--, 1);
+                    await this.invalidateQueuedForUnresolvedOwner(e.mission, t, e.worker, unresolvedOwner);
+                    progress = true;
                     continue;
                 }
                 if (!await this.queuedRuntimeResourcesReady(e.mission, t, e.worker))
@@ -567,8 +599,8 @@ export class TaskRuntime {
         if (isolationRequired && !isolationReason)
             throw new Error('Hi isolated task requires a bounded isolation reason');
         const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : []), ...mcpExposure.selected.map(name => `hi-mcp:${name}`), ...(browserDecision.backend ? [`hi-browser-backend:${browserDecision.backend}`] : []), ...browserAllowedOrigins.map(origin => `hi-browser-origin:${origin}`)])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = input.resumeTaskId ? m.execution.workers.find(w => w.task_id === input.resumeTaskId && !['completed', 'failed', 'cancelled'].includes(w.status)) : m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
-        const unresolvedOwner = unresolvedResultOwner(m, obligationIds, input.resumeTaskId);
-        if (unresolvedOwner && existing?.task_id !== unresolvedOwner.id) {
+        const unresolvedOwner = input.resumeTaskId ? undefined : unresolvedResultOwner(m, obligationIds, existing?.task_id);
+        if (unresolvedOwner) {
             appendLedger(m, 'task.start.reconcile-required', { task_id: unresolvedOwner.id, payload: { requested_role: role, requested_obligations: obligationIds, unresolved_status: unresolvedOwner.result?.status } });
             throw new Error(`Canonical task ${unresolvedOwner.id} has unresolved ${unresolvedOwner.result?.status}; resume/reconcile that exact task before starting new work for obligation(s): ${obligationIds.filter(id => unresolvedOwner.obligation_ids.includes(id)).join(', ')}`);
         }

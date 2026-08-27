@@ -131,10 +131,11 @@ test('same-session attempt prompt IDs bind OpenCode assistant ancestry and stale
 })
 
 test('cancelling FIX_REQUIRED task retires only its result-owned blockers and releases replacement ownership',async()=>{
-  const {runtime,m}=setup();const first=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']});const second=await runtime.start(m,{objective:'change y',role:'coder',category:'standard',scope:['src/y.ts']})
-  const firstWorker=m.execution.workers.find(w=>w.id===first.worker_id),firstTask=m.execution.tasks.find(t=>t.id===first.task_id),secondWorker=m.execution.workers.find(w=>w.id===second.worker_id)
+  const {runtime,m}=setup();const first=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const firstWorker=m.execution.workers.find(w=>w.id===first.worker_id),firstTask=m.execution.tasks.find(t=>t.id===first.task_id)
   runtime.applyResult(m,firstWorker.id,{...workerResult('FIX_REQUIRED'),open_issues:['only-cancelled','shared-blocker']})
-  runtime.applyResult(m,secondWorker.id,{...workerResult('FIX_REQUIRED'),open_issues:['shared-blocker']});m.execution.blockers.push('unrelated-blocker')
+  m.execution.tasks.push({id:'t-shared-owner',mission_id:m.identity.mission_id,objective:'independent unresolved owner',status:'waiting',role:'coder',category:'standard',scope:['src/y.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{...workerResult('FIX_REQUIRED'),open_issues:['shared-blocker']},worker_id:'w-shared-owner',created_at:Date.now(),updated_at:Date.now()})
+  m.execution.workers.push({id:'w-shared-owner',task_id:'t-shared-owner',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'shared-owner',status:'ready',attempt:1,generation_at_spawn:m.continuation.generation,updated_at:Date.now()});m.execution.blockers.push('unrelated-blocker')
   assert.equal(await runtime.cancel(m,firstTask.id),true);assert.equal(firstTask.status,'cancelled');assert.equal(firstWorker.status,'cancelled')
   assert.deepEqual(new Set(m.execution.blockers),new Set(['shared-blocker','unrelated-blocker']))
   const cancelled=m.execution.ledger.findLast(e=>e.type==='worker.cancelled'&&e.task_id===firstTask.id);assert.deepEqual(cancelled?.payload?.retired_result_issues,['only-cancelled'])

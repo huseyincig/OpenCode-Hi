@@ -29,7 +29,7 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
         m.continuation.stagnation_count = 0;
         return { decision: 'USER_ACTION_REQUIRED', reason: `process-orphan:${orphan.process_id}`, reason_code: 'process-orphan-blocked' };
     }
-    const operationalPrefixes = ['dependency-unavailable:', 'workspace-orphan:', 'workspace-reintegration-failed:', 'workspace-provision-failed:', 'queue-overflow-cleanup-failed:', 'browser-cleanup-failed:', 'process-cleanup:', 'process-termination-unverified:', 'process-wait-failed:', 'scheduler-restart-reconcile-failed:'];
+    const operationalPrefixes = ['dependency-unavailable:', 'workspace-orphan:', 'workspace-reintegration-failed:', 'workspace-provision-failed:', 'queue-overflow-cleanup-failed:', 'queue-invalidation-cleanup-failed:', 'browser-cleanup-failed:', 'process-cleanup:', 'process-termination-unverified:', 'process-wait-failed:', 'scheduler-restart-reconcile-failed:'];
     const operationalBlocker = m.execution.blockers.find(x => operationalPrefixes.some(prefix => x.startsWith(prefix)));
     if (operationalBlocker) {
         m.continuation.stagnation_count = 0;

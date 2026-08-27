@@ -114,6 +114,7 @@ export declare class TaskRuntime {
     rehydrateQueued(input: MissionState | MissionState[]): number;
     wakeQueued(): void;
     private rollbackQueueCapacityRejection;
+    private invalidateQueuedForUnresolvedOwner;
     private queuedRuntimeResourcesReady;
     private drainQueue;
     start(m: MissionState, input?: StartTaskInput): Promise<{
