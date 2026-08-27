@@ -21,6 +21,7 @@ export interface ProcessSpawnRequest {
     env?: Record<string, string>;
     title?: string;
     timeout_ms?: number;
+    service_origins?: string[];
     authority_ref: string;
     external_action?: ExternalActionContract;
     native_permission_grants?: ProcessNativePermissionGrant[];

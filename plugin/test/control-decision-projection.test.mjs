@@ -55,6 +55,19 @@ test('deadline-less persistent service does not mask verification and is exclude
   const decision=projectControlDecision(m,process.cwd());assert.equal(decision.action,'VERIFY');assert.deepEqual(decision.wait_for,[])
 })
 
+
+test('visual VERIFY projects exact retained live service origin and forbids static preview substitution',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'phase6-live-origin','Implement and visually verify the live UI.',{task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification','visual-qa'],likely_verification:['visual-check'],likely_targets:['app.py','templates/index.html']});closeImplementation(m)
+  m.execution.processes.push({process_id:'proc-live-origin',mission_id:m.identity.mission_id,task_id:'t-service',worker_id:'w-service',host:'opencode',command_identity:'d'.repeat(64),cwd:process.cwd(),pid:4250,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],service_origins:['http://127.0.0.1:5000'],authority_ref:'native',cleanup_state:'ACTIVE'})
+  const decision=projectControlDecision(m,process.cwd());assert.equal(decision.action,'VERIFY');const runtime=buildMissionRuntimeProjection(m,undefined,process.cwd());assert.match(runtime.next_action,/browser_required_origins=http:\/\/127\.0\.0\.1:5000/);assert.match(runtime.next_action,/hi_browser_preview_open cannot substitute/)
+})
+
+test('visual VERIFY with unregistered live process target requests one bounded process read and forbids preview',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'phase6-live-unregistered','Implement and visually verify the live UI.',{task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification','visual-qa'],likely_verification:['visual-check'],likely_targets:['app.py','templates/index.html']});closeImplementation(m)
+  m.execution.processes.push({process_id:'proc-live-unregistered',mission_id:m.identity.mission_id,task_id:'t-service',worker_id:'w-service',host:'opencode',command_identity:'e'.repeat(64),cwd:process.cwd(),pid:4251,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],authority_ref:'native',cleanup_state:'ACTIVE'})
+  const runtime=buildMissionRuntimeProjection(m,undefined,process.cwd());assert.match(runtime.next_action,/live-service-target-unregistered:proc-live-unregistered/);assert.match(runtime.next_action,/hi_process_read once/);assert.match(runtime.next_action,/static preview is forbidden/)
+})
+
 test('persistent service projects exact kill then cleanup after obligations are satisfied',()=>{
   const {m}=localMission('phase6-persistent-cleanup');closeImplementation(m)
   observeToolAfter(m,'bash',{command:'npm run check'},{stdout:'check passed',metadata:{exit:0}},process.cwd())

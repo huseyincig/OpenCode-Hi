@@ -6,6 +6,7 @@ import { addEvidence } from '../evidence/evidence-runtime.js';
 import { actionContract, beginAuthorizedAction, completeAuthorizedAction, completeAuthorizedActionByHash, isAuthorized, requireAuthority } from '../safety/authority.js';
 import { evaluateShellCommand } from './shell-policy.js';
 import { externalActionType } from '../safety/command-classifier.js';
+import { normalizeBrowserAllowedOrigins, observedLocalBrowserOriginsFromText } from '../browser/backend-policy.js';
 function replaceProcess(m, contract) {
     const index = m.execution.processes.findIndex(p => p.process_id === contract.process_id);
     if (index < 0)
@@ -28,6 +29,8 @@ function hash(text) { return createHash('sha256').update(text).digest('hex'); }
 function addProcessBlocker(m, marker) { if (!m.execution.blockers.includes(marker))
     m.execution.blockers.push(marker); }
 function clearProcessBlockers(m, id, kinds) { const prefixes = new Set(kinds.map(kind => `${kind}:${id}`)); m.execution.blockers = m.execution.blockers.filter(x => !prefixes.has(x)); }
+function mergedServiceOrigins(...sets) { return normalizeBrowserAllowedOrigins(sets.flatMap(values => values ?? [])); }
+function mergeProcessTargetAuthority(current, next) { const serviceOrigins = mergedServiceOrigins(current?.service_origins, next.service_origins); return { ...next, ...(serviceOrigins.length ? { service_origins: serviceOrigins } : {}) }; }
 export class ProcessRuntime {
     executor;
     projectRoot;
@@ -60,7 +63,8 @@ export class ProcessRuntime {
             if (!isAuthorized(m, commandLine, input.cwd))
                 requireAuthority(m, commandLine, input.cwd);
         }
-        let request = { mission_id: m.identity.mission_id, task_id: task.id, worker_id: worker.id, role: worker.role, command: input.command, args: input.args, cwd: input.cwd, env: input.env, title: input.title, timeout_ms: input.timeout_ms, authority_ref: authorityRef, ...(actionType ? { external_action: { action_type: actionType, target: commandLine, requested_explicitly: true, required_authority_ref: authorityRef, executor: 'hi-process-executor' } } : {}) };
+        const serviceOrigins = normalizeBrowserAllowedOrigins(input.service_origins ?? []);
+        let request = { mission_id: m.identity.mission_id, task_id: task.id, worker_id: worker.id, role: worker.role, command: input.command, args: input.args, cwd: input.cwd, env: input.env, title: input.title, timeout_ms: input.timeout_ms, ...(serviceOrigins.length ? { service_origins: serviceOrigins } : {}), authority_ref: authorityRef, ...(actionType ? { external_action: { action_type: actionType, target: commandLine, requested_explicitly: true, required_authority_ref: authorityRef, executor: 'hi-process-executor' } } : {}) };
         for (let attempts = 0; attempts < 3; attempts++) {
             const auth = evaluateProcessSpawnAuthority(request, this.projectRoot, this.getHostConfig());
             if (auth.decision === 'DENY')
@@ -78,12 +82,12 @@ export class ProcessRuntime {
                 privilegedStarted = true;
             }
             try {
-                const handle = await this.executor.spawn(request);
-                replaceProcess(m, handle.contract);
-                if (handle.contract.status === 'RUNNING')
-                    this.#verifiedRunningOwners.add(handle.contract.process_id);
-                appendLedger(m, 'process.spawned', { task_id: task.id, worker_id: worker.id, payload: { process_id: handle.contract.process_id, pid: handle.contract.pid, host: handle.contract.host, timeout_at: handle.contract.timeout_at } });
-                return structuredClone(handle.contract);
+                const handle = await this.executor.spawn(request), contract = mergeProcessTargetAuthority(undefined, handle.contract);
+                replaceProcess(m, contract);
+                if (contract.status === 'RUNNING')
+                    this.#verifiedRunningOwners.add(contract.process_id);
+                appendLedger(m, 'process.spawned', { task_id: task.id, worker_id: worker.id, payload: { process_id: contract.process_id, pid: contract.pid, host: contract.host, timeout_at: contract.timeout_at, service_origins: contract.service_origins ?? [] } });
+                return structuredClone(contract);
             }
             catch (error) {
                 if (privilegedStarted)
@@ -94,12 +98,16 @@ export class ProcessRuntime {
         throw new Error('Hi process native permission resolution exceeded bounded attempts');
     }
     async write(m, id, input) { this.contract(m, id); await this.executor.write(id, input); appendLedger(m, 'process.stdin', { payload: { process_id: id, chars: input.length } }); }
-    async observe(m, id) { const before = this.contract(m, id), observed = await this.executor.observe(id); if (observed.process_id !== before.process_id || observed.mission_id !== before.mission_id || observed.task_id !== before.task_id || observed.worker_id !== before.worker_id)
-        throw new Error(`Hi process observation identity mismatch: ${id}`); if (observed.status !== 'RUNNING')
+    async observe(m, id) { const before = this.contract(m, id), observedRaw = await this.executor.observe(id); if (observedRaw.process_id !== before.process_id || observedRaw.mission_id !== before.mission_id || observedRaw.task_id !== before.task_id || observedRaw.worker_id !== before.worker_id)
+        throw new Error(`Hi process observation identity mismatch: ${id}`); const observed = mergeProcessTargetAuthority(before, observedRaw); if (observed.status !== 'RUNNING')
         this.noteExit(m, observed);
     else
-        replaceProcess(m, observed); appendLedger(m, 'process.status-observed', { task_id: observed.task_id, worker_id: observed.worker_id, payload: { process_id: id, status: observed.status, cleanup_state: observed.cleanup_state } }); return structuredClone(observed); }
-    async read(m, id, cursor, maxChars) { const current = this.contract(m, id), out = await this.executor.read(id, { cursor, max_chars: maxChars }); if (out.status !== 'RUNNING') {
+        replaceProcess(m, observed); appendLedger(m, 'process.status-observed', { task_id: observed.task_id, worker_id: observed.worker_id, payload: { process_id: id, status: observed.status, cleanup_state: observed.cleanup_state, service_origins: observed.service_origins ?? [] } }); return structuredClone(observed); }
+    async read(m, id, cursor, maxChars) { let current = this.contract(m, id); const out = await this.executor.read(id, { cursor, max_chars: maxChars }), observedOrigins = observedLocalBrowserOriginsFromText(out.text), serviceOrigins = mergedServiceOrigins(current.service_origins, observedOrigins); if (JSON.stringify(serviceOrigins) !== JSON.stringify(current.service_origins ?? [])) {
+        current = mergeProcessTargetAuthority(current, { ...current, service_origins: serviceOrigins });
+        replaceProcess(m, current);
+        appendLedger(m, 'process.service-origin-observed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, service_origins: serviceOrigins, source: 'bounded-process-output' } });
+    } if (out.status !== 'RUNNING') {
         const terminal = await this.executor.wait(id);
         this.noteExit(m, terminal.contract);
     } const stateHash = hash(out.text), duplicate = !out.text.length || out.end_cursor <= out.start_cursor || m.execution.ledger.some(e => e.type === 'process.output-observed' && e.payload?.process_id === id && e.payload?.state_hash === stateHash); if (!duplicate) {
@@ -109,18 +117,17 @@ export class ProcessRuntime {
     }
     else
         appendLedger(m, 'process.output-repeat', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, start_cursor: out.start_cursor, end_cursor: out.end_cursor, state_hash: stateHash } }); return out; }
-    noteExit(m, contract) { replaceProcess(m, contract); if (contract.status !== 'RUNNING') {
+    noteExit(m, contract) { contract = mergeProcessTargetAuthority(m.execution.processes.find(p => p.process_id === contract.process_id), contract); replaceProcess(m, contract); if (contract.status !== 'RUNNING') {
         this.#verifiedRunningOwners.delete(contract.process_id);
         clearProcessBlockers(m, contract.process_id, ['process-termination-unverified', 'process-wait-failed']);
-    } appendLedger(m, 'process.exited', { task_id: contract.task_id, worker_id: contract.worker_id, payload: { process_id: contract.process_id, status: contract.status, exit_code: contract.exit_code, cleanup_state: contract.cleanup_state } }); }
+    } appendLedger(m, 'process.exited', { task_id: contract.task_id, worker_id: contract.worker_id, payload: { process_id: contract.process_id, status: contract.status, exit_code: contract.exit_code, cleanup_state: contract.cleanup_state } }); return contract; }
     async wait(m, id) { const before = this.contract(m, id); try {
-        const result = await this.executor.wait(id);
-        this.noteExit(m, result.contract);
+        const result = await this.executor.wait(id), terminal = this.noteExit(m, result.contract);
         const action = m.authority.authority?.executing;
-        if (action?.hash === result.contract.authority_ref) {
-            completeAuthorizedActionByHash(m, action.hash, result.contract.status === 'EXITED' && result.contract.exit_code === 0 ? 'success' : 'failure', `process ${result.contract.status}${result.contract.exit_code !== undefined ? ` exit=${result.contract.exit_code}` : ''}`, action.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '');
+        if (action?.hash === terminal.authority_ref) {
+            completeAuthorizedActionByHash(m, action.hash, terminal.status === 'EXITED' && terminal.exit_code === 0 ? 'success' : 'failure', `process ${terminal.status}${terminal.exit_code !== undefined ? ` exit=${terminal.exit_code}` : ''}`, action.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '');
         }
-        return structuredClone(result.contract);
+        return structuredClone(terminal);
     }
     catch (error) {
         const marker = `process-wait-failed:${id}`;
@@ -134,14 +141,13 @@ export class ProcessRuntime {
         throw error;
     } }
     async kill(m, id, signal = 'SIGTERM') { const before = this.contract(m, id); try {
-        const result = await this.executor.kill(id, signal);
-        this.noteExit(m, result.contract);
+        const result = await this.executor.kill(id, signal), terminal = this.noteExit(m, result.contract);
         if (m.identity.status === 'active' && m.authority.authority?.executing?.hash === before.authority_ref) {
             const command = m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '';
             if (command)
                 completeAuthorizedActionByHash(m, m.authority.authority.executing.hash, 'failure', `process terminated by ${signal}`, command);
         }
-        return structuredClone(result.contract);
+        return structuredClone(terminal);
     }
     catch (error) {
         const marker = `process-termination-unverified:${id}`;
@@ -204,8 +210,9 @@ export class ProcessRuntime {
             if (stored.cleanup_state === 'CLEANED')
                 continue;
             try {
-                const result = await this.executor.reconcile(stored);
-                replaceProcess(m, result.contract);
+                const result = await this.executor.reconcile(stored), contract = mergeProcessTargetAuthority(stored, result.contract);
+                result.contract = contract;
+                replaceProcess(m, contract);
                 if (result.disposition === 'ADOPTED' && result.contract.status === 'RUNNING')
                     this.#verifiedRunningOwners.add(stored.process_id);
                 else

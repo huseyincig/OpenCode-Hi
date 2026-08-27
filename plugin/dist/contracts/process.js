@@ -3,7 +3,7 @@ export const PROCESS_STATUSES = ['RUNNING', 'EXITED', 'TIMED_OUT', 'TERMINATED',
 export const PROCESS_CLEANUP_STATES = ['ACTIVE', 'CLEANUP_PENDING', 'CLEANED', 'QUARANTINED'];
 export function isWaitableRunningProcess(process) { return process.status === 'RUNNING' && process.timeout_at !== undefined; }
 export function isPersistentRunningProcess(process) { return process.status === 'RUNNING' && process.timeout_at === undefined; }
-const KEYS = new Set(['process_id', 'mission_id', 'task_id', 'worker_id', 'host', 'command_identity', 'cwd', 'pid', 'process_group_id', 'status', 'started_at', 'ended_at', 'timeout_at', 'exit_code', 'termination_reason', 'output_artifact_refs', 'authority_ref', 'cleanup_state']);
+const KEYS = new Set(['process_id', 'mission_id', 'task_id', 'worker_id', 'host', 'command_identity', 'cwd', 'pid', 'process_group_id', 'status', 'started_at', 'ended_at', 'timeout_at', 'exit_code', 'termination_reason', 'output_artifact_refs', 'service_origins', 'authority_ref', 'cleanup_state']);
 const STATUS = new Set(PROCESS_STATUSES), CLEANUP = new Set(PROCESS_CLEANUP_STATES);
 function record(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function nonempty(value) { return typeof value === 'string' && Boolean(value.trim()); }
@@ -11,6 +11,15 @@ function timestamp(value) { return typeof value === 'number' && Number.isFinite(
 function positiveInteger(value) { return Number.isInteger(value) && Number(value) > 0; }
 function sha256(value) { return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value); }
 function artifactRefs(value) { return Array.isArray(value) && value.length <= 64 && value.every(nonempty) && new Set(value).size === value.length; }
+function serviceOrigins(value) { if (!Array.isArray(value) || value.length > 8 || new Set(value).size !== value.length)
+    return false; return value.every(raw => { if (!nonempty(raw))
+    return false; try {
+    const url = new URL(raw);
+    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && ['localhost', '127.0.0.1', '::1', '[::1]'].includes(url.hostname) && url.origin === raw;
+}
+catch {
+    return false;
+} }); }
 export function processCommandIdentity(input) {
     const host = input.host.trim(), command = input.command.trim(), cwd = input.cwd.trim();
     if (!host || !command || !cwd)
@@ -23,6 +32,8 @@ export function isProcessContract(value) {
     if (!nonempty(value.process_id) || !nonempty(value.mission_id) || !nonempty(value.task_id) || !nonempty(value.worker_id) || !nonempty(value.host) || !sha256(value.command_identity) || !nonempty(value.cwd) || !positiveInteger(value.pid))
         return false;
     if (value.process_group_id !== undefined && !positiveInteger(value.process_group_id))
+        return false;
+    if (value.service_origins !== undefined && !serviceOrigins(value.service_origins))
         return false;
     if (typeof value.status !== 'string' || !STATUS.has(value.status) || !timestamp(value.started_at) || !artifactRefs(value.output_artifact_refs) || !nonempty(value.authority_ref) || typeof value.cleanup_state !== 'string' || !CLEANUP.has(value.cleanup_state))
         return false;

@@ -3,6 +3,7 @@ import { verificationEnvelopeFor, verificationKindSatisfiesRequirement } from '.
 import { discoverVerificationRoutes } from '../verification/discovery.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
 import { isPersistentRunningProcess, isWaitableRunningProcess } from '../../contracts/process.js';
+function persistentServiceTarget(m) { const processes = m.execution.processes.filter(isPersistentRunningProcess), origins = [...new Set(processes.flatMap(process => process.service_origins ?? []))]; return { processes, origins }; }
 function activeWaits(m) {
     const workers = m.execution.workers.filter(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)).map(w => `worker:${w.id}:${w.status}`);
     const tasks = m.execution.tasks.filter(t => ['created', 'queued', 'running'].includes(t.status) || (t.status === 'waiting' && !t.result)).map(t => `task:${t.id}:${t.status}`);
@@ -77,8 +78,13 @@ export function controlDecisionInstruction(m, decision) {
         const missing = [...new Set(decision.missing_evidence.map(x => x.kind))], visual = missing.some(kind => kind === 'visual-check' || kind === 'visual-evidence');
         const visualWorker = m.execution.workers.find(w => w.role === 'visual-qa' && !['completed', 'failed', 'cancelled'].includes(w.status));
         if (visual && !visualWorker && m.identity.intent.requiredCapabilities.includes('visual-qa')) {
-            const verificationIDs = decision.open_obligations.filter(o => o.kind === 'verification').map(o => o.id);
-            return `verify:${missing.join(',') || 'visual-check'}; call hi_task_start with role=visual-qa, category=visual, required_evidence=${missing.join(',') || 'visual-check'}${verificationIDs.length ? `, obligation_ids=${verificationIDs.join(',')}` : ''}; the visual worker must use Hi browser tools (hi_browser_preview_open for task-scoped local files); then await/reconcile that same task; do not substitute unclassified bash or prose claims`;
+            const verificationIDs = decision.open_obligations.filter(o => o.kind === 'verification').map(o => o.id), live = persistentServiceTarget(m);
+            if (live.processes.length && !live.origins.length)
+                return `verify:${missing.join(',') || 'visual-check'}; live-service-target-unregistered:${live.processes.map(process => process.process_id).join(',')}; call hi_process_read once for the exact retained live process to reconcile its observed loopback HTTP(S) origin, then retry visual task admission; static preview is forbidden while the live service is the verification surface`;
+            if (live.origins.length > 1)
+                return `verify:${missing.join(',') || 'visual-check'}; multiple-live-service-origins=${live.origins.join(',')}; call hi_task_start with one exact browser_required_origins value matching the intended live process; do not use static preview`;
+            const requiredOrigin = live.origins[0], targetClause = requiredOrigin ? `, browser_required_origins=${requiredOrigin}` : '';
+            return `verify:${missing.join(',') || 'visual-check'}; call hi_task_start with role=visual-qa, category=visual, required_evidence=${missing.join(',') || 'visual-check'}${verificationIDs.length ? `, obligation_ids=${verificationIDs.join(',')}` : ''}${targetClause}; the visual worker must use Hi browser tools${requiredOrigin ? ` against ${requiredOrigin}; hi_browser_preview_open cannot substitute for this live origin` : ' (hi_browser_preview_open is allowed only when no live service target exists)'}; then await/reconcile that same task; do not substitute unclassified bash or prose claims`;
         }
         if (decision.verification_route_status === 'available')
             return `verify:${missing.join(',') || 'required-evidence'}; route=${decision.verification_routes.map(x => x.command).join(' || ')}; evidence-owned; run only projected route(s); do not broaden without changed-surface evidence`;

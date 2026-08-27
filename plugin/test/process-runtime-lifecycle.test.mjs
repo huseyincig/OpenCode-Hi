@@ -22,12 +22,12 @@ function mission(root='/repo'){
   return{store,m,task,worker}
 }
 function host(bash='allow',external='ask'){return{agent:{coder:{permission:{bash:{'*':bash},external_directory:{'*':external}}}}}}
-function contract(req,id='proc_1',pid=5001){return{process_id:id,mission_id:req.mission_id,task_id:req.task_id,worker_id:req.worker_id,host:'opencode',command_identity:createHash('sha256').update(`opencode\0${req.cwd}\0${[req.command,...req.args??[]].map(x=>x.includes(' ')?`'${x}'`:x).join(' ')}`).digest('hex'),cwd:req.cwd,pid,status:'RUNNING',started_at:Date.now(),...(req.timeout_ms?{timeout_at:Date.now()+req.timeout_ms}:{}),output_artifact_refs:[],authority_ref:req.authority_ref,cleanup_state:'ACTIVE'}}
+function contract(req,id='proc_1',pid=5001){return{process_id:id,mission_id:req.mission_id,task_id:req.task_id,worker_id:req.worker_id,host:'opencode',command_identity:createHash('sha256').update(`opencode\0${req.cwd}\0${[req.command,...req.args??[]].map(x=>x.includes(' ')?`'${x}'`:x).join(' ')}`).digest('hex'),cwd:req.cwd,pid,status:'RUNNING',started_at:Date.now(),...(req.timeout_ms?{timeout_at:Date.now()+req.timeout_ms}:{}),output_artifact_refs:[],...(req.service_origins?.length?{service_origins:[...req.service_origins]}:{}),authority_ref:req.authority_ref,cleanup_state:'ACTIVE'}}
 class FakeExecutor{
-  constructor(){this.states=new Map();this.spawned=[];this.writes=[];this.cleaned=[];this.reconcileMode='ADOPTED';this.waiters=new Map()}
+  constructor(){this.states=new Map();this.spawned=[];this.writes=[];this.cleaned=[];this.reconcileMode='ADOPTED';this.waiters=new Map();this.readText='secret-output-1234567890'}
   async spawn(req){const c=contract(req,`proc_${this.spawned.length+1}`,5001+this.spawned.length);this.states.set(c.process_id,c);this.spawned.push(structuredClone(req));return{contract:structuredClone(c),host_process_id:`pty-${c.pid}`}}
   async write(id,input){if(!this.states.has(id))throw new Error('missing');this.writes.push([id,input])}
-  async read(id,{cursor=0,max_chars=64}={}){const c=this.states.get(id);if(!c)throw new Error('missing');const text='secret-output-1234567890';const start=Math.max(0,cursor),slice=text.slice(start,start+max_chars);return{text:slice,start_cursor:start,end_cursor:start+slice.length,available_start_cursor:0,available_end_cursor:text.length,truncated:start+slice.length<text.length,status:c.status}}
+  async read(id,{cursor=0,max_chars=64}={}){const c=this.states.get(id);if(!c)throw new Error('missing');const text=this.readText;const start=Math.max(0,cursor),slice=text.slice(start,start+max_chars);return{text:slice,start_cursor:start,end_cursor:start+slice.length,available_start_cursor:0,available_end_cursor:text.length,truncated:start+slice.length<text.length,status:c.status}}
   async observe(id){const c=this.states.get(id);if(!c)throw new Error('missing');return structuredClone(c)}
   async wait(id){const c=this.states.get(id);if(!c)throw new Error('missing');if(c.status!=='RUNNING')return{contract:structuredClone(c)};return await new Promise((resolve,reject)=>this.waiters.set(id,{resolve,reject}))}
   exit(id,code=0){const c=this.states.get(id);Object.assign(c,{status:'EXITED',ended_at:Date.now(),exit_code:code,cleanup_state:'CLEANUP_PENDING'});this.waiters.get(id)?.resolve({contract:structuredClone(c)});this.waiters.delete(id)}
@@ -40,10 +40,10 @@ class FakeExecutor{
 
 test('Mission execution owns durable ProcessContract registry and schema 10 round-trips it current-only',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p3-state-')),{m,worker}=mission(root),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,root,()=>host())
-  return runtime.spawn(m,{worker_id:worker.id,command:'node',args:['-e','1'],cwd:root}).then(process=>{
-    assert.equal(m.execution.processes.length,1);assert.equal(m.execution.processes[0].process_id,process.process_id);assert.equal(validateMissionEnvelope(m),true)
-    const persistence=new RuntimePersistence(root);persistence.save([m]);const raw=JSON.parse(readFileSync(persistence.path,'utf8'));assert.equal(raw.schema,10);assert.equal(RUNTIME_STATE_SCHEMA,10);assert.equal(raw.missions[0].execution.processes.length,1)
-    const reload=new RuntimePersistence(root),loaded=reload.load();assert.equal(loaded.length,1);assert.equal(loaded[0].execution.processes[0].pid,process.pid)
+  return runtime.spawn(m,{worker_id:worker.id,command:'node',args:['-e','1'],cwd:root,service_origins:['http://127.0.0.1:5000']}).then(process=>{
+    assert.equal(m.execution.processes.length,1);assert.equal(m.execution.processes[0].process_id,process.process_id);assert.deepEqual(process.service_origins,['http://127.0.0.1:5000']);assert.equal(validateMissionEnvelope(m),true)
+    const persistence=new RuntimePersistence(root);persistence.save([m]);const raw=JSON.parse(readFileSync(persistence.path,'utf8'));assert.equal(raw.schema,10);assert.equal(RUNTIME_STATE_SCHEMA,10);assert.equal(raw.missions[0].execution.processes.length,1);assert.deepEqual(raw.missions[0].execution.processes[0].service_origins,['http://127.0.0.1:5000'])
+    const reload=new RuntimePersistence(root),loaded=reload.load();assert.equal(loaded.length,1);assert.equal(loaded[0].execution.processes[0].pid,process.pid);assert.deepEqual(loaded[0].execution.processes[0].service_origins,['http://127.0.0.1:5000'])
     raw.schema=8;writeFileSync(persistence.path,JSON.stringify(raw));const rejected=new RuntimePersistence(root);assert.deepEqual(rejected.load(),[]);assert.match(rejected.lastLoadReport.error,/unsupported runtime-state schema 8/)
   })
 })
@@ -95,6 +95,15 @@ test('terminal status observed by bounded read reconciles the durable ProcessCon
   assert.equal(out.status,'EXITED');const durable=m.execution.processes.find(x=>x.process_id===p.process_id);assert.equal(durable.status,'EXITED');assert.equal(durable.exit_code,127);assert.equal(durable.cleanup_state,'CLEANUP_PENDING')
   assert.ok(m.execution.ledger.some(e=>e.type==='process.exited'&&e.payload?.process_id===p.process_id&&e.payload?.exit_code===127))
   const decision=evaluateIdle(m);assert.notEqual(decision.reason_code,'waiting-process','terminal read observation must retire the stale RUNNING wait hinge')
+})
+
+test('bounded process output registers exact loopback service origin and restart/terminal reconciliation preserves target authority',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'python3',args:['app.py'],cwd:'/repo'})
+  fake.readText=' * Serving Flask app\n * Running on http://127.0.0.1:5000\nDocs: https://example.com/ignored\n'
+  await runtime.read(m,p.process_id,0,4096)
+  const registered=m.execution.processes.find(x=>x.process_id===p.process_id);assert.deepEqual(registered.service_origins,['http://127.0.0.1:5000']);assert.ok(m.execution.ledger.some(e=>e.type==='process.service-origin-observed'&&e.payload?.process_id===p.process_id&&e.payload?.service_origins?.includes('http://127.0.0.1:5000')))
+  const restored=structuredClone(m),freshFake=new FakeExecutor(),freshRuntime=new ProcessRuntime(freshFake,'/repo',()=>host());await freshRuntime.reconcileRestored([restored]);assert.deepEqual(restored.execution.processes[0].service_origins,['http://127.0.0.1:5000'])
+  freshFake.exit(p.process_id,0);const terminal=await freshRuntime.wait(restored,p.process_id);assert.equal(terminal.status,'EXITED');assert.deepEqual(terminal.service_origins,['http://127.0.0.1:5000']);assert.deepEqual(restored.execution.processes[0].service_origins,['http://127.0.0.1:5000']);await freshRuntime.cleanup(restored,p.process_id);assert.equal(restored.execution.processes[0].cleanup_state,'CLEANED');assert.deepEqual(restored.execution.processes[0].service_origins,['http://127.0.0.1:5000'])
 })
 
 test('repeated identical process output is inert and does not mint duplicate evidence/progress',async()=>{

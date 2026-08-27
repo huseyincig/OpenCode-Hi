@@ -86,6 +86,42 @@ test('visual task binds explicit live objective URL as immutable browser target 
   await preview.dispose()
 })
 
+
+function retainedService(m,id,origin){
+  m.execution.processes.push({process_id:id,mission_id:m.identity.mission_id,task_id:`t-${id}`,worker_id:`w-${id}`,host:'opencode',command_identity:'c'.repeat(64),cwd:repoRoot,pid:4100+m.execution.processes.length,status:'RUNNING',started_at:Date.now(),output_artifact_refs:[],...(origin?{service_origins:[origin]}:{}),authority_ref:'native',cleanup_state:'ACTIVE'})
+}
+
+test('visual task automatically inherits the single retained live service origin and forbids static preview substitution',async()=>{
+  const prompts=[],m=mission('m13-retained-live',['visual-qa']),preview=new LocalPreviewManager(repoRoot);retainedService(m,'proc-live','http://127.0.0.1:5000')
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
+  const out=await rt.start(m,{objective:'Verify the running Flask Notes UI add/edit/delete behavior.',role:'visual-qa',category:'visual',scope:['app.py','templates/index.html'],requiredEvidence:['visual-check']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.deepEqual(task.execution_profile.browser_required_origins,['http://127.0.0.1:5000']);assert.deepEqual(task.execution_profile.browser_allowed_origins,['http://127.0.0.1:5000'])
+  const prompt=JSON.stringify(prompts[0]);assert.match(prompt,/REQUIRED LIVE BROWSER ORIGIN\(S\): http:\/\/127\.0\.0\.1:5000/);assert.doesNotMatch(prompt,/LOCAL STATIC PREVIEW/)
+  await preview.dispose()
+})
+
+test('live persistent service without registered target fails visual admission before child spawn instead of falling back to preview',async()=>{
+  const prompts=[],m=mission('m13-retained-unregistered',['visual-qa']),preview=new LocalPreviewManager(repoRoot);retainedService(m,'proc-unregistered')
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
+  await assert.rejects(()=>rt.start(m,{objective:'Verify the running app UI.',role:'visual-qa',category:'visual',scope:['app.py'],requiredEvidence:['visual-check']}),/Live persistent process target is unregistered.*static preview cannot substitute/i)
+  assert.equal(prompts.length,0);assert.equal(m.execution.tasks.length,0);assert.equal(preview.active('anything'),false)
+  await preview.dispose()
+})
+
+test('multiple retained live service targets require one explicit browser_required_origins choice',async()=>{
+  const prompts=[],m=mission('m13-retained-multiple',['visual-qa']);retainedService(m,'proc-a','http://127.0.0.1:5000');retainedService(m,'proc-b','http://127.0.0.1:5001')
+  const rt=runtime(prompts,new Set(['host-capability:browser-execution']))
+  await assert.rejects(()=>rt.start(m,{objective:'Verify the intended live app UI.',role:'visual-qa',category:'visual',scope:['app.py'],requiredEvidence:['visual-check']}),/Multiple live service browser origins are active/)
+  const out=await rt.start(m,{objective:'Verify the intended live app UI.',role:'visual-qa',category:'visual',scope:['app.py'],requiredEvidence:['visual-check'],browserRequiredOrigins:['http://127.0.0.1:5001']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.deepEqual(task.execution_profile.browser_required_origins,['http://127.0.0.1:5001'])
+})
+
+test('explicit visual target cannot point at a preview/other origin while a different live service is registered',async()=>{
+  const prompts=[],m=mission('m13-retained-mismatch',['visual-qa']);retainedService(m,'proc-live-mismatch','http://127.0.0.1:5000');const rt=runtime(prompts,new Set(['host-capability:browser-execution']))
+  await assert.rejects(()=>rt.start(m,{objective:'Verify live UI.',role:'visual-qa',category:'visual',scope:['app.py'],requiredEvidence:['visual-check'],browserRequiredOrigins:['http://127.0.0.1:37999']}),/required origin must match an active registered live service origin/i)
+  assert.equal(prompts.length,0)
+})
+
 test('browser requirement resolves operational-tool receipt even when live browser capability was already observed',async()=>{
   const prompts=[],m=mission('m13-operational-tool-existing',['visual-qa']),calls=[]
   const ensure=async()=>{calls.push('ensure');return{available:true,attempted:false,implementationId:'playwright-chromium',status:'existing',scope:'existing',receiptPath:join(repoRoot,'.opencode','hi','tools','receipts','browser-execution','playwright-chromium.json')}}

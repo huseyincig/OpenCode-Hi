@@ -56,3 +56,10 @@ export function browserOriginsFromText(text:string):string[]{
   const cleaned=candidates.map(value=>value.replace(/[),.;:!?]+$/g,''))
   return normalizeBrowserAllowedOrigins(cleaned)
 }
+
+/** Host-observed output may contain unrelated external links; only exact supported local origins are target authority candidates. */
+export function observedLocalBrowserOriginsFromText(text:string):string[]{
+  const candidates=String(text??'').match(/https?:\/\/[^\s<>{}\[\]\"']+/gi)??[],out:string[]=[]
+  for(const candidate of candidates.map(value=>value.replace(/[),.;:!?]+$/g,'')))try{out.push(...normalizeBrowserAllowedOrigins([candidate]))}catch{}
+  return[...new Set(out)].slice(0,8)
+}

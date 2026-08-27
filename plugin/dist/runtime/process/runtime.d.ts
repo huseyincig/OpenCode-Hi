@@ -12,6 +12,7 @@ export interface ProcessStartInput {
     env?: Record<string, string>;
     title?: string;
     timeout_ms?: number;
+    service_origins?: string[];
     ask?: NativePermissionPrompter;
 }
 export declare class ProcessRuntime {

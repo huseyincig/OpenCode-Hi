@@ -35,6 +35,7 @@ import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 import { explorationClearanceFreshness } from '../execution/exploration-clearance.js';
 import { QueuedWorkerDispatcher } from './queued-worker-dispatcher.js';
 import { projectSchedulingPeerView } from '../scheduler/project-peer-view.js';
+import { isPersistentRunningProcess } from '../../contracts/process.js';
 import { assessMissionLiveness, recordAssistantProgress } from '../liveness/assessment.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
@@ -654,7 +655,18 @@ export class TaskRuntime {
         }
         else if (browserDecision.backend)
             clearCapabilityUnavailable(m, 'browser-execution');
-        const browserRequiredOrigins = normalizeBrowserAllowedOrigins([...browserOriginsFromText(objective), ...browserOriginsFromTargets(taskIntent.likelyTargets ?? [])]);
+        const explicitBrowserRequiredOrigins = normalizeBrowserAllowedOrigins([...(input.browserRequiredOrigins ?? []), ...browserOriginsFromText(objective), ...browserOriginsFromTargets(taskIntent.likelyTargets ?? [])]), persistentProcesses = m.execution.processes.filter(isPersistentRunningProcess), liveServiceOrigins = normalizeBrowserAllowedOrigins(persistentProcesses.flatMap(process => process.service_origins ?? []));
+        let browserRequiredOrigins = [...explicitBrowserRequiredOrigins];
+        if (browserDecision.backend === 'bounded-playwright' && browserRequested && persistentProcesses.length) {
+            if (!browserRequiredOrigins.length && liveServiceOrigins.length === 1)
+                browserRequiredOrigins = [...liveServiceOrigins];
+            else if (!browserRequiredOrigins.length && liveServiceOrigins.length > 1)
+                throw new Error(`Multiple live service browser origins are active (${liveServiceOrigins.join(', ')}); pass browser_required_origins explicitly for this visual task.`);
+            else if (!browserRequiredOrigins.length)
+                throw new Error(`Live persistent process target is unregistered (${persistentProcesses.map(process => process.process_id).join(', ')}); static preview cannot substitute. Read the exact retained process once to reconcile an observed loopback URL, or pass browser_required_origins explicitly.`);
+            else if (liveServiceOrigins.length && browserRequiredOrigins.some(origin => !liveServiceOrigins.includes(origin)))
+                throw new Error(`Visual task required origin must match an active registered live service origin while a persistent service is running. required=${browserRequiredOrigins.join(', ')} active=${liveServiceOrigins.join(', ')}`);
+        }
         const browserAllowedOrigins = normalizeBrowserAllowedOrigins([...(input.browserAllowedOrigins ?? []), ...browserRequiredOrigins]);
         if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length && !this.previewManager)
             throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin or the Hi-owned local preview capability');

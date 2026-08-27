@@ -19,6 +19,7 @@ export interface ProcessContract {
     exit_code?: number;
     termination_reason?: string;
     output_artifact_refs: string[];
+    service_origins?: string[];
     authority_ref: string;
     cleanup_state: ProcessCleanupState;
 }

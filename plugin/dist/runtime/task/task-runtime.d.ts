@@ -33,6 +33,7 @@ export interface StartTaskInput {
     mcpServers?: string[];
     browserBackend?: BrowserBackend;
     browserAllowedOrigins?: string[];
+    browserRequiredOrigins?: string[];
     processLifecycle?: boolean;
     resumeTaskId?: string;
 }
