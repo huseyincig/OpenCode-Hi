@@ -312,3 +312,15 @@ test('prompt tool overrides only disable tools; they never turn a denied native 
   assert.equal(overrides.task,false);assert.equal(overrides.hi_task_start,false)
   assert.ok(!Object.values(overrides).includes(true))
 })
+
+test('satisfied exact obligation owner cannot be explicitly resumed',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('satisfied-owner-resume','fix parser');assess(store,'satisfied-owner-resume',{task_kind:'bug-fix',likely_targets:['src/parser.ts'],likely_verification:[]})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation)
+  const first=await runtime.start(m,{objective:'fix parser',role:'coder',category:'quick',scope:['src/parser.ts'],requiredEvidence:[],obligationIds:[implementation.id]})
+  runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'one correction remains',changed_files:[],evidence:[],open_issues:['fix:x'],needs_context:[]})
+  implementation.status='closed';implementation.closedAt=Date.now()
+  await assert.rejects(()=>runtime.resume(m,first.task_id),/owns no open obligations/)
+  assert.equal(created.length,1);assert.equal(prompts.length,1)
+})

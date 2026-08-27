@@ -2,7 +2,7 @@ import { evaluateCompletion } from './evaluator.js';
 import { verificationEnvelopeFor, verificationKindSatisfiesRequirement } from '../verification/policy.js';
 import { discoverVerificationRoutes } from '../verification/discovery.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
-import { isPersistentRunningProcess, isWaitableRunningProcess } from '../../contracts/process.js';
+import { isCleanupPendingProcess, isPersistentRunningProcess, isWaitableRunningProcess } from '../../contracts/process.js';
 function persistentServiceTarget(m) { const processes = m.execution.processes.filter(isPersistentRunningProcess), origins = [...new Set(processes.flatMap(process => process.service_origins ?? []))]; return { processes, origins }; }
 function activeWaits(m) {
     const workers = m.execution.workers.filter(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)).map(w => `worker:${w.id}:${w.status}`);
@@ -95,6 +95,9 @@ export function controlDecisionInstruction(m, decision) {
     const persistent = m.execution.processes.find(isPersistentRunningProcess);
     if (persistent && !decision.open_obligations.length)
         return `continue:cleanup-persistent-process:${persistent.process_id}; call hi_process_kill id=${persistent.process_id}, then hi_process_cleanup id=${persistent.process_id}; do not call hi_process_wait on a deadline-less persistent service`;
+    const cleanupPending = m.execution.processes.find(isCleanupPendingProcess);
+    if (cleanupPending && !decision.open_obligations.length)
+        return `continue:cleanup-terminal-process:${cleanupPending.process_id}; call hi_process_cleanup id=${cleanupPending.process_id}; terminal process cleanup is control-plane custody, not worker recovery`;
     const staleClearance = m.execution.gates.find(g => g.id === 'gate-exploration-clearance' && g.status === 'blocked');
     if (staleClearance)
         return `continue:refresh-exploration-clearance; call hi_task_start with role=repository-explorer against the stale clearance scope; ${staleClearance.reason ?? 're-establish current source provenance'}; do not implement until current bounded repository evidence is re-established`;

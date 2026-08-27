@@ -10,7 +10,10 @@ export function recoverySemanticSignature(m) {
     return fnv(JSON.stringify({ evidence: s.evidence_ids, invalidated: s.invalidated_evidence_ids, completed_tasks: s.completed_task_ids, completed_dependencies: s.completed_dependency_ids, closed_obligations: s.closed_obligation_ids, changed_files: s.changed_files, terminal_processes: s.terminal_process_ids }));
 }
 function currentProgressSignature(m) { return recoverySemanticSignature(m); }
-function latestRecoveryWorker(m) { return [...m.execution.workers].reverse().find(w => Boolean(w.session_id) && !['failed', 'cancelled', 'busy', 'starting', 'queued'].includes(w.status)); }
+function latestRecoveryWorker(m) { return [...m.execution.workers].reverse().find(w => { if (!w.session_id || ['failed', 'cancelled', 'busy', 'starting', 'queued'].includes(w.status))
+    return false; const task = m.execution.tasks.find(t => t.id === w.task_id); if (!task || task.status === 'completed' || task.result?.status === 'DONE')
+    return false; if (task.obligation_ids.length && task.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.status === 'closed')))
+    return false; return true; }); }
 function candidateModels(worker) { return [...new Set([...(worker.fallbacks ?? []), ...(worker.recovery_candidates ?? [])].filter(id => Boolean(id) && id !== worker.model))]; }
 export function recoveryModelHazard(m) {
     const progress_signature = currentProgressSignature(m), worker = latestRecoveryWorker(m), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined;

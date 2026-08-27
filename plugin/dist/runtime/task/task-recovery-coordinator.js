@@ -13,6 +13,10 @@ import { syncMissionGates } from '../gates/gates.js';
 import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from '../scheduler/project-peer-view.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
+function taskOwnsUnresolvedRecoveryWork(m, worker) { const task = m.execution.tasks.find(t => t.id === worker.task_id); if (!task || task.status === 'completed' || task.result?.status === 'DONE')
+    return false; if (task.obligation_ids.length && task.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.status === 'closed')))
+    return false; return true; }
+function latestRecoverableWorker(m) { return [...m.execution.workers].reverse().find(w => Boolean(w.session_id) && !['failed', 'cancelled', 'busy', 'starting', 'queued'].includes(w.status) && taskOwnsUnresolvedRecoveryWork(m, w)); }
 export class TaskRecoveryCoordinator {
     scheduler;
     registry;
@@ -43,7 +47,7 @@ export class TaskRecoveryCoordinator {
     async recoverCanonicalStall(m, assessment) {
         if (assessment.state !== 'STALLED' || assessment.inflight !== 'NO' || !assessment.destructive_recovery_allowed)
             return { disposition: 'NOOP', reason: 'canonical-stall-not-admitted' };
-        const worker = [...m.execution.workers].reverse().find(w => Boolean(w.session_id) && !['failed', 'cancelled', 'busy', 'starting', 'queued'].includes(w.status));
+        const worker = latestRecoverableWorker(m);
         if (!worker)
             return { disposition: 'NOOP', reason: 'no-quiescent-worker-to-resume' };
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
@@ -64,7 +68,7 @@ export class TaskRecoveryCoordinator {
     async recoverStagnation(m, level, action = 'same-worker-resume') {
         if ((action === 'same-worker-resume' && ![1, 2].includes(level)) || (action === 'model-escalation' && level !== 3) || m.identity.status !== 'active' || m.continuation.user_interrupted)
             return false;
-        const worker = [...m.execution.workers].reverse().find(w => Boolean(w.session_id) && !['failed', 'cancelled', 'busy', 'starting', 'queued'].includes(w.status));
+        const worker = latestRecoverableWorker(m);
         if (!worker?.session_id)
             return false;
         const task = m.execution.tasks.find(t => t.id === worker.task_id);

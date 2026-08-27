@@ -183,3 +183,12 @@ test('repeated semantic context artifact reuses durable identity and one mission
     assert.equal(m.execution.ledger.filter(e=>e.type==='context-artifact.reused').length,1)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+test('terminal CLEANUP_PENDING process projects cleanup-only custody instead of generic work recovery',()=>{
+  const {m}=localMission('phase6-terminal-cleanup');closeImplementation(m)
+  observeToolAfter(m,'bash',{command:'npm run check'},{stdout:'check passed',metadata:{exit:0}},process.cwd())
+  const verify=m.execution.obligations.find(x=>x.id==='o-verification');assert.ok(verify);verify.status='closed';verify.closedAt=Date.now()
+  m.execution.processes.push({process_id:'proc-terminal-clean',mission_id:m.identity.mission_id,task_id:'t-service',worker_id:'w-service',host:'opencode',command_identity:'c'.repeat(64),cwd:process.cwd(),pid:4244,status:'TERMINATED',started_at:Date.now()-1000,ended_at:Date.now(),termination_reason:'signal:SIGTERM',output_artifact_refs:[],authority_ref:'native',cleanup_state:'CLEANUP_PENDING'})
+  const decision=projectControlDecision(m,process.cwd());assert.equal(decision.action,'CONTINUE');assert.deepEqual(decision.open_obligations,[])
+  const runtime=buildMissionRuntimeProjection(m);assert.match(runtime.next_action,/cleanup-terminal-process:proc-terminal-clean/);assert.match(runtime.next_action,/hi_process_cleanup id=proc-terminal-clean/);assert.match(runtime.next_action,/control-plane custody/);assert.doesNotMatch(runtime.next_action,/canonical-open-obligation/)
+})

@@ -181,7 +181,7 @@ test('level-2 reasoning correction preserves the exact child session and model',
   store.applyInitialSemanticAssessment('recovery-runtime-session',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const task=createTask(m,{objective:'fix bug',role:'coder',category:'standard'})
   const worker=createWorker(m,task,'p/cheap',['p/strong'])
-  worker.session_id='child-1'; worker.status='completed'; task.status='completed'
+  worker.session_id='child-1'; worker.status='ready'; task.status='waiting';task.result={status:'FIX_REQUIRED',summary:'one bounded correction remains',changed_files:[],evidence:[],open_issues:['fix:x'],needs_context:[]}
   const registry=new BackgroundRegistry()
   const scheduler=createConcurrencyPolicySource(()=>({global:4}))
   const models=[
@@ -237,4 +237,21 @@ test('TaskRuntime awaitTask returns terminal immediately and wakes on the canoni
   assert.equal(done.changed,true);assert.equal(done.timed_out,false);assert.equal(done.terminal,true);assert.equal(done.status,'completed')
   const immediate=await runtime.awaitTask(m,task.id,1000)
   assert.equal(immediate.changed,false);assert.equal(immediate.timed_out,false);assert.equal(immediate.terminal,true);assert.equal(immediate.status,'completed')
+})
+
+test('completed satisfied task is never an implicit stagnation recovery candidate', async () => {
+  const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
+  const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
+  const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
+  const { createConcurrencyPolicySource } = await import('../dist/runtime/scheduler/concurrency.js')
+  const { resolveHiConfig } = await import('../dist/config/resolver.js')
+  const calls=[]
+  const client={session:{promptAsync:async req=>{calls.push(req)},status:async()=>({data:{'child-terminal':{type:'idle'}}})}}
+  const store=new MissionStore(),m=store.start('terminal-recovery-fence','finish visual verification')
+  store.applyInitialSemanticAssessment('terminal-recovery-fence',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification','visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['app.py'],intent_signals:[],suppressed_intent_signals:[]})
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);verification.status='closed';verification.closedAt=Date.now()
+  const task=createTask(m,{objective:'verify UI',role:'visual-qa',category:'visual',scope:['app.py'],requiredEvidence:['visual-check'],obligationIds:[verification.id]})
+  const worker=createWorker(m,task,'p/vision',[]);worker.session_id='child-terminal';worker.status='completed';worker.completed_at=Date.now();task.status='completed';task.result={status:'DONE',summary:'visual pass',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/vision',provider:'p',tags:['vision']}],()=>({}))
+  assert.equal(await runtime.recoverStagnation(m,1),false);assert.equal(await runtime.recoverStagnation(m,2),false);assert.equal(calls.length,0);assert.equal(worker.status,'completed');assert.equal(task.status,'completed');assert.equal(m.continuation.recovery_history?.length??0,0)
 })

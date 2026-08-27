@@ -9,6 +9,7 @@ import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {ProcessRuntime} from '../dist/runtime/process/runtime.js'
 import {ProcessSpawnPermissionError} from '../dist/opencode/open-code-pty-adapter.js'
 import {evaluateIdle,shouldCountStagnation} from '../dist/runtime/continuation/evaluator.js'
+import {addEvidence} from '../dist/runtime/evidence/evidence-runtime.js'
 import {RuntimePersistence,RUNTIME_STATE_SCHEMA} from '../dist/runtime/state/persistence.js'
 import {validateMissionEnvelope} from '../dist/runtime/mission/validators.js'
 
@@ -136,4 +137,13 @@ test('failed process lifecycle operations cannot masquerade as healthy RUNNING W
 test('failed process wait is terminal until a later lifecycle observation changes state',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'});worker.status='ready'
   fake.wait=async()=>{throw new Error('PTY wait transport unavailable')};await assert.rejects(()=>runtime.wait(m,p.process_id),/wait transport unavailable/);assert.ok(m.execution.blockers.includes(`process-wait-failed:${p.process_id}`));const d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason,`process-wait-failed:${p.process_id}`)
+})
+
+test('terminal cleanup-only continuation is not reasoning stagnation and resets stale recovery count',()=>{
+  const {m,task,worker}=mission();worker.status='completed';worker.completed_at=Date.now();task.status='completed';task.result={status:'DONE',summary:'work done',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]}
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now();m.vcs.changed_files=['src/a.ts']
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);addEvidence(m,{kind:'changed-surface-sanity',summary:'current host verification passed',scope:['src/a.ts'],source:'bash',trusted_source_class:'host-tool-observation',pass:true,outcome:'passed',obligation_ids:[verification.id]});verification.status='closed';verification.closedAt=Date.now()
+  m.execution.processes.push({process_id:'proc_cleanup_only',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,host:'opencode',command_identity:'f'.repeat(64),cwd:'/repo',pid:5010,status:'TERMINATED',started_at:Date.now()-1000,ended_at:Date.now(),termination_reason:'signal:SIGTERM',output_artifact_refs:[],authority_ref:'native',cleanup_state:'CLEANUP_PENDING'})
+  m.continuation.stagnation_count=2
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'CONTINUE');assert.equal(decision.reason_code,'process-cleanup-pending');assert.equal(shouldCountStagnation(decision),false);assert.equal(m.continuation.stagnation_count,0);assert.match(decision.prompt??'',/cleanup-terminal-process:proc_cleanup_only/)
 })

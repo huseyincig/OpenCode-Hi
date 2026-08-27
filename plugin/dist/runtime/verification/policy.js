@@ -60,7 +60,7 @@ export function replanVerificationForChangedSurface(m, task, files, repo) {
     }
     else if (riskEscalated && !m.execution.obligations.some(o => o.kind === 'review' && o.status === 'open'))
         m.execution.obligations.push({ id: `o-high-assurance-${Date.now().toString(36)}`, kind: 'review', summary: 'Changed surface entered a security/configuration-sensitive area; independent review required', status: 'open', requiredEvidence: ['review-evidence'] });
-    const changed = addedKinds.length > 0 || expanded || riskEscalated;
+    const changed = dependencyChanged || addedKinds.length > 0 || expanded || riskEscalated;
     if (changed) {
         m.execution.verification_policy.requiredKinds = next;
         for (const o of m.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open'))

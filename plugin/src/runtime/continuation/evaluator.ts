@@ -6,9 +6,9 @@ import { evaluatePreconditions } from '../readiness/preconditions.js'
 import { latestBlockingVerificationEvidence } from '../verification/policy.js'
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js'
 import { ambiguousConsequentialEffect } from './recovery-governor.js'
-import { isWaitableRunningProcess } from '../../contracts/process.js'
+import { isCleanupPendingProcess,isPersistentRunningProcess,isWaitableRunningProcess } from '../../contracts/process.js'
 export type RuntimeDecision='NOTHING'|'WAIT'|'CONTINUE'|'RECONCILE'|'VERIFY'|'RECOVER'|'USER_ACTION_REQUIRED'|'STOP'
-export type IdleReasonCode='no-active-mission'|'user-stop'|'mission-inactive'|'continuation-lock'|'continuation-reentrant'|'suppressed'|'waiting-permission'|'waiting-worker'|'waiting-process'|'process-orphan-blocked'|'worker-result-unreconciled'|'contract-ambiguity-repo-first'|'exploration-clearance-refresh'|'precondition-blocked'|'complete'|'waiting-user-authority'|'verification-pending'|'verification-failed'|'verification-environment-issue'|'verification-stalled'|'provider-failure-blocked'|'permission-failure-blocked'|'capability-unavailable'|'operational-blocker'|'continuation-runtime-retry'|'continuation-runtime-exhausted'|'execution-budget-exhausted'|'recovery-effect-uncertain'|'stagnation-recovery'|'open-obligation'
+export type IdleReasonCode='no-active-mission'|'user-stop'|'mission-inactive'|'continuation-lock'|'continuation-reentrant'|'suppressed'|'waiting-permission'|'waiting-worker'|'waiting-process'|'process-cleanup-pending'|'process-orphan-blocked'|'worker-result-unreconciled'|'contract-ambiguity-repo-first'|'exploration-clearance-refresh'|'precondition-blocked'|'complete'|'waiting-user-authority'|'verification-pending'|'verification-failed'|'verification-environment-issue'|'verification-stalled'|'provider-failure-blocked'|'permission-failure-blocked'|'capability-unavailable'|'operational-blocker'|'continuation-runtime-retry'|'continuation-runtime-exhausted'|'execution-budget-exhausted'|'recovery-effect-uncertain'|'stagnation-recovery'|'open-obligation'
 export interface DecisionResult{decision:RuntimeDecision;reason:string;reason_code:IdleReasonCode;prompt?:string}
 export function evaluateIdle(m:MissionState|undefined,now=Date.now(),projectRoot?:string):DecisionResult{
   if(!m)return{decision:'NOTHING',reason:'no-active-mission',reason_code:'no-active-mission'}
@@ -34,6 +34,8 @@ export function evaluateIdle(m:MissionState|undefined,now=Date.now(),projectRoot
   const providerBlocker=m.execution.blockers.find(x=>x.startsWith('provider-failure:'));if(providerBlocker){m.continuation.stagnation_count=0;return{decision:'USER_ACTION_REQUIRED',reason:providerBlocker,reason_code:'provider-failure-blocked'}}
   const capabilityBlocker=m.execution.blockers.find(x=>x.startsWith('capability-precondition:')||x.startsWith('capability-unavailable:'));if(capabilityBlocker){m.continuation.stagnation_count=0;return{decision:'USER_ACTION_REQUIRED',reason:capabilityBlocker,reason_code:'capability-unavailable'}}
   const completion=evaluateCompletion(m,projectRoot);if(completion.complete)return{decision:'STOP',reason:'complete',reason_code:'complete'}
+  const openObligations=m.execution.obligations.some(o=>o.status==='open'),cleanupOnly=!openObligations&&m.execution.processes.some(p=>isPersistentRunningProcess(p)||isCleanupPendingProcess(p))
+  if(completion.next==='CONTINUE'&&cleanupOnly){m.continuation.stagnation_count=0;const instruction=controlDecisionInstruction(m,projectControlDecision(m,projectRoot));setRuntimeNudge(m,instruction,'process-cleanup-pending');return{decision:'CONTINUE',reason:'process-cleanup-pending',reason_code:'process-cleanup-pending',prompt:continuationPrompt(m,instruction)}}
   const uncertainEffect=ambiguousConsequentialEffect(m);if(uncertainEffect){m.continuation.stagnation_count=0;return{decision:'USER_ACTION_REQUIRED',reason:uncertainEffect,reason_code:'recovery-effect-uncertain'}}
   if(completion.next==='USER_ACTION_REQUIRED')return{decision:'USER_ACTION_REQUIRED',reason:'waiting-user-authority',reason_code:'waiting-user-authority'}
   if(completion.next==='VERIFY'){

@@ -112,3 +112,16 @@ test('implicit dependency reviewer recomputes authoritative review evidence afte
   assert.doesNotMatch(prompts[0].body.parts[0].text,/REQUIRED EVIDENCE: visual-check/)
   assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.payload?.obligation_ids?.includes(review.id)&&e.payload?.requested_evidence?.includes('visual-check')&&e.payload?.authoritative_evidence?.includes('review-evidence')))
 })
+
+test('implementation settlement replans parent-owned dependency surface before closure',()=>{
+  const root=repo(),s=new MissionStore(root),m=startAssessedMission(s,'parent-dependency-surface','opaque visual app change',{task_kind:'implementation',scope:'multi-file',risk:'low',required_capabilities:['implementation','visual-qa'],likely_verification:['visual-check'],likely_targets:['requirements.txt']})
+  m.execution.verification_policy={requiredKinds:['visual-check'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false}
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.requiredTargets=['requirements.txt']
+  m.vcs.changed_files=['requirements.txt']
+  const task=createTask(m,{objective:'finish implementation after parent dependency write',role:'coder',category:'standard',scope:['requirements.txt'],requiredEvidence:[],obligationIds:[implementation.id]})
+  const worker=createWorker(m,task,'host-default',[],[],[]);worker.status='busy';worker.started_at=Date.now()-10;task.status='running'
+  runtime(root).applyResult(m,worker.id,{status:'DONE',summary:'implementation complete',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(implementation.status,'closed')
+  const review=m.execution.obligations.find(o=>o.kind==='review'&&o.summary.includes('Dependency graph changed'));assert.ok(review);assert.deepEqual(review.requiredEvidence,['review-evidence']);assert.equal(review.status,'open');assert.equal(m.execution.verification_policy.requireReview,true)
+  const replan=m.execution.ledger.findLast(e=>e.type==='verification.replanned');assert.ok(replan);assert.equal(replan.payload?.reason,'dependency-changed-surface');assert.ok(replan.payload?.changed_files?.includes('requirements.txt'))
+})

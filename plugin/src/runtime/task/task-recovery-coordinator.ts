@@ -23,12 +23,14 @@ import type { MissionLivenessAssessment } from '../liveness/assessment.js'
 
 export type ChildCallbackDisposition='accept'|'stale-mission'
 export type HostTerminalRecoveryDisposition='RECOVERED'|'QUARANTINED'|'NOT_RECOVERED'
+function taskOwnsUnresolvedRecoveryWork(m:MissionState,worker:MissionState['execution']['workers'][number]):boolean{const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task||task.status==='completed'||task.result?.status==='DONE')return false;if(task.obligation_ids.length&&task.obligation_ids.every(id=>m.execution.obligations.some(o=>o.id===id&&o.status==='closed')))return false;return true}
+function latestRecoverableWorker(m:MissionState):MissionState['execution']['workers'][number]|undefined{return[...m.execution.workers].reverse().find(w=>Boolean(w.session_id)&&!['failed','cancelled','busy','starting','queued'].includes(w.status)&&taskOwnsUnresolvedRecoveryWork(m,w))}
 export class TaskRecoveryCoordinator{
   callbackDisposition(m:MissionState,worker:{parent_mission_id?:string;generation_at_spawn?:number}):ChildCallbackDisposition{if((worker.parent_mission_id!==undefined&&worker.parent_mission_id!==m.identity.mission_id)||(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation))return'stale-mission';return'accept'}
   constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined,private readonly getProjectPeerView:(m:MissionState)=>ProjectSchedulingPeerView=()=>EMPTY_PROJECT_SCHEDULING_PEER_VIEW){}
   async recoverCanonicalStall(m:MissionState,assessment:MissionLivenessAssessment):Promise<{disposition:'NOOP'|'RECOVERED';reason:string;worker_id?:string;task_id?:string}>{
     if(assessment.state!=='STALLED'||assessment.inflight!=='NO'||!assessment.destructive_recovery_allowed)return{disposition:'NOOP',reason:'canonical-stall-not-admitted'}
-    const worker=[...m.execution.workers].reverse().find(w=>Boolean(w.session_id)&&!['failed','cancelled','busy','starting','queued'].includes(w.status))
+    const worker=latestRecoverableWorker(m)
     if(!worker)return{disposition:'NOOP',reason:'no-quiescent-worker-to-resume'}
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return{disposition:'NOOP',reason:'stalled-worker-task-missing'}
     let status:'idle'|'busy'|'retry'|'unknown'='unknown';try{status=await this.child.status(worker.session_id!)}catch{}
@@ -38,7 +40,7 @@ export class TaskRecoveryCoordinator{
   }
   async recoverStagnation(m:MissionState,level:number,action:'same-worker-resume'|'model-escalation'='same-worker-resume'):Promise<boolean>{
     if((action==='same-worker-resume'&&![1,2].includes(level))||(action==='model-escalation'&&level!==3)||m.identity.status!=='active'||m.continuation.user_interrupted)return false
-    const worker=[...m.execution.workers].reverse().find(w=>Boolean(w.session_id)&&!['failed','cancelled','busy','starting','queued'].includes(w.status))
+    const worker=latestRecoverableWorker(m)
     if(!worker?.session_id)return false
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return false
     let exactStatus:'idle'|'busy'|'retry'|'unknown'='unknown';try{exactStatus=await this.child.status(worker.session_id)}catch{}if(exactStatus!=='idle'){appendLedger(m,'worker.stagnation-recovery.deferred',{task_id:task.id,worker_id:worker.id,payload:{reason:'exact-old-execution-not-quiescent',host_status:exactStatus,generation:m.continuation.generation}});return false}

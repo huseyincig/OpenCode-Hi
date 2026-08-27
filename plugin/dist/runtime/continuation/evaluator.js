@@ -5,7 +5,7 @@ import { evaluatePreconditions } from '../readiness/preconditions.js';
 import { latestBlockingVerificationEvidence } from '../verification/policy.js';
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js';
 import { ambiguousConsequentialEffect } from './recovery-governor.js';
-import { isWaitableRunningProcess } from '../../contracts/process.js';
+import { isCleanupPendingProcess, isPersistentRunningProcess, isWaitableRunningProcess } from '../../contracts/process.js';
 export function evaluateIdle(m, now = Date.now(), projectRoot) {
     if (!m)
         return { decision: 'NOTHING', reason: 'no-active-mission', reason_code: 'no-active-mission' };
@@ -88,6 +88,13 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
     const completion = evaluateCompletion(m, projectRoot);
     if (completion.complete)
         return { decision: 'STOP', reason: 'complete', reason_code: 'complete' };
+    const openObligations = m.execution.obligations.some(o => o.status === 'open'), cleanupOnly = !openObligations && m.execution.processes.some(p => isPersistentRunningProcess(p) || isCleanupPendingProcess(p));
+    if (completion.next === 'CONTINUE' && cleanupOnly) {
+        m.continuation.stagnation_count = 0;
+        const instruction = controlDecisionInstruction(m, projectControlDecision(m, projectRoot));
+        setRuntimeNudge(m, instruction, 'process-cleanup-pending');
+        return { decision: 'CONTINUE', reason: 'process-cleanup-pending', reason_code: 'process-cleanup-pending', prompt: continuationPrompt(m, instruction) };
+    }
     const uncertainEffect = ambiguousConsequentialEffect(m);
     if (uncertainEffect) {
         m.continuation.stagnation_count = 0;

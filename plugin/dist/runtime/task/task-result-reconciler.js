@@ -415,7 +415,8 @@ export class TaskResultReconciler {
         applyWorkerResult(m, task, worker, effectiveResult);
         releaseTaskRuntimeReservation(m, worker.id);
         this.registry.delete(worker.id);
-        for (const signal of changedSurfaceMethodologySignals(effectiveResult.changed_files))
+        const ownsImplementation = task.obligation_ids.some(id => m.execution.obligations.some(o => o.id === id && o.kind === 'implementation')), replanFiles = ownsImplementation ? [...new Set([...m.vcs.changed_files, ...effectiveResult.changed_files])] : effectiveResult.changed_files;
+        for (const signal of changedSurfaceMethodologySignals(replanFiles))
             activateMethodologySignal(m, this.projectRoot, { signal: signal.name, producer: 'changed-surface', reason: signal.reason });
         for (const signal of workerResultMethodologySignals({ status: effectiveResult.status, needsContext: effectiveResult.needs_context, contextGap: effectiveResult.context_gap, failureFinding: effectiveResult.failure_finding })) {
             const producer = signal.name.startsWith('context.') ? 'context' : 'runtime-failure';
@@ -425,12 +426,12 @@ export class TaskResultReconciler {
         if (effectiveResult.open_issues.some(x => String(x).toUpperCase().includes('USER_ACTION_REQUIRED'))) {
             openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'worker-user-action-required', summary: effectiveResult.summary.slice(0, 500) || 'Worker requires external user action before this task can continue.', task_id: task.id, worker_id: worker.id, response_schema: { kind: 'external-action' } });
         }
-        const replan = replanVerificationForChangedSurface(m, task, effectiveResult.changed_files, collectRepoContext(this.projectRoot));
+        const replan = replanVerificationForChangedSurface(m, task, replanFiles, collectRepoContext(this.projectRoot));
         if (replan.changed) {
-            appendLedger(m, 'verification.replanned', { task_id: task.id, worker_id: worker.id, payload: { changed_files: effectiveResult.changed_files.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
+            appendLedger(m, 'verification.replanned', { task_id: task.id, worker_id: worker.id, payload: { changed_files: replanFiles.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
             void this.events?.(runtimeSignal('verification.replanned', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated } }));
         }
-        for (const signal of verificationMethodologySignals({ changed: replan.changed, scopeExpanded: replan.scopeExpanded, riskEscalated: replan.riskEscalated, requireReview: m.execution.verification_policy.requireReview, changedFiles: effectiveResult.changed_files })) {
+        for (const signal of verificationMethodologySignals({ changed: replan.changed, scopeExpanded: replan.scopeExpanded, riskEscalated: replan.riskEscalated, requireReview: m.execution.verification_policy.requireReview, changedFiles: replanFiles })) {
             const producer = signal.name.startsWith('risk.') ? 'risk' : 'verification';
             activateMethodologySignal(m, this.projectRoot, { signal: signal.name, producer, reason: signal.reason });
         }

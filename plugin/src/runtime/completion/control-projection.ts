@@ -3,7 +3,7 @@ import { evaluateCompletion } from './evaluator.js'
 import { verificationEnvelopeFor, verificationKindSatisfiesRequirement } from '../verification/policy.js'
 import { discoverVerificationRoutes } from '../verification/discovery.js'
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js'
-import { isPersistentRunningProcess,isWaitableRunningProcess } from '../../contracts/process.js'
+import { isCleanupPendingProcess,isPersistentRunningProcess,isWaitableRunningProcess } from '../../contracts/process.js'
 
 export type ControlDecisionAction='WAIT'|'VERIFY'|'RECONCILE'|'USER_ACTION_REQUIRED'|'CONTINUE'|'DONE'
 export interface ControlDecisionProjection{
@@ -82,6 +82,8 @@ export function controlDecisionInstruction(m:MissionState,decision:ControlDecisi
   }
   const persistent=m.execution.processes.find(isPersistentRunningProcess)
   if(persistent&&!decision.open_obligations.length)return`continue:cleanup-persistent-process:${persistent.process_id}; call hi_process_kill id=${persistent.process_id}, then hi_process_cleanup id=${persistent.process_id}; do not call hi_process_wait on a deadline-less persistent service`
+  const cleanupPending=m.execution.processes.find(isCleanupPendingProcess)
+  if(cleanupPending&&!decision.open_obligations.length)return`continue:cleanup-terminal-process:${cleanupPending.process_id}; call hi_process_cleanup id=${cleanupPending.process_id}; terminal process cleanup is control-plane custody, not worker recovery`
   const staleClearance=m.execution.gates.find(g=>g.id==='gate-exploration-clearance'&&g.status==='blocked')
   if(staleClearance)return`continue:refresh-exploration-clearance; call hi_task_start with role=repository-explorer against the stale clearance scope; ${staleClearance.reason??'re-establish current source provenance'}; do not implement until current bounded repository evidence is re-established`
   const openWork=m.execution.obligations.find(o=>o.status==='open'&&(o.kind==='analysis'||o.kind==='implementation'))

@@ -268,6 +268,7 @@ export class TaskRuntime{
     if(m.identity.semantic_assessment.status!=='assessed')throw new Error('Hi semantic assessment is pending; assess mission intent before starting a worker')
     const resumeTask=input.resumeTaskId?m.execution.tasks.find(t=>t.id===input.resumeTaskId):undefined,resumeWorker=resumeTask?m.execution.workers.find(w=>(w.id===resumeTask.worker_id||w.task_id===resumeTask.id)&&!['completed','failed','cancelled'].includes(w.status)):undefined
     if(input.resumeTaskId&&(!resumeTask||!resumeWorker))throw new Error(`Hi task ${input.resumeTaskId} has no resumable worker`)
+    if(resumeTask?.obligation_ids.length&&resumeTask.obligation_ids.every(id=>m.execution.obligations.some(o=>o.id===id&&o.status==='closed')))throw new Error(`Hi task ${resumeTask.id} owns no open obligations; satisfied task ownership cannot be resumed implicitly. Create separate work only for a newly opened canonical obligation.`)
     if(resumeTask&&resumeWorker&&resumeTask.role!==resumeWorker.role)throw new Error(`Hi task ${resumeTask.id} role identity mismatch: task=${resumeTask.role}, worker=${resumeWorker.role}`)
     const objective=input.objective?.trim()||resumeTask?.objective||m.identity.objective
     const taskIntent=m.identity.intent
