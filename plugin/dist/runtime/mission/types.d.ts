@@ -13,6 +13,7 @@ import type { ProgressDelta, SchedulerLifecycleState } from '../../contracts/orc
 import type { SemanticProgressSnapshot } from '../progress/semantic-progress.js';
 import type { RecoveryStrategyRecord } from '../continuation/recovery-governor.js';
 import type { ConstraintAtom } from '../../contracts/constraint-atom.js';
+import type { VerificationCase } from '../../contracts/verification-case.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceClaim, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -34,6 +35,7 @@ export interface Obligation {
     summary: string;
     requiredEvidence?: string[];
     requiredTargets?: string[];
+    verificationCases?: VerificationCase[];
     blocker?: string;
     closedAt?: number;
 }
@@ -96,6 +98,7 @@ export interface ExecutionProfile {
         scope: string[];
         dependencies: string[];
         required_evidence: string[];
+        verification_cases?: VerificationCase[];
     };
     tools: string[];
     mcp_servers?: string[];
@@ -187,6 +190,7 @@ export interface NormalizedMissionIntent {
     requiredCapabilities: string[];
     requestedExternalActions: ExternalActionType[];
     likelyVerification: string[];
+    verificationCases?: VerificationCase[];
     avoid: string[];
 }
 export interface MissionIdentityState {

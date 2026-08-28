@@ -177,7 +177,7 @@ test('bounded multi-file visual work keeps only repo-available technical verific
     writeFileSync(join(root,'opencode.json'),'{}')
     const store=new MissionStore(root)
     const mission=store.start('multi-file-visual-capability','Build a small visual app and exercise its behavior without naming a test runner.')
-    store.applyInitialSemanticAssessment('multi-file-visual-capability',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'multi-file',risk:'low',required_capabilities:['implementation','verification','visual-qa'],likely_verification:['targeted-tests','changed-surface-sanity','visual-check'],user_verification:[],verification_ceiling:false,likely_targets:['app.py','templates/index.html']}))
+    store.applyInitialSemanticAssessment('multi-file-visual-capability',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'multi-file',risk:'low',required_capabilities:['implementation','verification','visual-qa'],likely_verification:['targeted-tests','changed-surface-sanity','visual-check'],user_verification:[],verification_ceiling:false,likely_targets:['app.py','templates/index.html'],verification_cases:[{id:'vc_visual-smoke',subject:'rendered visual state',required_browser_actions:['inspect']}]}))
     assert.deepEqual(mission.identity.intent.likelyVerification,['visual-check'])
     assert.deepEqual(mission.execution.verification_policy.requiredKinds,['visual-check'])
   }finally{rmSync(root,{recursive:true,force:true})}
@@ -196,7 +196,7 @@ test('adaptive verification preserves exact user verifier and high-risk or visua
 
   const visualStore=new MissionStore(process.cwd())
   const visual=visualStore.start('review-visual','Visually review page.html without modifying it.')
-  visualStore.applyInitialSemanticAssessment('review-visual',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','visual-qa'],likely_verification:['visual-check'],user_verification:[],verification_ceiling:false,likely_targets:['page.html']}))
+  visualStore.applyInitialSemanticAssessment('review-visual',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','visual-qa'],likely_verification:['visual-check'],user_verification:[],verification_ceiling:false,likely_targets:['page.html'],verification_cases:[{id:'vc_visual-smoke',subject:'rendered visual state',required_browser_actions:['inspect']}]}))
   assert.deepEqual(visual.identity.intent.likelyVerification,['review-evidence','visual-check'])
 })
 

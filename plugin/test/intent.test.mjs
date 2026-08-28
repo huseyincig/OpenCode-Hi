@@ -57,8 +57,8 @@ test('review versus implementation is an explicit semantic assessment decision',
 })
 
 test('follow-up amendment cannot manufacture implementation work from verification-only capabilities',()=>{
-  assert.throws(()=>parseSemanticIntentAssessment({...base,message_kind:'amendment',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html']}),/amendment.*requires.*implementation/)
-  const verify=parseSemanticIntentAssessment({...base,message_kind:'verification',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html']})
+  assert.throws(()=>parseSemanticIntentAssessment({...base,message_kind:'amendment',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html'],verification_cases:[{id:'vc_visual-smoke',subject:'visual behavior',required_browser_actions:['inspect']}]}),/amendment.*requires.*implementation/)
+  const verify=parseSemanticIntentAssessment({...base,message_kind:'verification',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html'],verification_cases:[{id:'vc_visual-smoke',subject:'visual behavior',required_browser_actions:['inspect']}]})
   assert.equal(verify.message_kind,'verification')
 })
 

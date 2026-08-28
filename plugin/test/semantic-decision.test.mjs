@@ -6,6 +6,10 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { HI_METHODOLOGY_SIGNAL_CATALOG } from '../dist/generated/methodology-policy.js'
 import { SEMANTIC_CAPABILITIES,SEMANTIC_EXTERNAL_ACTIONS,SEMANTIC_VERIFICATION_KINDS } from '../dist/runtime/intent/semantic-assessment.js'
 
+// Captured before the semantic-entry frugality change; the accepted contract was
+// at least 30% less provider-visible text while preserving the full semantic gate.
+const SEMANTIC_GATE_PRE_COMPACTION_CHARS=2666,SEMANTIC_GATE_MIN_REDUCTION=0.30
+
 const topology={mode:'adaptive',maxAgents:4,parallelism:2}
 const verification=(requireReview=false)=>({requiredKinds:['targeted-tests'],requireFresh:true,requireReview,allowWorkerReportedEvidence:!requireReview})
 const intent=(patch={})=>({
@@ -71,10 +75,13 @@ test('visual capability is represented as browser intent without claiming runtim
   assert.equal(Object.hasOwn(d.capabilities,'available'),false)
 })
 
-test('compact semantic entry gate preserves closed contract and is at least 30 percent smaller',()=>{
+function semanticEntryGate(){
   const store=new MissionStore(process.cwd()),m=store.start('phase2-gate','opaque multilingual task')
-  const gate=renderSemanticAssessmentGate(m),legacyChars=2666,maxChars=Math.floor(legacyChars*0.70)
-  assert.ok(gate.length<=maxChars,`gate=${gate.length}, maximum=${maxChars}`)
+  return renderSemanticAssessmentGate(m)
+}
+
+test('semantic entry gate preserves the complete closed contract',()=>{
+  const gate=semanticEntryGate()
   assert.match(gate,/Hi SEMANTIC ASSESSMENT GATE/)
   assert.match(gate,/call hi_intent_assess once/)
   assert.match(gate,/message_kind=mission\|non-material/);assert.doesNotMatch(gate,/message_kind\(M\)/);assert.doesNotMatch(gate,/task_kind\(T\)|scope\(S\)|risk\(R\)|ambiguity\(A\)|dependency_class\(D\)/);assert.match(gate,/all keys required/)
@@ -87,6 +94,11 @@ test('compact semantic entry gate preserves closed contract and is at least 30 p
   for(const value of [...SEMANTIC_CAPABILITIES,...SEMANTIC_EXTERNAL_ACTIONS,...SEMANTIC_VERIFICATION_KINDS])assert.ok(gate.includes(value),`missing closed enum ${value}`)
   assert.match(gate,/intent_signals=\[\] by default/);assert.match(gate,/intent\.<slug>/);assert.match(gate,/intent\.tdd/);assert.match(gate,/unknown signals reject/)
   const allowedIntentSignals=Object.entries(HI_METHODOLOGY_SIGNAL_CATALOG).filter(([name,spec])=>name.startsWith('intent.')&&spec.producers.includes('intent'));assert.ok(allowedIntentSignals.length>20,'parser-side closed intent signal catalog remains available without prompt duplication')
+})
+
+test('semantic entry gate stays within the established provider-visible reduction fence',()=>{
+  const gate=semanticEntryGate(),maxChars=Math.floor(SEMANTIC_GATE_PRE_COMPACTION_CHARS*(1-SEMANTIC_GATE_MIN_REDUCTION))
+  assert.ok(gate.length<=maxChars,`gate=${gate.length}, maximum=${maxChars}; baseline=${SEMANTIC_GATE_PRE_COMPACTION_CHARS}, minimum_reduction=${SEMANTIC_GATE_MIN_REDUCTION}`)
 })
 
 test('MissionStore consumes the decision envelope without creating a second durable decision owner',()=>{

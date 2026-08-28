@@ -5,9 +5,10 @@ export { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
 const STATUS_ALIAS = { DONE: 'DONE', PASS: 'DONE', SUCCESS: 'DONE', SUCCEEDED: 'DONE', DONE_WITH_CONCERNS: 'DONE', FIX_REQUIRED: 'FIX_REQUIRED', NEEDS_CONTEXT: 'NEEDS_CONTEXT', USER_ACTION_REQUIRED: 'BLOCKED', BLOCKED: 'BLOCKED', NO_PROGRESS: 'FIX_REQUIRED', FAILED: 'FAILED', FAIL: 'FAILED' };
 const KIND_SET = new Set(WORKER_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);
-const RESULT_KEYS = new Set(['status', 'summary', 'changed_files', 'scope_expansions', 'evidence', 'findings', 'open_issues', 'needs_context', 'context_gap', 'failure_finding', 'methodology_observations']);
+const RESULT_KEYS = new Set(['status', 'summary', 'changed_files', 'scope_expansions', 'evidence', 'verification_coverage', 'findings', 'open_issues', 'needs_context', 'context_gap', 'failure_finding', 'methodology_observations']);
 const EVIDENCE_KEYS = new Set(['kind', 'summary', 'scope', 'evidence_refs', 'pass', 'outcome', 'reason']);
 const OBS_KEYS = new Set(['key', 'procedure', 'trigger', 'do_not_trigger', 'exit_condition', 'evidence']);
+const COVERAGE_KEYS = new Set(['case_id', 'outcome', 'evidence_refs', 'reason']);
 const EXPANSION_KEYS = new Set(['file', 'reason', 'necessary']);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function stringArray(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
@@ -62,6 +63,8 @@ export function isWorkerResultContract(v) {
         return false;
     if (!stringArray(v.changed_files) || !v.changed_files.every(x => normalizeBoundedProjectPath(x) === x.replace(/\\/g, '/').replace(/^\.\//, '')) || !Array.isArray(v.evidence) || !v.evidence.every(isWorkerEvidenceClaimContract) || !stringArray(v.open_issues) || !stringArray(v.needs_context))
         return false;
+    if (v.verification_coverage !== undefined && (!Array.isArray(v.verification_coverage) || v.verification_coverage.length > 16 || !v.verification_coverage.every(x => record(x) && onlyKeys(x, COVERAGE_KEYS) && typeof x.case_id === 'string' && /^vc_[a-z0-9][a-z0-9-]{0,47}$/.test(x.case_id) && ['passed', 'failed'].includes(String(x.outcome)) && stringArray(x.evidence_refs) && x.evidence_refs.length > 0 && x.evidence_refs.length <= 20 && (x.reason === undefined || typeof x.reason === 'string'))))
+        return false;
     if (v.scope_expansions !== undefined && (!Array.isArray(v.scope_expansions) || !v.scope_expansions.every(x => record(x) && onlyKeys(x, EXPANSION_KEYS) && typeof x.file === 'string' && normalizeBoundedProjectPath(x.file) !== undefined && typeof x.reason === 'string' && typeof x.necessary === 'boolean')))
         return false;
     if (v.findings !== undefined && (!Array.isArray(v.findings) || !v.findings.every(isReviewFindingContract)))
@@ -83,6 +86,11 @@ function normalizeEvidence(raw) {
         return []; const kind = String(v.kind ?? ''); if (!KIND_SET.has(kind))
         return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined, rawPass = typeof v.pass === 'boolean' ? v.pass : undefined, rawRefs = Array.isArray(v.evidence_refs) ? v.evidence_refs : Array.isArray(v.refs) ? v.refs : undefined, summarySource = typeof v.summary === 'string' ? v.summary : typeof v.description === 'string' ? v.description : typeof v.detail === 'string' ? v.detail : ''; return [{ kind, summary: clip(summarySource, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, evidence_refs: normalizeEvidenceRefs(rawRefs), pass: evidenceVerdictPassValue(rawPass, outcome), outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
 }
+function normalizeVerificationCoverage(raw) { if (!Array.isArray(raw))
+    return undefined; const out = raw.slice(0, 16).flatMap((v) => { if (!record(v))
+    return []; const case_id = String(v.case_id ?? '').trim().toLowerCase(); if (!/^vc_[a-z0-9][a-z0-9-]{0,47}$/.test(case_id) || !['passed', 'failed'].includes(String(v.outcome)))
+    return []; const evidence_refs = normalizeEvidenceRefs(v.evidence_refs); if (!evidence_refs?.length)
+    return []; return [{ case_id, outcome: String(v.outcome), evidence_refs, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; }); return out.length ? out : undefined; }
 function normalizeMethodologyObservations(raw) {
     if (!Array.isArray(raw))
         return undefined;
@@ -110,5 +118,5 @@ export function normalizeWorkerResult(raw) {
     const contextGap = ['scope', 'iterative', 'none'].includes(String(x.context_gap)) ? String(x.context_gap) : undefined;
     const rawFinding = ['ci-build', 'unknown-root-cause', 'none'].includes(String(x.failure_finding)) ? String(x.failure_finding) : undefined;
     const evidence = normalizeEvidence(x.evidence);
-    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.flatMap(v => { const p = normalizeBoundedProjectPath(v); return p ? [p] : []; }).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).flatMap(v => { const file = normalizeBoundedProjectPath(v.file); return file ? [{ file, reason: clip(v.reason, 600), necessary: v.necessary === true }] : []; }) : [], evidence, findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(boundedIssueText).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
+    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.flatMap(v => { const p = normalizeBoundedProjectPath(v); return p ? [p] : []; }).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).flatMap(v => { const file = normalizeBoundedProjectPath(v.file); return file ? [{ file, reason: clip(v.reason, 600), necessary: v.necessary === true }] : []; }) : [], evidence, verification_coverage: normalizeVerificationCoverage(x.verification_coverage), findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(boundedIssueText).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
 }

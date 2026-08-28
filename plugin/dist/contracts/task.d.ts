@@ -1,4 +1,5 @@
 import { type ExternalActionType } from './external-action.js';
+import { type VerificationCase } from './verification-case.js';
 export declare const TASK_STATUSES: readonly ["created", "queued", "running", "waiting", "completed", "failed", "cancelled", "blocked"];
 export type TaskContractStatus = typeof TASK_STATUSES[number];
 export declare const TASK_EXTERNAL_ACTIONS: readonly ["git-push", "release-create", "package-publish", "deploy"];
@@ -14,6 +15,7 @@ export interface TaskContract {
     constraints: string[];
     dependencies: string[];
     requiredEvidence: string[];
+    verification_cases?: VerificationCase[];
     obligation_ids: string[];
     context_artifacts: unknown[];
     execution_profile?: unknown;

@@ -21,6 +21,12 @@ export interface MethodologyObservation {
     exit_condition: string;
     evidence: WorkerEvidenceKind[];
 }
+export interface VerificationCoverageClaim {
+    case_id: string;
+    outcome: 'passed' | 'failed';
+    evidence_refs: string[];
+    reason?: string;
+}
 export interface ScopeExpansion {
     file: string;
     reason: string;
@@ -32,6 +38,7 @@ export interface WorkerResult {
     changed_files: string[];
     scope_expansions?: ScopeExpansion[];
     evidence: WorkerEvidenceClaim[];
+    verification_coverage?: VerificationCoverageClaim[];
     findings?: ReviewFinding[];
     open_issues: string[];
     needs_context: string[];

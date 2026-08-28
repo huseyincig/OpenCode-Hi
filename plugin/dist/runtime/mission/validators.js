@@ -13,14 +13,16 @@ import { isProgressDelta, isSemanticProgressSnapshot } from '../progress/semanti
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { isConstraintAtom } from '../../contracts/constraint-atom.js';
+import { isVerificationCase } from '../../contracts/verification-case.js';
 import { hasFreshPassedEvidence } from '../evidence/freshness.js';
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
 function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
 function uniqueRecordIDs(values) { const ids = values.map(value => isRecord(value) ? value.id : undefined); return ids.every(id => typeof id === 'string') && new Set(ids).size === ids.length; }
+function validVerificationCases(value) { return Array.isArray(value) && value.every(isVerificationCase) && new Set(value.map((x) => x.id)).size === value.length; }
 function onlyKeys(value, keys) { const allowed = new Set(keys); return Object.keys(value).every(key => allowed.has(key)); }
 const IDENTITY_KEYS = ['mission_id', 'session_id', 'objective', 'intent', 'semantic_assessment', 'status', 'risk', 'created_at', 'updated_at'];
-const INTENT_KEYS = ['objective', 'likelyTargets', 'taskKind', 'scope', 'risk', 'ambiguity', 'dependencyClass', 'requiredCapabilities', 'requestedExternalActions', 'likelyVerification', 'avoid'];
+const INTENT_KEYS = ['objective', 'likelyTargets', 'taskKind', 'scope', 'risk', 'ambiguity', 'dependencyClass', 'requiredCapabilities', 'requestedExternalActions', 'likelyVerification', 'verificationCases', 'avoid'];
 const SEMANTIC_ASSESSMENT_KEYS = ['status', 'phase', 'revision', 'source', 'pending_text', 'assessed_at'];
 const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'research', 'documentation', 'test-authoring', 'verification', 'review', 'authority']);
 const OBLIGATION_STATUSES = new Set(['open', 'closed', 'blocked']);
@@ -30,6 +32,8 @@ function validObligation(value) {
     if (!isRecord(value) || typeof value.id !== 'string' || typeof value.status !== 'string' || !OBLIGATION_STATUSES.has(value.status) || typeof value.kind !== 'string' || !OBLIGATION_KINDS.has(value.kind) || typeof value.summary !== 'string')
         return false;
     if (value.requiredEvidence !== undefined && (!stringArray(value.requiredEvidence) || !value.requiredEvidence.every(kind => SEMANTIC_VERIFICATION_KINDS.includes(kind))))
+        return false;
+    if (value.verificationCases !== undefined && (String(value.kind) !== 'verification' || !validVerificationCases(value.verificationCases)))
         return false;
     if (value.requiredTargets !== undefined && (!stringArray(value.requiredTargets) || !['implementation', 'documentation', 'test-authoring'].includes(String(value.kind)) || !value.requiredTargets.every(target => normalizeBoundedProjectPath(target) === target)))
         return false;
@@ -100,6 +104,7 @@ function validIntent(value) {
         && diagnosisWriteCapabilities(String(value.taskKind), value.requiredCapabilities).length === 0
         && Array.isArray(value.requestedExternalActions) && value.requestedExternalActions.every(isExternalActionType)
         && stringArray(value.likelyVerification) && value.likelyVerification.every(x => SEMANTIC_VERIFICATION_KINDS.includes(x))
+        && (value.verificationCases === undefined || validVerificationCases(value.verificationCases))
         && stringArray(value.avoid)
         && (value.likelyTargets === undefined || stringArray(value.likelyTargets));
 }

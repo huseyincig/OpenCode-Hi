@@ -17,6 +17,7 @@ export declare function createTask(m: MissionState, input: {
     requiredEvidence?: string[];
     obligationIds?: string[];
     contextReferences?: ContextReferenceDraft[];
+    verificationCases?: import('../../contracts/verification-case.js').VerificationCase[];
     executionProfile?: ExecutionProfile;
 }): MissionTask;
 export declare function createWorker(m: MissionState, task: MissionTask, model?: string, fallbacks?: string[], selectedMethodologies?: string[], methodologyProvenanceItems?: MethodologyProvenance[]): WorkerState;

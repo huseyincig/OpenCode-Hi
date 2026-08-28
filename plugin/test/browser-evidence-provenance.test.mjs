@@ -138,6 +138,26 @@ test('stale prior-attempt browser observation id alias remains fail-closed',asyn
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/);assert.equal(f.m.execution.ledger.some(e=>e.type==='browser.evidence-ref-normalized'),false)
 })
 
+
+
+test('visual verification case coverage rejects rerun6-shaped DONE when required navigate action was never observed',async()=>{
+  const f=fixture('m13-coverage-missing-navigate');f.task.verification_cases=[{id:'vc_reload',subject:'theme survives reload',required_browser_actions:['navigate','inspect']}];f.task.execution_profile.task.verification_cases=structuredClone(f.task.verification_cases);f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa']
+  const toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})}),inspected=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+  runtime().applyResult(f.m,f.worker.id,normalizeWorkerResult({status:'DONE',summary:'most visual checks passed but reload was not exercised',changed_files:[],evidence:[{kind:'visual-evidence',summary:'partial visual pass',scope:['src/view.tsx'],evidence_refs:[inspected.evidence_ref],pass:true,outcome:'passed'}],verification_coverage:[{case_id:'vc_reload',outcome:'passed',evidence_refs:[inspected.evidence_ref]}],open_issues:[],needs_context:[]}))
+  assert.equal(f.task.result.status,'FIX_REQUIRED');assert.ok(f.task.result.open_issues.some(x=>x.includes('vc_reload:missing-actions=navigate')));assert.equal(f.task.result.evidence[0].outcome,'pending');assert.equal(f.m.execution.evidence.items.some(e=>e.kind==='visual-evidence'&&e.outcome==='passed'),false);assert.ok(f.m.execution.ledger.some(e=>e.type==='visual.coverage-rejected'))
+})
+
+test('duplicate visual verification coverage claims cannot gain last-write-wins completion authority',async()=>{
+  const f=fixture('m13-coverage-duplicate');f.task.verification_cases=[{id:'vc_reload',subject:'theme survives reload',required_browser_actions:['inspect']}];f.task.execution_profile.task.verification_cases=structuredClone(f.task.verification_cases);f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa'];const toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})}),inspected=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})),claim={case_id:'vc_reload',outcome:'passed',evidence_refs:[inspected.evidence_ref]};runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'duplicate claims',changed_files:[],evidence:[{kind:'visual-evidence',summary:'visual pass',scope:['src/view.tsx'],evidence_refs:[inspected.evidence_ref],pass:true,outcome:'passed'}],verification_coverage:[claim,{...claim}],open_issues:[],needs_context:[]});assert.equal(f.task.result.status,'FIX_REQUIRED');assert.ok(f.task.result.open_issues.some(x=>x.includes('duplicate-cases=vc_reload')));assert.equal(f.m.execution.evidence.items.some(e=>e.kind==='visual-evidence'&&e.outcome==='passed'),false)
+})
+
+test('visual verification case coverage admits DONE only when every required current-attempt browser action is cited',async()=>{
+  const f=fixture('m13-coverage-complete');f.task.verification_cases=[{id:'vc_reload',subject:'theme survives reload',required_browser_actions:['navigate','inspect']}];f.task.execution_profile.task.verification_cases=structuredClone(f.task.verification_cases);f.worker.selected_methodologies=['hi-visual-qa'];f.worker.loaded_methodologies=['hi-visual-qa'];f.task.execution_profile.methodologies=['hi-visual-qa']
+  const nav=()=>{const x={...observation(f.task.id),action:'navigate',url:'http://127.0.0.1:4173/?reload=1'};x.observation_id=browserObservationId(x);return x},toolSurface=surface(f,{navigate:async()=>nav(),inspect:async()=>observation(f.task.id),health:async()=>({available:true})}),navigated=JSON.parse(await toolSurface.hi_browser_navigate.execute({task_id:f.task.id,url:'http://127.0.0.1:4173/?reload=1'},{sessionID:f.worker.session_id})),inspected=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})),refs=[navigated.evidence_ref,inspected.evidence_ref]
+  runtime().applyResult(f.m,f.worker.id,normalizeWorkerResult({status:'DONE',summary:'reload persistence exercised and observed',changed_files:[],evidence:[{kind:'visual-evidence',summary:'complete visual pass',scope:['src/view.tsx'],evidence_refs:refs,pass:true,outcome:'passed'}],verification_coverage:[{case_id:'vc_reload',outcome:'passed',evidence_refs:refs}],open_issues:[],needs_context:[]}))
+  assert.equal(f.task.result.status,'DONE');assert.ok(f.m.execution.evidence.items.some(e=>e.kind==='visual-evidence'&&e.outcome==='passed'));assert.ok(f.m.execution.ledger.some(e=>e.type==='visual.coverage-admitted'))
+})
+
 test('screenshot tool returns canonical ref plus native image attachment instead of a filesystem lookup target',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-browser-attachment-'))
   try{

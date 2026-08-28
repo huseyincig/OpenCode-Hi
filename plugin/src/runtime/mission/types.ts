@@ -13,6 +13,7 @@ import type { ProgressDelta,SchedulerLifecycleState } from '../../contracts/orch
 import type { SemanticProgressSnapshot } from '../progress/semantic-progress.js'
 import type { RecoveryStrategyRecord } from '../continuation/recovery-governor.js'
 import type { ConstraintAtom } from '../../contracts/constraint-atom.js'
+import type { VerificationCase } from '../../contracts/verification-case.js'
 export type { EvidenceItem } from '../../contracts/evidence.js'
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js'
 export type { EvidenceOutcome,MethodologyObservation,WorkerEvidenceClaim,WorkerEvidenceKind,WorkerResult,WorkerResultStatus } from '../../contracts/worker-result.js'
@@ -28,13 +29,13 @@ export type Category = 'quick' | 'standard' | 'deep' | 'visual' | 'critical'
 export type GateStatus = 'open'|'ready'|'blocked'|'closed'
 export type GateKind = 'verification'|'user-authority'|'reviewer'|'prerequisite-task'|'precondition'|'rollback'
 
-export interface Obligation { id:string; status:ObligationStatus; kind:ObligationKind; summary:string; requiredEvidence?:string[]; requiredTargets?:string[]; blocker?:string; closedAt?:number }
+export interface Obligation { id:string; status:ObligationStatus; kind:ObligationKind; summary:string; requiredEvidence?:string[]; requiredTargets?:string[]; verificationCases?:VerificationCase[]; blocker?:string; closedAt?:number }
 export interface ContextArtifact { id:string; kind:string; uri?:string; title?:string; summary?:string; sha256?:string; added_at:number }
 export interface MissionGate { id:string; kind:GateKind; summary:string; status:GateStatus; reason?:string; updated_at:number }
 export interface RuntimeNudge { id:string; reason:string; instruction:string; created_at:number; generation:number; task_id?:string; worker_id?:string }
 export interface TemporaryMutation { id:string; kind:string; description:string; rollback_command:string; rollback_hash:string; rollback_mode?:'command'|'native-revert'; session_id?:string; message_id?:string; status:'active'|'rolled-back'|'failed'; created_at:number; resolved_at?:number; detail?:string }
 export interface PermissionProfileSnapshot { skill_tool_enabled:boolean; skill_permissions:Record<string,'allow'|'ask'|'deny'>; external_effects:'parent-only'; recursive_task:'deny'; native?:{mode?:string;decisions:Record<string,'allow'|'ask'|'deny'|'unknown'>;source:'effective-opencode-agent'|'hi-default-invariants'} }
-export interface ExecutionProfile { role:string; category:Category; task:{objective:string;scope:string[];dependencies:string[];required_evidence:string[]}; tools:string[]; mcp_servers?:string[]; process_lifecycle?:true; browser_backend?:'bounded-playwright'|'mcp'; browser_allowed_origins?:string[]; browser_required_origins?:string[]; model?:string; model_variant?:string; fallback_models:string[]; fallback_variants?:Record<string,string|undefined>; fallback_reasons?:Array<{model:string;variant?:string;reason:string}>; methodologies:string[]; permission_profile:PermissionProfileSnapshot; verification_policy:VerificationPolicy; max_context_chars:number; max_handoff_chars:number; max_result_chars:number; max_artifacts:number; expected_turns?:number; context_overhead?:number }
+export interface ExecutionProfile { role:string; category:Category; task:{objective:string;scope:string[];dependencies:string[];required_evidence:string[];verification_cases?:VerificationCase[]}; tools:string[]; mcp_servers?:string[]; process_lifecycle?:true; browser_backend?:'bounded-playwright'|'mcp'; browser_allowed_origins?:string[]; browser_required_origins?:string[]; model?:string; model_variant?:string; fallback_models:string[]; fallback_variants?:Record<string,string|undefined>; fallback_reasons?:Array<{model:string;variant?:string;reason:string}>; methodologies:string[]; permission_profile:PermissionProfileSnapshot; verification_policy:VerificationPolicy; max_context_chars:number; max_handoff_chars:number; max_result_chars:number; max_artifacts:number; expected_turns?:number; context_overhead?:number }
 
 export interface MissionTask extends TaskContract { status:TaskStatus; category:Category; context_artifacts:ContextReferenceContract[]; execution_profile?:ExecutionProfile; result?:WorkerResult }
 export interface MethodologyProvenance { name:string; provider:'project'|'personal'|'hi'; source_path:string; source_sha256?:string; permission:'allow'|'ask'|'deny'; injection:'native-skill-tool'|'none'; selected_at:number }
@@ -43,7 +44,7 @@ export interface LedgerEvent { id:string; at:number; mission_id:string; type:str
 export interface VerificationPolicy { requiredKinds:string[]; requireFresh:boolean; requireReview:boolean; allowWorkerReportedEvidence:boolean }
 export interface HiMethodologyNeed { name:string; signal:string; trigger_source:string; producer:string; reason:string; created_at:number; task_id?:string; obligation_id?:string }
 export interface SemanticAssessmentState { status:'pending'|'assessed'; phase:'initial'|'followup'; revision:number; source:'host-primary'; pending_text:string; assessed_at?:number }
-export interface NormalizedMissionIntent { objective:string; likelyTargets?:string[]; taskKind:string; scope:'local'|'multi-file'|'repo-wide'|'external'|'multi-stream'; risk:Risk; ambiguity:'none'|'resolvable'|'contract-critical'; dependencyClass:'independent'|'sequential'|'external-gated'|'unknown'|'independent-multi'; requiredCapabilities:string[]; requestedExternalActions:ExternalActionType[]; likelyVerification:string[]; avoid:string[] }
+export interface NormalizedMissionIntent { objective:string; likelyTargets?:string[]; taskKind:string; scope:'local'|'multi-file'|'repo-wide'|'external'|'multi-stream'; risk:Risk; ambiguity:'none'|'resolvable'|'contract-critical'; dependencyClass:'independent'|'sequential'|'external-gated'|'unknown'|'independent-multi'; requiredCapabilities:string[]; requestedExternalActions:ExternalActionType[]; likelyVerification:string[]; verificationCases?:VerificationCase[]; avoid:string[] }
 export interface MissionIdentityState {
   mission_id:string; session_id:string; objective:string; intent:NormalizedMissionIntent; semantic_assessment:SemanticAssessmentState; status:MissionStatus; risk:Risk; created_at:number; updated_at:number
 }

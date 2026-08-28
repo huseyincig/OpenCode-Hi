@@ -4,6 +4,7 @@ import type { NormalizedMissionIntent, Risk } from '../mission/types.js'
 import type { RepoContext } from './repo-context.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import { isConstraintAtomDraft,type ConstraintAtomDraft } from '../../contracts/constraint-atom.js'
+import { isVerificationCase,type VerificationCase } from '../../contracts/verification-case.js'
 
 export type SemanticMessageKind='mission'|'amendment'|'constraint'|'verification'|'stop'|'resume'|'non-material'
 export const SEMANTIC_CAPABILITIES=['implementation','repository-analysis','review','verification','independent-review','security-review','visual-qa','design-exploration','multi-stream-delegation','source-verification','external-research','documentation','test-authoring','qa-review','dependency-change','interactive-process','mcp'] as const
@@ -28,6 +29,7 @@ export interface SemanticIntentAssessment{
   likely_verification:SemanticVerificationKind[]
   user_verification:SemanticVerificationKind[]
   verification_ceiling:boolean
+  verification_cases:VerificationCase[]
   likely_targets:string[]
   intent_signals:HiMethodologySignalName[]
   suppressed_intent_signals:HiMethodologySignalName[]
@@ -160,11 +162,12 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:taskKind,scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
-    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,likely_targets:semanticTargets(v.likely_targets,20),
+    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map(item=>{if(!isVerificationCase(item))throw new Error('invalid verification_cases entry');return item}):[],likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],
   }
   if(messageKind!=='constraint'&&assessment.constraint_atoms.length)throw new Error('constraint_atoms are allowed only for message_kind=constraint')
+  const visualRequired=assessment.likely_verification.includes('visual-check');if(visualRequired&&!assessment.verification_cases.length&&!['resume','constraint'].includes(messageKind))throw new Error('visual-check requires non-empty verification_cases');if(!visualRequired&&assessment.verification_cases.length)throw new Error('verification_cases require visual-check');const caseIDs=assessment.verification_cases.map(c=>c.id);if(new Set(caseIDs).size!==caseIDs.length)throw new Error('verification_cases ids must be unique')
   const materialTargets=materialSemanticTargets(assessment),localSequential=assessment.scope==='local'&&assessment.dependency_class==='sequential',boundedSingleMaterialTarget=assessment.scope==='multi-file'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&materialTargets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))
   const materialChange=['implementation','bug-fix','performance'].includes(assessment.task_kind),resolvedMultiFile=materialChange&&assessment.scope==='multi-file'&&assessment.ambiguity==='none',resolvedLocal=materialChange&&assessment.scope==='local'&&assessment.ambiguity==='none'
   if(resolvedMultiFile&&materialTargets.length<2&&!boundedSingleMaterialTarget)throw new Error('multi-file ambiguity=none material change requires at least two material targets')
@@ -172,5 +175,5 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   return localSequential||boundedSingleMaterialTarget?{...assessment,scope:'local',dependency_class:'independent'}:assessment
 }
 export function assessedIntent(current:NormalizedMissionIntent,assessment:SemanticIntentAssessment):NormalizedMissionIntent{
-  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:current.likelyTargets,taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification]}
+  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:current.likelyTargets,taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification],verificationCases:(assessment.verification_cases??[]).length?(assessment.verification_cases??[]).map(c=>({...c,required_browser_actions:[...c.required_browser_actions]})):(assessment.message_kind==='resume'||assessment.message_kind==='constraint'?current.verificationCases:[])}
 }

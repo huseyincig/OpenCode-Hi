@@ -328,6 +328,36 @@ export class TaskResultReconciler {
             if (preExisting.length)
                 appendLedger(m, 'review.finding-pre-existing', { task_id: task.id, worker_id: worker.id, payload: { findings: preExisting.map(f => ({ id: f.id, severity: f.severity, scope: f.scope.slice(0, 20) })), policy: 'record-without-unrelated-mission-blocker' } });
         }
+        const requiredVerificationCases = task.verification_cases ?? [];
+        if (worker.role === 'visual-qa' && requiredVerificationCases.length && effectiveResult.status === 'DONE') {
+            const coverage = effectiveResult.verification_coverage ?? [], coverageIDs = coverage.map(c => c.case_id), duplicateCoverageIDs = [...new Set(coverageIDs.filter((id, index) => coverageIDs.indexOf(id) !== index))], byID = new Map(coverage.map(c => [c.case_id, c])), actionForRef = (ref) => { const event = [...m.execution.ledger].reverse().find(event => event.type === 'browser.observation-recorded' && event.task_id === task.id && event.worker_id === worker.id && event.payload?.evidence_ref === ref); return typeof event?.payload?.action === 'string' ? event.payload.action : undefined; }, failures = [];
+            for (const required of requiredVerificationCases) {
+                const claim = byID.get(required.id);
+                if (!claim) {
+                    failures.push(`${required.id}:missing`);
+                    continue;
+                }
+                if (claim.outcome !== 'passed') {
+                    failures.push(`${required.id}:failed`);
+                    continue;
+                }
+                const refs = [...new Set(claim.evidence_refs)], support = refs.map(ref => m.execution.evidence.items.find(item => item.id === ref)).filter((item) => Boolean(item)), actions = new Set(refs.map(actionForRef).filter((x) => Boolean(x))), missingActions = required.required_browser_actions.filter(action => !actions.has(action)), validRefs = refs.length > 0 && support.length === refs.length && support.every(item => item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
+                if (!validRefs || missingActions.length)
+                    failures.push(`${required.id}:${!validRefs ? 'unbound-refs' : `missing-actions=${missingActions.join('+')}`}`);
+            }
+            if (duplicateCoverageIDs.length)
+                failures.push(`duplicate-cases=${duplicateCoverageIDs.join(',')}`);
+            const unknown = coverage.filter(c => !requiredVerificationCases.some(r => r.id === c.case_id)).map(c => c.case_id);
+            if (unknown.length)
+                failures.push(`unknown-cases=${unknown.join(',')}`);
+            if (failures.length) {
+                const markers = failures.map(x => `visual-coverage-unsatisfied:${task.id}:${x}`);
+                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', evidence: effectiveResult.evidence.map(e => ['browser-evidence', 'visual-evidence', 'accessibility-evidence'].includes(e.kind) && evidenceVerdictPassed(e.pass, e.outcome) ? { ...e, pass: undefined, outcome: 'pending', reason: `visual-coverage-unsatisfied: ${failures.join('; ')}` } : e), open_issues: [...new Set([...effectiveResult.open_issues, ...markers])], needs_context: [...new Set([...effectiveResult.needs_context, `visual-verification-coverage: satisfy every required case with current-attempt browser evidence refs and required actions; ${failures.join('; ')}`])] };
+                appendLedger(m, 'visual.coverage-rejected', { task_id: task.id, worker_id: worker.id, payload: { required_cases: requiredVerificationCases.map(c => ({ id: c.id, actions: c.required_browser_actions })), reported_cases: coverage.map(c => c.case_id), failures } });
+            }
+            else
+                appendLedger(m, 'visual.coverage-admitted', { task_id: task.id, worker_id: worker.id, payload: { cases: requiredVerificationCases.map(c => c.id) } });
+        }
         const browserProofKinds = new Set(['browser-evidence', 'visual-evidence', 'accessibility-evidence']);
         const requiredBrowserOrigins = [...(task.execution_profile?.browser_required_origins ?? [])];
         const browserTargetApplicable = (items) => !requiredBrowserOrigins.length || items.some(item => Boolean(item.browser_origin) && requiredBrowserOrigins.includes(item.browser_origin));

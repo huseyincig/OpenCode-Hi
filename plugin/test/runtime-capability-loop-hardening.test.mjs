@@ -25,6 +25,7 @@ const VISUAL_ASSESSMENT={
   required_capabilities:['visual-qa'],
   requested_external_actions:[],
   likely_verification:['visual-check'],
+  verification_cases:[{id:'vc_visual-smoke',subject:'visual behavior',required_browser_actions:['inspect']}],
   likely_targets:['index.html'],
   intent_signals:[],
   suppressed_intent_signals:[],

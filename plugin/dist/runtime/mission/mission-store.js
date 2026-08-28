@@ -12,7 +12,7 @@ import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
-function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}) }; }
+function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions] })) } : {}) }; }
 function explicitTestFirstRequested(text) {
     const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
     if (!normalized)
@@ -154,7 +154,7 @@ export class MissionStore {
         if (m.identity.intent.taskKind === 'review')
             obligations.push(obligation('o-review', 'review', 'Requested review completed', ['review-evidence']));
         if (m.identity.intent.taskKind !== 'diagnosis')
-            obligations.push(obligation('o-verification', 'verification', m.identity.intent.likelyVerification.join(', '), m.identity.intent.likelyVerification));
+            obligations.push(obligation('o-verification', 'verification', m.identity.intent.likelyVerification.join(', '), m.identity.intent.likelyVerification, [], m.identity.intent.verificationCases ?? []));
         if (m.identity.intent.risk === 'high')
             obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed', ['review-evidence']));
         if (m.identity.intent.risk === 'authority-boundary')
@@ -333,13 +333,14 @@ export class MissionStore {
             m.identity.objective = `${m.identity.objective}\nFollow-up verification: ${text}`.slice(0, 9000);
             let verify = m.execution.obligations.find(o => o.kind === 'verification');
             if (!verify) {
-                verify = obligation('o-followup-verification-r' + m.identity.semantic_assessment.revision, 'verification', `User verification follow-up: ${text.slice(0, 500)}`, effectiveAssessment.likely_verification);
+                verify = obligation('o-followup-verification-r' + m.identity.semantic_assessment.revision, 'verification', `User verification follow-up: ${text.slice(0, 500)}`, effectiveAssessment.likely_verification, [], effectiveAssessment.verification_cases ?? []);
                 m.execution.obligations.push(verify);
             }
             else {
                 verify.status = 'open';
                 verify.closedAt = undefined;
                 verify.requiredEvidence = [...effectiveAssessment.likely_verification];
+                verify.verificationCases = (effectiveAssessment.verification_cases ?? []).map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions] }));
                 verify.summary = `${verify.summary}; ${text.slice(0, 300)}`.slice(0, 700);
             }
         }
