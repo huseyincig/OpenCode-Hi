@@ -29,6 +29,23 @@ test('semantic assessment drops prose-only target descriptions and falls back to
   assert.deepEqual(intent.likelyTargets,['packages/core/src/ripgrep.ts'])
 })
 
+test('initial explicit empty target list clears provisional path-like prose artifacts',()=>{
+  const provisional=provisionalIntent("Mevcut fixture'ı çalışan/erişilebilir hale getir; modal focus/ESC ve labels/names kontrol et")
+  assert.deepEqual(provisional.likelyTargets,['an/eri','focus/ESC','labels/names'])
+  const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',ambiguity:'resolvable',likely_targets:[]})
+  assert.equal(a.likely_targets_explicit_empty,true)
+  const intent=assessedIntent(provisional,a)
+  assert.equal(intent.likelyTargets,undefined)
+})
+
+test('follow-up explicit empty target list preserves existing canonical targets',()=>{
+  const initial=assessedIntent(provisionalIntent('Fix index.html'),parseSemanticIntentAssessment({...base,likely_targets:['index.html']}))
+  const follow=parseSemanticIntentAssessment({...base,message_kind:'amendment',likely_targets:[]})
+  assert.equal(follow.likely_targets_explicit_empty,true)
+  const intent=assessedIntent(initial,follow)
+  assert.deepEqual(intent.likelyTargets,['index.html'])
+})
+
 test('structured bug-fix assessment produces bounded deterministic intent state',()=>{
   const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',likely_verification:['targeted-tests']})
   const intent=assessedIntent(provisionalIntent('opaque user text'),a)
