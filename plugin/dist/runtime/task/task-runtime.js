@@ -38,6 +38,7 @@ import { QueuedWorkerDispatcher } from './queued-worker-dispatcher.js';
 import { projectSchedulingPeerView } from '../scheduler/project-peer-view.js';
 import { isPersistentRunningProcess } from '../../contracts/process.js';
 import { assessMissionLiveness, recordAssistantProgress } from '../liveness/assessment.js';
+import { verificationKindAdmittedForMission } from '../verification/policy.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
@@ -621,10 +622,12 @@ export class TaskRuntime {
             role = canonicalRole;
         }
         const roleSelectionReason = implicitProcessSupport && !requestedRole ? ['implicit-process-support:canonical-runtime-resource-owner'] : routed.reason;
-        const requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds;
+        const missionVerificationKinds = [...new Set(m.execution.verification_policy.requiredKinds)], admittedExplicitEvidence = explicitEvidence.filter(kind => missionVerificationKinds.length > 0 && verificationKindAdmittedForMission(m, kind)), rejectedExplicitEvidence = explicitEvidence.filter(kind => !admittedExplicitEvidence.includes(kind)), requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? admittedExplicitEvidence : missionVerificationKinds;
         const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), obligationRequiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence, foreignVerification = implicitProcessSupport ? { kinds: [], obligationIds: [] } : foreignVerificationEvidence(m, role, obligationIds), foreignVerificationKinds = new Set(foreignVerification.kinds), ownerReconciledEvidence = foreignVerificationKinds.size ? obligationRequiredEvidence.filter(kind => !foreignVerificationKinds.has(kind)) : obligationRequiredEvidence, reviewOwnerMismatch = !isHiReviewerRole(role) && ownerReconciledEvidence.includes('review-evidence'), requiredEvidence = reviewOwnerMismatch ? ownerReconciledEvidence.filter(kind => kind !== 'review-evidence') : ownerReconciledEvidence, invalidEvidence = requiredEvidence.filter(kind => !isTaskRequiredEvidenceKind(kind));
         if (invalidEvidence.length)
             throw new Error(`Unsupported Hi required evidence kind(s): ${[...new Set(invalidEvidence)].join(', ')}. Use canonical task evidence IDs only.`);
+        if (rejectedExplicitEvidence.length)
+            appendLedger(m, 'task.evidence-contract-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(explicitEvidence)], authoritative_evidence: [...admittedExplicitEvidence], removed_evidence: [...new Set(rejectedExplicitEvidence)], mission_verification: [...missionVerificationKinds], policy: 'mission-verification-admission-wins' } });
         if (ownedObligationEvidence.authoritative && JSON.stringify([...new Set(requestedEvidence)]) !== JSON.stringify(ownedObligationEvidence.requiredEvidence))
             appendLedger(m, 'task.evidence-contract-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(requestedEvidence)], authoritative_evidence: ownedObligationEvidence.requiredEvidence, policy: 'exact-open-obligation-contract-wins' } });
         if (foreignVerificationKinds.size)

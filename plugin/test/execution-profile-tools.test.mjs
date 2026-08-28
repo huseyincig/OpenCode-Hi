@@ -117,6 +117,33 @@ test('distinct visual verification owner keeps mission visual evidence off analy
   const explorerHandoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.match(explorerHandoff,/Task evidence contract: none/i);assert.doesNotMatch(explorerHandoff,/Verification contract: visual-check/i)
 })
 
+test('model task evidence cannot widen beyond canonical mission verification admission',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('model-evidence-widening','repair static dashboard and visually verify it')
+  assess(store,'model-evidence-widening',{task_kind:'bug-fix',scope:'multi-file',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification','visual-qa'],likely_targets:['index.html'],likely_verification:['visual-check']})
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis'),implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(analysis&&implementation);assert.deepEqual(m.execution.verification_policy.requiredKinds,['visual-check'])
+  const explorer=await runtime.start(m,{objective:'inspect static dashboard',role:'repository-explorer',scope:['index.html'],requiredEvidence:['build'],obligationIds:[analysis.id]})
+  const coder=await runtime.start(m,{objective:'repair static dashboard',role:'coder',scope:['index.html'],requiredEvidence:['build','visual-check'],obligationIds:[implementation.id]})
+  const explorerTask=m.execution.tasks.find(t=>t.id===explorer.task_id),coderTask=m.execution.tasks.find(t=>t.id===coder.task_id);assert.ok(explorerTask&&coderTask)
+  assert.deepEqual(explorerTask.requiredEvidence,[]);assert.deepEqual(coderTask.requiredEvidence,[])
+  assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.payload?.policy==='mission-verification-admission-wins'&&e.payload?.role==='repository-explorer'&&e.payload?.removed_evidence?.includes('build')))
+  assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.payload?.policy==='mission-verification-admission-wins'&&e.payload?.role==='coder'&&e.payload?.removed_evidence?.includes('build')))
+  assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-owner-reconciled'&&e.payload?.policy==='distinct-verification-owner-wins'&&e.payload?.role==='coder'&&e.payload?.removed_evidence?.includes('visual-check')))
+  assert.match(String(prompts[0]?.body?.parts?.[0]?.text??''),/Task evidence contract: none/i);assert.doesNotMatch(String(prompts[0]?.body?.parts?.[0]?.text??''),/Verification contract: build/i)
+})
+
+test('task evidence admission preserves stronger proof already allowed by the mission contract',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('stronger-task-proof','make a bounded local change')
+  assess(store,'stronger-task-proof',{task_kind:'implementation',scope:'local',ambiguity:'none',required_capabilities:['implementation','verification'],likely_targets:['src/a.ts'],likely_verification:['changed-surface-sanity']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);assert.deepEqual(m.execution.verification_policy.requiredKinds,['changed-surface-sanity'])
+  const out=await runtime.start(m,{objective:'change src/a.ts and use a stronger targeted verifier',role:'coder',scope:['src/a.ts'],requiredEvidence:['targeted-tests'],obligationIds:[implementation.id]})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task);assert.deepEqual(task.requiredEvidence,['targeted-tests']);assert.match(String(prompts[0]?.body?.parts?.[0]?.text??''),/Verification contract: targeted-tests/i)
+  assert.equal(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.payload?.policy==='mission-verification-admission-wins'&&e.payload?.role==='coder'),false)
+})
+
 test('nonvisual implementation keeps mission technical verifier evidence when verification has no distinct child owner',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
