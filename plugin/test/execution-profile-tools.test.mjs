@@ -377,6 +377,8 @@ test('child process admission is exact-task/same-worker and blocks native backgr
   m.execution.tasks.push(task);m.execution.workers.push(worker);m.execution.processes.push({process_id:'proc_hook',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:'coder',host:'opencode',command_identity:'x',cwd:process.cwd(),authority_ref:'native',pid:99,process_group_id:99,status:'RUNNING',started_at:Date.now(),cleanup_state:'ACTIVE'})
   const bg=new BackgroundRegistry();bg.set(worker);const hook=createToolBeforeHook(store,bg,()=>resolveHiConfig({}),process.cwd())
   await hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{worker_id:worker.id,command:'node'}})
+  await hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{command:'node'}})
+  await hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{input:{command:'node'}}})
   await hook({sessionID:worker.session_id,tool:'hi_process_read'},{args:{id:'proc_hook'}})
   await hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{input:{worker_id:worker.id,command:'node'}}})
   await hook({sessionID:worker.session_id,tool:'hi_process_read'},{args:{input:{id:'proc_hook',cursor:0,max_chars:8000}}})

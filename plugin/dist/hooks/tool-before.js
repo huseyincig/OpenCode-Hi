@@ -107,7 +107,8 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
                 if (task?.execution_profile?.process_lifecycle !== true || !task.execution_profile.tools.includes(tool))
                     throw new Error(`Hi process ownership: child '${child.id}' cannot invoke '${tool}' outside its admitted process-lifecycle task.`);
                 if (tool === 'hi_process_spawn') {
-                    if (String(args?.worker_id ?? '') !== child.id)
+                    const requestedWorkerID = typeof args?.worker_id === 'string' ? String(args.worker_id).trim() : '';
+                    if (requestedWorkerID && requestedWorkerID !== child.id)
                         throw new Error(`Hi process ownership: child '${child.id}' cannot spawn a process for another worker.`);
                 }
                 else if (tool !== 'hi_process_list') {
