@@ -33,7 +33,7 @@ class FakeExecutor{
   async wait(id){const c=this.states.get(id);if(!c)throw new Error('missing');if(c.status!=='RUNNING')return{contract:structuredClone(c)};return await new Promise((resolve,reject)=>this.waiters.set(id,{resolve,reject}))}
   exit(id,code=0){const c=this.states.get(id);Object.assign(c,{status:'EXITED',ended_at:Date.now(),exit_code:code,cleanup_state:'CLEANUP_PENDING'});this.waiters.get(id)?.resolve({contract:structuredClone(c)});this.waiters.delete(id)}
   async kill(id,signal='SIGTERM'){const c=this.states.get(id);if(!c)throw new Error('missing');Object.assign(c,{status:'TERMINATED',ended_at:Date.now(),termination_reason:`signal:${signal}`,cleanup_state:'CLEANUP_PENDING'});this.waiters.get(id)?.resolve({contract:structuredClone(c)});this.waiters.delete(id);return{contract:structuredClone(c)}}
-  async cleanup(id){const c=this.states.get(id);if(!c)throw new Error('missing');if(c.status==='RUNNING')throw new Error('running');c.cleanup_state='CLEANED';this.cleaned.push(id)}
+  async cleanup(id){const c=this.states.get(id);if(!c)throw new Error('missing');if(c.status==='RUNNING')throw new Error('running');c.cleanup_state='CLEANED';this.cleaned.push(id);return structuredClone(c)}
   async reconcile(c){if(this.reconcileMode==='ORPHANED')return{disposition:'ORPHANED',contract:{...structuredClone(c),status:'ORPHANED',cleanup_state:'QUARANTINED',termination_reason:'restart-owner-missing'}};this.states.set(c.process_id,structuredClone(c));return{disposition:this.reconcileMode,contract:structuredClone(c)}}
   snapshot(id){return structuredClone(this.states.get(id))}
   list(){return[...this.states.values()].map(x=>structuredClone(x))}
@@ -69,6 +69,16 @@ test('authoritative process observation updates stale durable RUNNING to termina
   assert.equal(observed.status,'EXITED');assert.equal(observed.exit_code,0);assert.equal(m.execution.processes.find(x=>x.process_id===p.process_id).status,'EXITED')
   assert.ok(m.execution.ledger.some(e=>e.type==='process.status-observed'&&e.payload?.process_id===p.process_id&&e.payload?.status==='EXITED'))
   assert.equal(m.execution.evidence.items.filter(e=>String(e.source??'').startsWith(`process:${p.process_id}:`)).length,0,'status observation must not fabricate output evidence')
+})
+
+test('cleanup reconciles a host-terminal process before marking durable state CLEANED',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  fake.exit(p.process_id,0)
+  assert.equal(m.execution.processes.find(x=>x.process_id===p.process_id).status,'RUNNING','durable state is intentionally stale before cleanup')
+  await runtime.cleanup(m,p.process_id)
+  const durable=m.execution.processes.find(x=>x.process_id===p.process_id)
+  assert.equal(durable.status,'EXITED');assert.equal(durable.exit_code,0);assert.equal(durable.cleanup_state,'CLEANED')
+  assert.equal(validateMissionEnvelope(m),true,'cleanup must never synthesize RUNNING+CLEANED from a stale pre-await contract')
 })
 
 test('hard-deadline running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{
@@ -183,4 +193,15 @@ test('exact task-owner settlement fails closed when cleanup cannot complete',asy
   assert.equal(durable.status,'TERMINATED')
   assert.equal(durable.cleanup_state,'CLEANUP_PENDING')
   assert.ok(m.execution.blockers.includes(`process-cleanup:${p.process_id}`))
+})
+
+
+test('bounded process output cannot widen an immutable visual browser plan to a different service origin',async()=>{
+  const {m,task,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host())
+  task.role='visual-qa';worker.role='visual-qa';task.execution_profile={role:'visual-qa',category:'visual',task:{objective:task.objective,scope:[...task.scope],dependencies:[],required_evidence:['visual-check']},tools:['hi_process_spawn'],process_lifecycle:true,browser_backend:'bounded-playwright',browser_allowed_origins:['http://127.0.0.1:5000'],browser_required_origins:['http://127.0.0.1:5000'],fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:['visual-check'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2}
+  const p=await runtime.spawn(m,{worker_id:worker.id,command:'python3',args:['app.py'],cwd:'/repo'})
+  fake.readText=' * Running on http://127.0.0.1:8765\n'
+  await assert.rejects(()=>runtime.read(m,p.process_id,0,4096),/outside immutable browser plan/i)
+  const durable=m.execution.processes.find(x=>x.process_id===p.process_id);assert.deepEqual(durable.service_origins??[],[],'rejected observed origin must not become durable ProcessContract authority')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.service-origin-plan-rejected'&&e.task_id===task.id&&e.worker_id===worker.id&&e.payload?.source==='bounded-process-output'))
 })

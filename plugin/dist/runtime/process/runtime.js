@@ -30,6 +30,11 @@ function addProcessBlocker(m, marker) { if (!m.execution.blockers.includes(marke
     m.execution.blockers.push(marker); }
 function clearProcessBlockers(m, id, kinds) { const prefixes = new Set(kinds.map(kind => `${kind}:${id}`)); m.execution.blockers = m.execution.blockers.filter(x => !prefixes.has(x)); }
 function mergedServiceOrigins(...sets) { return normalizeBrowserAllowedOrigins(sets.flatMap(values => values ?? [])); }
+function exactTaskBrowserOrigins(task) { if (task.execution_profile?.browser_backend !== 'bounded-playwright')
+    return []; const required = task.execution_profile.browser_required_origins ?? []; return required.length ? [...required] : [...(task.execution_profile.browser_allowed_origins ?? [])]; }
+function assertProcessServiceOriginsWithinBrowserPlan(m, task, workerID, origins, source) { const declared = normalizeBrowserAllowedOrigins(origins), plan = exactTaskBrowserOrigins(task); if (!declared.length || !plan.length)
+    return; const incompatible = declared.filter(origin => !plan.includes(origin)); if (!incompatible.length)
+    return; appendLedger(m, 'process.service-origin-plan-rejected', { task_id: task.id, worker_id: workerID, payload: { declared_service_origins: declared, required_browser_origins: plan, incompatible_service_origins: incompatible, source, policy: 'exact-browser-origin-authority-before-process-contract-merge' } }); throw new Error(`Process service origin outside immutable browser plan: declared=${declared.join(', ')} required=${plan.join(', ')}`); }
 function mergeProcessTargetAuthority(current, next) { const serviceOrigins = mergedServiceOrigins(current?.service_origins, next.service_origins); return { ...next, ...(serviceOrigins.length ? { service_origins: serviceOrigins } : {}) }; }
 export class ProcessRuntime {
     executor;
@@ -64,6 +69,7 @@ export class ProcessRuntime {
                 requireAuthority(m, commandLine, input.cwd);
         }
         const serviceOrigins = normalizeBrowserAllowedOrigins(input.service_origins ?? []);
+        assertProcessServiceOriginsWithinBrowserPlan(m, task, worker.id, serviceOrigins, 'spawn-request');
         let request = { mission_id: m.identity.mission_id, task_id: task.id, worker_id: worker.id, role: worker.role, command: input.command, args: input.args, cwd: input.cwd, env: input.env, title: input.title, timeout_ms: input.timeout_ms, ...(serviceOrigins.length ? { service_origins: serviceOrigins } : {}), authority_ref: authorityRef, ...(actionType ? { external_action: { action_type: actionType, target: commandLine, requested_explicitly: true, required_authority_ref: authorityRef, executor: 'hi-process-executor' } } : {}) };
         for (let attempts = 0; attempts < 3; attempts++) {
             const auth = evaluateProcessSpawnAuthority(request, this.projectRoot, this.getHostConfig());
@@ -103,7 +109,8 @@ export class ProcessRuntime {
         this.noteExit(m, observed);
     else
         replaceProcess(m, observed); appendLedger(m, 'process.status-observed', { task_id: observed.task_id, worker_id: observed.worker_id, payload: { process_id: id, status: observed.status, cleanup_state: observed.cleanup_state, service_origins: observed.service_origins ?? [] } }); return structuredClone(observed); }
-    async read(m, id, cursor, maxChars) { let current = this.contract(m, id); const out = await this.executor.read(id, { cursor, max_chars: maxChars }), observedOrigins = observedLocalBrowserOriginsFromText(out.text), serviceOrigins = mergedServiceOrigins(current.service_origins, observedOrigins); if (JSON.stringify(serviceOrigins) !== JSON.stringify(current.service_origins ?? [])) {
+    async read(m, id, cursor, maxChars) { let current = this.contract(m, id); const out = await this.executor.read(id, { cursor, max_chars: maxChars }), observedOrigins = observedLocalBrowserOriginsFromText(out.text), task = m.execution.tasks.find(item => item.id === current.task_id); if (!task)
+        throw new Error(`Hi process owner task not found: ${current.task_id}`); assertProcessServiceOriginsWithinBrowserPlan(m, task, current.worker_id, observedOrigins, 'bounded-process-output'); const serviceOrigins = mergedServiceOrigins(current.service_origins, observedOrigins); if (JSON.stringify(serviceOrigins) !== JSON.stringify(current.service_origins ?? [])) {
         current = mergeProcessTargetAuthority(current, { ...current, service_origins: serviceOrigins });
         replaceProcess(m, current);
         appendLedger(m, 'process.service-origin-observed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, service_origins: serviceOrigins, source: 'bounded-process-output' } });
@@ -156,10 +163,14 @@ export class ProcessRuntime {
         throw error;
     } }
     async cleanup(m, id) { const current = this.contract(m, id); try {
-        await this.executor.cleanup(id);
-        replaceProcess(m, { ...current, cleanup_state: 'CLEANED' });
+        const cleaned = await this.executor.cleanup(id);
+        if (cleaned.process_id !== current.process_id || cleaned.mission_id !== current.mission_id || cleaned.task_id !== current.task_id || cleaned.worker_id !== current.worker_id)
+            throw new Error(`Hi process cleanup identity mismatch: ${id}`);
+        if (cleaned.status === 'RUNNING' || cleaned.status === 'ORPHANED' || cleaned.cleanup_state !== 'CLEANED')
+            throw new Error(`Hi process cleanup returned non-terminal contract: ${id}`);
+        replaceProcess(m, cleaned);
         clearProcessBlockers(m, id, ['process-cleanup']);
-        appendLedger(m, 'process.cleaned', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id } });
+        appendLedger(m, 'process.cleaned', { task_id: cleaned.task_id, worker_id: cleaned.worker_id, payload: { process_id: id, status: cleaned.status } });
     }
     catch (error) {
         const marker = `process-cleanup:${id}`;

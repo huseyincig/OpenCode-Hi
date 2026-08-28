@@ -356,7 +356,7 @@ export class OpenCodePtyAdapter {
         return { contract: cloneContract(state.contract) }; await this.#terminateAndObserve(state, signal, 'kill'); return { contract: cloneContract(state.contract) }; }
     async cleanup(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status === 'RUNNING')
         throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`); const raw = await this.#pty().remove({ ptyID: state.ptyID, location: this.#location() }); assertNativeAccepted(raw, `remove:${state.ptyID}`); state.socket?.close(1000, 'Hi cleanup'); state.contract.cleanup_state = 'CLEANED'; if (!isProcessContract(state.contract))
-        throw new Error(`Invalid cleanup state for ${processId}`); this.#states.delete(processId); }
+        throw new Error(`Invalid cleanup state for ${processId}`); const cleaned = cloneContract(state.contract); this.#states.delete(processId); return cleaned; }
     async reconcile(contract) {
         const persisted = structuredClone(contract);
         if (!isProcessContract(persisted) || persisted.host !== 'opencode')

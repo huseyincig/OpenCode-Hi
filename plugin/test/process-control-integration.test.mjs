@@ -339,3 +339,16 @@ test('parent idle with exact native busy records verified inflight and does not 
   assert.ok(m.execution.ledger.some(e=>e.type==='runtime.liveness-assessment'&&e.payload?.state==='ACTIVE'&&e.payload?.inflight==='YES'))
   assert.equal(m.execution.ledger.some(e=>e.type==='runtime.liveness-recovery'),false)
 })
+
+
+test('visual process spawn fails closed before native spawn when declared service origin is outside the immutable browser plan',async()=>{
+  const {store,m,task,worker}=processOwnedChildFixture(),calls=[]
+  task.role='visual-qa';task.category='visual';worker.role='visual-qa';worker.category='visual'
+  task.requiredEvidence=['visual-check'];task.execution_profile.role='visual-qa';task.execution_profile.category='visual';task.execution_profile.browser_backend='bounded-playwright';task.execution_profile.browser_required_origins=['http://127.0.0.1:5000'];task.execution_profile.browser_allowed_origins=['http://127.0.0.1:5000'];task.execution_profile.verification_policy.requiredKinds=['visual-check']
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'should-not-spawn',status:'RUNNING'}}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({command:'python3',args_json:'["app.py","--port","8765"]',cwd:'/repo',service_origins:'http://127.0.0.1:8765'},{sessionID:worker.session_id,directory:'/repo',ask:async()=>{throw new Error('unexpected native permission ask')}}))
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-service-origin-outside-browser-plan');assert.equal(out.retry_same_spawn,false);assert.deepEqual(out.required_browser_origins,['http://127.0.0.1:5000']);assert.deepEqual(out.declared_service_origins,['http://127.0.0.1:8765']);assert.deepEqual(calls,[],'incompatible service origin must be rejected before ProcessRuntime/native spawn')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.service-origin-plan-rejected'&&e.task_id===task.id&&e.worker_id===worker.id))
+})

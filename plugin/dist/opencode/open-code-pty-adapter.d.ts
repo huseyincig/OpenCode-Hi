@@ -39,7 +39,7 @@ export declare class OpenCodePtyAdapter implements ProcessExecutor {
     observe(processId: string): Promise<ProcessContract>;
     wait(processId: string): Promise<ProcessExit>;
     kill(processId: string, signal?: 'SIGTERM' | 'SIGINT'): Promise<ProcessExit>;
-    cleanup(processId: string): Promise<void>;
+    cleanup(processId: string): Promise<ProcessContract>;
     reconcile(contract: ProcessContract): Promise<ProcessReconcileResult>;
     snapshot(processId: string): ProcessContract;
     list(): ProcessContract[];
