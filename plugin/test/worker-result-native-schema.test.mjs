@@ -24,6 +24,14 @@ test('transport-valid rerun25-style visual payload normalizes without fabricatin
   assert.equal(normalized.status,'DONE','semantic TaskResultReconciler remains responsible for converting missing required cases to FIX_REQUIRED')
 })
 
+test('native review-finding transport rejects rerun31-style opaque ids and evidence ids',()=>{
+  const base={status:'FIX_REQUIRED',summary:'review finding',changed_files:[],evidence:[{kind:'browser-evidence',summary:'close click failed',scope:['index.html'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]}
+  const opaque={...base,findings:[{id:'F1',reviewer_role:'visual-qa',subject:'close handler broken',severity:'high',causality:'introduced',scope:['index.html'],evidence_refs:['ev_mtda7dg5_m4wexm'],confidence:'high',disposition:'open',blocking:true}]}
+  assert.equal(isWorkerResultTransportContract(opaque),false)
+  assert.equal(WORKER_RESULT_JSON_SCHEMA.properties.findings.items.properties.id.pattern,'^rf-[a-z0-9][a-z0-9-]{0,79}$')
+  assert.ok(WORKER_RESULT_JSON_SCHEMA.properties.findings.items.properties.evidence_refs.items.enum.includes('browser-evidence'))
+})
+
 test('structured transport guard remains fail-closed for malformed core envelopes',()=>{
   assert.equal(isWorkerResultTransportContract({status:'DONE',summary:'missing required arrays'}),false)
   assert.equal(isWorkerResultTransportContract({status:'DONE',summary:'unknown top-level',changed_files:[],evidence:[],open_issues:[],needs_context:[],magic:true}),false)

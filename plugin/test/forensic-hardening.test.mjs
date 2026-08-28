@@ -385,7 +385,7 @@ test('read-only manager cannot close implementation through hi_direct_progress e
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({hi:{primaryMode:'manager'}})
     await hooks['chat.message']({sessionID:'s-manager-direct',agent:'manager'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]});await assessPluginMission(hooks,'s-manager-direct',{likely_targets:['src/a.ts']})
-    await hooks['tool.execute.before']({sessionID:'s-manager-direct',tool:'write'},{args:{filePath:'src/a.ts'}})
+    await assert.rejects(()=>hooks['tool.execute.before']({sessionID:'s-manager-direct',tool:'write'},{args:{filePath:'src/a.ts'}}),/direct mutation authority guard/)
     const result=String(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-manager-direct'}))
     assert.match(result,/primary role manager lacks canonical repository write authority/)
     assert.match(String(await hooks.tool.hi_status.execute({},{sessionID:'s-manager-direct'})),/[1-9] obligation open/)

@@ -52,6 +52,14 @@ test('project direct parents serialize overlapping mutation claims while disjoin
   assert.ok(b.execution.ledger.some(e=>e.type==='orchestration.parent-mutation-blocked'&&e.payload?.reason==='project-write-conflict'))
 })
 
+test('direct parent mutation loses authority when no canonical implementation obligation remains open',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'direct-owner-closed','edit src/a.ts',{task_kind:'bug-fix',scope:'local',risk:'low',required_capabilities:['implementation','verification'],likely_targets:['src/a.ts']})
+  for(const obligation of m.execution.obligations)if(obligation.kind==='implementation'){obligation.status='closed';obligation.closedAt=Date.now()}
+  const hook=createToolBeforeHook(store)
+  await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'edit'},{args:{filePath:'src/a.ts'}}),/direct mutation authority guard.*hi_task_start/i)
+  assert.ok(m.execution.ledger.some(e=>e.type==='orchestration.parent-mutation-blocked'&&e.payload?.reason==='no-canonical-direct-write-owner'))
+})
+
 test('running foreign child writer blocks a direct parent mutation on the same project surface',async()=>{
   const store=new MissionStore(),peer=startAssessedMission(store,'direct-vs-child-peer','delegated shared edit',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']}),direct=startAssessedMission(store,'direct-vs-child-parent','direct shared edit',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
   const task=createTask(peer,{objective:'write shared',role:'coder',category:'standard',scope:['src/shared.ts']}),worker=createWorker(peer,task,'p/code');task.status='running';worker.status='busy';worker.write_set=['src/shared.ts']

@@ -77,9 +77,12 @@ test('blocking finding with unknown causality requires reconciliation instead of
   assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-unknown-owner'),false)
 })
 
-test('finding evidence refs must resolve to evidence kinds returned by the same WorkerResult',()=>{
+test('explicit malformed finding fails closed instead of silently disappearing during compatibility normalization',()=>{
   const result=normalizeWorkerResult({status:'DONE',summary:'review',changed_files:[],evidence:[proof],findings:[finding({id:'rf-bad-ref',evidence_refs:['build']})],open_issues:[],needs_context:[]})
-  assert.equal(result.findings,undefined,'normalizer must not retain a blocking finding whose proof reference is absent')
+  assert.equal(result.findings,undefined,'normalizer must not grant authority to a finding whose proof reference is absent')
+  assert.equal(result.status,'FIX_REQUIRED')
+  assert.ok(result.open_issues.includes('review-finding-contract-invalid'))
+  assert.ok(result.needs_context.some(x=>x.startsWith('review-finding-contract-retry:')))
 })
 
 

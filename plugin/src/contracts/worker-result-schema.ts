@@ -1,6 +1,10 @@
 import { EVIDENCE_OUTCOMES,WORKER_EVIDENCE_KINDS } from './evidence-kinds.js'
+import { isReviewFindingContract } from './review-finding.js'
 
 const stringArray={type:'array',items:{type:'string'}} as const
+const evidenceKindArray={type:'array',maxItems:20,items:{type:'string',enum:[...WORKER_EVIDENCE_KINDS]}} as const
+const REVIEW_FINDING_ID_PATTERN='^rf-[a-z0-9][a-z0-9-]{0,79}$'
+const REVIEWER_ROLE_PATTERN='^[a-z][a-z0-9-]{1,63}$'
 const evidenceClaim={
   type:'object',additionalProperties:false,required:['kind','summary'],
   properties:{
@@ -11,10 +15,10 @@ const evidenceClaim={
 const reviewFinding={
   type:'object',additionalProperties:false,required:['id','reviewer_role','subject','severity','causality','scope','evidence_refs','confidence','disposition','blocking'],
   properties:{
-    id:{type:'string'},reviewer_role:{type:'string'},subject:{type:'string'},
+    id:{type:'string',pattern:REVIEW_FINDING_ID_PATTERN},reviewer_role:{type:'string',pattern:REVIEWER_ROLE_PATTERN},subject:{type:'string',minLength:1,maxLength:1200},
     severity:{type:'string',enum:['info','low','medium','high','critical']},
     causality:{type:'string',enum:['introduced','worsened','pre-existing','unknown']},
-    scope:stringArray,evidence_refs:stringArray,confidence:{type:'string',enum:['low','medium','high']},
+    scope:{type:'array',maxItems:50,items:{type:'string'}},evidence_refs:evidenceKindArray,confidence:{type:'string',enum:['low','medium','high']},
     disposition:{type:'string',enum:['open','resolved','rejected','parked']},blocking:{type:'boolean'},
   },
 } as const
@@ -29,7 +33,7 @@ function optionalStrings(value:unknown):boolean{return value===undefined||string
 function transportEvidence(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['kind','summary','scope','evidence_refs','pass','outcome','reason']);return exactKeys(value,allowed)&&typeof value.kind==='string'&&EVIDENCE_KIND_SET.has(value.kind)&&typeof value.summary==='string'&&optionalStrings(value.scope)&&optionalStrings(value.evidence_refs)&&(value.pass===undefined||typeof value.pass==='boolean')&&(value.outcome===undefined||typeof value.outcome==='string'&&EVIDENCE_OUTCOME_SET.has(value.outcome))&&optionalString(value.reason)}
 function transportScopeExpansion(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['file','reason','necessary']);return exactKeys(value,allowed)&&typeof value.file==='string'&&typeof value.reason==='string'&&typeof value.necessary==='boolean'}
 function transportCoverage(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['case_id','outcome','evidence_refs','reason']);return exactKeys(value,allowed)&&typeof value.case_id==='string'&&(value.outcome==='passed'||value.outcome==='failed')&&strings(value.evidence_refs)&&optionalString(value.reason)}
-function transportFinding(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['id','reviewer_role','subject','severity','causality','scope','evidence_refs','confidence','disposition','blocking']);return exactKeys(value,allowed)&&typeof value.id==='string'&&typeof value.reviewer_role==='string'&&typeof value.subject==='string'&&['info','low','medium','high','critical'].includes(String(value.severity))&&['introduced','worsened','pre-existing','unknown'].includes(String(value.causality))&&strings(value.scope)&&strings(value.evidence_refs)&&['low','medium','high'].includes(String(value.confidence))&&['open','resolved','rejected','parked'].includes(String(value.disposition))&&typeof value.blocking==='boolean'}
+function transportFinding(value:unknown):boolean{return isReviewFindingContract(value)}
 function transportMethodologyObservation(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['key','procedure','trigger','do_not_trigger','exit_condition','evidence']);return exactKeys(value,allowed)&&typeof value.key==='string'&&typeof value.procedure==='string'&&typeof value.trigger==='string'&&typeof value.do_not_trigger==='string'&&typeof value.exit_condition==='string'&&Array.isArray(value.evidence)&&value.evidence.every(item=>typeof item==='string'&&EVIDENCE_KIND_SET.has(item))}
 
 /** Re-validates the static OpenCode transport envelope before Hi normalization. Dynamic task/evidence semantics remain outside this predicate. */

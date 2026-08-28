@@ -273,6 +273,17 @@ test('transport-valid native structured payload is normalized before canonical s
   assert.equal(m.execution.ledger.some(e=>e.type==='worker.structured-result-invalid'),false);assert.equal(task.result.summary,'transport-valid with noncanonical optional coverage')
 })
 
+test('transport-valid review finding that loses canonical evidence binding fails closed instead of disappearing',async()=>{
+  const {runtime,m}=setup()
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.projected_model='p/primary'
+  const structured={status:'FIX_REQUIRED',summary:'finding with wrong proof kind',changed_files:[],evidence:[{kind:'review-evidence',summary:'reviewed target',scope:['src/a.ts'],pass:true,outcome:'passed'}],findings:[{id:'rf-live-proof-mismatch',reviewer_role:'qa-reviewer',subject:'proof kind mismatch',severity:'high',causality:'introduced',scope:['src/a.ts'],evidence_refs:['browser-evidence'],confidence:'high',disposition:'open',blocking:true}],open_issues:[],needs_context:[]}
+  const settled=await runtime.settleHostIdleAssistantResult(m,worker,{structured,model:{model:'p/primary'}})
+  assert.equal(settled.applied,true);assert.equal(settled.result?.status,'FIX_REQUIRED')
+  assert.ok(task.result.open_issues.includes('worker-result-contract-invalid:review-finding'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-invalid'&&e.payload?.reason==='review-finding-canonical-projection-loss'))
+  assert.equal(m.execution.ledger.some(e=>e.type==='worker.structured-result-admitted'),false)
+})
+
 test('malformed native structured core envelope remains fail-closed before normalization',async()=>{
   const {runtime,m}=setup()
   const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.projected_model='p/primary'

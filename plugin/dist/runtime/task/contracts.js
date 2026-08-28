@@ -5,7 +5,7 @@ export function workerHandoffText(h, maxChars = DEFAULT_CONTEXT_BUDGET.max_hando
     const exitRequirements = h.methodologies.length ? [...(h.methodology_exit_requirements ?? [])] : [];
     const visualProof = [...h.required_evidence, ...exitRequirements, ...h.methodologies].some(value => /(?:browser|visual|accessibility)/i.test(value));
     const reviewFindingInstruction = h.expected_output.findings
-        ? 'Reviewer findings: {id, reviewer_role, subject, severity, causality, scope, evidence_refs, confidence, disposition, blocking}; evidence_refs must name evidence.kind values from this result; unrelated existing debt is causality=pre-existing.'
+        ? 'Reviewer findings: {id, reviewer_role, subject, severity, causality, scope, evidence_refs, confidence, disposition, blocking}; id MUST use rf- followed only by lowercase letters/digits/hyphens; evidence_refs MUST name evidence.kind values from this same result, never opaque evidence ids such as ev_*; unrelated existing debt is causality=pre-existing.'
         : '';
     const reviewEvidenceInstruction = h.expected_output.findings && h.required_evidence.includes('review-evidence')
         ? 'Reviewer closure: emit evidence.kind="review-evidence" for the bounded review verdict. Do not invent provider-, package-, advisory-, CVE-, or scanner-specific evidence.kind IDs; put those source details in evidence.summary and findings. A passing review uses outcome="passed" only after the scoped review is complete; a blocking introduced finding must return FIX_REQUIRED rather than a prose-only DONE.'

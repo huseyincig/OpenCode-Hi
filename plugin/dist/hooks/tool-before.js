@@ -135,7 +135,11 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         }
         if (!child && m.identity.status === 'active' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
             const decision = projectDirectMutationDecision(m, store.all(), exactParentMutationSurface(args, projectRoot, workingDirectory));
-            if (decision.applicable && !decision.safe) {
+            if (!decision.applicable) {
+                appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'no-canonical-direct-write-owner', required_tool: 'hi_task_start' } });
+                throw new Error(`Hi direct mutation authority guard: parent mutation via '${tool}' has no open canonical implementation obligation owned by this direct parent. Use hi_task_start for the exact implementation/rework obligation; reviewer or verifier correction state never grants parent repository-write authority.`);
+            }
+            if (!decision.safe) {
                 appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'project-write-conflict', required_tool: 'hi_task_start', surface: decision.surface.slice(0, 40), blocking_units: decision.blockingUnitIds.slice(0, 20), conflict_reasons: decision.reasons.slice(0, 20) } });
                 throw new Error(`Hi project write conflict: parent direct mutation via '${tool}' conflicts with an earlier or active project write owner (${decision.blockingUnitIds.join(', ') || 'unknown surface'}). Delegate this mutation with hi_task_start so canonical scheduler ownership can serialize it.`);
             }

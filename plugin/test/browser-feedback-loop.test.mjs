@@ -55,7 +55,7 @@ test('browser finding transfers source remediation to a writer before fresh visu
   const second=await runtime.resume(m,task.id)
   assert.equal(second.task_id,task.id);assert.equal(second.worker_id,worker.id);assert.equal(second.session_id,sessionID);assert.equal(m.execution.tasks.length,taskCount);assert.equal(m.execution.workers.length,workerCount);assert.equal(worker.attempt,firstAttempt+1)
   assert.equal(evidenceClaimApplicability(m,observationEvidence).applicable,false,'prior browser observation must not prove the fresh verification attempt')
-  assert.match(JSON.stringify(prompts.at(-1)),/Hi corrective resume for existing task/);assert.match(JSON.stringify(prompts.at(-1)),/review-finding:rf-browser-overlap/)
+  assert.match(JSON.stringify(prompts.at(-1)),/Hi corrective resume for existing task/);assert.match(JSON.stringify(prompts.at(-1)),/review-finding:rf-browser-overlap/);assert.doesNotMatch(JSON.stringify(prompts.at(-1)),/Apply the smallest correction/);assert.match(JSON.stringify(prompts.at(-1)),/Do not mutate repository state/)
 })
 
 
