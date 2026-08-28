@@ -240,6 +240,48 @@ test('implicit process-support task canonicalizes a verification-shaped parent o
   assert.match(handoff,/runtime process resource\/readiness/i);assert.doesNotMatch(handoff,/OBJECTIVE: Browser validation/i)
 })
 
+test('implicit process-support handoff retains the ready persistent service for downstream mission verification',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-resource-retention','fix dashboard and verify visually')
+  assess(store,'process-resource-retention',{required_capabilities:['implementation','visual-qa'],likely_targets:['index.html'],likely_verification:['visual-check']})
+  const out=await runtime.start(m,{objective:'serve dashboard at http://127.0.0.1:8099 for downstream visual verification',role:'coder',scope:['index.html'],processLifecycle:true})
+  const text=JSON.stringify(prompts[0])
+  assert.match(text,/leave (?:the )?(?:retained )?(?:ready )?service RUNNING/i)
+  assert.match(text,/parent.*custod/i)
+  assert.match(text,/do not (?:call )?hi_process_kill.*hi_process_cleanup/i)
+  assert.match(text,/downstream.*verification/i)
+  assert.equal(m.execution.tasks.find(t=>t.id===out.task_id).requiredEvidence.length,0)
+})
+
+test('implicit process-support DONE is rejected unless its exact retained persistent process remains RUNNING',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-resource-result-guard','fix dashboard and verify visually')
+  assess(store,'process-resource-result-guard',{required_capabilities:['implementation','visual-qa'],likely_targets:['index.html'],likely_verification:['visual-check']})
+  const out=await runtime.start(m,{objective:'serve dashboard at http://127.0.0.1:8099 for downstream visual verification',role:'coder',scope:['index.html'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id);assert.ok(task);assert.ok(worker)
+  m.execution.processes.push({process_id:'proc_cleaned_too_early',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,host:'opencode',command_identity:'a'.repeat(64),cwd:process.cwd(),pid:4312,status:'TERMINATED',started_at:Date.now()-1000,ended_at:Date.now(),termination_reason:'signal:SIGTERM',output_artifact_refs:[],service_origins:['http://127.0.0.1:8099'],authority_ref:'native',cleanup_state:'CLEANED'})
+  runtime.applyResult(m,worker.id,{status:'DONE',summary:'server was ready, then cleaned',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(task.status,'waiting');assert.equal(worker.status,'ready');assert.equal(task.result.status,'FIX_REQUIRED')
+  assert.ok(task.result.open_issues.some(x=>x.startsWith('process-resource-not-retained:')))
+  assert.match(task.result.needs_context.join(' '),/leave.*RUNNING/i)
+})
+
+test('implicit process-support DONE transfers a live persistent ProcessContract into parent custody',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-resource-result-admit','fix dashboard and verify visually')
+  assess(store,'process-resource-result-admit',{required_capabilities:['implementation','visual-qa'],likely_targets:['index.html'],likely_verification:['visual-check']})
+  const out=await runtime.start(m,{objective:'serve dashboard at http://127.0.0.1:8099 for downstream visual verification',role:'coder',scope:['index.html'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id);assert.ok(task);assert.ok(worker)
+  m.execution.processes.push({process_id:'proc_retained_ready',mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,host:'opencode',command_identity:'b'.repeat(64),cwd:process.cwd(),pid:4313,status:'RUNNING',started_at:Date.now()-1000,output_artifact_refs:[],service_origins:['http://127.0.0.1:8099'],authority_ref:'native',cleanup_state:'ACTIVE'})
+  runtime.applyResult(m,worker.id,{status:'DONE',summary:'service ready and retained',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(task.status,'completed');assert.equal(worker.status,'completed');assert.equal(task.result.status,'DONE')
+  assert.equal(m.execution.processes.find(p=>p.process_id==='proc_retained_ready').status,'RUNNING')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.resource-retention-admitted'&&e.task_id===task.id))
+})
+
 test('process lifecycle cannot be widened from mission or task defaults without both semantic and task-level admission',async()=>{
   const c=client([],[]),runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('process-no-task','run bounded command');assess(store,'process-no-task',{required_capabilities:['implementation','interactive-process'],likely_targets:['app.py']})
