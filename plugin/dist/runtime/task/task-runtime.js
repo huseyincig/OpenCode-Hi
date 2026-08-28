@@ -150,6 +150,13 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     }
     return [...new Set(out)];
 }
+function foreignVerificationEvidence(m, role, obligationIds) {
+    const owned = new Set(obligationIds), foreign = m.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open' && !owned.has(o.id) && ownerForObligation(m, o.kind) !== undefined && ownerForObligation(m, o.kind) !== role);
+    const owners = [...new Set(foreign.map(o => ownerForObligation(m, o.kind)).filter((x) => Boolean(x)))];
+    if (owners.length !== 1)
+        return { kinds: [], obligationIds: [] };
+    return { owner: owners[0], kinds: [...new Set(foreign.flatMap(o => o.requiredEvidence ?? []).map(kind => String(kind).trim()).filter(Boolean))], obligationIds: foreign.map(o => o.id) };
+}
 function unresolvedResultOwner(m, obligationIds, excludeTaskId) {
     if (!obligationIds.length)
         return undefined;
@@ -615,13 +622,15 @@ export class TaskRuntime {
         }
         const roleSelectionReason = implicitProcessSupport && !requestedRole ? ['implicit-process-support:canonical-runtime-resource-owner'] : routed.reason;
         const requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds;
-        const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), obligationRequiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence, reviewOwnerMismatch = !isHiReviewerRole(role) && obligationRequiredEvidence.includes('review-evidence'), requiredEvidence = reviewOwnerMismatch ? obligationRequiredEvidence.filter(kind => kind !== 'review-evidence') : obligationRequiredEvidence, invalidEvidence = requiredEvidence.filter(kind => !isTaskRequiredEvidenceKind(kind));
+        const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), obligationRequiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence, foreignVerification = implicitProcessSupport ? { kinds: [], obligationIds: [] } : foreignVerificationEvidence(m, role, obligationIds), foreignVerificationKinds = new Set(foreignVerification.kinds), ownerReconciledEvidence = foreignVerificationKinds.size ? obligationRequiredEvidence.filter(kind => !foreignVerificationKinds.has(kind)) : obligationRequiredEvidence, reviewOwnerMismatch = !isHiReviewerRole(role) && ownerReconciledEvidence.includes('review-evidence'), requiredEvidence = reviewOwnerMismatch ? ownerReconciledEvidence.filter(kind => kind !== 'review-evidence') : ownerReconciledEvidence, invalidEvidence = requiredEvidence.filter(kind => !isTaskRequiredEvidenceKind(kind));
         if (invalidEvidence.length)
             throw new Error(`Unsupported Hi required evidence kind(s): ${[...new Set(invalidEvidence)].join(', ')}. Use canonical task evidence IDs only.`);
         if (ownedObligationEvidence.authoritative && JSON.stringify([...new Set(requestedEvidence)]) !== JSON.stringify(ownedObligationEvidence.requiredEvidence))
             appendLedger(m, 'task.evidence-contract-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(requestedEvidence)], authoritative_evidence: ownedObligationEvidence.requiredEvidence, policy: 'exact-open-obligation-contract-wins' } });
+        if (foreignVerificationKinds.size)
+            appendLedger(m, 'task.evidence-owner-reconciled', { payload: { role, obligation_ids: obligationIds, verification_owner: foreignVerification.owner, verification_obligation_ids: foreignVerification.obligationIds, requested_evidence: [...new Set(obligationRequiredEvidence)], removed_evidence: [...foreignVerificationKinds].filter(kind => obligationRequiredEvidence.includes(kind)), authoritative_evidence: [...ownerReconciledEvidence], policy: 'distinct-verification-owner-wins' } });
         if (reviewOwnerMismatch)
-            appendLedger(m, 'task.evidence-owner-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(obligationRequiredEvidence)], removed_evidence: ['review-evidence'], authoritative_evidence: [...requiredEvidence], policy: 'review-evidence-requires-reviewer-role' } });
+            appendLedger(m, 'task.evidence-owner-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(ownerReconciledEvidence)], removed_evidence: ['review-evidence'], authoritative_evidence: [...requiredEvidence], policy: 'review-evidence-requires-reviewer-role' } });
         reconcileTaskEvidenceMethodologyNeeds(m, this.projectRoot, { requiredEvidence, obligationIds });
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
