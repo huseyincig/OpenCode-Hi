@@ -632,7 +632,7 @@ export class TaskRuntime {
         const implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length;
         if (implicitProcessSupport && !input.resumeTaskId && !input.objective?.trim())
             throw new Error('Implicit process-lifecycle support task requires an explicit bounded objective for the process resource; it cannot inherit the Mission objective');
-        const objective = input.objective?.trim() || resumeTask?.objective || m.identity.objective;
+        const requestedObjective = input.objective?.trim() || resumeTask?.objective || m.identity.objective;
         const taskIntent = m.identity.intent;
         const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (resumeTask?.category ?? (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory))), requestedRole = String(input.role ?? '').trim();
         if (requestedRole && !isHiChildRole(requestedRole))
@@ -733,7 +733,7 @@ export class TaskRuntime {
         }
         else if (browserDecision.backend)
             clearCapabilityUnavailable(m, 'browser-execution');
-        const explicitBrowserRequiredOrigins = normalizeBrowserAllowedOrigins([...(input.browserRequiredOrigins ?? []), ...browserOriginsFromText(objective), ...browserOriginsFromTargets(taskIntent.likelyTargets ?? [])]), persistentProcesses = m.execution.processes.filter(isPersistentRunningProcess), liveServiceOrigins = normalizeBrowserAllowedOrigins(persistentProcesses.flatMap(process => process.service_origins ?? []));
+        const explicitBrowserRequiredOrigins = normalizeBrowserAllowedOrigins([...(input.browserRequiredOrigins ?? []), ...browserOriginsFromText(requestedObjective), ...browserOriginsFromTargets(taskIntent.likelyTargets ?? [])]), persistentProcesses = m.execution.processes.filter(isPersistentRunningProcess), liveServiceOrigins = normalizeBrowserAllowedOrigins(persistentProcesses.flatMap(process => process.service_origins ?? []));
         let browserRequiredOrigins = [...explicitBrowserRequiredOrigins];
         if (browserDecision.backend === 'bounded-playwright' && browserRequested && persistentProcesses.length) {
             if (!browserRequiredOrigins.length && liveServiceOrigins.length === 1)
@@ -760,7 +760,7 @@ export class TaskRuntime {
             appendLedger(m, 'task.scope-admission-rejected', { payload: { role, requested_scope: requestedScope.slice(0, 40), unbound_scope: scopeAdmission.unbound.slice(0, 40), canonical_targets: scopeAdmission.canonical_targets.slice(0, 40), reason: scopeAdmission.reason, policy: 'repository-explorer-scope-requires-current-project-identity-or-canonical-mission-target' } });
             throw new Error(`Repository explorer scope is not canonical: ${scopeAdmission.unbound.join(', ')}. Use current project-relative filesystem paths or exact canonical Mission targets; when the repository target is still unknown, omit scope so bounded discovery can resolve it.`);
         }
-        const scope = scopeAdmission.scope;
+        const scope = scopeAdmission.scope, objective = implicitProcessSupport && !input.resumeTaskId ? `Establish only the bounded runtime process resource/readiness for scoped target(s): ${scope.length ? scope.join(', ') : 'mission-local runtime target'}${explicitBrowserRequiredOrigins.length ? `; required service origin(s): ${explicitBrowserRequiredOrigins.join(', ')}` : ''}. Confirm the owned process/service is ready, return its ProcessContract/service origin, then stop. Do not perform mission/browser/test/review verification.` : requestedObjective;
         if (scopeAdmission.reason === 'repository-discovery-unbound-normalized')
             appendLedger(m, 'task.scope-unbound-discovery-normalized', { payload: { role, requested_scope: requestedScope.slice(0, 40), canonical_scope: [], unbound_scope: scopeAdmission.unbound.slice(0, 40), reason: 'unbound model scope cannot become authority while repository target is unresolved', policy: 'empty-scope-bounded-repository-discovery' } });
         if (!isHiReadOnlyChildRole(role)) {

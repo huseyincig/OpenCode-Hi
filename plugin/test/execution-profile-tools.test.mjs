@@ -227,6 +227,19 @@ test('process lifecycle is an exact task-level opt-in and survives child handoff
   assert.match(JSON.stringify(prompts[0]),new RegExp(`hi_process_spawn with worker_id=${out.worker_id}`));assert.match(JSON.stringify(prompts[0]),/parent cannot proxy hi_process_\* calls/i);assert.match(JSON.stringify(prompts[0]),/command=.*python3.*args_json/i);assert.match(JSON.stringify(prompts[0]),/never embed arguments inside command/i);assert.match(JSON.stringify(prompts[0]),/OMIT timeout_ms so the service is not killed by a hard wall-clock deadline/i);assert.match(JSON.stringify(prompts[0]),/hi_process_wait is only for a process that is expected to terminate naturally/i);assert.match(JSON.stringify(prompts[0]),/Never inflate timeout_ms and replay the same healthy persistent command/i);assert.match(JSON.stringify(prompts[0]),/Do not use shell '&', nohup, setsid, disown, pkill, killall/i)
 })
 
+test('implicit process-support task canonicalizes a verification-shaped parent objective into resource-only runtime work',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('process-resource-objective','fix dashboard and verify visually')
+  assess(store,'process-resource-objective',{required_capabilities:['implementation','visual-qa'],likely_targets:['index.html'],likely_verification:['visual-check']})
+  const out=await runtime.start(m,{objective:'Browser validation of fixed dashboard at http://localhost:8099 including responsive layout and modal behavior',role:'coder',scope:['index.html'],processLifecycle:true})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),handoff=JSON.stringify(prompts[0])
+  assert.equal(task.requiredEvidence.length,0);assert.equal(task.obligation_ids.length,0)
+  assert.match(task.objective,/runtime process resource\/readiness/i);assert.doesNotMatch(task.objective,/browser validation|responsive layout|modal behavior/i)
+  assert.match(task.objective,/http:\/\/localhost:8099/);assert.match(task.objective,/index\.html/)
+  assert.match(handoff,/runtime process resource\/readiness/i);assert.doesNotMatch(handoff,/OBJECTIVE: Browser validation/i)
+})
+
 test('process lifecycle cannot be widened from mission or task defaults without both semantic and task-level admission',async()=>{
   const c=client([],[]),runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('process-no-task','run bounded command');assess(store,'process-no-task',{required_capabilities:['implementation','interactive-process'],likely_targets:['app.py']})
