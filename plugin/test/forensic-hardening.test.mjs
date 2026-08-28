@@ -434,11 +434,13 @@ test('bash mutation variants invalidate prior fresh evidence while read-only git
 test('path-unknown bash mutation cannot be used as direct implementation ownership proof',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-unknown-surface-'))
   try{
-    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    writeFileSync(join(root,'.gitignore'),'.opencode/\n')
+    for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','.gitignore'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{vcs:'git'},client:client()});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-unknown'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}); await assessPluginMission(hooks,'s-unknown',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-unknown',tool:'bash'},{args:{command:'printf x > src/a.ts'}})
     const result=String(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-unknown'}))
-    assert.match(result,/changed-file surface is unknown/)
+    assert.match(result,/no current Git changed surface exists/)
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })

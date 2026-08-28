@@ -5,6 +5,7 @@ import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { evidenceVerdictConsistent, evidenceVerdictPassValue, resolvedEvidenceOutcome } from '../../contracts/evidence-kinds.js';
 import { verificationSatisfied } from '../verification/policy.js';
 import { hasFreshPassedEvidence } from './freshness.js';
+import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js';
 function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
 const SHELL_MUTATION_COMMAND = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i;
@@ -85,6 +86,8 @@ export function reconcileEvidenceOwnedVerificationObligations(mission, projectRo
         closed.push(obligation.id);
         appendLedger(mission, 'obligation.closed', { task_id: context?.task_id, worker_id: context?.worker_id, payload: { obligation: obligation.id, owner: context?.owner ?? 'evidence-reconciliation' } });
     }
+    if (closed.length)
+        reconcileSatisfiedTaskArtifacts(mission, 'verification-evidence-obligation-closed');
     return closed;
 }
 export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_TOOLS.has(tool)) {

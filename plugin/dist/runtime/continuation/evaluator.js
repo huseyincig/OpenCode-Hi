@@ -6,6 +6,7 @@ import { latestBlockingVerificationEvidence } from '../verification/policy.js';
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js';
 import { ambiguousConsequentialEffect } from './recovery-governor.js';
 import { isCleanupPendingProcess, isPersistentRunningProcess, isWaitableRunningProcess } from '../../contracts/process.js';
+import { taskResultRequiresReconciliation } from '../task/task-ownership.js';
 export function evaluateIdle(m, now = Date.now(), projectRoot) {
     if (!m)
         return { decision: 'NOTHING', reason: 'no-active-mission', reason_code: 'no-active-mission' };
@@ -50,7 +51,7 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
     }
     if (m.continuation.iteration >= m.continuation.continuation_budget)
         return { decision: 'USER_ACTION_REQUIRED', reason: 'execution-budget-exhausted', reason_code: 'execution-budget-exhausted' };
-    if (m.execution.tasks.some(t => t.status !== 'cancelled' && t.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT'].includes(t.result.status))) {
+    if (m.execution.tasks.some(t => taskResultRequiresReconciliation(m, t))) {
         const instruction = 'Reconcile the latest worker result. Prefer same-session corrective resume; do not spawn a replacement unless justified.';
         setRuntimeNudge(m, instruction, 'worker-result-unreconciled');
         return { decision: 'RECONCILE', reason: 'worker-result-unreconciled', reason_code: 'worker-result-unreconciled', prompt: continuationPrompt(m, instruction) };

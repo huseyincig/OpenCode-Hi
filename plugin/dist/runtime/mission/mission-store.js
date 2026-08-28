@@ -15,6 +15,7 @@ import { existsSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
+import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js';
 function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) } : {}) }; }
 function explicitTestFirstRequested(text) {
     const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
@@ -505,6 +506,7 @@ export class MissionStore {
                 }
             }
         }
+        reconcileSatisfiedTaskArtifacts(m, 'mission-restore');
         syncMissionGates(m);
         m.identity.updated_at = Date.now();
         this.syncProgressBaseline(m);
@@ -535,6 +537,6 @@ export class MissionStore {
     else if (countStagnation)
         m.continuation.stagnation_count += 1; m.continuation.semantic_progress_snapshot = next; m.continuation.last_progress_delta = delta; m.continuation.last_progress_signature = next.state_hash; m.identity.updated_at = Date.now(); return progressed; }
     closeObligation(m, id) { const o = m.execution.obligations.find(x => x.id === id); if (!o)
-        return; o.status = 'closed'; o.closedAt = Date.now(); syncMissionGates(m); appendLedger(m, 'obligation.closed', { payload: { obligation: id } }); }
+        return; o.status = 'closed'; o.closedAt = Date.now(); reconcileSatisfiedTaskArtifacts(m, 'mission-store-obligation-closed'); syncMissionGates(m); appendLedger(m, 'obligation.closed', { payload: { obligation: id } }); }
     signature(m) { return semanticProgressSnapshot(m).state_hash; }
 }

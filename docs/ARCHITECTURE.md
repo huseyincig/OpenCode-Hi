@@ -224,3 +224,6 @@ Hi-owned durable project data lives under `.opencode/hi/`. OpenCode-native plugi
 ## Privacy
 
 Provider-facing projections are redacted at the privacy boundary. Credentials and secret-bearing execution environment values are not product state. See [Security model](SECURITY-MODEL.md).
+### Satisfied child ownership vs attempt history
+
+Task/WorkerResult history and canonical Mission obligation authority are intentionally distinct. When a settled child has a non-empty owned obligation set and every owned obligation has already been closed by canonical reconciliation, its unresolved attempt result remains durable history but no longer blocks scheduling, continuation, completion, or task-bound methodology progression. This projection never suppresses a starting/busy host execution. Explicit task dependency dataflow remains stricter and still requires a real `completed + DONE` dependency result with accepted attempt identity.

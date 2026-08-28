@@ -6,6 +6,7 @@ import { evidenceClaimApplicability } from '../evidence/applicability.js';
 import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js';
 import { discoverProjectMethodologyPolicies } from './project-policy.js';
+import { taskControlStatus, taskHasSatisfiedSettledOwnership } from '../task/task-ownership.js';
 function normScope(value) { return value.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
 function passedEvidence(m, task, obligationId) {
     const taskScope = new Set((task?.scope ?? []).map(normScope).filter(Boolean));
@@ -123,15 +124,15 @@ export function methodologyExitCheck(m, name, input = {}) {
     }
     return { ok: missing.length === 0, missing };
 }
-function taskStillActionable(task) { return Boolean(task && ['created', 'queued', 'running', 'waiting'].includes(task.status)); }
+function taskStillActionable(m, task) { return Boolean(task && ['created', 'queued', 'running', 'waiting'].includes(taskControlStatus(m, task))); }
 function unloadedNeedStillActionable(m, need) {
     const task = need.task_id ? m.execution.tasks.find(item => item.id === need.task_id) : undefined;
     if (need.task_id)
-        return taskStillActionable(task);
+        return taskStillActionable(m, task);
     const obligation = need.obligation_id ? m.execution.obligations.find(item => item.id === need.obligation_id) : undefined;
     if (need.obligation_id)
         return obligation?.status === 'open';
-    if (m.execution.tasks.some(taskStillActionable))
+    if (m.execution.tasks.some(task => taskStillActionable(m, task)))
         return true;
     return m.execution.obligations.some(item => item.status === 'open');
 }
@@ -151,6 +152,10 @@ export function reconcileMethodologyExits(m, projectRoot) {
         if (!task) {
             worker = [...m.execution.workers].reverse().find(w => w.loaded_methodologies.includes(need.name) && w.status === 'completed');
             task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined;
+        }
+        if (task && taskHasSatisfiedSettledOwnership(m, task)) {
+            appendLedger(m, 'methodology.satisfied-owner-retired', { task_id: task.id, payload: { name: need.name, signal: need.signal, producer: need.producer, obligation_id: need.obligation_id, reason: 'task owned obligations are canonically closed; historical unresolved attempt no longer owns methodology progression' } });
+            continue;
         }
         const childLoaded = Boolean(worker?.loaded_methodologies.includes(need.name)), parentLoaded = m.methodology.parent_loaded_methodologies.includes(need.name);
         if (!childLoaded && !parentLoaded) {

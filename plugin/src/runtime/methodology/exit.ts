@@ -7,6 +7,7 @@ import { evidenceClaimApplicability } from '../evidence/applicability.js'
 import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js'
 import { discoverProjectMethodologyPolicies } from './project-policy.js'
+import { taskControlStatus,taskHasSatisfiedSettledOwnership } from '../task/task-ownership.js'
 
 export interface MethodologyExitCheck { ok:boolean; missing:HiMethodologyExitRequirement[] }
 
@@ -82,13 +83,13 @@ export function methodologyExitCheck(m:MissionState,name:string,input:{task?:Mis
   return{ok:missing.length===0,missing}
 }
 
-function taskStillActionable(task:MissionTask|undefined):boolean{return Boolean(task&&['created','queued','running','waiting'].includes(task.status))}
+function taskStillActionable(m:MissionState,task:MissionTask|undefined):boolean{return Boolean(task&&['created','queued','running','waiting'].includes(taskControlStatus(m,task)))}
 function unloadedNeedStillActionable(m:MissionState,need:MissionState['methodology']['methodology_needs'][number]):boolean{
   const task=need.task_id?m.execution.tasks.find(item=>item.id===need.task_id):undefined
-  if(need.task_id)return taskStillActionable(task)
+  if(need.task_id)return taskStillActionable(m,task)
   const obligation=need.obligation_id?m.execution.obligations.find(item=>item.id===need.obligation_id):undefined
   if(need.obligation_id)return obligation?.status==='open'
-  if(m.execution.tasks.some(taskStillActionable))return true
+  if(m.execution.tasks.some(task=>taskStillActionable(m,task)))return true
   return m.execution.obligations.some(item=>item.status==='open')
 }
 export function loadedMethodologyNeedNames(m:MissionState):Set<string>{
@@ -104,6 +105,7 @@ export function reconcileMethodologyExits(m:MissionState,projectRoot?:string):st
     const taskWorkerId=task?.worker_id
     let worker=taskWorkerId?m.execution.workers.find(w=>w.id===taskWorkerId):undefined
     if(!task){worker=[...m.execution.workers].reverse().find(w=>w.loaded_methodologies.includes(need.name)&&w.status==='completed');task=worker?m.execution.tasks.find(t=>t.id===worker!.task_id):undefined}
+    if(task&&taskHasSatisfiedSettledOwnership(m,task)){appendLedger(m,'methodology.satisfied-owner-retired',{task_id:task.id,payload:{name:need.name,signal:need.signal,producer:need.producer,obligation_id:need.obligation_id,reason:'task owned obligations are canonically closed; historical unresolved attempt no longer owns methodology progression'}});continue}
     const childLoaded=Boolean(worker?.loaded_methodologies.includes(need.name)),parentLoaded=m.methodology.parent_loaded_methodologies.includes(need.name)
     if(!childLoaded&&!parentLoaded){
       if(unloadedNeedStillActionable(m,need)){remaining.push(need);continue}

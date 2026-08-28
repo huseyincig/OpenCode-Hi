@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { bindContextReference } from '../../contracts/context-reference.js';
 import { appendLedger } from '../ledger/ledger.js';
+import { taskHasSatisfiedSettledOwnership } from '../task/task-ownership.js';
 function uid(prefix) { return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 function canon(items = []) { return [...new Set(items.map(x => x.trim().replace(/\\/g, '/').replace(/\/+$/, '')).filter(Boolean))].sort().join(','); }
 export function workerFingerprint(role, category, model, taskFamily, objective = '', contract) { return [role, category, model ?? 'default', taskFamily, objective.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 240), `scope:${canon(contract?.scope)}`, `constraints:${canon(contract?.constraints)}`, `deps:${canon(contract?.dependencies)}`, `evidence:${canon(contract?.requiredEvidence)}`, `obligations:${canon(contract?.obligationIds)}`].join('|'); }
@@ -11,7 +12,7 @@ export function beginWorkerAttempt(task, worker, at = Date.now()) { worker.attem
 export function retireTaskResultIssues(m, taskID, issues, replacementIssues = []) {
     if (!issues.length)
         return [];
-    const replacement = new Set(replacementIssues), stillOwned = new Set(m.execution.tasks.filter(t => t.id !== taskID && t.status !== 'cancelled' && t.result?.status !== 'DONE').flatMap(t => t.result?.open_issues ?? [])), retired = issues.filter(issue => !replacement.has(issue) && !stillOwned.has(issue));
+    const replacement = new Set(replacementIssues), stillOwned = new Set(m.execution.tasks.filter(t => t.id !== taskID && t.status !== 'cancelled' && !taskHasSatisfiedSettledOwnership(m, t) && t.result?.status !== 'DONE').flatMap(t => t.result?.open_issues ?? [])), retired = issues.filter(issue => !replacement.has(issue) && !stillOwned.has(issue));
     if (retired.length)
         m.execution.blockers = m.execution.blockers.filter(blocker => !retired.includes(blocker));
     return retired;

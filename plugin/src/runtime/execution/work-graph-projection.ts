@@ -1,15 +1,16 @@
 import { executionAttemptIdentity,type WorkGraph,type WorkNode,type ExecutionUnit,type ExecutionResourceSelection,type ExecutionAttempt } from '../../contracts/orchestration-core.js'
 import type { MissionState,MissionTask,WorkerState } from '../mission/types.js'
 import { hasFreshPassedEvidence } from '../evidence/freshness.js'
+import { taskControlStatus } from '../task/task-ownership.js'
 
 function clone<T>(value:T):T{return structuredClone(value)}
 
-function projectNode(task:MissionTask,missionId:string):WorkNode{
+function projectNode(mission:MissionState,task:MissionTask,missionId:string):WorkNode{
   return{
     id:task.id,
     missionId:task.mission_id||missionId,
     objective:task.objective,
-    status:task.status,
+    status:taskControlStatus(mission,task),
     scope:[...task.scope],
     constraints:[...task.constraints],
     dependencies:[...task.dependencies],
@@ -95,7 +96,7 @@ function projectUnit(task:MissionTask,worker:WorkerState|undefined,missionId:str
  */
 export function projectMissionToWorkGraph(mission:MissionState,observedAt=Date.now()):WorkGraph{
   const workerByTask=new Map(mission.execution.workers.map(worker=>[worker.task_id,worker]))
-  const nodes=mission.execution.tasks.map(task=>projectNode(task,mission.identity.mission_id))
+  const nodes=mission.execution.tasks.map(task=>projectNode(mission,task,mission.identity.mission_id))
   const edges=mission.execution.tasks.flatMap(task=>task.dependencies.map(dependency=>({from:dependency,to:task.id,kind:'requires' as const})))
   const executionUnits=mission.execution.tasks.map(task=>projectUnit(task,workerByTask.get(task.id),mission.identity.mission_id,mission.continuation.generation))
   return{

@@ -1,14 +1,15 @@
 import { projectMissionToWorkGraph } from '../execution/work-graph-projection.js';
 import { isHiReadOnlyChildRole, primaryRoleCanDirectImplementation } from '../roles/catalog.js';
 import { evaluateSchedulingSurfaceConflicts } from './planner.js';
+import { taskControlStatus } from '../task/task-ownership.js';
 export const EMPTY_PROJECT_SCHEDULING_PEER_VIEW = { peerUnits: [], running: [], activeWriters: [] };
 function peerUnitID(missionID, executionUnitID) { return `${missionID}::${executionUnitID}`; }
 function directParentOwnsImplementation(mission) { return mission.identity.status === 'active' && !mission.continuation.user_interrupted && mission.identity.semantic_assessment.status === 'assessed' && mission.execution.execution_mode !== 'parallel' && ['DIRECT', 'EVIDENCE'].includes(mission.execution.adaptive_execution?.path ?? '') && primaryRoleCanDirectImplementation(mission.execution.primary_mode) && mission.execution.obligations.some(item => item.kind === 'implementation' && item.status === 'open'); }
 function directParentClaimClock(mission) {
-    const writeTasks = mission.execution.tasks.filter(task => !isHiReadOnlyChildRole(task.role)), delegatedActive = writeTasks.some(task => !['completed', 'failed', 'cancelled'].includes(task.status));
+    const writeTasks = mission.execution.tasks.filter(task => !isHiReadOnlyChildRole(task.role)), delegatedActive = writeTasks.some(task => !['completed', 'failed', 'cancelled'].includes(taskControlStatus(mission, task)));
     let at = mission.identity.created_at;
     for (const task of writeTasks)
-        if (['completed', 'failed', 'cancelled'].includes(task.status))
+        if (['completed', 'failed', 'cancelled'].includes(taskControlStatus(mission, task)))
             at = Math.max(at, task.updated_at);
     for (const worker of mission.execution.workers.filter(worker => !isHiReadOnlyChildRole(worker.role)))
         if (['completed', 'failed', 'cancelled'].includes(worker.status))

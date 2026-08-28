@@ -22,6 +22,7 @@ import { replanVerificationForChangedSurface, verificationEnvelopeFor, verificat
 import { collectRepoContext } from '../intent/repo-context.js';
 import { bindParentMethodologyNeeds } from '../methodology/activation.js';
 import { reconcileMethodologyExits } from '../methodology/exit.js';
+import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js';
 import { evaluateCompletion } from '../completion/evaluator.js';
 import { projectControlDecision } from '../completion/control-projection.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
@@ -437,7 +438,9 @@ export function createHiToolSurface(input) {
                 verify.status = 'closed';
                 verify.closedAt = Date.now();
             }
+            reconcileSatisfiedTaskArtifacts(m, 'parent-direct-obligation-closed');
             reconcileMethodologyExits(m, missionRoot);
+            tasks.wakeQueued();
             syncMissionGates(m, missionRoot);
             const completion = evaluateCompletion(m, missionRoot);
             if (completion.complete)

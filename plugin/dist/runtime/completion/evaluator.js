@@ -3,7 +3,8 @@ import { syncMissionGates } from '../gates/gates.js';
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js';
 import { assessRequiredTargetCoverage } from '../task/diff-ownership.js';
 import { loadedMethodologyNeedNames } from '../methodology/exit.js';
-export function evaluateCompletion(m, projectRoot) { const reasons = [], verification = verificationClaimsSatisfied(m, projectRoot), reviews = reviewClaimsSatisfied(m, projectRoot); syncMissionGates(m, projectRoot, { verification, review: reviews }); if (missionRequiresReleaseCreate(m)) {
+import { reconcileSatisfiedTaskArtifacts, taskPendingForControl, taskResultRequiresReconciliation } from '../task/task-ownership.js';
+export function evaluateCompletion(m, projectRoot) { reconcileSatisfiedTaskArtifacts(m, 'completion-evaluation'); const reasons = [], verification = verificationClaimsSatisfied(m, projectRoot), reviews = reviewClaimsSatisfied(m, projectRoot); syncMissionGates(m, projectRoot, { verification, review: reviews }); if (missionRequiresReleaseCreate(m)) {
     if (m.release.release_chain?.release?.outcome !== 'success')
         reasons.push('release-chain:release-not-completed');
     else if (!m.release.release_chain?.release?.remote_verified)
@@ -17,7 +18,7 @@ export function evaluateCompletion(m, projectRoot) { const reasons = [], verific
     return { complete: false, reasons: ['user-stopped'] }; if (m.identity.semantic_assessment.status !== 'assessed')
     return { complete: false, reasons: ['semantic-assessment-pending'], next: 'CONTINUE' }; if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request')
     return { complete: false, reasons: [`human-decision:${m.authority.human_decision.reason_code}`], next: 'USER_ACTION_REQUIRED' }; if (m.execution.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
-    reasons.push('active-worker'); if (m.execution.tasks.some(t => ['created', 'queued', 'running', 'waiting'].includes(t.status)))
+    reasons.push('active-worker'); if (m.execution.tasks.some(t => taskPendingForControl(m, t)))
     reasons.push('pending-task'); if (m.execution.processes.some(p => p.status === 'RUNNING'))
     reasons.push('active-process'); if (m.execution.processes.some(p => p.status === 'ORPHANED'))
     reasons.push('orphan-process'); if (m.execution.processes.some(p => p.cleanup_state !== 'CLEANED' && p.status !== 'ORPHANED'))
@@ -29,7 +30,7 @@ export function evaluateCompletion(m, projectRoot) { const reasons = [], verific
     reasons.push(`open-obligations:${open.map(o => o.id).join(',')}`); const authorityGate = m.execution.gates.find(g => g.kind === 'user-authority' && g.status !== 'closed'); if (authorityGate)
     return { complete: false, reasons: [...reasons, `authority:${authorityGate.status}`], next: 'USER_ACTION_REQUIRED' }; const rollback = m.execution.gates.find(g => g.kind === 'rollback' && g.status !== 'closed'); if (rollback)
     return { complete: false, reasons: [...reasons, 'temporary-rollback-pending'], next: 'USER_ACTION_REQUIRED' }; const prereq = m.execution.gates.find(g => g.kind === 'prerequisite-task' && g.status !== 'closed'); if (prereq)
-    reasons.push('prerequisite-task-pending'); if (m.execution.tasks.some(t => t.status !== 'cancelled' && (t.result?.status === 'FIX_REQUIRED' || t.result?.status === 'NEEDS_CONTEXT')))
+    reasons.push('prerequisite-task-pending'); if (m.execution.tasks.some(t => taskResultRequiresReconciliation(m, t)))
     return { complete: false, reasons: [...reasons, 'worker-result-unreconciled'], next: 'RECONCILE' }; const openWork = m.execution.obligations.filter(o => o.status === 'open' && (o.kind === 'analysis' || o.kind === 'implementation')); if (openWork.length)
     return { complete: false, reasons, next: 'CONTINUE' }; if (!verification.ok)
     return { complete: false, reasons: [...reasons, `verification-claims-missing:${verification.missing.join(',')}`], next: 'VERIFY' }; if (!reviews.ok)
