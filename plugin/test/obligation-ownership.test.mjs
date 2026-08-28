@@ -115,6 +115,23 @@ test('source-bound explicit reviewer evidence can close its owned review and ver
 })
 
 
+test('reviewer semantic case scope falls back to canonical task filesystem scope for freshness binding',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-semantic-scope-'))
+  try{
+    writeFileSync(join(root,'index.html'),'<main>reviewed</main>\n')
+    const m=assessedMission('ownership-review-semantic-scope','Review index.html visually',{task_kind:'review',required_capabilities:['review','visual-qa','independent-review'],likely_verification:['review-evidence'],likely_targets:['index.html']})
+    m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:false}
+    const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['review-evidence']
+    const task=createTask(m,{objective:'visually review index.html',role:'visual-qa',category:'standard',scope:['index.html'],requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
+    const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='visual-review-session';worker.native_state_hash='f'.repeat(64)
+    runtime(root).applyResult(m,worker.id,{status:'DONE',summary:'visual review complete',changed_files:[],evidence:[{kind:'review-evidence',summary:'all visual cases passed',scope:['vc_3-1','vc_4-1'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    const evidence=m.execution.evidence.items.find(e=>e.kind==='review-evidence'&&e.outcome==='passed')
+    assert.ok(evidence);assert.deepEqual(evidence.scope,['index.html']);assert.equal(evidence.trusted_source_class,'reviewer-observation')
+    assert.equal(review.status,'closed');assert.equal(verification.status,'closed');assert.deepEqual(verificationSatisfied(m,verification.id,root),{ok:true,missing:[]})
+    assert.ok(m.execution.ledger.some(e=>e.type==='review.evidence-scope-normalized'&&e.task_id===task.id))
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('late independent review closure re-evaluates earlier passed verification even when reviewer does not own it',()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-late-review-'))
   try{

@@ -408,15 +408,17 @@ export class TaskResultReconciler {
             const refs = [...new Set(e.evidence_refs ?? [])];
             appendLedger(m, 'worker.evidence-claim-recorded', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, claimed_outcome: e.outcome, claimed_pass: e.pass, observation_refs: refs.slice(0, 20) } });
             if (e.kind === 'review-evidence' && isHiReviewerRole(worker.role)) {
-                const stateHash = worker.native_state_hash, scope = e.scope?.length ? e.scope : task.scope, scopeStateHash = captureEvidenceScopeState(this.projectRoot, scope);
+                const stateHash = worker.native_state_hash, claimedScope = e.scope?.length ? e.scope : task.scope, claimedScopeStateHash = captureEvidenceScopeState(this.projectRoot, claimedScope), scope = claimedScopeStateHash ? claimedScope : task.scope, scopeStateHash = claimedScopeStateHash ?? captureEvidenceScopeState(this.projectRoot, task.scope);
                 if (!worker.session_id || !stateHash || !/^[a-f0-9]{64}$/i.test(stateHash)) {
                     appendLedger(m, 'review.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { reason: 'reviewer-observation-requires-exact-session-state', session_id: worker.session_id } });
                     continue;
                 }
                 if (!scopeStateHash) {
-                    appendLedger(m, 'review.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { reason: 'reviewer-observation-requires-current-bounded-scope-state', scope: scope.slice(0, 40) } });
+                    appendLedger(m, 'review.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { reason: 'reviewer-observation-requires-current-bounded-scope-state', scope: claimedScope.slice(0, 40), task_scope: task.scope.slice(0, 40) } });
                     continue;
                 }
+                if (!claimedScopeStateHash && claimedScope.length)
+                    appendLedger(m, 'review.evidence-scope-normalized', { task_id: task.id, worker_id: worker.id, payload: { claimed_scope: claimedScope.slice(0, 40), canonical_scope: scope.slice(0, 40), reason: 'review claim scope is semantic/non-filesystem; repository freshness is bound to canonical task scope' } });
                 addEvidence(m, { kind: e.kind, summary: e.summary, scope, source: `reviewer:${worker.id}`, trusted_source_class: 'reviewer-observation', source_session_id: worker.session_id, source_state_hash: stateHash, scope_state_hash: scopeStateHash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs.length ? refs : undefined, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: cleanlinessMarker ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
                 continue;
             }
