@@ -306,28 +306,34 @@ export class TaskResultReconciler {
             task.diff_cleanliness = { collateral: unresolved, accepted_expansions: [...(task.diff_cleanliness?.accepted_expansions ?? [])], native_verified_reverts: [] };
         }
         if (effectiveResult.findings?.length) {
-            const findings = effectiveResult.findings;
-            const invalidRole = findings.filter(f => !isHiReviewerRole(worker.role) || f.reviewer_role !== worker.role);
-            const actionable = findings.filter(f => f.reviewer_role === worker.role && reviewFindingNeedsCorrection(f));
-            const unresolvedCausality = findings.filter(f => f.reviewer_role === worker.role && f.disposition === 'open' && f.blocking && f.causality === 'unknown');
-            const roleMarkers = invalidRole.map(f => `review-finding-role-mismatch:${f.id}:${worker.role}->${f.reviewer_role}`);
-            const actionableMarkers = actionable.map(reviewFindingMarker);
-            const causalityMarkers = unresolvedCausality.map(f => `review-finding-causality-unresolved:${f.id}`);
-            if (roleMarkers.length) {
-                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...roleMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-role-reconcile: structured findings must be emitted by the actual canonical reviewer role'])] };
-                appendLedger(m, 'review.finding-role-rejected', { task_id: task.id, worker_id: worker.id, payload: { findings: invalidRole.map(f => f.id), worker_role: worker.role } });
+            const findings = effectiveResult.findings, reviewerRole = isHiReviewerRole(worker.role);
+            if (!reviewerRole) {
+                appendLedger(m, 'review.finding-authority-ignored', { task_id: task.id, worker_id: worker.id, payload: { findings: findings.map(f => f.id), worker_role: worker.role, reason: 'structured-review-findings-require-canonical-reviewer-role' } });
+                effectiveResult = { ...effectiveResult, findings: undefined };
             }
-            if (actionableMarkers.length) {
-                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...actionableMarkers])] };
-                appendLedger(m, 'review.finding-actionable', { task_id: task.id, worker_id: worker.id, payload: { findings: actionable.map(f => ({ id: f.id, severity: f.severity, causality: f.causality, blocking: f.blocking, scope: f.scope.slice(0, 20) })) } });
+            else {
+                const invalidRole = findings.filter(f => f.reviewer_role !== worker.role);
+                const actionable = findings.filter(f => f.reviewer_role === worker.role && reviewFindingNeedsCorrection(f));
+                const unresolvedCausality = findings.filter(f => f.reviewer_role === worker.role && f.disposition === 'open' && f.blocking && f.causality === 'unknown');
+                const roleMarkers = invalidRole.map(f => `review-finding-role-mismatch:${f.id}:${worker.role}->${f.reviewer_role}`);
+                const actionableMarkers = actionable.map(reviewFindingMarker);
+                const causalityMarkers = unresolvedCausality.map(f => `review-finding-causality-unresolved:${f.id}`);
+                if (roleMarkers.length) {
+                    effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...roleMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-role-reconcile: structured findings must be emitted by the actual canonical reviewer role'])] };
+                    appendLedger(m, 'review.finding-role-rejected', { task_id: task.id, worker_id: worker.id, payload: { findings: invalidRole.map(f => f.id), worker_role: worker.role } });
+                }
+                if (actionableMarkers.length) {
+                    effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...actionableMarkers])] };
+                    appendLedger(m, 'review.finding-actionable', { task_id: task.id, worker_id: worker.id, payload: { findings: actionable.map(f => ({ id: f.id, severity: f.severity, causality: f.causality, blocking: f.blocking, scope: f.scope.slice(0, 20) })) } });
+                }
+                if (causalityMarkers.length) {
+                    effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...causalityMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-causality-reconcile: blocking findings with unknown causality cannot become mission blockers until introduced/worsened/pre-existing ownership is established'])] };
+                    appendLedger(m, 'review.finding-causality-unresolved', { task_id: task.id, worker_id: worker.id, payload: { findings: unresolvedCausality.map(f => f.id) } });
+                }
+                const preExisting = findings.filter(f => f.causality === 'pre-existing' && f.disposition === 'open');
+                if (preExisting.length)
+                    appendLedger(m, 'review.finding-pre-existing', { task_id: task.id, worker_id: worker.id, payload: { findings: preExisting.map(f => ({ id: f.id, severity: f.severity, scope: f.scope.slice(0, 20) })), policy: 'record-without-unrelated-mission-blocker' } });
             }
-            if (causalityMarkers.length) {
-                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...causalityMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-causality-reconcile: blocking findings with unknown causality cannot become mission blockers until introduced/worsened/pre-existing ownership is established'])] };
-                appendLedger(m, 'review.finding-causality-unresolved', { task_id: task.id, worker_id: worker.id, payload: { findings: unresolvedCausality.map(f => f.id) } });
-            }
-            const preExisting = findings.filter(f => f.causality === 'pre-existing' && f.disposition === 'open');
-            if (preExisting.length)
-                appendLedger(m, 'review.finding-pre-existing', { task_id: task.id, worker_id: worker.id, payload: { findings: preExisting.map(f => ({ id: f.id, severity: f.severity, scope: f.scope.slice(0, 20) })), policy: 'record-without-unrelated-mission-blocker' } });
         }
         const requiredVerificationCases = task.verification_cases ?? [];
         if (worker.role === 'visual-qa' && requiredVerificationCases.length && effectiveResult.status === 'DONE') {

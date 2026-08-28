@@ -130,3 +130,17 @@ test('runtime-bound explorer clearance promotes discovered source scope into can
     assert.equal(task.result.status,'DONE');assert.equal(m.identity.intent.ambiguity,'none');assert.deepEqual(m.identity.intent.likelyTargets,['src/contract.ts']);assert.equal(analysis.status,'closed');assert.ok(m.execution.ledger.some(e=>e.type==='intent.targets.resolved'&&e.payload?.source==='repository-explorer-clearance'&&e.payload?.targets?.includes('src/contract.ts')))
   }finally{rmSync(r,{recursive:true,force:true})}
 })
+
+
+test('repository-explorer structured review findings are ignored as unauthorized metadata without blocking valid exploration clearance',()=>{
+  const r=root();try{
+    const m=mission(r,'nonreviewer-findings'),{task,worker,analysis}=explorer(m),source=sourceClaimWithReceipt(r,m,task,worker)
+    runtime(r).applyResult(m,worker.id,result({evidence:[source],findings:[{id:'rf-analysis-note',reviewer_role:'repository-explorer',subject:'pre-existing contract defect observed during analysis',severity:'medium',causality:'pre-existing',scope:['src/contract.ts'],evidence_refs:['source-provenance-evidence'],confidence:'high',disposition:'open',blocking:false}]}))
+    assert.equal(task.result.status,'DONE')
+    assert.equal(task.result.findings,undefined)
+    assert.equal(m.identity.intent.ambiguity,'none')
+    assert.equal(analysis.status,'closed')
+    assert.ok(m.execution.ledger.some(e=>e.type==='review.finding-authority-ignored'&&e.worker_id===worker.id))
+    assert.equal(m.execution.blockers.some(x=>x.includes('rf-analysis-note')),false)
+  }finally{rmSync(r,{recursive:true,force:true})}
+})

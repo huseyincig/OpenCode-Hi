@@ -91,6 +91,20 @@ test('repository explorer handoff projects clearance result contract without pol
   }
 })
 
+test('repository explorer corrective resume stays read-only without reviewer finding authority',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),`${process.cwd()}/..`,()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),sid='explorer-corrective-resume-role-contract',m=store.start(sid,'resolve repository ambiguity')
+  assess(store,sid,{task_kind:'bug-fix',scope:'local',ambiguity:'none',required_capabilities:['repository-analysis','implementation'],likely_targets:[EXISTING_REPO_SCOPE],likely_verification:[]})
+  const out=await runtime.start(m,{objective:'inspect current repository source',role:'repository-explorer',scope:[EXISTING_REPO_SCOPE]})
+  runtime.applyResult(m,out.worker_id,{status:'NEEDS_CONTEXT',summary:'source needs one bounded reread',changed_files:[],evidence:[],open_issues:[],needs_context:['re-read bounded source']})
+  await runtime.resume(m,out.task_id)
+  const resume=String(prompts[1]?.body?.parts?.[0]?.text??'')
+  assert.match(resume,/read-only (?:analyzer|explorer)/i);assert.match(resume,/Do not mutate repository state/)
+  assert.match(resume,/return DONE/i);assert.match(resume,/source-provenance-evidence/i)
+  assert.doesNotMatch(resume,/ReviewFinding|finding ids MUST use rf-|finding evidence_refs/i)
+})
+
 test('repository explorer with no mission ambiguity gets no clearance result contract',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
