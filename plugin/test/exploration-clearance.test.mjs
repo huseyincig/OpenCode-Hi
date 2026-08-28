@@ -78,6 +78,27 @@ test('source drift after clearance blocks implementation and a fresh bounded exp
   }finally{rmSync(r,{recursive:true,force:true})}
 })
 
+test('stale exploration clearance does not deadlock exact same-session implementation correction',async()=>{
+  const r=root();try{
+    const m=mission(r,'corrective-stale'),{task:exploreTask,worker:exploreWorker}=explorer(m)
+    const created=[],prompts=[],client={session:{create:async req=>{created.push(req);return{data:{id:`child-${created.length}`}}},promptAsync:async req=>{prompts.push(req);return{data:{}}},status:async()=>({data:{'child-1':{type:'idle'}}}),diff:async()=>({data:[]}),abort:async()=>({data:true})}}
+    const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),r,join(process.cwd(),'..'),()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}));rt.applyResult(m,exploreWorker.id,result({evidence:[sourceClaimWithReceipt(r,m,exploreTask,exploreWorker)]}));assert.equal(explorationClearanceFreshness(r,m).current,true)
+    const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation)
+    const first=await rt.start(m,{role:'coder',objective:'implement current contract',scope:['src/contract.ts'],obligationIds:[implementation.id]});assert.equal(created.length,1)
+    writeFileSync(join(r,'src','contract.ts'),'export interface Contract { id:string; mode:string }\n')
+    rt.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'one bounded correction remains',changed_files:['src/contract.ts'],evidence:[],open_issues:['fix:bounded-correction'],needs_context:[]})
+    assert.equal(explorationClearanceFreshness(r,m).current,false)
+    const beforeTasks=m.execution.tasks.length,beforeWorkers=m.execution.workers.length
+    const resumed=await rt.resume(m,first.task_id)
+    assert.equal(resumed.task_id,first.task_id);assert.equal(resumed.worker_id,first.worker_id);assert.equal(resumed.session_id,first.session_id)
+    assert.equal(created.length,1,'corrective continuation must reuse the exact child session');assert.equal(m.execution.tasks.length,beforeTasks);assert.equal(m.execution.workers.length,beforeWorkers)
+    assert.equal(m.execution.tasks.some(t=>t.role==='repository-explorer'&&t.id!==exploreTask.id),false,'resume must not manufacture a refresh worker')
+    const correction=JSON.stringify(prompts.at(-1));assert.match(correction,/RECOVERY SOURCE REVALIDATION/);assert.match(correction,/inspect the current diff\/state and re-read the current bounded task scope/i);assert.match(correction,/src\/contract\.ts/);assert.match(correction,/do not widen mutation scope or restart planning/i)
+    assert.ok(m.execution.ledger.some(e=>e.type==='task.resume.exploration-revalidation-owned'&&e.task_id===first.task_id&&e.worker_id===first.worker_id))
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
+
 
 test('runtime-bound explorer clearance promotes discovered source scope into canonical Mission targets',()=>{
   const r=root();try{

@@ -41,7 +41,7 @@ export function evaluateTaskPreconditions(input) {
         add('dependency-wait', 'WAIT', `Waiting for prerequisite task(s): ${input.dependencies.incomplete.join(',')}`);
     if ((input.unresolvedRepositoryAmbiguity || input.contractCriticalAmbiguity) && input.implementation)
         add('contract-ambiguity', 'RESOLVE', 'Unresolved repository ambiguity must be cleared by current source evidence/exploration before implementation starts');
-    if (input.staleExplorationClearance && input.implementation)
+    if (input.staleExplorationClearance && input.implementation && !input.correctiveResume)
         add('exploration-clearance-stale', 'RESOLVE', 'Repository evidence that cleared prior ambiguity is stale; refresh bounded exploration before implementation starts');
     if (input.authorityRequired)
         add('user-authority', 'USER_ACTION_REQUIRED', 'Required user authority must be resolved before this task starts');

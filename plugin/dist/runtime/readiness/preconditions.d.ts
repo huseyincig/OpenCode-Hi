@@ -34,6 +34,7 @@ export interface TaskPreconditionInput {
     contractCriticalAmbiguity?: boolean;
     unresolvedRepositoryAmbiguity?: boolean;
     staleExplorationClearance?: boolean;
+    correctiveResume?: boolean;
     authorityRequired?: boolean;
 }
 export interface TaskPreconditionResult {

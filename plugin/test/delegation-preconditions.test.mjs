@@ -93,3 +93,11 @@ test('unresolved repository ambiguity blocks exact implementation ownership but 
   const blocked=evaluateTaskPreconditions({...base,implementation:true});assert.equal(blocked.decision,'RESOLVE');assert.ok(blocked.items.some(x=>x.id==='contract-ambiguity'&&/Unresolved repository ambiguity/.test(x.reason)))
   const support=evaluateTaskPreconditions({...base,implementation:false});assert.equal(support.decision,'READY');assert.equal(support.items.some(x=>x.id==='contract-ambiguity'),false)
 })
+
+
+test('stale exploration clearance blocks fresh implementation but not exact corrective continuation',()=>{
+  const base={role:'coder',implementation:true,dependencies:{unknown:[],failed:[],incomplete:[]},modelAvailable:true,native:{childSession:true,prompt:true},staleExplorationClearance:true}
+  const fresh=evaluateTaskPreconditions(base);assert.equal(fresh.decision,'RESOLVE');assert.ok(fresh.items.some(x=>x.id==='exploration-clearance-stale'))
+  const corrective=evaluateTaskPreconditions({...base,correctiveResume:true});assert.equal(corrective.decision,'READY');assert.equal(corrective.items.some(x=>x.id==='exploration-clearance-stale'),false)
+  const ambiguous=evaluateTaskPreconditions({...base,correctiveResume:true,unresolvedRepositoryAmbiguity:true});assert.equal(ambiguous.decision,'RESOLVE');assert.ok(ambiguous.items.some(x=>x.id==='contract-ambiguity'))
+})
