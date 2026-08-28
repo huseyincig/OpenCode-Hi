@@ -284,3 +284,35 @@ test('TaskRuntime cancel fails closed when exact browser cleanup cannot complete
   assert.ok(m.execution.ledger.some(e=>e.type==='browser.cleanup-failed'&&e.worker_id===worker.id))
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.blocked'&&e.worker_id===worker.id&&e.payload?.reason==='browser-cleanup-failed'))
 })
+
+test('connected hung close retires the generation so explicit reopen can relaunch without weakening cleanup',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-retired-close-test-')),never=new Promise(()=>{}),sessions=[]
+  const module={chromium:{launch:async()=>{
+    const index=sessions.length,page={_url:'about:blank',closed:false,url(){return this._url},setDefaultTimeout(){},on(){},isClosed(){return this.closed},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={connected:true,newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>index===0?never:(browser.connected=false),isConnected(){return this.connected}};sessions.push({browser,page});return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('retire-close','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    const closeResult=await adapter.close(owner);assert.equal(closeResult.result,'FAILED');assert.match(closeResult.network_errors.join('\n'),/browser\.close timed out/i)
+    const reopened=await adapter.open(owner,'http://127.0.0.1:4173/');assert.equal(reopened.result,'OBSERVED');assert.equal(sessions.length,2,'hung connected generation must be retired from active reuse so a fresh browser can launch')
+    const cleanup=await adapter.cleanup(owner);assert.equal(cleanup.cleaned,false);assert.equal(cleanup.reason,'close-failed');assert.match(cleanup.error??'',/browser\.close timed out/i)
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})
+
+test('owner replacement can proceed after connected hung close while stale cleanup remains fail-closed',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-retired-owner-test-')),never=new Promise(()=>{}),sessions=[]
+  const module={chromium:{launch:async()=>{
+    const index=sessions.length,page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},isClosed:()=>false,async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={connected:true,newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>index===0?never:(browser.connected=false),isConnected(){return this.connected}};sessions.push({browser,page});return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const oldOwner=context('retire-owner','m:w:s-old:g1'),newOwner=context('retire-owner','m:w:s-new:g2')
+    await adapter.open(oldOwner,'http://127.0.0.1:4173/')
+    const reopened=await adapter.open(newOwner,'http://127.0.0.1:4173/');assert.equal(reopened.result,'OBSERVED');assert.equal(sessions.length,2)
+    const stale=await adapter.cleanup(oldOwner);assert.equal(stale.cleaned,false);assert.equal(stale.reason,'close-failed')
+    assert.equal((await adapter.inspect(newOwner)).result,'OBSERVED','stale-owner cleanup must not close the replacement active generation')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})

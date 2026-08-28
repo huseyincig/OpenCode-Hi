@@ -22,6 +22,7 @@ export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     private readonly executableExists;
     private readonly launchTempBase;
     private readonly sessions;
+    private readonly retiredSessions;
     constructor(options?: PlaywrightBrowserAdapterOptions);
     private refreshExecutable;
     private createTempRoot;
@@ -30,6 +31,8 @@ export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     private pageClosed;
     private invalidateSession;
     private discardSession;
+    private retireSession;
+    private matchingRetired;
     private liveSession;
     private boundedAction;
     private closeSession;

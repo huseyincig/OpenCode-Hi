@@ -20,6 +20,22 @@ async function boundedBrowserClose(browser, timeoutMs = BROWSER_CLOSE_TIMEOUT_MS
             clearTimeout(timer);
     }
 }
+async function boundedSessionClose(s, timeoutMs = BROWSER_CLOSE_TIMEOUT_MS) {
+    if (!s.closePromise) {
+        const pending = Promise.resolve().then(() => s.browser.close());
+        s.closeState = 'pending';
+        s.closePromise = pending;
+        pending.then(() => { s.closeState = 'fulfilled'; }, error => { s.closeState = 'rejected'; s.closeError = error; }).catch(() => { });
+    }
+    let timer;
+    try {
+        await Promise.race([s.closePromise, new Promise((_resolve, reject) => { timer = setTimeout(() => reject(new Error(`Playwright browser.close timed out after ${timeoutMs}ms`)), timeoutMs); })]);
+    }
+    finally {
+        if (timer)
+            clearTimeout(timer);
+    }
+}
 async function boundedBrowserOperation(operation, timeoutMs, invoke) {
     let timer;
     const pending = Promise.resolve().then(invoke);
@@ -59,6 +75,7 @@ export class PlaywrightBrowserAdapter {
     executableExists;
     launchTempBase;
     sessions = new Map();
+    retiredSessions = new Map();
     constructor(options = {}) { this.executableExists = options.executable_exists ?? existsSync; this.explicitExecutable = Boolean(options.executable_path); this.browserCachePaths = [...new Set(options.browser_cache_paths ?? [])]; this.executablePath = options.executable_path ?? discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); this.headless = options.headless ?? true; this.timeoutMs = Math.min(Math.max(options.timeout_ms ?? 15000, 1000), 30000); this.persistScreenshot = options.persist_screenshot; this.loadPlaywright = options.load_playwright ?? (() => import('playwright-core')); this.launchTempBase = options.launch_temp_base ?? (process.platform === 'win32' ? tmpdir() : '/tmp'); }
     refreshExecutable() { if (this.executablePath && this.executableExists(this.executablePath))
         return this.executablePath; if (this.explicitExecutable)
@@ -79,7 +96,18 @@ export class PlaywrightBrowserAdapter {
     } }
     invalidateSession(s, reason) { s.invalidReason = reason; s.refs.clear(); }
     discardSession(taskID, s) { if (this.sessions.get(taskID) === s)
-        this.sessions.delete(taskID); rmSync(s.launchTempRoot, { recursive: true, force: true }); }
+        this.sessions.delete(taskID); const retired = this.retiredSessions.get(taskID); if (retired) {
+        retired.delete(s);
+        if (!retired.size)
+            this.retiredSessions.delete(taskID);
+    } rmSync(s.launchTempRoot, { recursive: true, force: true }); }
+    retireSession(taskID, s) { if (this.sessions.get(taskID) === s)
+        this.sessions.delete(taskID); let retired = this.retiredSessions.get(taskID); if (!retired) {
+        retired = new Set();
+        this.retiredSessions.set(taskID, retired);
+    } retired.add(s); s.closePromise?.then(() => this.discardSession(taskID, s), () => { if (!this.browserConnected(s))
+        this.discardSession(taskID, s); }).catch(() => { }); }
+    matchingRetired(taskID, ownerRef) { return [...(this.retiredSessions.get(taskID) ?? [])].filter(s => s.executionOwnerRef === ownerRef); }
     liveSession(c) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); if (!this.browserConnected(s)) {
         this.discardSession(c.task_id, s);
@@ -99,21 +127,25 @@ export class PlaywrightBrowserAdapter {
             this.invalidateSession(s, `uncertain ${operation} timeout`);
         throw error;
     } }
-    async closeSession(taskID, s) { try {
-        await boundedBrowserClose(s.browser);
+    async closeSession(taskID, s, allowRetire = false) { try {
+        await boundedSessionClose(s);
     }
     catch (error) {
-        if (this.browserConnected(s))
+        if (this.browserConnected(s)) {
+            this.retireSession(taskID, s);
+            if (allowRetire)
+                return 'retired';
             throw error;
-    } this.discardSession(taskID, s); }
+        }
+    } this.discardSession(taskID, s); return 'closed'; }
     async ensure(c) { const current = this.sessions.get(c.task_id); if (current && !this.browserConnected(current))
         this.discardSession(c.task_id, current);
     else if (current && (current.invalidReason || this.pageClosed(current)))
-        await this.closeSession(c.task_id, current);
+        await this.closeSession(c.task_id, current, true);
     else if (current && current.executionOwnerRef === c.execution_owner_ref)
         return current;
     else if (current)
-        await this.closeSession(c.task_id, current); if (!c.execution_owner_ref.trim())
+        await this.closeSession(c.task_id, current, true); if (!c.execution_owner_ref.trim())
         throw new Error('Browser execution owner identity is required'); const executablePath = this.refreshExecutable(); if (!executablePath)
         throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), launchTempRoot = this.createTempRoot(); let browser; try {
         browser = await chromium.launch(this.launchOptions(executablePath, launchTempRoot));
@@ -266,18 +298,23 @@ export class PlaywrightBrowserAdapter {
     catch (error) {
         return this.observation(c, s, 'close', url, 'FAILED', undefined, undefined, String(error));
     } }
-    async cleanup(c) { const s = this.sessions.get(c.task_id); if (!s)
-        return { cleaned: false, reason: 'not-found' }; if (s.executionOwnerRef !== c.execution_owner_ref)
-        return { cleaned: false, reason: 'owner-mismatch' }; try {
-        await this.closeSession(c.task_id, s);
-        return { cleaned: true, reason: 'cleaned' };
-    }
-    catch (error) {
-        return { cleaned: false, reason: 'close-failed', error: String(error) };
-    } }
+    async cleanup(c) { const active = this.sessions.get(c.task_id), retired = this.matchingRetired(c.task_id, c.execution_owner_ref), owned = [...(active?.executionOwnerRef === c.execution_owner_ref ? [active] : []), ...retired]; if (!owned.length)
+        return active ? { cleaned: false, reason: 'owner-mismatch' } : { cleaned: false, reason: 'not-found' }; let failure; for (const s of owned)
+        try {
+            await this.closeSession(c.task_id, s);
+        }
+        catch (error) {
+            failure ??= error;
+        } if (failure)
+        return { cleaned: false, reason: 'close-failed', error: String(failure) }; return { cleaned: true, reason: 'cleaned' }; }
     async dispose() { for (const [id, s] of [...this.sessions])
         try {
             await this.closeSession(id, s);
         }
-        catch { } }
+        catch { } for (const [id, set] of [...this.retiredSessions])
+        for (const s of [...set])
+            try {
+                await this.closeSession(id, s);
+            }
+            catch { } }
 }
