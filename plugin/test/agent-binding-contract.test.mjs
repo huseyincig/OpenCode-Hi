@@ -83,3 +83,10 @@ test('foreign execution semantics and malformed routing metadata remain collisio
     assert.deepEqual(projectHiOpenCodeAgents(cfg,{coder:PACKAGED_HI_AGENTS.coder}).collisions,['coder'])
   }
 })
+
+
+test('visual-qa host step ceiling covers maximal canonical browser workload plus bounded settlement reserve',()=>{
+  const maxVerificationCases=16,maxActionsPerCase=10,settlementReservePerCase=2
+  const minimumVisualSteps=maxVerificationCases*(maxActionsPerCase+settlementReservePerCase)
+  assert.ok(PACKAGED_HI_AGENTS['visual-qa'].steps>=minimumVisualSteps,`visual-qa steps=${PACKAGED_HI_AGENTS['visual-qa'].steps} must be >= ${minimumVisualSteps} for 16 cases x (10 browser actions + 2 bounded setup/settlement turns)`)
+})

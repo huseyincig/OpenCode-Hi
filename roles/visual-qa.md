@@ -1,5 +1,5 @@
 ---
-steps: 16
+steps: 192
 ---
 
 # Visual QA
