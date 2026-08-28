@@ -96,9 +96,9 @@ OpenCode owns native host primitives such as sessions, child sessions, provider/
 
 ## Mission, Task, Worker and Team
 
-`MissionStore` is the durable Mission owner. The persisted Mission envelope contains named slices for identity, execution, continuation, context, VCS safety, authority, release and methodology state.
+`MissionStore` is the durable Mission owner. The persisted Mission envelope contains named slices for identity, execution, continuation, context, VCS safety, authority, release and methodology state. Host-primary `likely_targets` are proposals until this boundary binds them to an exact user-named technical path, a current project-contained filesystem identity, or an explicit HTTP(S) target; a merely path-shaped nonexistent model label cannot become Task scope authority. When ambiguity remains and no canonical target exists, bounded repository exploration may resolve actual current source scope through the existing source-provenance clearance path.
 
-`TaskRuntime` is the canonical Task application facade. Mechanical child execution, result reconciliation and recovery are delegated to bounded collaborators; none owns a second Task store.
+`TaskRuntime` is the canonical Task application facade. Mechanical child execution, result reconciliation and recovery are delegated to bounded collaborators; none owns a second Task store. A model-facing cancel cannot retire a `FIX_REQUIRED`/`NEEDS_CONTEXT` Task while it still owns an open obligation: that exact Task must be reconciled instead, so cancellation cannot manufacture a fresh identity for an equivalent recovery strategy. Canonical user STOP/runtime-owned cancellation remains a separate lifecycle path.
 
 A Worker is one execution attempt bound to a Task. `WorkerResult` is boundary-untrusted input and does not own completion.
 

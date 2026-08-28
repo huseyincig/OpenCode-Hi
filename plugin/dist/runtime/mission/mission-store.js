@@ -1,4 +1,4 @@
-import { assessedIntent, assertSemanticTaskCapabilityConsistency, provisionalIntent, resolveAdaptiveVerificationAssessment, userRequiredMaterialTargets } from '../intent/semantic-assessment.js';
+import { assessedIntent, assertSemanticTaskCapabilityConsistency, provisionalIntent, resolveAdaptiveVerificationAssessment, technicalTargets, userRequiredMaterialTargets } from '../intent/semantic-assessment.js';
 import { collectRepoContext } from '../intent/repo-context.js';
 import { continuationBudget } from '../routing/category.js';
 import { appendLedger } from '../ledger/ledger.js';
@@ -10,6 +10,9 @@ import { architectureMethodologySignals, requiredVerificationMethodologySignals 
 import { applyConstraintAtomDrafts, constraintAtomProjection } from '../constraint/constraint-atoms.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+import { existsSync, realpathSync } from 'node:fs';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) } : {}) }; }
@@ -35,6 +38,22 @@ function explicitTestMutationForbidden(text) {
         /\b(?:tests?|test files?)\s+(?:must|should)\s+(?:remain|stay)\s+unchanged\b/,
         /\bwithout\s+(?:modifying|editing|changing|writing|adding|creating|updating|touching)\s+(?:the\s+)?(?:tests?|test files?)\b/,
     ].some(pattern => pattern.test(normalized));
+}
+function projectContainedExistingTarget(root, target) {
+    try {
+        const project = realpathSync(root), candidate = realpathSync(resolve(root, target)), rel = relative(project, candidate);
+        return rel === '' || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`));
+    }
+    catch {
+        return false;
+    }
+}
+function repositoryBoundAssessment(root, userText, assessment) {
+    const explicit = new Set(technicalTargets(userText).map(target => normalizeBoundedProjectPath(target)).filter((target) => Boolean(target)));
+    const likely_targets = assessment.likely_targets.filter(target => { if (/^https?:\/\//i.test(target))
+        return true; const bounded = normalizeBoundedProjectPath(target), pathShaped = Boolean(bounded && technicalTargets(target).some(candidate => candidate === target || normalizeBoundedProjectPath(candidate) === bounded)); if (!pathShaped)
+        return true; return Boolean(bounded && (explicit.has(bounded) || (existsSync(resolve(root, bounded)) && projectContainedExistingTarget(root, bounded)))); });
+    return likely_targets.length === assessment.likely_targets.length ? assessment : { ...assessment, likely_targets };
 }
 function initialNonMaterialExecutionIndicators(assessment) {
     if (assessment.material || assessment.message_kind !== 'non-material')
@@ -134,7 +153,7 @@ export class MissionStore {
             this.syncProgressBaseline(m);
             return m;
         }
-        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, m.identity.semantic_assessment.pending_text, this.#workingRepo), effectiveAssessment = verificationResolution.assessment, explicitUserVerification = verificationResolution.explicitUserVerification, boundedExplicitVerification = verificationResolution.ceilingApplied;
+        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, m.identity.semantic_assessment.pending_text, this.#workingRepo), effectiveAssessment = repositoryBoundAssessment(this.#root, m.identity.semantic_assessment.pending_text, verificationResolution.assessment), explicitUserVerification = verificationResolution.explicitUserVerification, boundedExplicitVerification = verificationResolution.ceilingApplied;
         m.identity.intent = assessedIntent(m.identity.intent, effectiveAssessment);
         m.identity.risk = m.identity.intent.risk;
         m.identity.objective = m.identity.intent.objective;
@@ -283,7 +302,7 @@ export class MissionStore {
             this.syncProgressBaseline(m);
             return m;
         }
-        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), effectiveAssessment = verificationResolution.assessment, kind = effectiveAssessment.message_kind;
+        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), effectiveAssessment = repositoryBoundAssessment(this.#root, text, verificationResolution.assessment), kind = effectiveAssessment.message_kind;
         if (kind === 'constraint') {
             m.execution.constraints ??= [];
             m.execution.constraint_atoms ??= [];

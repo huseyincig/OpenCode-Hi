@@ -2,6 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {parseSemanticIntentAssessment,provisionalIntent,technicalTargets,semanticTargets,assessedIntent,materialSemanticTargets} from '../dist/runtime/intent/semantic-assessment.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import {mkdtempSync,rmSync,writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 const base={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
 
@@ -20,6 +23,21 @@ test('technical target extraction parses machine-like paths without classifying 
 
 test('semantic targets normalize prose-wrapped project paths and preserve browser URLs',()=>{
   assert.deepEqual(semanticTargets(['ripgrep preview truncation code in packages/core','https://127.0.0.1:4173/view']),['packages/core','https://127.0.0.1:4173/view'])
+})
+
+test('Mission admission binds model-proposed targets to explicit user paths or current project identities',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-semantic-target-bound-'));writeFileSync(join(root,'index.html'),'<!doctype html>\n')
+  try{
+    const apply=(sid,text,targets)=>{const store=new MissionStore(root),m=store.start(sid,text);store.applyInitialSemanticAssessment(sid,parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',ambiguity:'resolvable',dependency_class:'independent-multi',required_capabilities:['implementation','repository-analysis'],likely_targets:targets}));return m}
+    const falseScope=apply('false-scope','Repair the dashboard fixture',['dashboard fixture files','CSS/layout','JS interactivity','accessibility attributes'])
+    assert.equal(falseScope.identity.intent.likelyTargets,undefined,'nonexistent model prose-like slash labels must not become canonical task scope')
+    const existing=apply('existing-target','Repair the dashboard fixture',['index.html'])
+    assert.deepEqual(existing.identity.intent.likelyTargets,['index.html'],'current project identities may bind model-proposed scope')
+    const explicitNew=apply('explicit-new','Create src/new.ts',['src/new.ts'])
+    assert.deepEqual(explicitNew.identity.intent.likelyTargets,['src/new.ts'],'an exact user-named future file remains canonical before it exists')
+    const url=apply('url-target','Inspect browser target https://127.0.0.1:4173/view',['https://127.0.0.1:4173/view'])
+    assert.deepEqual(url.identity.intent.likelyTargets,['https://127.0.0.1:4173/view'])
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('initial semantic assessment drops provisional targets when structured targets do not normalize',()=>{

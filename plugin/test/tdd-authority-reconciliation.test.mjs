@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {applyStructuredFollowup} from './helpers/semantic.mjs'
 
-const R2_PROMPT="Fix the real production regression in OpenCode's ripgrep preview handling. A failing regression test in packages/core/test/ripgrep.test.ts demonstrates the bug. Make the smallest correct production-code change. Do not modify tests or unrelated files. Run `bun test test/ripgrep.test.ts` from packages/core and stop when it passes."
+const R2_PROMPT="Fix the real production regression in OpenCode's packages/core/src/ripgrep.ts ripgrep preview handling. A failing regression test in packages/core/test/ripgrep.test.ts demonstrates the bug. Make the smallest correct production-code change. Do not modify tests or unrelated files. Run `bun test test/ripgrep.test.ts` from packages/core and stop when it passes."
 const R2_ASSESSMENT={material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['packages/core/src/ripgrep.ts','packages/core/test/ripgrep.test.ts'],intent_signals:['intent.tdd'],suppressed_intent_signals:[]}
 const TDD_ASSESSMENT={...R2_ASSESSMENT,scope:'multi-file',dependency_class:'sequential',likely_targets:['src/parser.ts','test/parser.test.ts']}
 

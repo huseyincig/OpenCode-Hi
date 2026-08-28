@@ -174,7 +174,7 @@ test('explicit verification policy suppresses contradictory intent.test-strategy
 
 test('clear bounded direct bug-fix suppresses over-inferred intent.debugging methodology signal',()=>{
   const store=new MissionStore(root)
-  const m=store.start('s-direct-debugging-conflict','Fix the proven parser regression')
+  const m=store.start('s-direct-debugging-conflict','Fix the proven parser regression in src/parser.ts and verify test/parser.test.ts')
   store.applyInitialSemanticAssessment('s-direct-debugging-conflict',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification','repository-analysis'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts','test/parser.test.ts'],intent_signals:['intent.debugging','intent.test-strategy'],suppressed_intent_signals:[]})
   assert.equal(m.execution.adaptive_execution.path,'DIRECT')
   assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-debugging-root-cause'),false)
@@ -187,7 +187,7 @@ test('clear bounded direct bug-fix suppresses over-inferred intent.debugging met
 
 test('resolvable bounded bug-fix suppresses debugging signal when semantic capabilities do not require diagnosis',()=>{
   const store=new MissionStore(root)
-  const m=store.start('s-unbacked-debugging-signal','Fix the proven parser regression')
+  const m=store.start('s-unbacked-debugging-signal','Fix the proven parser regression in src/parser.ts')
   store.applyInitialSemanticAssessment('s-unbacked-debugging-signal',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts'],intent_signals:['intent.debugging'],suppressed_intent_signals:[]})
   assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-debugging-root-cause'),false)
   const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed');assert.deepEqual(assessed?.payload?.effective_intent_signals,[]);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,['intent.debugging'])

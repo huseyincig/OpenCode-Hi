@@ -442,6 +442,7 @@ export class TaskRuntime{
     const task=m.execution.tasks.find(t=>t.id===id),worker=m.execution.workers.find(w=>w.id===id||w.id===task?.worker_id),resolvedTask=worker?m.execution.tasks.find(t=>t.id===worker.task_id):task
     if(!worker)return{allowed:false,reason:'worker-not-found'}
     if(['completed','failed','cancelled'].includes(worker.status)||['completed','failed','cancelled'].includes(resolvedTask?.status??''))return{allowed:false,reason:'task-already-terminal',task_id:resolvedTask?.id,worker_id:worker.id}
+    if(resolvedTask?.result&&['FIX_REQUIRED','NEEDS_CONTEXT'].includes(resolvedTask.result.status)&&resolvedTask.obligation_ids.some(id=>m.execution.obligations.some(o=>o.id===id&&o.status==='open'))){appendLedger(m,'worker.cancel.admission-blocked',{task_id:resolvedTask.id,worker_id:worker.id,payload:{reason:'child-result-reconcile-required',result_status:resolvedTask.result.status,open_obligations:resolvedTask.obligation_ids.filter(id=>m.execution.obligations.some(o=>o.id===id&&o.status==='open'))}});return{allowed:false,reason:'child-result-reconcile-required',live_status:'idle',task_id:resolvedTask.id,worker_id:worker.id}}
     if(worker.status==='ready'||worker.status==='created'||worker.status==='queued')return{allowed:true,reason:'non-running-task',task_id:resolvedTask?.id,worker_id:worker.id}
     if(!worker.session_id)return{allowed:false,reason:'active-worker-session-unverified',live_status:'unknown',task_id:resolvedTask?.id,worker_id:worker.id}
     const observed=await this.observeWorkerLiveness(m,worker)
