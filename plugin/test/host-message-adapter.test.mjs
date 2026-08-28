@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {lastAssistantError,lastAssistantModel,lastMeaningfulAssistantActivity} from '../dist/opencode/client-adapter.js'
+import {createHostPort} from '../dist/opencode/host-port.js'
 
 test('OpenCode assistant error projection preserves exact V1 named-error identity and message',()=>{
   const error=lastAssistantError([{info:{id:'m1',role:'assistant',error:{name:'ContextOverflowError',data:{message:'maximum context length exceeded'}}},parts:[]}])
@@ -46,4 +47,18 @@ test('meaningful assistant activity ignores a newer open zero-token turn and ret
     {info:{id:'msg-open',role:'assistant',time:{created:230},tokens:{input:0,output:0,reasoning:0,cache:{read:0,write:0}}},parts:[{type:'step-start'}]},
   ])
   assert.deepEqual(activity,{message_id:'msg-progress',observed_at:220,output_tokens:24,reasoning_tokens:3,tool_calls:1,text_chars:16})
+})
+
+
+test('OpenCode assistant-result readback requests only the newest message so json_schema user history cannot poison settlement',async()=>{
+  const calls=[]
+  const structured={status:'DONE',summary:'native result',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  const client={session:{messages:async request=>{calls.push(request);return{data:[{info:{id:'msg-assistant',role:'assistant',providerID:'p',modelID:'m',parentID:'msg-user',structured,time:{created:10,completed:20},tokens:{input:1,output:2,reasoning:0,cache:{read:0,write:0}},cost:0},parts:[{type:'text',text:'compatibility text'}]}]}}}}
+  const host=createHostPort({directory:'/repo',worktree:'/repo',project:{},client,experimental_workspace:{register(){}},$:()=>{}})
+  const result=await host.readAssistantResult('child-json-schema')
+  assert.equal(calls.length,1)
+  assert.deepEqual(calls[0],{path:{id:'child-json-schema'},query:{limit:1}})
+  assert.deepEqual(result.structured,structured)
+  assert.equal(result.model?.parent_id,'msg-user')
+  assert.equal(result.text,'compatibility text')
 })

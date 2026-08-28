@@ -3,6 +3,8 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+
+- Keeps native WorkerResult structured output enabled while hardening OpenCode result readback: `HostPort` no longer exposes host message-page sizing, and the OpenCode adapter reads only the newest message for assistant settlement. This avoids an OpenCode 1.18.23 response-schema incompatibility where `prompt_async` accepts a persisted `json_schema` user format but `session.messages` rejects a page containing that user message; Hi does not work around it by removing `retryCount`, disabling structured output, or broad-reading history.
 - Adds a code-owned Tool Capability & Provisioning lifecycle for operational dependencies without creating a second routing/scheduler/process/authority/workspace/browser/Evidence owner. Existing implementations are preferred; managed tools default to `.opencode/hi/tools/`, project-local provisioning is authority-context and smoke-gated, receipts/locks are bounded and project-owned, global/system install is not a normal scope, and application package/lock/dependency state is never mutated. Chromium is the first integrated implementation while BrowserExecutor/Playwright remain the browser execution owners.
 - Rejects cross-Mission `process_id` collisions during OpenCode PTY restart reconciliation so process-local PTY ownership cannot be silently overwritten by another Mission/Task/Worker.
 - Bounds Hi-owned Playwright browser shutdown so a hung `browser.close()` cannot pin task cancellation indefinitely; exact visual-worker cancellation now fails closed when browser ownership cannot be cleaned.

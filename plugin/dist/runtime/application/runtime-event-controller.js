@@ -257,7 +257,7 @@ export class RuntimeEventController {
                         return;
                     }
                 }
-                const assistant = await host.readAssistantResult(sid, 12), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
+                const assistant = await host.readAssistantResult(sid), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
                 if (!settled.applied) {
                     appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });
                     persistence.save(store.all());

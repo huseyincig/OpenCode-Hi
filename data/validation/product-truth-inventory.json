@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "e49bc3aea9c5263d06f40a870ca3a19d2e7528bc0f0104950e80f61a37884976",
+      "owner_sha256": "b50d8520b34756617f8333e5c2eece96826b87c34450070fb97cdd2e036fc222",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -348,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "3f1595614782dc851235ba437ccd1f366d12d028a8abe542ebc2b81069f245e7",
+      "owner_sha256": "1817dfdc12bbeb1c6f0896e08c0cb1c8b8bd82b66e2b2799821f3e571b892833",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",

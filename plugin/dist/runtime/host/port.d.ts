@@ -75,7 +75,7 @@ export interface HostPort {
     log(level: HostLogLevel, message: string, extra?: Record<string, unknown>): Promise<void>;
     refreshRuntimeInventory(reason: string): Promise<number>;
     getModels(): AvailableModel[];
-    readAssistantResult(sessionID: string, limit?: number): Promise<HostAssistantResult>;
+    readAssistantResult(sessionID: string): Promise<HostAssistantResult>;
     sessionStatus(sessionID: string): Promise<HostChildSessionStatus>;
     continueSession(sessionID: string, text: string, metadata: Record<string, unknown>): Promise<boolean>;
 }

@@ -439,7 +439,7 @@ export class TaskRuntime {
         }
         let assistant;
         try {
-            assistant = await this.readAssistantResult(worker.session_id, 12);
+            assistant = await this.readAssistantResult(worker.session_id);
         }
         catch (error) {
             appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'assistant-result-read-failed', session_id: worker.session_id, error: String(error) } });
@@ -1168,7 +1168,7 @@ export class TaskRuntime {
         hostSessions[worker.session_id] = status;
         if ((status === 'busy' || status === 'retry') && this.readAssistantResult)
             try {
-                const activity = (await this.readAssistantResult(worker.session_id, 12)).activity;
+                const activity = (await this.readAssistantResult(worker.session_id)).activity;
                 if (activity)
                     recordAssistantProgress(m, { worker_id: worker.id, task_id: worker.task_id, session_id: worker.session_id, generation: worker.generation_at_spawn ?? m.continuation.generation, message_id: activity.message_id, observed_at: activity.observed_at, output_tokens: activity.output_tokens, reasoning_tokens: activity.reasoning_tokens, tool_calls: activity.tool_calls, text_chars: activity.text_chars });
             }
@@ -1191,7 +1191,7 @@ export class TaskRuntime {
         let progress_observed = false;
         if ((live_status === 'busy' || live_status === 'retry') && this.readAssistantResult)
             try {
-                const activity = (await this.readAssistantResult(worker.session_id, 12)).activity;
+                const activity = (await this.readAssistantResult(worker.session_id)).activity;
                 if (activity)
                     progress_observed = recordAssistantProgress(m, { worker_id: worker.id, task_id: worker.task_id, session_id: worker.session_id, generation: worker.generation_at_spawn ?? m.continuation.generation, message_id: activity.message_id, observed_at: activity.observed_at, output_tokens: activity.output_tokens, reasoning_tokens: activity.reasoning_tokens, tool_calls: activity.tool_calls, text_chars: activity.text_chars });
             }
