@@ -76,14 +76,29 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
 
 
 
-test('noncanonical required evidence is rejected before Task or Worker creation while obligation-owned canonicalization remains available',async()=>{
+test('noncanonical required evidence is rejected before obligation reconciliation can discard it',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('closed-task-evidence','inspect one file before implementation')
   assess(store,'closed-task-evidence',{task_kind:'bug-fix',scope:'multi-file',required_capabilities:['repository-analysis','implementation'],likely_targets:['index.html']})
-  const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis);assert.deepEqual(analysis.requiredEvidence,[])
   await assert.rejects(()=>runtime.start(m,{objective:'inspect index.html',role:'repository-explorer',scope:['index.html'],requiredEvidence:['Root cause understood'],obligationIds:[analysis.id]}),/Unsupported Hi required evidence kind.*Root cause understood/)
   assert.equal(m.execution.tasks.length,0);assert.equal(m.execution.workers.length,0);assert.equal(created.length,0);assert.equal(prompts.length,0)
+})
+
+test('review evidence is fenced from non-reviewer analysis and implementation handoffs without weakening explorer clearance',async()=>{
+  for(const [suffix,role,kind] of [['analysis','repository-explorer','analysis'],['implementation','coder','implementation']]){
+    const created=[],prompts=[],c=client(created,prompts)
+    const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+    const store=new MissionStore(process.cwd()),sid=`empty-owned-${suffix}`,m=store.start(sid,'repair dashboard fixture')
+    assess(store,sid,{task_kind:'bug-fix',scope:'multi-file',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:['index.html'],likely_verification:['review-evidence']})
+    const obligation=m.execution.obligations.find(o=>o.kind===kind);assert.ok(obligation);assert.deepEqual(obligation.requiredEvidence,[])
+    const out=await runtime.start(m,{objective:`bounded ${suffix}`,role,scope:['index.html'],requiredEvidence:['review-evidence'],obligationIds:[obligation.id]})
+    const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task);assert.deepEqual(task.obligation_ids,[obligation.id]);assert.deepEqual(task.requiredEvidence,[]);assert.deepEqual(task.execution_profile.task.required_evidence,[])
+    const handoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.match(handoff,/Task evidence contract: none/i);assert.doesNotMatch(handoff,/Verification contract: review-evidence/i)
+    assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-owner-reconciled'&&e.payload?.requested_evidence?.includes('review-evidence')&&e.payload?.removed_evidence?.includes('review-evidence')&&Array.isArray(e.payload?.authoritative_evidence)&&e.payload.authoritative_evidence.length===0))
+    if(role==='repository-explorer')assert.match(PACKAGED_HI_AGENTS['repository-explorer'].prompt,/source-provenance-evidence/,'explorer clearance remains a role/runtime contract rather than mission verifier inheritance')
+  }
 })
 
 test('verification-only coder task loses repository mutation surface and tool guard fails closed',async()=>{
@@ -114,11 +129,11 @@ test('exact review obligation overrides semantic evidence aliases and does not i
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation');implementation.status='closed';implementation.closedAt=Date.now()
   m.execution.verification_policy.requiredKinds=['visual-check'];m.execution.verification_policy.requireReview=true
   const review={id:'o-dependency-review-test',kind:'review',summary:'Dependency graph changed',status:'open',requiredEvidence:['review-evidence']};m.execution.obligations.push(review)
-  const out=await runtime.start(m,{objective:'review Flask dependency',role:'security-reviewer',category:'review',scope:['requirements.txt'],requiredEvidence:['dependency-review'],obligationIds:[review.id]})
+  const out=await runtime.start(m,{objective:'review Flask dependency',role:'security-reviewer',category:'review',scope:['requirements.txt'],requiredEvidence:['visual-check'],obligationIds:[review.id]})
   const task=m.execution.tasks.find(t=>t.id===out.task_id),text=JSON.stringify(prompts[0])
   assert.deepEqual(task.requiredEvidence,['review-evidence']);assert.deepEqual(task.obligation_ids,[review.id])
   assert.match(text,/REQUIRED EVIDENCE: review-evidence/);assert.match(text,/Verification contract: review-evidence/i);assert.doesNotMatch(text,/Verification contract: visual-check/i)
-  assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.task_id===undefined&&e.payload?.requested_evidence?.includes('dependency-review')&&e.payload?.authoritative_evidence?.includes('review-evidence')))
+  assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.task_id===undefined&&e.payload?.requested_evidence?.includes('visual-check')&&e.payload?.authoritative_evidence?.includes('review-evidence')))
 })
 
 test('process lifecycle is an exact task-level opt-in and survives child handoff',async()=>{

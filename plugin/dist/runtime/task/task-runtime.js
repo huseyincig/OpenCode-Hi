@@ -578,7 +578,10 @@ export class TaskRuntime {
             throw new Error(`Hi task ${resumeTask.id} owns no open obligations; satisfied task ownership cannot be resumed implicitly. Create separate work only for a newly opened canonical obligation.`);
         if (resumeTask && resumeWorker && resumeTask.role !== resumeWorker.role)
             throw new Error(`Hi task ${resumeTask.id} role identity mismatch: task=${resumeTask.role}, worker=${resumeWorker.role}`);
-        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).map(value => String(value).trim()).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length;
+        const processLifecycleRequested = input.processLifecycle === true, explicitEvidence = (input.requiredEvidence ?? []).map(value => String(value).trim()).filter(Boolean), explicitObligations = (input.obligationIds ?? []).filter(Boolean), invalidExplicitEvidence = explicitEvidence.filter(kind => !isTaskRequiredEvidenceKind(kind));
+        if (invalidExplicitEvidence.length)
+            throw new Error(`Unsupported Hi required evidence kind(s): ${[...new Set(invalidExplicitEvidence)].join(', ')}. Use canonical task evidence IDs only.`);
+        const implicitProcessSupport = processLifecycleRequested && !explicitEvidence.length && !explicitObligations.length;
         if (implicitProcessSupport && !input.resumeTaskId && !input.objective?.trim())
             throw new Error('Implicit process-lifecycle support task requires an explicit bounded objective for the process resource; it cannot inherit the Mission objective');
         const objective = input.objective?.trim() || resumeTask?.objective || m.identity.objective;
@@ -612,11 +615,13 @@ export class TaskRuntime {
         }
         const roleSelectionReason = implicitProcessSupport && !requestedRole ? ['implicit-process-support:canonical-runtime-resource-owner'] : routed.reason;
         const requestedEvidence = implicitProcessSupport ? [] : explicitEvidence.length ? explicitEvidence : m.execution.verification_policy.requiredKinds;
-        const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), requiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence, invalidEvidence = requiredEvidence.filter(kind => !isTaskRequiredEvidenceKind(kind));
+        const obligationIds = implicitProcessSupport ? [] : inferObligationIds(m, role, requestedEvidence, explicitObligations), ownedObligationEvidence = implicitProcessSupport ? { requiredEvidence: [], authoritative: false } : explicitObligationEvidenceContract(m, obligationIds), obligationRequiredEvidence = ownedObligationEvidence.authoritative ? ownedObligationEvidence.requiredEvidence : requestedEvidence, reviewOwnerMismatch = !isHiReviewerRole(role) && obligationRequiredEvidence.includes('review-evidence'), requiredEvidence = reviewOwnerMismatch ? obligationRequiredEvidence.filter(kind => kind !== 'review-evidence') : obligationRequiredEvidence, invalidEvidence = requiredEvidence.filter(kind => !isTaskRequiredEvidenceKind(kind));
         if (invalidEvidence.length)
             throw new Error(`Unsupported Hi required evidence kind(s): ${[...new Set(invalidEvidence)].join(', ')}. Use canonical task evidence IDs only.`);
         if (ownedObligationEvidence.authoritative && JSON.stringify([...new Set(requestedEvidence)]) !== JSON.stringify(ownedObligationEvidence.requiredEvidence))
             appendLedger(m, 'task.evidence-contract-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(requestedEvidence)], authoritative_evidence: ownedObligationEvidence.requiredEvidence, policy: 'exact-open-obligation-contract-wins' } });
+        if (reviewOwnerMismatch)
+            appendLedger(m, 'task.evidence-owner-reconciled', { payload: { role, obligation_ids: obligationIds, requested_evidence: [...new Set(obligationRequiredEvidence)], removed_evidence: ['review-evidence'], authoritative_evidence: [...requiredEvidence], policy: 'review-evidence-requires-reviewer-role' } });
         reconcileTaskEvidenceMethodologyNeeds(m, this.projectRoot, { requiredEvidence, obligationIds });
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
