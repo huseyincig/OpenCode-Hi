@@ -10,6 +10,7 @@ export interface WorkerHandoff {
   methodologies:string[]
   methodology_exit_requirements?:string[]
   approval_gated_methodologies?:string[]
+  result_contract_instructions?:string[]
   expected_output:{
     status:true
     summary:true
@@ -41,6 +42,7 @@ export function workerHandoffText(h:WorkerHandoff,maxChars:number=DEFAULT_CONTEX
     exitRequirements.length?`METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ')}`:'',
     h.approval_gated_methodologies?.length?`APPROVAL-GATED METHODOLOGIES: ${h.approval_gated_methodologies.join(', ')}; OpenCode native ask/deny remains authoritative.`:'',
     `RESULT: compact JSON; status= DONE|FIX_REQUIRED|NEEDS_CONTEXT|BLOCKED|FAILED; fields=${resultFields}.`,
+    ...(h.result_contract_instructions??[]),
     h.required_evidence.length?'Required evidence kinds are canonical IDs: emit those exact values as evidence.kind; never rename or alias them; if unmet, report the gap and never invent proof.':'',
     reviewFindingInstruction,
     reviewEvidenceInstruction,

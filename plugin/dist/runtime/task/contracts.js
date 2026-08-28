@@ -20,6 +20,7 @@ export function workerHandoffText(h, maxChars = DEFAULT_CONTEXT_BUDGET.max_hando
         exitRequirements.length ? `METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ')}` : '',
         h.approval_gated_methodologies?.length ? `APPROVAL-GATED METHODOLOGIES: ${h.approval_gated_methodologies.join(', ')}; OpenCode native ask/deny remains authoritative.` : '',
         `RESULT: compact JSON; status= DONE|FIX_REQUIRED|NEEDS_CONTEXT|BLOCKED|FAILED; fields=${resultFields}.`,
+        ...(h.result_contract_instructions ?? []),
         h.required_evidence.length ? 'Required evidence kinds are canonical IDs: emit those exact values as evidence.kind; never rename or alias them; if unmet, report the gap and never invent proof.' : '',
         reviewFindingInstruction,
         reviewEvidenceInstruction,

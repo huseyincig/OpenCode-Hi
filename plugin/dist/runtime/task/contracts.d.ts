@@ -8,6 +8,7 @@ export interface WorkerHandoff {
     methodologies: string[];
     methodology_exit_requirements?: string[];
     approval_gated_methodologies?: string[];
+    result_contract_instructions?: string[];
     expected_output: {
         status: true;
         summary: true;

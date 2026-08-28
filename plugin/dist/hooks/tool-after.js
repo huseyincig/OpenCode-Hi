@@ -29,6 +29,9 @@ function outputText(output) { try {
 catch {
     return String(output);
 } }
+function appendModelVisibleToolReceipt(output, receiptID, path) { if (!output || typeof output !== 'object' || typeof output.output !== 'string')
+    return; const note = `HI_SOURCE_READ_RECEIPT evidence_ref=${receiptID} path=${path}`; if (!output.output.includes(note))
+    output.output = `${output.output}\n\n${note}`; }
 function successOf(text) { return !/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text); }
 function numericExit(output) { for (const v of [output?.metadata?.exit, output?.metadata?.exitCode, output?.metadata?.exit_code, output?.exit, output?.exitCode, output?.exit_code]) {
     if (typeof v === 'number' && Number.isFinite(v))
@@ -90,7 +93,8 @@ export function createToolAfterHook(store, background, events, projectRoot, work
         if (child?.role === 'repository-explorer' && childTask && tool === 'read') {
             const rawPath = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined, path = rawPath ? normalizeProjectPath(rawPath, evidenceRoot) : '', scopeState = path ? captureEvidenceScopeState(evidenceRoot ?? '', [path]) : undefined;
             if (path && scopeState && text.trim()) {
-                addEvidence(m, { kind: 'source-read-observation', summary: `Explorer read ${path}`, scope: [path], source: `explorer-read:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), source_state_hash: scopeState, scope_state_hash: scopeState, task_id: childTask.id, obligation_ids: childTask.obligation_ids, producer_attempt: evidenceProducerAttemptForWorker(m, child), outcome: 'pending', reason: 'OpenCode read tool completed for this bounded file during the current repository-explorer attempt' });
+                const receipt = addEvidence(m, { kind: 'source-read-observation', summary: `Explorer read ${path}`, scope: [path], source: `explorer-read:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), source_state_hash: scopeState, scope_state_hash: scopeState, task_id: childTask.id, obligation_ids: childTask.obligation_ids, producer_attempt: evidenceProducerAttemptForWorker(m, child), outcome: 'pending', reason: 'OpenCode read tool completed for this bounded file during the current repository-explorer attempt' });
+                appendModelVisibleToolReceipt(output, receipt.id, path);
             }
         }
         if (tool === 'skill') {

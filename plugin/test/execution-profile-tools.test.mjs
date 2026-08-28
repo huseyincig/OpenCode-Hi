@@ -76,6 +76,30 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
 
 
 
+test('repository explorer handoff projects clearance result contract without polluting task verification evidence',async()=>{
+  for(const [suffix,ambiguity,critical] of [['resolvable','resolvable',false],['critical','contract-critical',true]]){
+    const created=[],prompts=[],c=client(created,prompts)
+    const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+    const store=new MissionStore(process.cwd()),sid=`explorer-clearance-handoff-${suffix}`,m=store.start(sid,'resolve repository ambiguity')
+    assess(store,sid,{task_kind:'bug-fix',scope:'local',ambiguity,required_capabilities:['repository-analysis','implementation'],likely_targets:['src/a.ts'],likely_verification:[]})
+    const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+    const out=await runtime.start(m,{objective:'inspect src/a.ts',role:'repository-explorer',scope:['src/a.ts'],obligationIds:[analysis.id]})
+    const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task);assert.equal(task.requiredEvidence.includes('source-provenance-evidence'),false);assert.equal(task.requiredEvidence.includes('decision-evidence'),false);assert.equal(task.execution_profile.task.required_evidence.includes('source-provenance-evidence'),false)
+    const handoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.match(handoff,/EXPLORATION CLEARANCE RESULT CONTRACT/);assert.match(handoff,/source-provenance-evidence/);assert.match(handoff,/HI_SOURCE_READ_RECEIPT evidence_ref/);assert.match(handoff,/evidence_refs/)
+    if(critical)assert.match(handoff,/CONTRACT-CRITICAL EXPLORATION/);else assert.doesNotMatch(handoff,/CONTRACT-CRITICAL EXPLORATION/)
+  }
+})
+
+test('repository explorer with no mission ambiguity gets no clearance result contract',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('explorer-no-clearance-handoff','inspect known repository surface')
+  assess(store,'explorer-no-clearance-handoff',{task_kind:'bug-fix',scope:'local',ambiguity:'none',required_capabilities:['repository-analysis','implementation'],likely_targets:['src/a.ts'],likely_verification:[]})
+  const out=await runtime.start(m,{objective:'inspect src/a.ts',role:'repository-explorer',scope:['src/a.ts']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task);assert.equal(task.requiredEvidence.includes('source-provenance-evidence'),false);assert.equal(task.requiredEvidence.includes('decision-evidence'),false)
+  const handoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.doesNotMatch(handoff,/EXPLORATION CLEARANCE RESULT CONTRACT/)
+})
+
 test('noncanonical required evidence is rejected before obligation reconciliation can discard it',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
