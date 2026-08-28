@@ -1,7 +1,7 @@
 import { HI_METHODOLOGY_SIGNAL_CATALOG } from '../../generated/methodology-policy.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { isConstraintAtomDraft } from '../../contracts/constraint-atom.js';
-import { isVerificationCase } from '../../contracts/verification-case.js';
+import { verificationCaseValidationError } from '../../contracts/verification-case.js';
 export const SEMANTIC_CAPABILITIES = ['implementation', 'repository-analysis', 'review', 'verification', 'independent-review', 'security-review', 'visual-qa', 'design-exploration', 'multi-stream-delegation', 'source-verification', 'external-research', 'documentation', 'test-authoring', 'qa-review', 'dependency-change', 'interactive-process', 'mcp'];
 export const SEMANTIC_EXTERNAL_ACTIONS = ['git-push', 'release-create', 'package-publish', 'deploy'];
 export const SEMANTIC_VERIFICATION_KINDS = ['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity', 'visual-check', 'review-evidence'];
@@ -180,8 +180,8 @@ export function parseSemanticIntentAssessment(raw) {
     const assessment = {
         material: v.material, message_kind: messageKind,
         task_kind: taskKind, scope: take('scope', scopes), risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
-        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map(item => { if (!isVerificationCase(item))
-            throw new Error('invalid verification_cases entry'); return item; }) : [], likely_targets: semanticTargets(v.likely_targets, 20),
+        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => { const issue = verificationCaseValidationError(item); if (issue)
+            throw new Error(`verification_cases[${index}]: ${issue}`); return item; }) : [], likely_targets: semanticTargets(v.likely_targets, 20),
         intent_signals: semanticSignals, suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))
             throw new Error('invalid constraint_atoms entry'); return item; }) : [],

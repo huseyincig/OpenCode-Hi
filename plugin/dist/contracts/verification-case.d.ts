@@ -4,4 +4,5 @@ export interface VerificationCase {
     subject: string;
     required_browser_actions: BrowserObservationAction[];
 }
+export declare function verificationCaseValidationError(v: unknown): string | undefined;
 export declare function isVerificationCase(v: unknown): v is VerificationCase;

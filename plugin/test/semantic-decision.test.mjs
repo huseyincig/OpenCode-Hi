@@ -4,7 +4,7 @@ import { decideSemanticExecution } from '../dist/runtime/decision/semantic-decis
 import { renderSemanticAssessmentGate } from '../dist/runtime/intent/semantic-assessment-gate.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { HI_METHODOLOGY_SIGNAL_CATALOG } from '../dist/generated/methodology-policy.js'
-import { SEMANTIC_CAPABILITIES,SEMANTIC_EXTERNAL_ACTIONS,SEMANTIC_VERIFICATION_KINDS } from '../dist/runtime/intent/semantic-assessment.js'
+import { SEMANTIC_CAPABILITIES,SEMANTIC_EXTERNAL_ACTIONS,SEMANTIC_VERIFICATION_KINDS,parseSemanticIntentAssessment } from '../dist/runtime/intent/semantic-assessment.js'
 
 // Captured before the semantic-entry frugality change; the accepted contract was
 // at least 30% less provider-visible text while preserving the full semantic gate.
@@ -99,6 +99,31 @@ test('semantic entry gate preserves the complete closed contract',()=>{
 test('semantic entry gate stays within the established provider-visible reduction fence',()=>{
   const gate=semanticEntryGate(),maxChars=Math.floor(SEMANTIC_GATE_PRE_COMPACTION_CHARS*(1-SEMANTIC_GATE_MIN_REDUCTION))
   assert.ok(gate.length<=maxChars,`gate=${gate.length}, maximum=${maxChars}; baseline=${SEMANTIC_GATE_PRE_COMPACTION_CHARS}, minimum_reduction=${SEMANTIC_GATE_MIN_REDUCTION}`)
+})
+
+test('semantic visual-case correction reports exact id grammar and preserves a complete corrected set',()=>{
+  const base={material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','verification','visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],user_verification:[],verification_ceiling:false,likely_targets:[],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]}
+  assert.throws(
+    ()=>parseSemanticIntentAssessment({
+      ...base,
+      verification_cases:[{
+        id:'vc_theme_persistence',
+        subject:'theme persists after reload',
+        required_browser_actions:['open','click','navigate','inspect'],
+      }],
+    }),
+    /verification_cases\[0\]: id must match .*lowercase kebab-case after vc_/,
+  )
+  const cases=[
+    {id:'vc_desktop-dashboard',subject:'desktop dashboard render',required_browser_actions:['open','inspect','screenshot']},
+    {id:'vc_mobile-overflow',subject:'mobile cards overflow',required_browser_actions:['open','viewport','inspect','screenshot']},
+    {id:'vc_filter-counter',subject:'filter interaction and counter correctness',required_browser_actions:['open','click','inspect']},
+    {id:'vc_modal-keyboard',subject:'modal focus management and escape close',required_browser_actions:['open','click','key','inspect']},
+    {id:'vc_theme-persistence',subject:'theme persistence after reload',required_browser_actions:['open','click','navigate','inspect']},
+    {id:'vc_accessibility',subject:'keyboard navigation, accessible names and focus visibility',required_browser_actions:['open','key','inspect']},
+  ]
+  const assessment=parseSemanticIntentAssessment({...base,verification_cases:cases})
+  assert.deepEqual(assessment.verification_cases,cases)
 })
 
 test('MissionStore consumes the decision envelope without creating a second durable decision owner',()=>{
