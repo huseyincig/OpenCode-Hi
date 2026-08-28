@@ -20,6 +20,10 @@ export function classifyWorkerFailure(error:unknown):ClassifiedWorkerFailure{
     const autoOnlyRequiredToolChoice=/tool[_\s-]?choice/.test(text)&&/only\s+[`"'\\]*auto[`"'\\]*\s+is\s+supported/.test(text)&&/(?:required|named\s+function)/.test(text)&&/(?:not\s+(?:currently\s+)?supported|unsupported)/.test(text)
     const thinkingModeRequiredToolChoice=/thinking\s+mode\s+does\s+not\s+support\s+(?:this\s+)?tool[_\s-]?choice/.test(text)
     if(autoOnlyRequiredToolChoice||thinkingModeRequiredToolChoice)return{kind:'provider-transport',stagnation:false,retryable:true,reason:'opencode-required-tool-choice-compatibility-fallback-eligible'}
+    // A provider-policy 404 can be terminal for this exact model while another already-authorized
+    // model remains viable. Treat only the explicit model/provider-availability wire error as
+    // cross-model fallback eligible; ordinary 4xx request/auth failures remain fail-closed.
+    if(/no allowed providers? (?:are )?available for the selected model/.test(text))return{kind:'provider-transport',stagnation:false,retryable:true,reason:'opencode-selected-model-provider-unavailable-fallback-eligible'}
     const fallbackEligible=observed.isRetryable===true||observed.statusCode===429||(observed.statusCode!==undefined&&observed.statusCode>=500)
     return{kind:'provider-transport',stagnation:false,retryable:fallbackEligible,reason:fallbackEligible?'opencode-terminal-api-error-fallback-eligible':'opencode-terminal-api-error-nonretryable'}
   }
