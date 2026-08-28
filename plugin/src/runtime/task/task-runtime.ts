@@ -9,6 +9,7 @@ import { createTask,createWorker,beginWorkerAttempt,retireTaskResultIssues,worke
 import { BackgroundRegistry } from '../background/registry.js'
 import { parseWorkerResult } from './result-parser.js'
 import { isWorkerResultContract,normalizeWorkerResult } from '../../contracts/worker-result.js'
+import { isWorkerResultTransportContract } from '../../contracts/worker-result-schema.js'
 import { appendLedger } from '../ledger/ledger.js'
 import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js'
 import { routeCapabilities } from '../routing/capability-router.js'
@@ -205,8 +206,11 @@ export class TaskRuntime{
     const effective=this.noteEffectiveModel(m,worker.id,assistant.model?{...assistant.model,source:'assistant-message-metadata'}:undefined)
     let result:WorkerResult
     if(assistant.structured!==undefined){
-      if(isWorkerResultContract(assistant.structured)){result=normalizeWorkerResult(assistant.structured);appendLedger(m,'worker.structured-result-admitted',{task_id:task.id,worker_id:worker.id,payload:{transport:'opencode-json-schema',attempt:worker.attempt,generation:m.continuation.generation}})}
-      else{result=resultContractFailure('OpenCode returned a structured child payload that failed the canonical WorkerResult contract after transport.','worker-result-contract-invalid:structured-payload');appendLedger(m,'worker.structured-result-invalid',{task_id:task.id,worker_id:worker.id,payload:{attempt:worker.attempt,generation:m.continuation.generation}})}
+      if(isWorkerResultTransportContract(assistant.structured)){
+        const rawCanonical=isWorkerResultContract(assistant.structured),normalized=normalizeWorkerResult(assistant.structured)
+        if(isWorkerResultContract(normalized)){result=normalized;appendLedger(m,'worker.structured-result-admitted',{task_id:task.id,worker_id:worker.id,payload:{transport:'opencode-json-schema',normalized:!rawCanonical,attempt:worker.attempt,generation:m.continuation.generation}})}
+        else{result=resultContractFailure('OpenCode returned a structured child payload that could not be normalized into the canonical WorkerResult contract.','worker-result-contract-invalid:structured-normalization');appendLedger(m,'worker.structured-result-invalid',{task_id:task.id,worker_id:worker.id,payload:{reason:'canonical-normalization-failed',attempt:worker.attempt,generation:m.continuation.generation}})}
+      }else{result=resultContractFailure('OpenCode returned a structured child payload that failed the native WorkerResult transport contract.','worker-result-contract-invalid:structured-payload');appendLedger(m,'worker.structured-result-invalid',{task_id:task.id,worker_id:worker.id,payload:{reason:'transport-shape-invalid',attempt:worker.attempt,generation:m.continuation.generation}})}
     }else result=parseWorkerResult(assistant.text)
     const unparseableWorkerContract=result.status==='FAILED'&&(result.open_issues??[]).includes('Worker did not return parseable structured result')
     if(unparseableWorkerContract){result={...result,status:'FIX_REQUIRED',summary:result.summary||'Worker response did not satisfy the structured WorkerResult contract.',open_issues:[...new Set([...(result.open_issues??[]),'worker-result-contract-invalid'])],needs_context:[...new Set([...(result.needs_context??[]),'worker-result-contract-retry: continue the same task/session and return the exact structured WorkerResult contract; evidence claims must be nested under evidence:[{...}]; do not claim completion from prose'])]};appendLedger(m,'worker.result-contract-retryable',{task_id:task.id,worker_id:worker.id,payload:{model:worker.model,attempt:worker.attempt,generation:m.continuation.generation,transport:'text-compatibility'}})}

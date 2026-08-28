@@ -19,6 +19,32 @@ const reviewFinding={
   },
 } as const
 
+const WORKER_RESULT_TRANSPORT_KEYS=new Set(['status','summary','changed_files','scope_expansions','evidence','verification_coverage','findings','open_issues','needs_context','context_gap','failure_finding','methodology_observations'])
+const EVIDENCE_KIND_SET=new Set<string>(WORKER_EVIDENCE_KINDS),EVIDENCE_OUTCOME_SET=new Set<string>(EVIDENCE_OUTCOMES)
+function record(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
+function exactKeys(value:Record<string,unknown>,allowed:ReadonlySet<string>):boolean{return Object.keys(value).every(key=>allowed.has(key))}
+function strings(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
+function optionalString(value:unknown):boolean{return value===undefined||typeof value==='string'}
+function optionalStrings(value:unknown):boolean{return value===undefined||strings(value)}
+function transportEvidence(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['kind','summary','scope','evidence_refs','pass','outcome','reason']);return exactKeys(value,allowed)&&typeof value.kind==='string'&&EVIDENCE_KIND_SET.has(value.kind)&&typeof value.summary==='string'&&optionalStrings(value.scope)&&optionalStrings(value.evidence_refs)&&(value.pass===undefined||typeof value.pass==='boolean')&&(value.outcome===undefined||typeof value.outcome==='string'&&EVIDENCE_OUTCOME_SET.has(value.outcome))&&optionalString(value.reason)}
+function transportScopeExpansion(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['file','reason','necessary']);return exactKeys(value,allowed)&&typeof value.file==='string'&&typeof value.reason==='string'&&typeof value.necessary==='boolean'}
+function transportCoverage(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['case_id','outcome','evidence_refs','reason']);return exactKeys(value,allowed)&&typeof value.case_id==='string'&&(value.outcome==='passed'||value.outcome==='failed')&&strings(value.evidence_refs)&&optionalString(value.reason)}
+function transportFinding(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['id','reviewer_role','subject','severity','causality','scope','evidence_refs','confidence','disposition','blocking']);return exactKeys(value,allowed)&&typeof value.id==='string'&&typeof value.reviewer_role==='string'&&typeof value.subject==='string'&&['info','low','medium','high','critical'].includes(String(value.severity))&&['introduced','worsened','pre-existing','unknown'].includes(String(value.causality))&&strings(value.scope)&&strings(value.evidence_refs)&&['low','medium','high'].includes(String(value.confidence))&&['open','resolved','rejected','parked'].includes(String(value.disposition))&&typeof value.blocking==='boolean'}
+function transportMethodologyObservation(value:unknown):boolean{if(!record(value))return false;const allowed=new Set(['key','procedure','trigger','do_not_trigger','exit_condition','evidence']);return exactKeys(value,allowed)&&typeof value.key==='string'&&typeof value.procedure==='string'&&typeof value.trigger==='string'&&typeof value.do_not_trigger==='string'&&typeof value.exit_condition==='string'&&Array.isArray(value.evidence)&&value.evidence.every(item=>typeof item==='string'&&EVIDENCE_KIND_SET.has(item))}
+
+/** Re-validates the static OpenCode transport envelope before Hi normalization. Dynamic task/evidence semantics remain outside this predicate. */
+export function isWorkerResultTransportContract(value:unknown):boolean{
+  if(!record(value)||!exactKeys(value,WORKER_RESULT_TRANSPORT_KEYS))return false
+  if(!['DONE','FIX_REQUIRED','NEEDS_CONTEXT','BLOCKED','FAILED'].includes(String(value.status))||typeof value.summary!=='string'||!strings(value.changed_files)||!Array.isArray(value.evidence)||!value.evidence.every(transportEvidence)||!strings(value.open_issues)||!strings(value.needs_context))return false
+  if(value.scope_expansions!==undefined&&(!Array.isArray(value.scope_expansions)||!value.scope_expansions.every(transportScopeExpansion)))return false
+  if(value.verification_coverage!==undefined&&(!Array.isArray(value.verification_coverage)||!value.verification_coverage.every(transportCoverage)))return false
+  if(value.findings!==undefined&&(!Array.isArray(value.findings)||!value.findings.every(transportFinding)))return false
+  if(value.context_gap!==undefined&&!['scope','iterative','none'].includes(String(value.context_gap)))return false
+  if(value.failure_finding!==undefined&&!['ci-build','unknown-root-cause','none'].includes(String(value.failure_finding)))return false
+  if(value.methodology_observations!==undefined&&(!Array.isArray(value.methodology_observations)||!value.methodology_observations.every(transportMethodologyObservation)))return false
+  return true
+}
+
 /** Native OpenCode transport schema. Hi semantic/provenance validators remain authoritative after transport validation. */
 export const WORKER_RESULT_JSON_SCHEMA:Record<string,unknown>={
   type:'object',additionalProperties:false,

@@ -41,7 +41,7 @@ export function recoverySemanticSignature(m:MissionState):string{
 }
 function currentProgressSignature(m:MissionState):string{return recoverySemanticSignature(m)}
 function latestRecoveryWorker(m:MissionState):WorkerState|undefined{return[...m.execution.workers].reverse().find(w=>{if(!w.session_id||['failed','cancelled','busy','starting','queued'].includes(w.status))return false;const task=m.execution.tasks.find(t=>t.id===w.task_id);if(!task||task.status==='completed'||task.result?.status==='DONE')return false;if(task.obligation_ids.length&&task.obligation_ids.every(id=>m.execution.obligations.some(o=>o.id===id&&o.status==='closed')))return false;return true})}
-function candidateModels(worker:WorkerState):string[]{return[...new Set([...(worker.fallbacks??[]),...(worker.recovery_candidates??[])].filter(id=>Boolean(id)&&id!==worker.model))]}
+function candidateModels(worker:WorkerState):string[]{const attempted=new Set<string>();if(worker.model)attempted.add(worker.model);for(const transition of worker.fallback_history??[]){if(transition.from)attempted.add(transition.from);if(transition.to)attempted.add(transition.to)}return[...new Set([...(worker.fallbacks??[]),...(worker.recovery_candidates??[])].filter(id=>Boolean(id)&&!attempted.has(id)))]}
 export function recoveryModelHazard(m:MissionState):RecoveryModelHazard{
   const progress_signature=currentProgressSignature(m),worker=latestRecoveryWorker(m),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined
   if(!worker||!task||!worker.model)return{open:false,same_model_exhausted:false,reason:'no-recoverable-model-worker',progress_signature,attempts:0,recovery_candidates:[]}

@@ -35,7 +35,13 @@ function latestRecoveryWorker(m) { return [...m.execution.workers].reverse().fin
     return false; const task = m.execution.tasks.find(t => t.id === w.task_id); if (!task || task.status === 'completed' || task.result?.status === 'DONE')
     return false; if (task.obligation_ids.length && task.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.status === 'closed')))
     return false; return true; }); }
-function candidateModels(worker) { return [...new Set([...(worker.fallbacks ?? []), ...(worker.recovery_candidates ?? [])].filter(id => Boolean(id) && id !== worker.model))]; }
+function candidateModels(worker) { const attempted = new Set(); if (worker.model)
+    attempted.add(worker.model); for (const transition of worker.fallback_history ?? []) {
+    if (transition.from)
+        attempted.add(transition.from);
+    if (transition.to)
+        attempted.add(transition.to);
+} return [...new Set([...(worker.fallbacks ?? []), ...(worker.recovery_candidates ?? [])].filter(id => Boolean(id) && !attempted.has(id)))]; }
 export function recoveryModelHazard(m) {
     const progress_signature = currentProgressSignature(m), worker = latestRecoveryWorker(m), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined;
     if (!worker || !task || !worker.model)

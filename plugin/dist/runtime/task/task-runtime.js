@@ -6,6 +6,7 @@ import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/pe
 import { createTask, createWorker, beginWorkerAttempt, retireTaskResultIssues, workerFingerprint } from '../worker/worker-runtime.js';
 import { parseWorkerResult } from './result-parser.js';
 import { isWorkerResultContract, normalizeWorkerResult } from '../../contracts/worker-result.js';
+import { isWorkerResultTransportContract } from '../../contracts/worker-result-schema.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
 import { bindMethodologyNeeds, methodologyNames, reconcileTaskEvidenceMethodologyNeeds, releaseCancelledTaskMethodologyNeeds, releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js';
@@ -332,13 +333,20 @@ export class TaskRuntime {
         const effective = this.noteEffectiveModel(m, worker.id, assistant.model ? { ...assistant.model, source: 'assistant-message-metadata' } : undefined);
         let result;
         if (assistant.structured !== undefined) {
-            if (isWorkerResultContract(assistant.structured)) {
-                result = normalizeWorkerResult(assistant.structured);
-                appendLedger(m, 'worker.structured-result-admitted', { task_id: task.id, worker_id: worker.id, payload: { transport: 'opencode-json-schema', attempt: worker.attempt, generation: m.continuation.generation } });
+            if (isWorkerResultTransportContract(assistant.structured)) {
+                const rawCanonical = isWorkerResultContract(assistant.structured), normalized = normalizeWorkerResult(assistant.structured);
+                if (isWorkerResultContract(normalized)) {
+                    result = normalized;
+                    appendLedger(m, 'worker.structured-result-admitted', { task_id: task.id, worker_id: worker.id, payload: { transport: 'opencode-json-schema', normalized: !rawCanonical, attempt: worker.attempt, generation: m.continuation.generation } });
+                }
+                else {
+                    result = resultContractFailure('OpenCode returned a structured child payload that could not be normalized into the canonical WorkerResult contract.', 'worker-result-contract-invalid:structured-normalization');
+                    appendLedger(m, 'worker.structured-result-invalid', { task_id: task.id, worker_id: worker.id, payload: { reason: 'canonical-normalization-failed', attempt: worker.attempt, generation: m.continuation.generation } });
+                }
             }
             else {
-                result = resultContractFailure('OpenCode returned a structured child payload that failed the canonical WorkerResult contract after transport.', 'worker-result-contract-invalid:structured-payload');
-                appendLedger(m, 'worker.structured-result-invalid', { task_id: task.id, worker_id: worker.id, payload: { attempt: worker.attempt, generation: m.continuation.generation } });
+                result = resultContractFailure('OpenCode returned a structured child payload that failed the native WorkerResult transport contract.', 'worker-result-contract-invalid:structured-payload');
+                appendLedger(m, 'worker.structured-result-invalid', { task_id: task.id, worker_id: worker.id, payload: { reason: 'transport-shape-invalid', attempt: worker.attempt, generation: m.continuation.generation } });
             }
         }
         else

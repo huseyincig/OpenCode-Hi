@@ -51,6 +51,13 @@ test('equivalent failure marker churn exhausts same-model correction after one r
   assert.equal(recoveryStrategyEligibility(m,{level:2,action:'same-worker-resume'}).allowed,false)
 })
 
+test('behavioral recovery candidates exclude every model already attempted in fallback history',()=>{
+  const {store,m}=mission('rg-no-model-bounce')
+  const task=createTask(m,{objective:'visual verification',role:'visual-qa',category:'visual'}),worker=createWorker(m,task,'p/mimo');worker.session_id='child-mimo';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/deepseek','p/mimo','p/qwen'];worker.fallback_history=[{from:'p/muse',to:'p/deepseek',reason:'provider recovery',phase:'runtime',at:1},{from:'p/deepseek',to:'p/mimo',reason:'provider recovery',phase:'runtime',at:2}];task.result={status:'FIX_REQUIRED',summary:'same result contract failure',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return canonical coverage']};store.updateProgress(m,false)
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/mimo'})
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.deepEqual(hazard.recovery_candidates,['p/qwen'],'behavioral escalation must not bounce through provider-failed or otherwise previously attempted models')
+})
+
 test('unknown consequential release outcome blocks automatic recovery until reconciliation',()=>{
   const {m}=mission('rg-unknown-effect');m.continuation.stagnation_count=3
   m.release.release_chain={push:{outcome:'unknown',at:Date.now(),command:'git push'}}

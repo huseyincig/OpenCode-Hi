@@ -263,6 +263,24 @@ test('native structured WorkerResult is authoritative over compatibility text an
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-admitted'))
 })
 
+test('transport-valid native structured payload is normalized before canonical settlement instead of generic contract retry',async()=>{
+  const {runtime,m}=setup()
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.projected_model='p/primary'
+  const structured={status:'FIX_REQUIRED',summary:'transport-valid with noncanonical optional coverage',changed_files:[],evidence:[],verification_coverage:[{case_id:'desktop-layout',outcome:'passed',evidence_refs:['ev_full_ref']}],open_issues:['visual coverage still needs canonical task cases'],needs_context:['return exact vc_* case IDs']}
+  const settled=await runtime.settleHostIdleAssistantResult(m,worker,{structured,model:{model:'p/primary'}})
+  assert.equal(settled.applied,true);assert.equal(settled.result?.status,'FIX_REQUIRED');assert.equal(settled.result?.verification_coverage,undefined)
+  const admitted=m.execution.ledger.findLast(e=>e.type==='worker.structured-result-admitted');assert.equal(admitted?.payload?.normalized,true)
+  assert.equal(m.execution.ledger.some(e=>e.type==='worker.structured-result-invalid'),false);assert.equal(task.result.summary,'transport-valid with noncanonical optional coverage')
+})
+
+test('malformed native structured core envelope remains fail-closed before normalization',async()=>{
+  const {runtime,m}=setup()
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.projected_model='p/primary'
+  const settled=await runtime.settleHostIdleAssistantResult(m,worker,{structured:{status:'DONE',summary:'missing core arrays'},model:{model:'p/primary'}})
+  assert.equal(settled.applied,true);assert.equal(settled.result?.status,'FIX_REQUIRED');assert.ok(settled.result?.open_issues.includes('worker-result-contract-invalid:structured-payload'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-invalid'&&e.payload?.reason==='transport-shape-invalid'));assert.equal(task.status,'waiting')
+})
+
 test('terminal StructuredOutputError becomes resumable WorkerResult FIX_REQUIRED instead of provider/runtime failure',async()=>{
   const {runtime,m,calls}=setup()
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
