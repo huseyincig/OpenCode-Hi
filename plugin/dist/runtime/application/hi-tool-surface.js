@@ -5,7 +5,7 @@ import { formatUserMissionStatus } from '../ledger/status.js';
 import { evaluatePreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
 import { clearCapabilityUnavailable, firstCapabilityBlocker, markCapabilityUnavailable } from '../readiness/capability-failure.js';
 import { parseSemanticIntentAssessment } from '../intent/semantic-assessment.js';
-import { assertVerificationRequestTrace } from '../intent/request-units.js';
+import { assertVerificationRequestTrace, renderRequestUnitChallenge } from '../intent/request-units.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { redactProviderContext } from '../privacy/boundary.js';
@@ -245,8 +245,9 @@ export function createHiToolSurface(input) {
             return JSON.stringify({ status: assessment.material ? 'ASSESSED' : 'NON_MATERIAL', phase, revision: next.identity.semantic_assessment.revision, message_kind: assessment.message_kind, task_kind: next.identity.intent.taskKind, scope: next.identity.intent.scope, risk: next.identity.risk, methodologies: next.methodology.methodology_needs.map(x => x.name), reconciled_workers: reconciledWorkers, gates: syncMissionGates(next, projectRoot).filter(g => g.status !== 'closed').map(g => ({ id: g.id, status: g.status, reason: g.reason })) });
         }
         catch (error) {
-            appendLedger(m, 'semantic.assessment-rejected', { payload: { revision: m.identity.semantic_assessment.revision, error: String(error) } });
-            return JSON.stringify({ status: 'INVALID_ASSESSMENT', error: String(error) });
+            const message = String(error), traceRelated = /verification_cases|source_units|nonvisual_request_units|visual-check|request trace|request unit/i.test(message), request_unit_challenge = traceRelated ? renderRequestUnitChallenge(m.identity.semantic_assessment.pending_text) : undefined;
+            appendLedger(m, 'semantic.assessment-rejected', { payload: { revision: m.identity.semantic_assessment.revision, error: message, ...(request_unit_challenge ? { request_unit_challenge } : {}) } });
+            return JSON.stringify({ status: 'INVALID_ASSESSMENT', error: message, ...(request_unit_challenge ? { request_unit_challenge } : {}) });
         } } });
     const artifactAddTool = tool({ description: 'Attach one bounded context artifact reference to the current Hi mission. Optional long content is retained by the Context owner and referenced by hash/handle.', args: { kind: tool.schema.string(), title: tool.schema.string().optional(), uri: tool.schema.string().optional(), summary: tool.schema.string().optional(), sha256: tool.schema.string().optional(), content: tool.schema.string().optional(), source_files: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; const kind = String(a.kind).slice(0, 80), summary = a.summary ? String(a.summary).slice(0, 2000) : a.title ? String(a.title).slice(0, 300) : kind, sourceFiles = a.source_files ? String(a.source_files).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 32) : [], content = typeof a.content === 'string' && a.content.length ? redactProviderContext(String(a.content)).providerText : undefined, stored = content ? scopedStores.contextArtifacts.add(kind, summary, content, sourceFiles, { producer: 'hi-context-artifact-add', privacyClass: 'redacted' }) : undefined, raw = String(a.uri ?? summary ?? kind), item = { id: stored?.artifact_id ?? `ca_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind, title: a.title ? String(a.title).slice(0, 300) : undefined, uri: stored ? `hi-artifact:${stored.artifact_id}` : a.uri ? String(a.uri).slice(0, 1200) : undefined, summary, sha256: stored?.content_hash ?? (a.sha256 ? String(a.sha256) : createHash('sha256').update(raw).digest('hex')), added_at: Date.now() }; const existingHandle = m.context.context_artifacts.find(x => x.id === item.id); if (!existingHandle) {

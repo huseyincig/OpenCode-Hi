@@ -61,12 +61,15 @@ test('hi_intent_assess keeps incomplete visual request trace pending until corre
     const sid='visual-trace-admission',text='Fix the UI.\n- Verify desktop + mobile.\n- Verify accessibility names, focus visibility.'
     await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text}]})
     const common={...base,ambiguity:'resolvable',likely_targets:[],nonvisual_request_units:['ru1']}
+    const malformed={...common,nonvisual_request_units:['not-an-id'],verification_cases:[{id:'vc_keyboard_flow',subject:'keyboard flow',required_browser_actions:['key','inspect'],source_units:['ru2']}]}
+    const malformedRejected=JSON.parse(String(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify(malformed)},{sessionID:sid})))
+    assert.equal(malformedRejected.status,'INVALID_ASSESSMENT');assert.match(malformedRejected.error,/invalid nonvisual_request_units/);assert.match(malformedRejected.request_unit_challenge,/^request_units=ru1:/);assert.match(malformedRejected.request_unit_challenge,/ru4:"Verify accessibility names"/)
     const incomplete={...common,verification_cases:[
       {id:'vc_desktop',subject:'desktop',required_browser_actions:['viewport','inspect'],source_units:['ru2']},
       {id:'vc_mobile',subject:'mobile',required_browser_actions:['viewport','inspect'],source_units:['ru3']},
     ]}
     const rejected=JSON.parse(String(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify(incomplete)},{sessionID:sid})))
-    assert.equal(rejected.status,'INVALID_ASSESSMENT');assert.match(rejected.error,/unclassified unit\(s\): ru4,ru5/);assert.match(rejected.error,/ru4:"Verify accessibility names"/)
+    assert.equal(rejected.status,'INVALID_ASSESSMENT');assert.match(rejected.error,/unclassified unit\(s\): ru4,ru5/);assert.match(rejected.error,/ru4:"Verify accessibility names"/);assert.match(rejected.request_unit_challenge,/ru5:"focus visibility"/)
     const corrected={...common,verification_cases:[...incomplete.verification_cases,{id:'vc_accessibility',subject:'accessible names and visible focus',required_browser_actions:['key','inspect'],source_units:['ru4','ru5']}]}
     const accepted=JSON.parse(String(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify(corrected)},{sessionID:sid})))
     assert.equal(accepted.status,'ASSESSED');assert.equal(accepted.revision,1)

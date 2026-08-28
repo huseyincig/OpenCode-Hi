@@ -127,6 +127,18 @@ function enumList(value, allowed, max = 40, field = 'semantic_enum') { const ite
     throw new Error(`unsupported ${field} value(s): ${unknown.join(', ')}`); return items; }
 function requestUnitIdList(value, max = 24) { const items = stringList(value, max), invalid = items.filter(id => !/^ru[1-9][0-9]*$/.test(id)); if (invalid.length)
     throw new Error(`invalid nonvisual_request_units id(s): ${invalid.join(', ')}`); return items; }
+function semanticVerificationCase(value, index) { let candidate = value; if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const raw = value;
+    if (typeof raw.id === 'string') {
+        let id = raw.id.trim().toLowerCase();
+        if (/^vc-[a-z0-9_-]+$/.test(id))
+            id = `vc_${id.slice(3)}`;
+        if (/^vc_[a-z0-9_-]+$/.test(id))
+            id = `vc_${id.slice(3).replace(/_/g, '-')}`;
+        candidate = { ...raw, id };
+    }
+} const issue = verificationCaseValidationError(candidate); if (issue)
+    throw new Error(`verification_cases[${index}]: ${issue}`); return candidate; }
 function intentSignalList(value) {
     const items = stringList(value, 40), invalid = items.filter(name => {
         const spec = HI_METHODOLOGY_SIGNAL_CATALOG[name];
@@ -182,8 +194,7 @@ export function parseSemanticIntentAssessment(raw) {
     const assessment = {
         material: v.material, message_kind: messageKind,
         task_kind: taskKind, scope: take('scope', scopes), risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
-        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => { const issue = verificationCaseValidationError(item); if (issue)
-            throw new Error(`verification_cases[${index}]: ${issue}`); return item; }) : [], nonvisual_request_units: requestUnitIdList(v.nonvisual_request_units), likely_targets: semanticTargets(v.likely_targets, 20),
+        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => semanticVerificationCase(item, index)) : [], nonvisual_request_units: requestUnitIdList(v.nonvisual_request_units), likely_targets: semanticTargets(v.likely_targets, 20),
         intent_signals: semanticSignals, suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))
             throw new Error('invalid constraint_atoms entry'); return item; }) : [],
