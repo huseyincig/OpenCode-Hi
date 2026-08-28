@@ -180,6 +180,37 @@ test('browser cleanup is bounded when Playwright browser.close never settles',as
 })
 
 
+test('disconnected Playwright session is reclaimed after bounded close timeout',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-disconnected-close-test-')),never=new Promise(()=>{}),sessions=[]
+  const module={chromium:{launch:async()=>{
+    const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>never,isConnected:()=>false};sessions.push(browser);return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('disconnected-close','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    assert.deepEqual(await adapter.cleanup(owner),{cleaned:true,reason:'cleaned'})
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    assert.equal(sessions.length,2,'a disconnected stale session must not be reused')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})
+
+test('same-owner open relaunches when the retained Playwright browser disconnected',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-disconnected-relaunch-test-')),sessions=[]
+  const module={chromium:{launch:async()=>{
+    const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>{},connected:true,isConnected(){return this.connected}};sessions.push(browser);return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('same-owner-disconnected','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/');sessions[0].connected=false
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    assert.equal(sessions.length,2,'same-owner execution must relaunch instead of reusing a disconnected browser')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})
+
 test('TaskRuntime cancel fails closed when exact browser cleanup cannot complete',async()=>{
   const prompts=[],client={session:{create:async()=>({data:{id:'child-browser-fail'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
   const browserExecutor={

@@ -50,10 +50,26 @@ export class PlaywrightBrowserAdapter {
         return undefined; this.executablePath = discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); return this.executablePath; }
     createTempRoot() { return mkdtempSync(join(this.launchTempBase, 'hi-br-')); }
     launchOptions(executablePath, temp) { return { executablePath, headless: this.headless, timeout: this.timeoutMs, args: ['--no-sandbox'], env: { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp } }; }
-    async closeSession(taskID, s) { await boundedBrowserClose(s.browser); if (this.sessions.get(taskID) === s)
+    browserConnected(s) { try {
+        return typeof s.browser?.isConnected !== 'function' || Boolean(s.browser.isConnected());
+    }
+    catch {
+        return false;
+    } }
+    discardSession(taskID, s) { if (this.sessions.get(taskID) === s)
         this.sessions.delete(taskID); rmSync(s.launchTempRoot, { recursive: true, force: true }); }
-    async ensure(c) { const current = this.sessions.get(c.task_id); if (current && current.executionOwnerRef === c.execution_owner_ref)
-        return current; if (current)
+    async closeSession(taskID, s) { try {
+        await boundedBrowserClose(s.browser);
+    }
+    catch (error) {
+        if (this.browserConnected(s))
+            throw error;
+    } this.discardSession(taskID, s); }
+    async ensure(c) { const current = this.sessions.get(c.task_id); if (current && !this.browserConnected(current))
+        this.discardSession(c.task_id, current);
+    else if (current && current.executionOwnerRef === c.execution_owner_ref)
+        return current;
+    else if (current)
         await this.closeSession(c.task_id, current); if (!c.execution_owner_ref.trim())
         throw new Error('Browser execution owner identity is required'); const executablePath = this.refreshExecutable(); if (!executablePath)
         throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), launchTempRoot = this.createTempRoot(); let browser; try {
