@@ -125,7 +125,9 @@ export function provisionalIntent(text, repo) {
 function stringList(value, max = 40) { return Array.isArray(value) ? [...new Set(value.filter(x => typeof x === 'string').map(x => String(x).trim()).filter(Boolean))].slice(0, max) : []; }
 function enumList(value, allowed, max = 40, field = 'semantic_enum') { const items = stringList(value, max), set = new Set(allowed), unknown = items.filter(x => !set.has(x)); if (unknown.length)
     throw new Error(`unsupported ${field} value(s): ${unknown.join(', ')}`); return items; }
-function requestUnitIdList(value, max = 24) { const items = stringList(value, max), invalid = items.filter(id => !/^ru[1-9][0-9]*$/.test(id)); if (invalid.length)
+function requestUnitIdList(value, max = 24) { if (value === undefined)
+    return []; if (!Array.isArray(value) || value.some(item => typeof item !== 'string'))
+    throw new Error('nonvisual_request_units must be an array of RU id strings (for example [\"ru1\"])'); const items = stringList(value, max), invalid = items.filter(id => !/^ru[1-9][0-9]*$/.test(id)); if (invalid.length)
     throw new Error(`invalid nonvisual_request_units id(s): ${invalid.join(', ')}`); return items; }
 function semanticVerificationCase(value, index) { let candidate = value; if (value && typeof value === 'object' && !Array.isArray(value)) {
     const raw = value;
@@ -152,7 +154,11 @@ export function parseSemanticIntentAssessment(raw) {
     const x = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (!x || typeof x !== 'object' || Array.isArray(x))
         throw new Error('semantic assessment must be a JSON object');
-    const v = x;
+    const v = x, allowedKeys = new Set(['material', 'message_kind', 'task_kind', 'scope', 'risk', 'ambiguity', 'dependency_class', 'required_capabilities', 'requested_external_actions', 'likely_verification', 'user_verification', 'verification_ceiling', 'verification_cases', 'nonvisual_request_units', 'likely_targets', 'intent_signals', 'suppressed_intent_signals', 'constraint_atoms']), unknownKeys = Object.keys(v).filter(key => !allowedKeys.has(key));
+    if (unknownKeys.length) {
+        const hint = unknownKeys.includes('visual_request_units') ? '; use top-level verification_cases[] and nonvisual_request_units as RU id strings' : '';
+        throw new Error(`unsupported semantic assessment key(s): ${unknownKeys.join(', ')}${hint}`);
+    }
     const taskKinds = ['implementation', 'bug-fix', 'diagnosis', 'review', 'performance', 'release-readiness'];
     const scopes = ['local', 'multi-file', 'repo-wide', 'external', 'multi-stream'];
     const risks = ['low', 'medium', 'high', 'authority-boundary'];
@@ -203,7 +209,7 @@ export function parseSemanticIntentAssessment(raw) {
         throw new Error('constraint_atoms are allowed only for message_kind=constraint');
     const visualRequired = assessment.likely_verification.includes('visual-check');
     if (visualRequired && !assessment.verification_cases.length && !['resume', 'constraint'].includes(messageKind))
-        throw new Error('visual-check requires non-empty verification_cases');
+        throw new Error('visual-check requires non-empty top-level verification_cases[]');
     if (!visualRequired && assessment.verification_cases.length)
         throw new Error('verification_cases require visual-check');
     if (!visualRequired && assessment.nonvisual_request_units.length)

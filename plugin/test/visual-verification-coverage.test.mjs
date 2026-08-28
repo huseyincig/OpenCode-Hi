@@ -9,7 +9,7 @@ const base={material:true,message_kind:'mission',task_kind:'bug-fix',scope:'loca
 const tracedCase=(patch={})=>({id:'vc_reload',subject:'theme survives reload',required_browser_actions:['navigate','inspect'],source_units:['ru1'],...patch})
 
 test('visual semantic contract requires bounded explicit verification cases',()=>{
-  assert.throws(()=>parseSemanticIntentAssessment({...base,verification_cases:[]}),/visual-check requires non-empty verification_cases/)
+  assert.throws(()=>parseSemanticIntentAssessment({...base,verification_cases:[]}),/visual-check requires non-empty (?:top-level )?verification_cases/)
   assert.throws(()=>parseSemanticIntentAssessment({...base,verification_cases:[{id:'vc_reload',subject:'reload',required_browser_actions:['reload'],source_units:['ru1']}]}),/verification_cases\[0\]: required_browser_actions contains unsupported action: reload/)
   const x=parseSemanticIntentAssessment({...base,verification_cases:[tracedCase()]});assert.deepEqual(x.verification_cases[0].required_browser_actions,['navigate','inspect']);assert.deepEqual(x.verification_cases[0].source_units,['ru1'])
 })
@@ -39,6 +39,16 @@ test('visual cases become canonical mission and verification obligation state wi
   const store=new MissionStore(process.cwd()),m=store.start('visual-cases','verify UI')
   const cases=[tracedCase()];store.applyInitialSemanticAssessment('visual-cases',parseSemanticIntentAssessment({...base,verification_cases:cases}))
   assert.deepEqual(m.identity.intent.verificationCases,cases);assert.deepEqual(m.execution.obligations.find(o=>o.kind==='verification')?.verificationCases,cases)
+})
+
+test('semantic assessment rejects nested visual_request_units instead of silently dropping canonical cases',()=>{
+  const nested={...base,visual_request_units:[{id:'ru2',kind:'visual',subject:'mobile cards',verification_cases:[tracedCase()]}],verification_cases:[]}
+  assert.throws(()=>parseSemanticIntentAssessment(nested),/unsupported semantic assessment key\(s\): visual_request_units.*top-level verification_cases\[\]/)
+})
+
+test('semantic assessment rejects object-shaped nonvisual_request_units with canonical RU-id guidance',()=>{
+  const malformed={...base,verification_cases:[tracedCase()],nonvisual_request_units:[{id:'ru1',kind:'nonvisual',subject:'logic'}]}
+  assert.throws(()=>parseSemanticIntentAssessment(malformed),/nonvisual_request_units must be an array of RU id strings/)
 })
 
 test('semantic gate teaches request-unit traceability and all-cases browser action coverage',()=>{
