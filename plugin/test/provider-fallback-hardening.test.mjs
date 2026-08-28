@@ -76,6 +76,21 @@ test('native required-tool-choice compatibility APIError uses one bounded automa
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.failure.classified'&&e.payload?.reason==='opencode-required-tool-choice-compatibility-fallback-eligible'))
 })
 
+test('successive required-tool-choice compatibility failures advance through recovery-only candidates without bouncing',async()=>{
+  const models=[{id:'p/deepseek',provider:'p',writeCapable:true,tags:['coding','balanced']},{id:'p/mimo',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/deepseek','p/mimo'];worker.model_selection_reason=['visual capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
+  m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/deepseek':'high'}
+  const first=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'only `\"auto\"` is supported for `tool_choice`; `\"required\"` and named function choices are not currently supported',isRetryable:false,statusCode:400})
+  assert.equal(first.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/deepseek');assert.equal(worker.session_id,'recovery-1')
+  worker.runtime_recovery_pending=false
+  const second=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'Thinking mode does not support this tool_choice',isRetryable:false,statusCode:400})
+  assert.equal(second.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/mimo');assert.equal(worker.session_id,'recovery-2')
+  assert.deepEqual(calls.map(x=>x.body.model.modelID),['deepseek','mimo'])
+  assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/deepseek','p/mimo'])
+  assert.equal(m.execution.blockers.some(x=>x.startsWith('provider-failure:')),false)
+})
+
 test('explicit task model does not gain automatic authority from required-tool-choice compatibility failure',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
   const {runtime,m,calls}=setup(async()=>{},true,models)

@@ -16,8 +16,9 @@ export function classifyWorkerFailure(error) {
         // modes, so an auto-only provider can be discovered only from this terminal wire error.
         // Keep ordinary 4xx failures nonretryable; only this exact protocol incompatibility may
         // consume an already-authorized alternate-model recovery candidate.
-        const requiredToolChoiceIncompatible = /tool[_\s-]?choice/.test(text) && /only\s+[`"'\\]*auto[`"'\\]*\s+is\s+supported/.test(text) && /(?:required|named\s+function)/.test(text) && /(?:not\s+(?:currently\s+)?supported|unsupported)/.test(text);
-        if (requiredToolChoiceIncompatible)
+        const autoOnlyRequiredToolChoice = /tool[_\s-]?choice/.test(text) && /only\s+[`"'\\]*auto[`"'\\]*\s+is\s+supported/.test(text) && /(?:required|named\s+function)/.test(text) && /(?:not\s+(?:currently\s+)?supported|unsupported)/.test(text);
+        const thinkingModeRequiredToolChoice = /thinking\s+mode\s+does\s+not\s+support\s+(?:this\s+)?tool[_\s-]?choice/.test(text);
+        if (autoOnlyRequiredToolChoice || thinkingModeRequiredToolChoice)
             return { kind: 'provider-transport', stagnation: false, retryable: true, reason: 'opencode-required-tool-choice-compatibility-fallback-eligible' };
         const fallbackEligible = observed.isRetryable === true || observed.statusCode === 429 || (observed.statusCode !== undefined && observed.statusCode >= 500);
         return { kind: 'provider-transport', stagnation: false, retryable: fallbackEligible, reason: fallbackEligible ? 'opencode-terminal-api-error-fallback-eligible' : 'opencode-terminal-api-error-nonretryable' };
