@@ -12,6 +12,7 @@ import {createHiToolSurface} from '../dist/runtime/application/hi-tool-surface.j
 import {browserObservationId} from '../dist/contracts/browser-observation.js'
 import {evidenceClaimApplicability} from '../dist/runtime/evidence/applicability.js'
 import {activateMethodologySignal} from '../dist/runtime/methodology/activation.js'
+import {projectControlDecision} from '../dist/runtime/completion/control-projection.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function client(created=[],prompts=[]){let n=0;return{session:{
@@ -24,7 +25,7 @@ function observation(taskID){const x={task_id:taskID,executor_version:'hi-playwr
 const repoRoot=path.resolve(process.cwd(),'..')
 const EXISTING_READ_SCOPE='plugin/src/runtime/task/task-runtime.ts'
 
-test('browser finding feeds the same visual task/session correction loop and requires fresh attempt proof',async()=>{
+test('browser finding transfers source remediation to a writer before fresh visual re-verification',async()=>{
   const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
   const browser={health:async()=>({available:true}),inspect:async cx=>observation(cx.task_id),cleanup:async()=>({cleaned:true,reason:'closed'})}
   const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}}))
@@ -41,11 +42,20 @@ test('browser finding feeds the same visual task/session correction loop and req
   const observationEvidence=m.execution.evidence.items.find(e=>e.id===inspected.evidence_ref);assert.ok(observationEvidence);assert.equal(evidenceClaimApplicability(m,observationEvidence).applicable,true)
   runtime.applyResult(m,worker.id,{status:'DONE',summary:'Visual regression found',changed_files:[],evidence:[{kind:'browser-evidence',summary:'overlap reproduced in real browser',scope:['src/ui.tsx'],evidence_refs:[inspected.evidence_ref],pass:true,outcome:'passed'}],findings:[{id:'rf-browser-overlap',reviewer_role:'visual-qa',subject:'Submit button overlaps error text',severity:'high',causality:'introduced',scope:['src/ui.tsx'],evidence_refs:['browser-evidence'],confidence:'high',disposition:'open',blocking:true}],open_issues:[],needs_context:[]})
   assert.equal(task.result?.status,'FIX_REQUIRED');assert.equal(task.status,'waiting');assert.equal(worker.status,'ready');assert.ok(task.result.open_issues.some(x=>x.startsWith('review-finding:rf-browser-overlap:high:introduced')))
+  const rework=m.execution.obligations.find(o=>o.id==='o-review-rework-rf-browser-overlap');assert.ok(rework);assert.equal(rework.kind,'implementation');assert.equal(rework.status,'open');assert.deepEqual(rework.requiredTargets,['src/ui.tsx'])
+  assert.equal(projectControlDecision(m,repoRoot).action,'CONTINUE','writer-owned rework must take control before verifier correction')
+  await assert.rejects(runtime.resume(m,task.id),/cannot resume before canonical predecessor rework closes/)
+
+  const coderStarted=await runtime.start(m,{objective:'resolve rf-browser-overlap',role:'coder',category:'standard',scope:['src/ui.tsx'],obligationIds:[rework.id]})
+  const coderTask=m.execution.tasks.find(t=>t.id===coderStarted.task_id),coderWorker=m.execution.workers.find(w=>w.id===coderStarted.worker_id);assert.ok(coderTask);assert.ok(coderWorker);assert.equal(coderTask.role,'coder');assert.ok(coderTask.obligation_ids.includes(rework.id))
+  runtime.applyResult(m,coderWorker.id,{status:'DONE',summary:'Resolved overlap',changed_files:['src/ui.tsx'],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(rework.status,'closed');assert.equal(projectControlDecision(m,repoRoot).action,'RECONCILE','closed remediation must return control to the prior verifier result')
+
   const taskCount=m.execution.tasks.length,workerCount=m.execution.workers.length,firstAttempt=worker.attempt,sessionID=worker.session_id
   const second=await runtime.resume(m,task.id)
-  assert.equal(second.task_id,task.id);assert.equal(second.worker_id,worker.id);assert.equal(second.session_id,sessionID);assert.equal(m.execution.tasks.length,taskCount);assert.equal(m.execution.workers.length,workerCount);assert.equal(created.length,1);assert.equal(prompts.length,2);assert.equal(worker.attempt,firstAttempt+1)
-  assert.equal(evidenceClaimApplicability(m,observationEvidence).applicable,false,'prior browser observation must not prove the correction attempt')
-  assert.match(JSON.stringify(prompts[1]),/Hi corrective resume for existing task/);assert.match(JSON.stringify(prompts[1]),/review-finding:rf-browser-overlap/)
+  assert.equal(second.task_id,task.id);assert.equal(second.worker_id,worker.id);assert.equal(second.session_id,sessionID);assert.equal(m.execution.tasks.length,taskCount);assert.equal(m.execution.workers.length,workerCount);assert.equal(worker.attempt,firstAttempt+1)
+  assert.equal(evidenceClaimApplicability(m,observationEvidence).applicable,false,'prior browser observation must not prove the fresh verification attempt')
+  assert.match(JSON.stringify(prompts.at(-1)),/Hi corrective resume for existing task/);assert.match(JSON.stringify(prompts.at(-1)),/review-finding:rf-browser-overlap/)
 })
 
 

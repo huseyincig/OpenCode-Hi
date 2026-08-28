@@ -1,5 +1,6 @@
 import type {MissionState,MissionTask,TaskStatus} from '../mission/types.js'
 import {appendLedger} from '../ledger/ledger.js'
+import {taskHasDelegatedReviewFindingRework} from './review-finding-rework.js'
 
 const ACTIVE_WORKER_STATUSES=new Set(['created','queued','starting','busy'])
 const UNRESOLVED_RESULT_STATUSES=new Set(['FIX_REQUIRED','NEEDS_CONTEXT','BLOCKED'])
@@ -22,7 +23,7 @@ export function taskControlStatus(m:MissionState,task:MissionTask):TaskStatus{
   return taskHasSatisfiedSettledOwnership(m,task)&&['waiting','blocked'].includes(task.status)?'completed':task.status
 }
 export function taskPendingForControl(m:MissionState,task:MissionTask):boolean{return CONTROL_PENDING_TASK_STATUSES.has(taskControlStatus(m,task))}
-export function taskResultRequiresReconciliation(m:MissionState,task:MissionTask):boolean{return task.status!=='cancelled'&&!taskHasSatisfiedSettledOwnership(m,task)&&Boolean(task.result&&['FIX_REQUIRED','NEEDS_CONTEXT'].includes(task.result.status))}
+export function taskResultRequiresReconciliation(m:MissionState,task:MissionTask):boolean{return task.status!=='cancelled'&&!taskHasSatisfiedSettledOwnership(m,task)&&!taskHasDelegatedReviewFindingRework(m,task)&&Boolean(task.result&&['FIX_REQUIRED','NEEDS_CONTEXT'].includes(task.result.status))}
 
 /**
  * Retire only mission-level artifacts that belonged to a settled task whose canonical ownership

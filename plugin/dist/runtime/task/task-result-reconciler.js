@@ -24,6 +24,7 @@ import { captureEvidenceScopeState } from '../evidence/scope-state.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 import { assessExplorationClearance, explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js';
+import { materializeReviewFindingRework } from './review-finding-rework.js';
 function resultDigest(result) { return createHash('sha256').update(JSON.stringify(result)).digest('hex'); }
 export class TaskResultReconciler {
     scheduler;
@@ -430,6 +431,8 @@ export class TaskResultReconciler {
                 addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? task.scope, source: `browser-derived:${worker.id}`, trusted_source_class: 'browser-observation', source_session_id: worker.session_id, source_state_hash: browserStateHash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: cleanlinessMarker ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
             }
         }
+        if (effectiveResult.findings?.length)
+            materializeReviewFindingRework(m, task, worker, effectiveResult.findings);
         const explorationClearance = assessExplorationClearance(this.projectRoot, m, task, worker, effectiveResult);
         if (explorationClearance.applicable && !explorationClearance.admitted && effectiveResult.status === 'DONE') {
             const marker = `exploration-clearance-unsatisfied:${task.id}:${explorationClearance.reason}`;

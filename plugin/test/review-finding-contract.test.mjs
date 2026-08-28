@@ -27,14 +27,19 @@ test('ReviewFinding requires technical identity, closed enums and evidence for b
   assert.equal(isReviewFindingContract(finding({evidence_refs:[]})),false)
 })
 
-test('introduced open reviewer finding forces FIX_REQUIRED even if reviewer claimed DONE',()=>{
-  const m=reviewMission('rf-actionable'),{task,worker,review}=reviewerTask(m)
-  const result=normalizeWorkerResult({status:'DONE',summary:'review completed with finding',changed_files:[],evidence:[proof],findings:[finding()],open_issues:[],needs_context:[]})
-  runtime().applyResult(m,worker.id,result)
-  assert.equal(task.status,'waiting')
-  assert.equal(task.result?.status,'FIX_REQUIRED')
-  assert.equal(review.status,'open')
-  assert.ok(m.execution.blockers.some(x=>x.startsWith('review-finding:rf-null-guard:high:introduced')))
+test('introduced open reviewer finding forces FIX_REQUIRED and opens evidence-backed writer rework',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-actionable-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
+    const m=reviewMission('rf-actionable',root),{task,worker,review}=reviewerTask(m)
+    const result=normalizeWorkerResult({status:'DONE',summary:'review completed with finding',changed_files:[],evidence:[proof],findings:[finding()],open_issues:[],needs_context:[]})
+    runtime(root).applyResult(m,worker.id,result)
+    assert.equal(task.status,'waiting')
+    assert.equal(task.result?.status,'FIX_REQUIRED')
+    assert.equal(review.status,'open')
+    assert.ok(m.execution.blockers.some(x=>x.startsWith('review-finding:rf-null-guard:high:introduced')))
+    const rework=m.execution.obligations.find(o=>o.id==='o-review-rework-rf-null-guard');assert.ok(rework);assert.equal(rework.kind,'implementation');assert.equal(rework.status,'open');assert.deepEqual(rework.requiredTargets,['src/a.ts'])
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('pre-existing finding is preserved without becoming an unrelated mission blocker',()=>{
@@ -50,6 +55,7 @@ test('pre-existing finding is preserved without becoming an unrelated mission bl
     assert.equal(verificationSatisfied(m,verification.id,root).ok,true)
     assert.ok(task.result?.findings?.some(x=>x.id==='rf-existing-debt'))
     assert.equal(m.execution.blockers.some(x=>x.includes('rf-existing-debt')),false)
+    assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-existing-debt'),false)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
@@ -68,9 +74,19 @@ test('blocking finding with unknown causality requires reconciliation instead of
   assert.equal(task.result?.status,'FIX_REQUIRED')
   assert.ok(task.result?.open_issues.includes('review-finding-causality-unresolved:rf-unknown-owner'))
   assert.ok(task.result?.needs_context.some(x=>x.startsWith('review-finding-causality-reconcile:')))
+  assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-unknown-owner'),false)
 })
 
 test('finding evidence refs must resolve to evidence kinds returned by the same WorkerResult',()=>{
   const result=normalizeWorkerResult({status:'DONE',summary:'review',changed_files:[],evidence:[proof],findings:[finding({id:'rf-bad-ref',evidence_refs:['build']})],open_issues:[],needs_context:[]})
   assert.equal(result.findings,undefined,'normalizer must not retain a blocking finding whose proof reference is absent')
+})
+
+
+test('plain FIX_REQUIRED or prose open_issue cannot acquire writer rework authority',()=>{
+  const m=reviewMission('rf-prose-only'),{task,worker}=reviewerTask(m)
+  const result=normalizeWorkerResult({status:'FIX_REQUIRED',summary:'Filter appears wrong',changed_files:[],evidence:[],open_issues:['Filter handler appears not to update the count'],needs_context:[]})
+  runtime().applyResult(m,worker.id,result)
+  assert.equal(task.result?.status,'FIX_REQUIRED')
+  assert.equal(m.execution.obligations.some(o=>o.id.startsWith('o-review-rework-')),false)
 })
