@@ -39,8 +39,9 @@ test('methodology and visual proof rules are lazy and task-specific',()=>{
   assert.match(visual,/evidence\.kind="visual-evidence"/)
   assert.match(visual,/evidence\.outcome="passed"/)
   assert.match(visual,/Never manufacture PASS from a BrowserObservation or screenshot alone/)
-  assert.match(visual,/actual Hi browser evidence_ref/)
-  assert.match(visual,/native image attachment/);assert.match(visual,/opaque canonical provenance/);assert.match(visual,/never read\/glob\/find it/)
+  assert.match(visual,/FULL opaque value must be copied verbatim/);assert.match(visual,/ev_ab12cd34_q1w2e3/);assert.match(visual,/prefix such as ev_ab12cd34 is NOT the same evidence identity/);assert.match(visual,/Do not substitute or abbreviate an observation_id/)
+  assert.doesNotMatch(visual,/ev_\.\.\. or bo_\.\.\./)
+  assert.match(visual,/native image attachment/);assert.match(visual,/supplemental opaque canonical provenance/);assert.match(visual,/never read\/glob\/find it/)
   assert.match(visual,/Return the WorkerResult directly in assistant text/)
 })
 

@@ -41,6 +41,12 @@ test('visual task defaults to bounded Playwright and disables unselected MCP ser
   assert.ok(task.constraints.includes('hi-browser-backend:bounded-playwright'))
 })
 
+test('visual verification case handoff requires full verbatim browser evidence refs instead of prefix-like examples',async()=>{
+  const prompts=[],m=mission('m13-full-evidence-ref-handoff',['visual-qa']),verify=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verify);verify.verificationCases=[{id:'vc_reload',subject:'theme survives reload',required_browser_actions:['navigate','inspect']}];m.identity.intent.verificationCases=structuredClone(verify.verificationCases)
+  const rt=runtime(prompts,new Set(['host-capability:browser-execution']));await rt.start(m,{objective:'verify theme persistence',role:'visual-qa',category:'visual',scope:['src/view.tsx'],requiredEvidence:['visual-check'],obligationIds:[verify.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const prompt=JSON.stringify(prompts[0]);assert.match(prompt,/verification_coverage/);assert.match(prompt,/FULL_EVIDENCE_REF/);assert.match(prompt,/ENTIRE current-attempt evidence_ref string/);assert.match(prompt,/ev_ab12cd34_q1w2e3/);assert.match(prompt,/prefix ev_ab12cd34 is invalid/);assert.match(prompt,/Do not substitute observation_id or screenshot_artifact_ref/);assert.doesNotMatch(prompt,/evidence_refs:\[ev_\*\]/)
+})
+
 test('selected MCP backend satisfies browser runtime resource without fabricating local Hi browser tools',async()=>{
   const prompts=[],m=mission('m13-mcp',['visual-qa','mcp']),rt=runtime(prompts,new Set())
   const out=await rt.start(m,{objective:'verify UI through configured browser MCP',role:'visual-qa',category:'visual',scope:['src/view.tsx'],mcpServers:['browser'],browserBackend:'mcp'})
