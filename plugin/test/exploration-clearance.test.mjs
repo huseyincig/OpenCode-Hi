@@ -77,3 +77,16 @@ test('source drift after clearance blocks implementation and a fresh bounded exp
     const creates=[],client={session:{create:async req=>{creates.push(req);return{data:{id:'coder-child'}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:{}})}};const started=await runtime(r,client).start(m,{role:'coder',objective:'implement contract',scope:['src/contract.ts']});assert.ok(started.session_id);assert.equal(creates.length,1)
   }finally{rmSync(r,{recursive:true,force:true})}
 })
+
+
+test('runtime-bound explorer clearance promotes discovered source scope into canonical Mission targets',()=>{
+  const r=root();try{
+    const store=new MissionStore(r),m=store.start('target-promotion',"Fix dashboard fixture with unresolved source location")
+    store.applyInitialSemanticAssessment('target-promotion',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','repository-analysis'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
+    assert.equal(m.identity.intent.likelyTargets,undefined)
+    const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+    const task=createTask(m,{objective:'discover the exact source owning the bug',role:'repository-explorer',category:'standard',scope:[],requiredEvidence:[],obligationIds:[analysis.id]}),worker=createWorker(m,task,'host-default');worker.status='busy';worker.session_id='explorer-promotion';worker.started_at=Date.now()-10;worker.native_diff_baseline={};worker.native_diff_final={};worker.native_state_hash='c'.repeat(64);worker.attempt=1
+    runtime(r).applyResult(m,worker.id,result({evidence:[sourceClaimWithReceipt(r,m,task,worker)]}))
+    assert.equal(task.result.status,'DONE');assert.equal(m.identity.intent.ambiguity,'none');assert.deepEqual(m.identity.intent.likelyTargets,['src/contract.ts']);assert.equal(analysis.status,'closed');assert.ok(m.execution.ledger.some(e=>e.type==='intent.targets.resolved'&&e.payload?.source==='repository-explorer-clearance'&&e.payload?.targets?.includes('src/contract.ts')))
+  }finally{rmSync(r,{recursive:true,force:true})}
+})

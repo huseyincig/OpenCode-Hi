@@ -27,7 +27,6 @@ export interface SemanticIntentAssessment {
     verification_ceiling: boolean;
     verification_cases: VerificationCase[];
     likely_targets: string[];
-    likely_targets_explicit_empty?: boolean;
     intent_signals: HiMethodologySignalName[];
     suppressed_intent_signals: HiMethodologySignalName[];
     constraint_atoms: ConstraintAtomDraft[];

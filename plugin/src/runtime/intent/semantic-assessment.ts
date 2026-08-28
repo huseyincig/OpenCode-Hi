@@ -31,7 +31,6 @@ export interface SemanticIntentAssessment{
   verification_ceiling:boolean
   verification_cases:VerificationCase[]
   likely_targets:string[]
-  likely_targets_explicit_empty?:boolean
   intent_signals:HiMethodologySignalName[]
   suppressed_intent_signals:HiMethodologySignalName[]
   constraint_atoms:ConstraintAtomDraft[]
@@ -163,7 +162,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:taskKind,scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
-    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>{const issue=verificationCaseValidationError(item);if(issue)throw new Error(`verification_cases[${index}]: ${issue}`);return item as VerificationCase}):[],likely_targets:semanticTargets(v.likely_targets,20),likely_targets_explicit_empty:Array.isArray(v.likely_targets)&&v.likely_targets.length===0,
+    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>{const issue=verificationCaseValidationError(item);if(issue)throw new Error(`verification_cases[${index}]: ${issue}`);return item as VerificationCase}):[],likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],
   }
@@ -176,6 +175,6 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   return localSequential||boundedSingleMaterialTarget?{...assessment,scope:'local',dependency_class:'independent'}:assessment
 }
 export function assessedIntent(current:NormalizedMissionIntent,assessment:SemanticIntentAssessment):NormalizedMissionIntent{
-  const initialExplicitNoTargets=assessment.message_kind==='mission'&&assessment.likely_targets_explicit_empty===true
-  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:(initialExplicitNoTargets?undefined:current.likelyTargets),taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification],verificationCases:(assessment.verification_cases??[]).length?(assessment.verification_cases??[]).map(c=>({...c,required_browser_actions:[...c.required_browser_actions]})):(assessment.message_kind==='resume'||assessment.message_kind==='constraint'?current.verificationCases:[])}
+  const initialMission=assessment.message_kind==='mission'
+  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:(initialMission?undefined:current.likelyTargets),taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification],verificationCases:(assessment.verification_cases??[]).length?(assessment.verification_cases??[]).map(c=>({...c,required_browser_actions:[...c.required_browser_actions]})):(assessment.message_kind==='resume'||assessment.message_kind==='constraint'?current.verificationCases:[])}
 }

@@ -17,6 +17,7 @@ export interface TaskPreconditionInput{
   methodologyResourceFailures?:string[]
   methodologyAdmissionFailures?:string[]
   contractCriticalAmbiguity?:boolean
+  unresolvedRepositoryAmbiguity?:boolean
   staleExplorationClearance?:boolean
   authorityRequired?:boolean
 }
@@ -49,7 +50,7 @@ export function evaluateTaskPreconditions(input:TaskPreconditionInput):TaskPreco
   if(input.dependencies.unknown.length)add('dependency-unknown','RESOLVE',`Unknown task dependencies: ${input.dependencies.unknown.join(',')}`)
   if(input.dependencies.failed.length)add('dependency-terminal','RESOLVE',`Unavailable task dependencies: ${input.dependencies.failed.join(',')}`)
   if(input.dependencies.incomplete.length)add('dependency-wait','WAIT',`Waiting for prerequisite task(s): ${input.dependencies.incomplete.join(',')}`)
-  if(input.contractCriticalAmbiguity&&input.implementation)add('contract-ambiguity','RESOLVE','Contract-critical ambiguity must be resolved by evidence/exploration before implementation starts')
+  if((input.unresolvedRepositoryAmbiguity||input.contractCriticalAmbiguity)&&input.implementation)add('contract-ambiguity','RESOLVE','Unresolved repository ambiguity must be cleared by current source evidence/exploration before implementation starts')
   if(input.staleExplorationClearance&&input.implementation)add('exploration-clearance-stale','RESOLVE','Repository evidence that cleared prior ambiguity is stale; refresh bounded exploration before implementation starts')
   if(input.authorityRequired)add('user-authority','USER_ACTION_REQUIRED','Required user authority must be resolved before this task starts')
   if(input.methodologyResourceFailures?.length)add('methodology-resource','RESOLVE',`Required methodology host/resource capability is unavailable: ${input.methodologyResourceFailures.join(', ')}`)

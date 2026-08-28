@@ -32,6 +32,7 @@ export interface TaskPreconditionInput {
     methodologyResourceFailures?: string[];
     methodologyAdmissionFailures?: string[];
     contractCriticalAmbiguity?: boolean;
+    unresolvedRepositoryAmbiguity?: boolean;
     staleExplorationClearance?: boolean;
     authorityRequired?: boolean;
 }

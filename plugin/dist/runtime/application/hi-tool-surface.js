@@ -410,6 +410,10 @@ export function createHiToolSurface(input) {
                 const reviewVerification = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
                 addEvidence(m, { kind: 'review-evidence', summary, scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id, ...(reviewVerification ? [reviewVerification.id] : [])], pass: true, outcome: 'passed' });
             }
+            if (o.kind === 'analysis' && m.identity.intent.ambiguity !== 'none' && m.execution.obligations.some(x => x.kind === 'implementation' && x.status === 'open')) {
+                appendLedger(m, 'analysis.direct-progress-rejected', { payload: { obligation: o.id, ambiguity: m.identity.intent.ambiguity, reason: 'repository-exploration-clearance-required' } });
+                return JSON.stringify({ status: 'EVIDENCE_REQUIRED', reason: 'repository-exploration-clearance-required', obligation_id: o.id, ambiguity: m.identity.intent.ambiguity, retry_same_call: false, instruction: 'Start a read-only repository-explorer and settle current bounded source provenance before direct analysis can close.' });
+            }
             if (o.kind === 'analysis' && m.identity.intent.taskKind === 'diagnosis') {
                 const outcome = String(rawArgs?.diagnostic_outcome ?? '').toUpperCase(), hypothesis = String(rawArgs?.hypothesis ?? ''), falsifier = String(rawArgs?.falsifier ?? ''), refs = String(rawArgs?.diagnostic_evidence_refs ?? '').split(/[;,]/).map((x) => x.trim()).filter(Boolean);
                 if (!DIAGNOSTIC_HYPOTHESIS_OUTCOMES.includes(outcome) || !hypothesis.trim() || !falsifier.trim())

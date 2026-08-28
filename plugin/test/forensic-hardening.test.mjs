@@ -111,15 +111,25 @@ test('runtime state is persisted with private file permissions on POSIX',()=>{
   }finally{rmSync(root,{recursive:true,force:true});rmSync(dirname(persistence.path),{recursive:true,force:true})}
 })
 
-test('parent direct progress can close an explicit analysis obligation without bypassing implementation or verification',async()=>{
+test('parent direct progress cannot close unresolved repository analysis with prose',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-analysis'},{message:{role:'user'},parts:[{type:'text',text:'Fix the parser bug and verify it'}]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
     const empty=String(await hooks.tool.hi_direct_progress.execute({summary:'   ',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.match(empty,/non-empty bounded summary/)
     const wrong=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause known.',obligation_id:'o-analysis:Root cause understood'},{sessionID:'s-analysis'}));assert.equal(wrong.reason,'unknown-obligation-id');assert.deepEqual(wrong.candidate_ids,['o-analysis','o-implementation'])
-    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,[]);assert.equal(result.completion_ready,false);assert.equal(result.next,'CONTINUE');assert.equal(result.verification_required,true);assert.deepEqual(result.remaining_obligations,[{id:'o-implementation',kind:'implementation'},{id:'o-verification',kind:'verification'}]);assert.deepEqual(result.methodology_needs,[])
-    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-analysis'}));const obligations=Object.fromEntries(ledger.obligations.map(o=>[o.id,o.status]));assert.equal(obligations['o-analysis'],'closed');assert.equal(obligations['o-implementation'],'open');assert.equal(obligations['o-verification'],'open');assert.ok(ledger.events.some(e=>e.type==='analysis.direct-progress'))
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'repository-exploration-clearance-required');assert.equal(result.retry_same_call,false);assert.equal(result.ambiguity,'resolvable')
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-analysis'}));const obligations=Object.fromEntries(ledger.obligations.map(o=>[o.id,o.status]));assert.equal(obligations['o-analysis'],'open');assert.equal(obligations['o-implementation'],'open');assert.equal(obligations['o-verification'],'open');assert.ok(ledger.events.some(e=>e.type==='analysis.direct-progress-rejected'&&e.payload?.reason==='repository-exploration-clearance-required'));assert.equal(ledger.events.some(e=>e.type==='analysis.direct-progress'),false)
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('parent direct progress may close analysis after repository ambiguity is already resolved',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-resolved-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    await hooks['chat.message']({sessionID:'s-analysis-resolved'},{message:{role:'user'},parts:[{type:'text',text:'Fix the parser bug and verify it'}]});await assessPluginMission(hooks,'s-analysis-resolved',{task_kind:'bug-fix',scope:'local',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
+    const mission=JSON.parse(await hooks.tool.hi_ledger.execute({limit:50},{sessionID:'s-analysis-resolved'}));assert.equal(mission.obligations.some(o=>o.id==='o-analysis'),false,'resolved local bug fix does not manufacture analysis ownership')
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
@@ -187,15 +197,15 @@ test('explicit technical verifier never aliases to direct review even after fres
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('direct analysis progress reports implementation as the remaining obligation after verification is already fresh',async()=>{
+test('fresh verification cannot bypass unresolved repository analysis clearance',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-after-verify-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-analysis-after-verify'},{message:{role:'user'},parts:[{type:'text',text:'Fix the parser bug and run the focused test'}]});await assessPluginMission(hooks,'s-analysis-after-verify',{task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
     await hooks['tool.execute.after']({sessionID:'s-analysis-after-verify',tool:'bash',args:{command:'bun test test/parser.test.ts'}},{stdout:'3 pass\n0 fail',metadata:{exit:0}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause is proven by the focused regression test.',obligation_id:'o-analysis'},{sessionID:'s-analysis-after-verify'}))
-    assert.equal(result.status,'RECORDED');assert.equal(result.completion_ready,false);assert.equal(result.next,'CONTINUE');assert.equal(result.verification_required,false)
-    assert.deepEqual(result.remaining_obligations,[{id:'o-implementation',kind:'implementation'}]);assert.deepEqual(result.methodology_needs,[])
+    assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'repository-exploration-clearance-required');assert.equal(result.retry_same_call,false)
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-analysis-after-verify'}));const obligations=Object.fromEntries(ledger.obligations.map(o=>[o.id,o.status]));assert.equal(obligations['o-analysis'],'open');assert.equal(obligations['o-implementation'],'open');assert.equal(obligations['o-verification'],'closed')
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })

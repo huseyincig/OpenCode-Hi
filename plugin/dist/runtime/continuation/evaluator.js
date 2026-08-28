@@ -63,7 +63,7 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
             setRuntimeNudge(m, instruction, 'exploration-clearance-refresh');
             return { decision: 'CONTINUE', reason: 'exploration-clearance-refresh', reason_code: 'exploration-clearance-refresh', prompt: continuationPrompt(m, instruction) };
         }
-        const instruction = 'Resolve the contract-critical ambiguity from repository structure, existing contracts, tests, or evidence before asking the user. Do not implement until resolved.';
+        const instruction = 'Resolve the unresolved repository ambiguity from current repository structure, existing contracts, tests, or source evidence before implementation. Do not implement until the bounded exploration clearance is settled.';
         setRuntimeNudge(m, instruction, 'contract-ambiguity-repo-first');
         return { decision: 'CONTINUE', reason: 'contract-ambiguity-repo-first', reason_code: 'contract-ambiguity-repo-first', prompt: continuationPrompt(m, instruction) };
     }

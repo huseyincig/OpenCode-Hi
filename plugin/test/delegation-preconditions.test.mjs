@@ -58,7 +58,7 @@ test('preflight RESOLVE prevents specialist recursion when colliding host agent 
 
 test('contract-critical ambiguity blocks implementation but permits repository exploration to resolve it',async()=>{
   const {client,creates}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,'ambiguity-preflight','opaque contract task',{ambiguity:'contract-critical'})
-  await assert.rejects(()=>runtime(client).start(m,{role:'coder',objective:'implement ambiguous auth contract'}),/contract-critical ambiguity/i)
+  await assert.rejects(()=>runtime(client).start(m,{role:'coder',objective:'implement ambiguous auth contract'}),/Unresolved repository ambiguity/i)
   assert.equal(creates.length,0);assert.equal(m.authority.human_decision,undefined,'source-resolvable ambiguity must not ask the user before repository exploration')
   const out=await runtime(client).start(m,{role:'repository-explorer',objective:'resolve auth contract from repository evidence',requiredEvidence:[]})
   assert.ok(out.session_id);assert.equal(creates.length,1);assert.equal(creates[0].body.agent,'repository-explorer');assert.equal(m.authority.human_decision,undefined)
@@ -85,4 +85,11 @@ test('task precondition vocabulary includes USER_ACTION_REQUIRED for real author
   const result=evaluateTaskPreconditions({role:'coder',implementation:true,dependencies:{unknown:[],failed:[],incomplete:[]},modelAvailable:true,native:{childSession:true,prompt:true},authorityRequired:true})
   assert.equal(result.decision,'USER_ACTION_REQUIRED')
   assert.ok(result.items.some(x=>x.id==='user-authority'))
+})
+
+
+test('unresolved repository ambiguity blocks exact implementation ownership but not non-implementation support work',()=>{
+  const base={role:'coder',dependencies:{unknown:[],failed:[],incomplete:[]},modelAvailable:true,native:{childSession:true,prompt:true},unresolvedRepositoryAmbiguity:true}
+  const blocked=evaluateTaskPreconditions({...base,implementation:true});assert.equal(blocked.decision,'RESOLVE');assert.ok(blocked.items.some(x=>x.id==='contract-ambiguity'&&/Unresolved repository ambiguity/.test(x.reason)))
+  const support=evaluateTaskPreconditions({...base,implementation:false});assert.equal(support.decision,'READY');assert.equal(support.items.some(x=>x.id==='contract-ambiguity'),false)
 })
