@@ -27,7 +27,11 @@ export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     private createTempRoot;
     private launchOptions;
     private browserConnected;
+    private pageClosed;
+    private invalidateSession;
     private discardSession;
+    private liveSession;
+    private boundedAction;
     private closeSession;
     private ensure;
     private observation;

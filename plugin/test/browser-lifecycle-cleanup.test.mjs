@@ -184,12 +184,12 @@ test('disconnected Playwright session is reclaimed after bounded close timeout',
   const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-disconnected-close-test-')),never=new Promise(()=>{}),sessions=[]
   const module={chromium:{launch:async()=>{
     const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
-    const browser={newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>never,isConnected:()=>false};sessions.push(browser);return browser
+    const browser={connected:true,newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>never,isConnected(){return this.connected}};sessions.push(browser);return browser
   }}}
   try{
     const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
     const owner=context('disconnected-close','m:w:s:g1')
-    await adapter.open(owner,'http://127.0.0.1:4173/')
+    await adapter.open(owner,'http://127.0.0.1:4173/');sessions[0].connected=false
     assert.deepEqual(await adapter.cleanup(owner),{cleaned:true,reason:'cleaned'})
     await adapter.open(owner,'http://127.0.0.1:4173/')
     assert.equal(sessions.length,2,'a disconnected stale session must not be reused')
@@ -208,6 +208,61 @@ test('same-owner open relaunches when the retained Playwright browser disconnect
     await adapter.open(owner,'http://127.0.0.1:4173/');sessions[0].connected=false
     await adapter.open(owner,'http://127.0.0.1:4173/')
     assert.equal(sessions.length,2,'same-owner execution must relaunch instead of reusing a disconnected browser')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})
+
+test('disconnected retained browser blocks direct viewport and explicit open relaunches',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-direct-disconnect-test-')),sessions=[]
+  const module={chromium:{launch:async()=>{
+    let viewportCalls=0
+    const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},isClosed:()=>false,async goto(url){this._url=url},async setViewportSize(){viewportCalls++},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={connected:true,newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>{browser.connected=false},isConnected(){return this.connected}};sessions.push({browser,page,get viewportCalls(){return viewportCalls}});return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('direct-disconnect','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/');sessions[0].browser.connected=false
+    await assert.rejects(()=>adapter.viewport(owner,{width:1280,height:800}),/disconnected.*open|disconnected.*navigate/i)
+    assert.equal(sessions[0].viewportCalls,0,'direct action must not execute against a mechanically disconnected retained browser')
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    assert.equal(sessions.length,2,'explicit open must relaunch after stale-session eviction')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})
+
+test('disconnect during direct browser operation is bounded and stale session is evicted',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-inflight-disconnect-test-')),sessions=[],never=new Promise(()=>{})
+  const module={chromium:{launch:async()=>{
+    const handlers={}
+    const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},isClosed:()=>false,async goto(url){this._url=url},async setViewportSize(){return never},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={connected:true,on(event,fn){handlers[event]=fn},newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>{browser.connected=false;handlers.disconnected?.(browser)},isConnected(){return this.connected}};sessions.push({browser,page,handlers});return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('inflight-disconnect','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    const pending=adapter.viewport(owner,{width:1280,height:800});setTimeout(()=>{sessions[0].browser.connected=false;sessions[0].handlers.disconnected?.(sessions[0].browser)},25)
+    const outcome=await Promise.race([pending.then(value=>({kind:'result',value})),new Promise(resolve=>setTimeout(()=>resolve({kind:'timeout'}),2500))])
+    assert.equal(outcome.kind,'result','direct action must be bounded even when disconnect leaves the Playwright operation pending')
+    assert.equal(outcome.value.result,'FAILED');assert.match(outcome.value.network_errors.join('\n'),/viewport timed out/i)
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    assert.equal(sessions.length,2,'the disconnected generation must not be reused after the bounded failure')
+  }finally{rmSync(tempBase,{recursive:true,force:true})}
+})
+
+test('connected operation timeout quarantines session until explicit reopen',async()=>{
+  const tempBase=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-browser-operation-quarantine-test-')),sessions=[],never=new Promise(()=>{})
+  const module={chromium:{launch:async()=>{
+    const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},isClosed:()=>false,async goto(url){this._url=url},async setViewportSize(){return never},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    const browser={connected:true,newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>{browser.connected=false},isConnected(){return this.connected}};sessions.push({browser,page});return browser
+  }}}
+  try{
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000,launch_temp_base:tempBase})
+    const owner=context('operation-quarantine','m:w:s:g1')
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    const result=await adapter.viewport(owner,{width:1280,height:800});assert.equal(result.result,'FAILED');assert.match(result.network_errors.join('\n'),/viewport timed out/i)
+    await assert.rejects(()=>adapter.inspect(owner),/not reusable.*open|not reusable.*navigate/i)
+    await adapter.open(owner,'http://127.0.0.1:4173/')
+    assert.equal(sessions.length,2,'explicit reopen must close and replace an uncertain timed-out session')
   }finally{rmSync(tempBase,{recursive:true,force:true})}
 })
 
