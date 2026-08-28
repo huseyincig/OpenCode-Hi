@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {mkdtempSync,rmSync} from 'node:fs'
+import {mkdtempSync,mkdirSync,rmSync,writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import HiPlugin from '../dist/plugin.js'
@@ -140,7 +140,7 @@ test('child terminal wake is deferred while parent is busy and delivered exactly
 })
 
 test('failed child defers parent continuation while a sibling worker is still pending',async()=>{
-  const dir=mkdtempSync(join(tmpdir(),'hi-parent-wake-'))
+  const dir=mkdtempSync(join(tmpdir(),'hi-parent-wake-'));mkdirSync(join(dir,'src'));writeFileSync(join(dir,'src','a.ts'),'export const a=1\n');writeFileSync(join(dir,'src','b.ts'),'export const b=1\n')
   const {client,promptCalls}=baseClient(['child-a','child-b'])
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   await hooks['chat.message']({sessionID:'parent'},{message:{role:'user'},parts:[{type:'text',text:'research the repository for two separate tasks'}]})
@@ -159,7 +159,7 @@ test('failed child defers parent continuation while a sibling worker is still pe
 })
 
 test('child-result wake honors a terminal capability blocker instead of blindly continuing the parent',async()=>{
-  const dir=mkdtempSync(join(tmpdir(),'hi-child-wake-capability-'))
+  const dir=mkdtempSync(join(tmpdir(),'hi-child-wake-capability-'));mkdirSync(join(dir,'src'));writeFileSync(join(dir,'src','a.ts'),'export const a=1\n')
   const {client,promptCalls}=baseClient(['child-capability'])
   client.session.messages=async()=>({data:[{info:{role:'assistant'},parts:[{type:'text',text:JSON.stringify({status:'DONE',summary:'repository inspection complete',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}]}]})
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})

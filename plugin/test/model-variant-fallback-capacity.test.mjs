@@ -82,7 +82,7 @@ test('role-specific children respect model capacity and second worker remains qu
   const scheduler=createConcurrencyPolicySource(()=>({global:3,providers:{p:3},models:{'p/shared':1}}))
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque parallel inspection',{task_kind:'review',required_capabilities:['repository-analysis']});m.execution.execution_mode='parallel'
-  const a=await runtime.start(m,{objective:'inspect alpha',role:'repository-explorer',category:'standard',scope:['src/a.ts']})
+  const a=await runtime.start(m,{objective:'inspect alpha',role:'repository-explorer',category:'standard',scope:['src/runtime/task/task-runtime.ts']})
   assert.equal(a.readiness,'READY');assert.equal(m.execution.scheduler.reservations.length,1)
   const b=await runtime.start(m,{objective:'inspect beta',role:'architect',category:'standard',scope:['src/b.ts']})
   assert.equal(b.readiness,'WAIT')

@@ -100,6 +100,25 @@ test('stale exploration clearance does not deadlock exact same-session implement
 
 
 
+test('rerun20-shaped unbound explorer scope normalizes to discovery and exact root-file receipts clear ambiguity',async()=>{
+  const r=root();try{
+    const store=new MissionStore(r),m=store.start('rerun20-scope','repair dashboard fixture with unresolved target')
+    store.applyInitialSemanticAssessment('rerun20-scope',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'multi-file',risk:'medium',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
+    const created=[],prompts=[],client={session:{create:async()=>({data:{id:`explorer-${created.push(1)}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},diff:async()=>({data:[]}),abort:async()=>({data:true})}}
+    const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),r,join(process.cwd(),'..'),()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}))
+    const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+    const started=await rt.start(m,{objective:'map the unresolved dashboard source',role:'repository-explorer',scope:['workspace'],obligationIds:[analysis.id]})
+    const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task&&worker)
+    assert.deepEqual(task.scope,[],'unbound pseudo-scope cannot become canonical authority');assert.deepEqual(task.execution_profile.task.scope,[])
+    assert.ok(m.execution.ledger.some(e=>e.type==='task.scope-unbound-discovery-normalized'&&e.payload?.unbound_scope?.includes('workspace')))
+    rt.applyResult(m,worker.id,result({evidence:[sourceClaimWithReceipt(r,m,task,worker)]}))
+    assert.equal(task.result.status,'DONE');assert.equal(m.identity.intent.ambiguity,'none');assert.deepEqual(m.identity.intent.likelyTargets,['src/contract.ts'])
+    assert.equal(created.length,1);assert.equal(prompts.length,1)
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
+
+
 test('runtime-bound explorer clearance promotes discovered source scope into canonical Mission targets',()=>{
   const r=root();try{
     const store=new MissionStore(r),m=store.start('target-promotion',"Fix dashboard fixture with unresolved source location")

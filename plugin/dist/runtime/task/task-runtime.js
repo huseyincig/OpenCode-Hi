@@ -39,6 +39,7 @@ import { projectSchedulingPeerView } from '../scheduler/project-peer-view.js';
 import { isPersistentRunningProcess } from '../../contracts/process.js';
 import { assessMissionLiveness, recordAssistantProgress } from '../liveness/assessment.js';
 import { verificationKindAdmittedForMission } from '../verification/policy.js';
+import { admitNewTaskScope } from './scope-admission.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
@@ -710,7 +711,14 @@ export class TaskRuntime {
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
-        const scope = input.scope ?? (implicitProcessSupport ? [] : isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []);
+        const requestedScope = input.scope ?? (implicitProcessSupport ? [] : isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []), scopeAdmission = input.resumeTaskId ? { accepted: true, scope: [...requestedScope], reason: 'unchanged', unbound: [], canonical_targets: [] } : admitNewTaskScope({ projectRoot: this.projectRoot, role, ambiguity: m.identity.intent.ambiguity, missionTargets: m.identity.intent.likelyTargets, requestedScope });
+        if (!scopeAdmission.accepted) {
+            appendLedger(m, 'task.scope-admission-rejected', { payload: { role, requested_scope: requestedScope.slice(0, 40), unbound_scope: scopeAdmission.unbound.slice(0, 40), canonical_targets: scopeAdmission.canonical_targets.slice(0, 40), reason: scopeAdmission.reason, policy: 'repository-explorer-scope-requires-current-project-identity-or-canonical-mission-target' } });
+            throw new Error(`Repository explorer scope is not canonical: ${scopeAdmission.unbound.join(', ')}. Use current project-relative filesystem paths or exact canonical Mission targets; when the repository target is still unknown, omit scope so bounded discovery can resolve it.`);
+        }
+        const scope = scopeAdmission.scope;
+        if (scopeAdmission.reason === 'repository-discovery-unbound-normalized')
+            appendLedger(m, 'task.scope-unbound-discovery-normalized', { payload: { role, requested_scope: requestedScope.slice(0, 40), canonical_scope: [], unbound_scope: scopeAdmission.unbound.slice(0, 40), reason: 'unbound model scope cannot become authority while repository target is unresolved', policy: 'empty-scope-bounded-repository-discovery' } });
         if (!isHiReadOnlyChildRole(role)) {
             const denied = [...new Map(scope.flatMap(path => deniedMutationAtoms(m.execution.constraint_atoms, path)).map(atom => [atom.id, atom])).values()];
             if (denied.length) {

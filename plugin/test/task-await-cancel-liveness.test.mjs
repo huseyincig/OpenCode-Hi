@@ -50,7 +50,7 @@ test('implicit process-lifecycle support without an explicit role uses the neutr
 
 test('explicit repository-explorer process task keeps explicit specialist ownership',async()=>{
   const {runtime,m}=setup()
-  const started=await runtime.start(m,{objective:'inspect repository while keeping a process available if needed',role:'repository-explorer',scope:['src/a.ts'],processLifecycle:true})
+  const started=await runtime.start(m,{objective:'inspect repository while keeping a process available if needed',role:'repository-explorer',scope:['src/runtime/task/task-runtime.ts'],processLifecycle:true})
   const task=m.execution.tasks.find(t=>t.id===started.task_id);assert.equal(task.role,'repository-explorer')
 })
 
