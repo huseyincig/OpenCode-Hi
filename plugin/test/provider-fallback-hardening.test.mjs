@@ -40,6 +40,19 @@ test('provider failure creates a fresh child on first fallback without stagnatio
   assert.equal(m.continuation.stagnation_count,4,'provider failure does not increment reasoning stagnation')
 })
 
+test('fresh provider fallback preserves exact visual verification case and full evidence-ref result contract',async()=>{
+  const models=[{id:'p/fallback1',provider:'p',writeCapable:true,visionCapable:true,tags:['coding','balanced','vision']},{id:'p/fallback2',provider:'p',writeCapable:true,visionCapable:true,tags:['coding','balanced','vision']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const task=m.execution.tasks[0],worker=m.execution.workers[0]
+  task.role='visual-qa';task.category='visual';worker.role='visual-qa';worker.category='visual';worker.selected_methodologies=['hi-visual-qa'];worker.loaded_methodologies=['hi-visual-qa'];worker.methodologies=[{name:'hi-visual-qa',permission:'allow'}]
+  task.verification_cases=[{id:'vc_desktop-layout',subject:'desktop cards align',required_browser_actions:['viewport','screenshot','inspect']},{id:'vc_theme-persistence',subject:'theme survives reload',required_browser_actions:['click','navigate','inspect']}]
+  task.execution_profile={...task.execution_profile,role:'visual-qa',category:'visual',methodologies:['hi-visual-qa'],task:{objective:task.objective,scope:[...task.scope],dependencies:[],required_evidence:['visual-check'],verification_cases:structuredClone(task.verification_cases)},browser_backend:'bounded-playwright',browser_allowed_origins:['http://127.0.0.1:8085'],browser_required_origins:['http://127.0.0.1:8085']}
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'503 provider unavailable',isRetryable:true,statusCode:503})
+  assert.equal(settled.wakeResult,'RUNTIME_FALLBACK');assert.equal(calls.length,1)
+  const prompt=JSON.stringify(calls[0])
+  assert.match(prompt,/verification_coverage/);assert.match(prompt,/FULL_EVIDENCE_REF/);assert.match(prompt,/ENTIRE current-attempt evidence_ref string/);assert.match(prompt,/vc_desktop-layout/);assert.match(prompt,/vc_theme-persistence/);assert.match(prompt,/viewport\+screenshot\+inspect/);assert.match(prompt,/click\+navigate\+inspect/);assert.match(prompt,/prefix ev_ab12cd34 is invalid/);assert.match(prompt,/Do not substitute observation_id or screenshot_artifact_ref/)
+})
+
 test('second provider failure advances to next fallback rather than returning to prior model',async()=>{
   const {runtime,m,calls}=setup()
   assert.equal((await runtime.settleHostIdleRuntimeError(m,m.execution.workers[0],{name:'APIError',message:'503 provider unavailable',isRetryable:true,statusCode:503})).wakeResult,'RUNTIME_FALLBACK')

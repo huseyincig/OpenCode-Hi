@@ -81,6 +81,25 @@ test('cleanup reconciles a host-terminal process before marking durable state CL
   assert.equal(validateMissionEnvelope(m),true,'cleanup must never synthesize RUNNING+CLEANED from a stale pre-await contract')
 })
 
+test('cleanup is idempotent for an already durable terminal CLEANED process and never manufactures an operational blocker',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  fake.exit(p.process_id,0);await runtime.cleanup(m,p.process_id);const calls=fake.cleaned.length
+  m.execution.blockers.push(`process-cleanup:${p.process_id}`)
+  await runtime.cleanup(m,p.process_id)
+  assert.equal(fake.cleaned.length,calls,'durable CLEANED state must not re-enter a deleted host cleanup handle')
+  assert.equal(m.execution.blockers.includes(`process-cleanup:${p.process_id}`),false)
+  assert.equal(m.execution.processes.find(x=>x.process_id===p.process_id).cleanup_state,'CLEANED')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.cleanup-idempotent'&&e.payload?.process_id===p.process_id))
+})
+
+test('cleanup of a RUNNING owned process is a kill-or-exit precondition, not an operational blocker',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  await assert.rejects(()=>runtime.cleanup(m,p.process_id),/kill\/exit.*first|running process/i)
+  assert.equal(fake.cleaned.length,0)
+  assert.equal(m.execution.blockers.includes(`process-cleanup:${p.process_id}`),false)
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.cleanup-rejected-running'&&e.payload?.process_id===p.process_id))
+})
+
 test('hard-deadline running process makes continuation WAIT without reasoning stagnation and wait resolves from native promise',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo',timeout_ms:1000})
   const decision=evaluateIdle(m);assert.equal(decision.decision,'WAIT');assert.equal(decision.reason_code,'waiting-worker')

@@ -1,0 +1,6 @@
+import type {MissionTask} from '../mission/types.js'
+
+export function taskSpecificResultContractInstructions(task:MissionTask,role:string):string[]{
+  if(role!=='visual-qa'||!(task.verification_cases?.length))return[]
+  return [`VISUAL VERIFICATION CASE CONTRACT: every listed case is independently required. Return verification_coverage[] entries {case_id,outcome=passed|failed,evidence_refs:[FULL_EVIDENCE_REF],reason?}. For verification_coverage, copy the ENTIRE current-attempt evidence_ref string returned by each Hi browser tool verbatim, including its final underscore suffix; format example only: ev_ab12cd34_q1w2e3. The prefix ev_ab12cd34 is invalid and must never be used as an abbreviation. Do not substitute observation_id or screenshot_artifact_ref for verification_coverage evidence_refs. Each passed case must cite current-attempt Hi browser evidence_ref tokens whose recorded actions collectively include every required action. Missing/failed/unbound case forces FIX_REQUIRED; one general visual-evidence claim cannot substitute for case coverage. Cases: ${task.verification_cases.map(c=>`${c.id}=[${c.required_browser_actions.join('+')}] ${c.subject}`).join(' | ')}`]
+}

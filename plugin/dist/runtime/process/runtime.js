@@ -162,7 +162,31 @@ export class ProcessRuntime {
         appendLedger(m, 'process.kill-failed', { task_id: before.task_id, worker_id: before.worker_id, payload: { process_id: id, signal, error: String(error), marker } });
         throw error;
     } }
-    async cleanup(m, id) { const current = this.contract(m, id); try {
+    async cleanup(m, id) { let current = this.contract(m, id); if (current.cleanup_state === 'CLEANED' && current.status !== 'RUNNING' && current.status !== 'ORPHANED') {
+        clearProcessBlockers(m, id, ['process-cleanup']);
+        appendLedger(m, 'process.cleanup-idempotent', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, status: current.status } });
+        return;
+    } if (current.status === 'RUNNING') {
+        try {
+            const observedRaw = await this.executor.observe(id);
+            if (observedRaw.process_id !== current.process_id || observedRaw.mission_id !== current.mission_id || observedRaw.task_id !== current.task_id || observedRaw.worker_id !== current.worker_id)
+                throw new Error(`Hi process cleanup observation identity mismatch: ${id}`);
+            const observed = mergeProcessTargetAuthority(current, observedRaw);
+            if (observed.status !== 'RUNNING')
+                current = this.noteExit(m, observed);
+            else
+                current = observed;
+        }
+        catch (error) {
+            const marker = `process-cleanup:${id}`;
+            addProcessBlocker(m, marker);
+            appendLedger(m, 'process.cleanup-failed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, error: String(error), marker, phase: 'preflight-observe' } });
+            throw error;
+        }
+    } if (current.status === 'RUNNING') {
+        appendLedger(m, 'process.cleanup-rejected-running', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, status: current.status, required_action: 'kill-or-exit-before-cleanup' } });
+        throw new Error(`Refusing cleanup of running process ${id}; kill/exit must occur first`);
+    } try {
         const cleaned = await this.executor.cleanup(id);
         if (cleaned.process_id !== current.process_id || cleaned.mission_id !== current.mission_id || cleaned.task_id !== current.task_id || cleaned.worker_id !== current.worker_id)
             throw new Error(`Hi process cleanup identity mismatch: ${id}`);
@@ -175,7 +199,7 @@ export class ProcessRuntime {
     catch (error) {
         const marker = `process-cleanup:${id}`;
         addProcessBlocker(m, marker);
-        appendLedger(m, 'process.cleanup-failed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, error: String(error), marker } });
+        appendLedger(m, 'process.cleanup-failed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, error: String(error), marker, phase: 'terminal-cleanup' } });
         throw error;
     } }
     async settleTaskOwner(m, taskID, workerID) { let settled = 0; const owned = [...m.execution.processes].filter(process => process.task_id === taskID && process.worker_id === workerID && process.cleanup_state !== 'CLEANED'); for (const process of owned) {
