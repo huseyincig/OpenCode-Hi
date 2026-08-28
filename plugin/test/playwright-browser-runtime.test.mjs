@@ -75,6 +75,16 @@ test('browser health fails closed when Chromium cannot actually launch',async()=
   }finally{rmSync(base,{recursive:true,force:true})}
 })
 
+test('browser session is replaced when the same owner gains a new allowed origin',async()=>{
+  const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
+  const first=ctx('t-origin-plan','m:w:child:g1',['http://127.0.0.1:8000']),expanded=ctx('t-origin-plan','m:w:child:g1',['http://127.0.0.1:8000','http://127.0.0.1:44899'])
+  await adapter.open(first,'http://127.0.0.1:8000/')
+  const preview=await adapter.open(expanded,'http://127.0.0.1:44899/index.html')
+  assert.equal(preview.result,'OBSERVED');assert.equal(pw.sessions.length,2,'origin-plan expansion must replace the route closure instead of reusing its stale allowlist')
+  assert.equal(pw.sessions[0].page.closed,true,'stale allowlist session must be closed before preview navigation')
+  await adapter.dispose()
+})
+
 test('browser session state cannot cross execution-owner identity for the same Task',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   const first=ctx('t-owner','m:w:child-a:g1'),second=ctx('t-owner','m:w:child-b:g2')

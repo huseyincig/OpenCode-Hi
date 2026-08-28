@@ -58,6 +58,7 @@ catch {
     throw new Error('Browser URL must use http(s)'); if (u.username || u.password)
     throw new Error('Browser credentials in URL are forbidden'); if (!localHost(u.hostname))
     throw new Error(`Browser target is outside supported local scope: ${u.origin}`); return u.toString(); }
+function allowedOriginPlan(c) { return [...new Set(c.allowed_origins ?? [])].sort().join('\n'); }
 function plannedUrl(c, value) { const url = safeLocalUrl(value), origin = new URL(url).origin, allowed = new Set(c.allowed_origins ?? []); if (!allowed.size)
     throw new Error('Browser task has no allowed-origin plan'); if (!allowed.has(origin))
     throw new Error(`Browser target origin is outside the task plan: ${origin}`); return url; }
@@ -138,11 +139,11 @@ export class PlaywrightBrowserAdapter {
             throw error;
         }
     } this.discardSession(taskID, s); return 'closed'; }
-    async ensure(c) { const current = this.sessions.get(c.task_id); if (current && !this.browserConnected(current))
+    async ensure(c) { const current = this.sessions.get(c.task_id), originPlan = allowedOriginPlan(c); if (current && !this.browserConnected(current))
         this.discardSession(c.task_id, current);
     else if (current && (current.invalidReason || this.pageClosed(current)))
         await this.closeSession(c.task_id, current, true);
-    else if (current && current.executionOwnerRef === c.execution_owner_ref)
+    else if (current && current.executionOwnerRef === c.execution_owner_ref && current.allowedOriginPlan === originPlan)
         return current;
     else if (current)
         await this.closeSession(c.task_id, current, true); if (!c.execution_owner_ref.trim())
@@ -159,7 +160,7 @@ export class PlaywrightBrowserAdapter {
         catch {
             await route.abort('blockedbyclient');
         } });
-        const page = await context.newPage(), s = { browser, page, refs: new Map(), consoleErrors: [], networkErrors: [], executionOwnerRef: c.execution_owner_ref, launchTempRoot };
+        const page = await context.newPage(), s = { browser, page, refs: new Map(), consoleErrors: [], networkErrors: [], executionOwnerRef: c.execution_owner_ref, allowedOriginPlan: originPlan, launchTempRoot };
         page.setDefaultTimeout(this.timeoutMs);
         page.on('console', (msg) => { if (msg.type() === 'error')
             s.consoleErrors.push(bounded(String(msg.text()), 1000)); if (s.consoleErrors.length > MAX_ERRORS)
