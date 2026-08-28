@@ -64,6 +64,27 @@ test('automatic selection uses bounded recovery-only candidate after native prov
   assert.match(worker.fallback_history.at(-1).reason,/bounded automatic recovery candidate/);assert.equal(m.execution.blockers.some(x=>x.startsWith('provider-failure:')),false)
 })
 
+test('native required-tool-choice compatibility APIError uses one bounded automatic recovery candidate',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['visual capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
+  m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/recovery':'high'}
+  const error={name:'APIError',message:'Upstream request failed: [invalid_request_error] only `\"auto\"` is supported for `tool_choice`. `\"none\"`, `\"required\"`, and named function choices are not currently supported',isRetryable:false,statusCode:400}
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,error)
+  assert.equal(settled.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/recovery');assert.equal(worker.session_id,'recovery-1');assert.equal(calls.length,1)
+  assert.match(worker.fallback_history.at(-1).reason,/bounded automatic recovery candidate/);assert.match(worker.fallback_history.at(-1).reason,/failure=provider-transport/)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.failure.classified'&&e.payload?.reason==='opencode-required-tool-choice-compatibility-fallback-eligible'))
+})
+
+test('explicit task model does not gain automatic authority from required-tool-choice compatibility failure',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['ephemeral automatic selection'];worker.requested_model='p/primary'
+  const error={name:'APIError',message:'only `\"auto\"` is supported for `tool_choice`; `\"required\"` and named function choices are not currently supported',isRetryable:false,statusCode:400}
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,error)
+  assert.equal(settled.wakeResult,'BLOCKED');assert.equal(calls.length,0);assert.equal(worker.model,'p/primary');assert.ok(m.execution.blockers.some(x=>x.startsWith('provider-failure:provider-transport:')))
+})
+
 test('explicit task model never gains automatic recovery authority from recovery_candidates',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
   const {runtime,m,calls}=setup(async()=>{},true,models)

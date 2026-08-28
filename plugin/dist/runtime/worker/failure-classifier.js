@@ -11,6 +11,14 @@ export function classifyWorkerFailure(error) {
     if (name === 'MessageAbortedError')
         return { kind: 'unknown', stagnation: false, retryable: false, reason: 'opencode-message-aborted' };
     if (name === 'APIError') {
+        // OpenCode's native json_schema WorkerResult transport requires tool_choice=required.
+        // Provider inventory exposes generic tool-call capability but not supported tool-choice
+        // modes, so an auto-only provider can be discovered only from this terminal wire error.
+        // Keep ordinary 4xx failures nonretryable; only this exact protocol incompatibility may
+        // consume an already-authorized alternate-model recovery candidate.
+        const requiredToolChoiceIncompatible = /tool[_\s-]?choice/.test(text) && /only\s+[`"'\\]*auto[`"'\\]*\s+is\s+supported/.test(text) && /(?:required|named\s+function)/.test(text) && /(?:not\s+(?:currently\s+)?supported|unsupported)/.test(text);
+        if (requiredToolChoiceIncompatible)
+            return { kind: 'provider-transport', stagnation: false, retryable: true, reason: 'opencode-required-tool-choice-compatibility-fallback-eligible' };
         const fallbackEligible = observed.isRetryable === true || observed.statusCode === 429 || (observed.statusCode !== undefined && observed.statusCode >= 500);
         return { kind: 'provider-transport', stagnation: false, retryable: fallbackEligible, reason: fallbackEligible ? 'opencode-terminal-api-error-fallback-eligible' : 'opencode-terminal-api-error-nonretryable' };
     }
