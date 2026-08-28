@@ -87,6 +87,7 @@ test('repository explorer handoff projects clearance result contract without pol
     const out=await runtime.start(m,{objective:'inspect current repository source',role:'repository-explorer',scope:[EXISTING_REPO_SCOPE],obligationIds:[analysis.id]})
     const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task);assert.equal(task.requiredEvidence.includes('source-provenance-evidence'),false);assert.equal(task.requiredEvidence.includes('decision-evidence'),false);assert.equal(task.execution_profile.task.required_evidence.includes('source-provenance-evidence'),false)
     const handoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.match(handoff,/EXPLORATION CLEARANCE RESULT CONTRACT/);assert.match(handoff,/source-provenance-evidence/);assert.match(handoff,/HI_SOURCE_READ_RECEIPT evidence_ref/);assert.match(handoff,/evidence_refs/)
+    assert.match(handoff,/status=\"DONE\"/);assert.match(handoff,/open_issues=\[\], needs_context=\[\]/);assert.match(handoff,/limited to files inside this task SCOPE/);assert.match(handoff,/ancillary context reads outside task SCOPE must not be added/);assert.match(handoff,/downstream implementation work, verification work, recommendations, or handoff notes belong in summary and are not open issues/)
     if(critical)assert.match(handoff,/CONTRACT-CRITICAL EXPLORATION/);else assert.doesNotMatch(handoff,/CONTRACT-CRITICAL EXPLORATION/)
   }
 })
@@ -102,6 +103,7 @@ test('repository explorer corrective resume stays read-only without reviewer fin
   const resume=String(prompts[1]?.body?.parts?.[0]?.text??'')
   assert.match(resume,/read-only (?:analyzer|explorer)/i);assert.match(resume,/Do not mutate repository state/)
   assert.match(resume,/return DONE/i);assert.match(resume,/source-provenance-evidence/i)
+  assert.match(resume,/canonical task scope/);assert.match(resume,/ancillary reads are context only/);assert.match(resume,/downstream implementation\/verification recommendations belong in summary and must not keep analysis open/)
   assert.doesNotMatch(resume,/ReviewFinding|finding ids MUST use rf-|finding evidence_refs/i)
 })
 
