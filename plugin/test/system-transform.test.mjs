@@ -115,9 +115,9 @@ test('pending semantic gate distinguishes material implementation scope from ver
   const output = { system: [] }
   await hook({ sessionID: 's-semantic-coherence' }, output)
   const text=output.system.join('\n')
-  assert.match(text,/scope and dependency_class describe material implementation\/change work units/)
-  assert.match(text,/test files that the user says must remain unchanged/)
-  assert.match(text,/one implementation change followed by verification is not a sequential dependency/)
+  assert.match(text,/scope\/dependency describe material change units/)
+  assert.match(text,/user-unchanged test files excluded/)
+  assert.match(text,/one change\+verification != sequential/)
   assert.match(text,/task_kind=implementation\|bug-fix\|diagnosis\|review/)
   assert.match(text,/diagnosis is read-only root cause\/no fix/)
   assert.match(text,/otherwise intent\.debugging requires material diagnosis \+ repository-analysis/)

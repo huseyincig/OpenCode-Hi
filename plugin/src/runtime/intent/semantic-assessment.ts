@@ -30,6 +30,7 @@ export interface SemanticIntentAssessment{
   user_verification:SemanticVerificationKind[]
   verification_ceiling:boolean
   verification_cases:VerificationCase[]
+  nonvisual_request_units:string[]
   likely_targets:string[]
   intent_signals:HiMethodologySignalName[]
   suppressed_intent_signals:HiMethodologySignalName[]
@@ -122,6 +123,7 @@ export function provisionalIntent(text:string,repo?:RepoContext):NormalizedMissi
 }
 function stringList(value:unknown,max=40):string[]{return Array.isArray(value)?[...new Set(value.filter(x=>typeof x==='string').map(x=>String(x).trim()).filter(Boolean))].slice(0,max):[]}
 function enumList<T extends readonly string[]>(value:unknown,allowed:T,max=40,field='semantic_enum'):T[number][]{const items=stringList(value,max),set=new Set<string>(allowed),unknown=items.filter(x=>!set.has(x));if(unknown.length)throw new Error(`unsupported ${field} value(s): ${unknown.join(', ')}`);return items as T[number][]}
+function requestUnitIdList(value:unknown,max=24):string[]{const items=stringList(value,max),invalid=items.filter(id=>!/^ru[1-9][0-9]*$/.test(id));if(invalid.length)throw new Error(`invalid nonvisual_request_units id(s): ${invalid.join(', ')}`);return items}
 function intentSignalList(value:unknown):HiMethodologySignalName[]{
   const items=stringList(value,40),invalid=items.filter(name=>{
     const spec=(HI_METHODOLOGY_SIGNAL_CATALOG as Record<string,{producers:readonly string[]}>)[name]
@@ -162,12 +164,12 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:taskKind,scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
-    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>{const issue=verificationCaseValidationError(item);if(issue)throw new Error(`verification_cases[${index}]: ${issue}`);return item as VerificationCase}):[],likely_targets:semanticTargets(v.likely_targets,20),
+    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>{const issue=verificationCaseValidationError(item);if(issue)throw new Error(`verification_cases[${index}]: ${issue}`);return item as VerificationCase}):[],nonvisual_request_units:requestUnitIdList(v.nonvisual_request_units),likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],
   }
   if(messageKind!=='constraint'&&assessment.constraint_atoms.length)throw new Error('constraint_atoms are allowed only for message_kind=constraint')
-  const visualRequired=assessment.likely_verification.includes('visual-check');if(visualRequired&&!assessment.verification_cases.length&&!['resume','constraint'].includes(messageKind))throw new Error('visual-check requires non-empty verification_cases');if(!visualRequired&&assessment.verification_cases.length)throw new Error('verification_cases require visual-check');const caseIDs=assessment.verification_cases.map(c=>c.id);if(new Set(caseIDs).size!==caseIDs.length)throw new Error('verification_cases ids must be unique')
+  const visualRequired=assessment.likely_verification.includes('visual-check');if(visualRequired&&!assessment.verification_cases.length&&!['resume','constraint'].includes(messageKind))throw new Error('visual-check requires non-empty verification_cases');if(!visualRequired&&assessment.verification_cases.length)throw new Error('verification_cases require visual-check');if(!visualRequired&&assessment.nonvisual_request_units.length)throw new Error('nonvisual_request_units require visual-check');const caseIDs=assessment.verification_cases.map(c=>c.id);if(new Set(caseIDs).size!==caseIDs.length)throw new Error('verification_cases ids must be unique')
   const materialTargets=materialSemanticTargets(assessment),localSequential=assessment.scope==='local'&&assessment.dependency_class==='sequential',boundedSingleMaterialTarget=assessment.scope==='multi-file'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&materialTargets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))
   const materialChange=['implementation','bug-fix','performance'].includes(assessment.task_kind),resolvedMultiFile=materialChange&&assessment.scope==='multi-file'&&assessment.ambiguity==='none',resolvedLocal=materialChange&&assessment.scope==='local'&&assessment.ambiguity==='none'
   if(resolvedMultiFile&&materialTargets.length<2&&!boundedSingleMaterialTarget)throw new Error('multi-file ambiguity=none material change requires at least two material targets')
@@ -176,5 +178,5 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
 }
 export function assessedIntent(current:NormalizedMissionIntent,assessment:SemanticIntentAssessment):NormalizedMissionIntent{
   const initialMission=assessment.message_kind==='mission'
-  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:(initialMission?undefined:current.likelyTargets),taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification],verificationCases:(assessment.verification_cases??[]).length?(assessment.verification_cases??[]).map(c=>({...c,required_browser_actions:[...c.required_browser_actions]})):(assessment.message_kind==='resume'||assessment.message_kind==='constraint'?current.verificationCases:[])}
+  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:(initialMission?undefined:current.likelyTargets),taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification],verificationCases:(assessment.verification_cases??[]).length?(assessment.verification_cases??[]).map(c=>({...c,required_browser_actions:[...c.required_browser_actions],...(c.source_units?.length?{source_units:[...c.source_units]}:{})})):(assessment.message_kind==='resume'||assessment.message_kind==='constraint'?current.verificationCases:[])}
 }

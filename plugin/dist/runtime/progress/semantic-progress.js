@@ -28,7 +28,7 @@ export function semanticProgressSnapshot(m) {
     ]);
     const terminalProcesses = sorted(m.execution.processes.filter(p => p.status !== 'RUNNING').map(p => `${p.process_id}:${p.status}:${p.exit_code ?? ''}:${p.cleanup_state}`));
     const semanticState = {
-        obligations: m.execution.obligations.map(o => [o.id, o.status, (o.verificationCases ?? []).map(c => [c.id, [...c.required_browser_actions].sort()])]),
+        obligations: m.execution.obligations.map(o => [o.id, o.status, (o.verificationCases ?? []).map(c => [c.id, [...c.required_browser_actions].sort(), [...(c.source_units ?? [])].sort()])]),
         tasks: m.execution.tasks.map(t => [t.id, t.status, t.result?.status, sorted(t.result?.open_issues ?? []), sorted(t.result?.needs_context ?? []), sorted(t.dependencies)]),
         workers: m.execution.workers.map(w => [w.id, w.status, w.model, w.model_variant, w.attempt ?? 0, w.runtime_recovery_attempt ?? 0, w.last_runtime_failure_kind]),
         processes: m.execution.processes.map(p => [p.process_id, p.status, p.cleanup_state, p.exit_code]),

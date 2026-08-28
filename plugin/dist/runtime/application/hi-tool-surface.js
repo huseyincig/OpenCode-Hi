@@ -5,6 +5,7 @@ import { formatUserMissionStatus } from '../ledger/status.js';
 import { evaluatePreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
 import { clearCapabilityUnavailable, firstCapabilityBlocker, markCapabilityUnavailable } from '../readiness/capability-failure.js';
 import { parseSemanticIntentAssessment } from '../intent/semantic-assessment.js';
+import { assertVerificationRequestTrace } from '../intent/request-units.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { redactProviderContext } from '../privacy/boundary.js';
@@ -226,6 +227,7 @@ export function createHiToolSurface(input) {
             return JSON.stringify({ status: 'ALREADY_ASSESSED', revision: m.identity.semantic_assessment.revision }); if (Number(a.revision) !== m.identity.semantic_assessment.revision)
             return JSON.stringify({ status: 'STALE_ASSESSMENT', expected_revision: m.identity.semantic_assessment.revision }); try {
             const assessment = parseSemanticIntentAssessment(String(a.assessment_json)), phase = m.identity.semantic_assessment.phase, pendingText = m.identity.semantic_assessment.pending_text;
+            assertVerificationRequestTrace(pendingText, assessment);
             const next = phase === 'initial' ? store.applyInitialSemanticAssessment(c.sessionID, assessment) : store.applyFollowupSemanticAssessment(c.sessionID, assessment);
             let reconciledWorkers = 0;
             if (phase === 'followup') {

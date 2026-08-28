@@ -12,7 +12,7 @@ import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
-function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions] })) } : {}) }; }
+function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) } : {}) }; }
 function explicitTestFirstRequested(text) {
     const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
     if (!normalized)
@@ -340,7 +340,7 @@ export class MissionStore {
                 verify.status = 'open';
                 verify.closedAt = undefined;
                 verify.requiredEvidence = [...effectiveAssessment.likely_verification];
-                verify.verificationCases = (effectiveAssessment.verification_cases ?? []).map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions] }));
+                verify.verificationCases = (effectiveAssessment.verification_cases ?? []).map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) }));
                 verify.summary = `${verify.summary}; ${text.slice(0, 300)}`.slice(0, 700);
             }
         }

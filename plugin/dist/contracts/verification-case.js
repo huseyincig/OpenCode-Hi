@@ -3,7 +3,7 @@ const ACTIONS = new Set(BROWSER_OBSERVATION_ACTIONS);
 export function verificationCaseValidationError(v) {
     if (!v || typeof v !== 'object' || Array.isArray(v))
         return 'must be an object';
-    const x = v, keys = Object.keys(x), unknown = keys.filter(k => !['id', 'subject', 'required_browser_actions'].includes(k));
+    const x = v, keys = Object.keys(x), unknown = keys.filter(k => !['id', 'subject', 'required_browser_actions', 'source_units'].includes(k));
     if (unknown.length)
         return `unsupported field(s): ${unknown.join(', ')}`;
     if (typeof x.id !== 'string' || !/^vc_[a-z0-9][a-z0-9-]{0,47}$/.test(x.id))
@@ -19,6 +19,15 @@ export function verificationCaseValidationError(v) {
     const invalid = x.required_browser_actions.find(a => typeof a !== 'string' || !ACTIONS.has(a));
     if (invalid !== undefined)
         return `required_browser_actions contains unsupported action: ${String(invalid)}`;
+    if (x.source_units !== undefined) {
+        if (!Array.isArray(x.source_units) || x.source_units.length === 0 || x.source_units.length > 24)
+            return 'source_units must contain 1..24 request-unit ids (ruN)';
+        if (new Set(x.source_units).size !== x.source_units.length)
+            return 'source_units must not contain duplicates';
+        const invalidUnit = x.source_units.find(id => typeof id !== 'string' || !/^ru[1-9][0-9]*$/.test(id));
+        if (invalidUnit !== undefined)
+            return `source_units contains invalid request-unit id: ${String(invalidUnit)}`;
+    }
     return undefined;
 }
 export function isVerificationCase(v) { return verificationCaseValidationError(v) === undefined; }
