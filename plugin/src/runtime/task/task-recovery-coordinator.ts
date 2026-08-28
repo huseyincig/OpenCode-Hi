@@ -18,7 +18,7 @@ import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js'
 import {EMPTY_PROJECT_SCHEDULING_PEER_VIEW,type ProjectSchedulingPeerView} from '../scheduler/project-peer-view.js'
 import { ChildExecutionCoordinator,type ChildWorkspaceBinding } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
-import { recordRecoveryStrategy,recoveryModelHazard } from '../continuation/recovery-governor.js'
+import { recordRecoveryStrategy,recoveryModelHazard,recoveryStrategyEligibility } from '../continuation/recovery-governor.js'
 import type { MissionLivenessAssessment } from '../liveness/assessment.js'
 
 export type ChildCallbackDisposition='accept'|'stale-mission'
@@ -43,6 +43,7 @@ export class TaskRecoveryCoordinator{
     const worker=latestRecoverableWorker(m)
     if(!worker?.session_id)return false
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return false
+    if(action==='same-worker-resume'){const eligibility=recoveryStrategyEligibility(m,{level:level as 1|2,action});if(!eligibility.allowed){appendLedger(m,'worker.stagnation-recovery.rejected',{task_id:task.id,worker_id:worker.id,payload:{level,action,reason:eligibility.reason,progress_signature:eligibility.progress_signature}});return false}}
     let exactStatus:'idle'|'busy'|'retry'|'unknown'='unknown';try{exactStatus=await this.child.status(worker.session_id)}catch{}if(exactStatus!=='idle'){appendLedger(m,'worker.stagnation-recovery.deferred',{task_id:task.id,worker_id:worker.id,payload:{reason:'exact-old-execution-not-quiescent',host_status:exactStatus,generation:m.continuation.generation}});return false}
     try{this.workspaceBinding?.(m,task.id)}catch(error){const marker=`workspace-orphan:${task.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];appendLedger(m,'worker.recovery.workspace-blocked',{task_id:task.id,worker_id:worker.id,payload:{error:String(error)}});return false}
     const model=worker.model,variant=worker.model_variant
@@ -61,13 +62,13 @@ export class TaskRecoveryCoordinator{
         if(!child?.id)throw new Error('Behavioral recovery child session id missing')
         const recoverySessionID=String(child.id);worker.session_id=recoverySessionID;worker.forked_from_session_id=previousSession
         const bound=bindTaskRuntimeHost(m,worker.id,recoverySessionID);if(!bound.accepted)throw new Error(`Scheduler host binding failed during behavioral recovery: ${bound.reason}`)
-        worker.loaded_methodologies=[];worker.model=next;worker.model_variant=nextVariant;worker.fallback_history=[...(worker.fallback_history??[]),{from:model,to:next,variant:nextVariant,reason:'recovery-only model escalation after two same-model corrections without semantic gain',phase:'runtime',at:Date.now()}];worker.status='busy';worker.generation_at_spawn=m.continuation.generation;worker.parent_mission_id=m.identity.mission_id;worker.started_at=Date.now();task.status='running';this.registry.set(worker)
+        worker.loaded_methodologies=[];worker.model=next;worker.model_variant=nextVariant;worker.fallback_history=[...(worker.fallback_history??[]),{from:model,to:next,variant:nextVariant,reason:'recovery-only model escalation after one repeated same-failure correction without semantic gain',phase:'runtime',at:Date.now()}];worker.status='busy';worker.generation_at_spawn=m.continuation.generation;worker.parent_mission_id=m.identity.mission_id;worker.started_at=Date.now();task.status='running';this.registry.set(worker)
         recordPreexistingUserBaseline(m,await this.child.captureNativeDiff(worker,'baseline'))
         const exitRequirements=worker.selected_methodologies.flatMap(name=>{const item=methodologyCatalog(this.projectRoot).find(x=>x.name===name);return item?[`${name}: ${item.exitRequirements.join(', ')}`]:[]})
-        const prompt=clipText([ownershipContract('child',worker.selected_methodologies),`Hi behavioral recovery for existing task ${task.id}.`,`The prior model ${model} received two bounded corrective attempts without semantic progress.`,`Recovery model: ${next}. This is recovery-only and does not change user routing preferences.`,`OBJECTIVE: ${task.objective}`,`SCOPE: ${task.scope.join(', ')||'bounded by objective'}`,`CURRENT USER CONSTRAINTS: ${(task.constraints??[]).join(' | ')||'none'}.`,`OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ')||'none'}`,`METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ')||'none'}`,worker.selected_methodologies.length?'Fresh context: reload every still-selected methodology through the native skill tool before applying it.':'No methodology is selected for this recovery.','Independently inspect the minimum current repository/evidence state needed to continue the SAME task. Do not trust or repeat the prior model strategy, do not restart top-level planning, and return the normal structured WorkerResult.'].join('\n'),DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
+        const prompt=clipText([ownershipContract('child',worker.selected_methodologies),`Hi behavioral recovery for existing task ${task.id}.`,`The prior model ${model} received one bounded corrective attempt that returned the same normalized failure without semantic progress.`,`Recovery model: ${next}. This is recovery-only and does not change user routing preferences.`,`OBJECTIVE: ${task.objective}`,`SCOPE: ${task.scope.join(', ')||'bounded by objective'}`,`CURRENT USER CONSTRAINTS: ${(task.constraints??[]).join(' | ')||'none'}.`,`OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ')||'none'}`,`METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ')||'none'}`,worker.selected_methodologies.length?'Fresh context: reload every still-selected methodology through the native skill tool before applying it.':'No methodology is selected for this recovery.','Independently inspect the minimum current repository/evidence state needed to continue the SAME task. Do not trust or repeat the prior model strategy, do not restart top-level planning, and return the normal structured WorkerResult.'].join('\n'),DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
         beginWorkerAttempt(task,worker);await this.child.sendProviderPrompt(recoverySessionID,prompt,worker.role,next==='host-default'?undefined:next,nextVariant,taskPromptToolOverrides(task.execution_profile?.tools??[],this.getHostConfig(),task.execution_profile?.mcp_servers??[]),worker.attempt_prompt_message_id)
-        recordRecoveryStrategy(m,{level:3,action:'model-escalation'},'started',Date.now(),{task_id:task.id,worker_id:worker.id,model, failure_signature:worker.last_runtime_failure_kind})
-        appendLedger(m,'worker.behavioral-model-escalation',{task_id:task.id,worker_id:worker.id,payload:{level,action,from:model,to:next,from_session:previousSession,to_session:recoverySessionID,generation:m.continuation.generation,reason:'same-model-bounded-corrections-exhausted'}})
+        recordRecoveryStrategy(m,{level:3,action:'model-escalation'},'started',Date.now(),{task_id:task.id,worker_id:worker.id,model,failure_signature:hazard.failure_signature})
+        appendLedger(m,'worker.behavioral-model-escalation',{task_id:task.id,worker_id:worker.id,payload:{level,action,from:model,to:next,from_session:previousSession,to_session:recoverySessionID,generation:m.continuation.generation,reason:'same-model-same-failure-correction-exhausted'}})
         void this.events?.(runtimeSignal('worker.recovered',m.identity.mission_id,{task_id:task.id,worker_id:worker.id,payload:{level,action,from:model,to:next}}))
         return true
       }catch(error){
@@ -77,7 +78,7 @@ export class TaskRecoveryCoordinator{
         return false
       }
     }
-    const previousWorkerStatus=worker.status,previousTaskStatus=task.status
+    const previousWorkerStatus=worker.status,previousTaskStatus=task.status,sameModelFailureSignature=recoveryModelHazard(m).failure_signature
     worker.status='ready';task.status='waiting'
     if(taskRuntimeAdmittedModel(m,worker,[model],this.scheduler,this.getProjectPeerView(m))!==model){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
     const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler,Date.now(),this.getProjectPeerView(m));if(!reservation.accepted){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
@@ -89,7 +90,7 @@ export class TaskRecoveryCoordinator{
         ?'Hi stagnation recovery: continue the SAME task/session with one narrowly scoped corrective attempt. Preserve completed work and evidence. Do not restart planning.'
         :'Hi stagnation recovery: continue the SAME task/session/model, but use a materially different corrective hypothesis or action from the prior attempt. Preserve completed work and evidence. Do not restart planning or change models.'
       beginWorkerAttempt(task,worker);this.child.recordModelProjection(worker,model,variant);await this.child.sendProviderPrompt(worker.session_id,clipText(`${instruction}\nReturn the normal structured WorkerResult.`,DEFAULT_CONTEXT_BUDGET.max_handoff_chars),worker.role,model==='host-default'?undefined:model,variant,taskPromptToolOverrides(task.execution_profile?.tools??[],this.getHostConfig(),task.execution_profile?.mcp_servers??[]),worker.attempt_prompt_message_id)
-      recordRecoveryStrategy(m,{level:level as 1|2,action},'started',Date.now(),{task_id:task.id,worker_id:worker.id,model,failure_signature:worker.last_runtime_failure_kind})
+      recordRecoveryStrategy(m,{level:level as 1|2,action},'started',Date.now(),{task_id:task.id,worker_id:worker.id,model,failure_signature:sameModelFailureSignature})
       appendLedger(m,'worker.stagnation-recovery',{task_id:task.id,worker_id:worker.id,payload:{level,action,from:previous,to:model,variant,generation:m.continuation.generation}})
       void this.events?.(runtimeSignal('worker.recovered',m.identity.mission_id,{task_id:task.id,worker_id:worker.id,payload:{level,action,from:previous,to:model,variant}}))
       return true

@@ -105,7 +105,7 @@ export function runSchedulerEconomicsBenchmarks():SchedulerEconomicsResult[]{
   const admitted=evaluateSchedulingResourceCapacity({...capacity,running:[]},'w2',{provider:'alpha',model:'alpha/m2'})
   const reasonText=(x:ReturnType<typeof evaluateSchedulingResourceCapacity>)=>x.ok?'ready':`${x.reason?.code??'blocked'}${x.reason?.detail?`:${x.reason.detail}`:''}`
 
-  const recoveryMission={continuation:{stagnation_count:1}} as MissionState
+  const recoveryMission={continuation:{stagnation_count:1,generation:1,recovery_history:[]},execution:{workers:[],tasks:[],obligations:[]},authority:{},release:{}} as unknown as MissionState
   const same=recoveryPlan(recoveryMission)
   recoveryMission.continuation.stagnation_count=2
   const escalated=recoveryPlan(recoveryMission)
@@ -132,7 +132,7 @@ export interface RecoveryGovernorAblationResult{
 }
 /** Counterfactual policy ablation: old counter-only selection vs semantic-state strategy fencing. */
 export function runRecoveryGovernorAblation():RecoveryGovernorAblationResult{
-  const base={continuation:{stagnation_count:1,generation:1,last_progress_signature:'deadbeef',recovery_history:[]},authority:{},release:{}} as unknown as MissionState
+  const base={continuation:{stagnation_count:1,generation:1,last_progress_signature:'deadbeef',recovery_history:[]},execution:{workers:[],tasks:[],obligations:[]},authority:{},release:{}} as unknown as MissionState
   const baselineFirst=recoveryPlan({...base,continuation:{...base.continuation,recovery_history:[]}} as MissionState),baselineSecond=recoveryPlan({...base,continuation:{...base.continuation,recovery_history:[]}} as MissionState)
   const governedMission=structuredClone(base),first=recoveryPlan(governedMission);recordRecoveryStrategy(governedMission,first,'started',1);const second=recoveryPlan(governedMission)
   const fresh=structuredClone(base),freshFirst=recoveryPlan(fresh)

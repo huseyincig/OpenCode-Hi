@@ -20,7 +20,7 @@ export interface HostEvent{
 }
 export interface HostAssistantError{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
 export interface HostAssistantActivity{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}
-export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;activity?:HostAssistantActivity;error?:HostAssistantError}
+export interface HostAssistantResult{text:string;structured?:unknown;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;activity?:HostAssistantActivity;error?:HostAssistantError}
 export interface HostCapabilityView{
   childSessions:boolean;asyncPrompt:boolean;syncPrompt:boolean;abort:boolean;providerInventory:boolean;appLog:boolean
   sessionStatus:boolean;childSessionList:boolean;sessionTodo:boolean;sessionDiff:boolean;sessionFork:boolean;sessionSummarize:boolean;sessionRevert:boolean;sessionUnrevert:boolean
@@ -42,10 +42,11 @@ export interface ChildWorkspaceRequest{workspaceID:string;directory:string}
 export interface ChildSessionCreateRequest{parentSessionID:string;title:string;role:string;model?:string;variant?:string;workspace?:ChildWorkspaceRequest;forkFromSession?:string}
 export interface ChildSessionCreateResult{child:{id?:string;workspaceID?:string;directory?:string};fork:{requested:boolean;nativeAvailable:boolean;used:false;reason?:string}}
 export type HostChildSessionStatus='idle'|'busy'|'retry'|'unknown'
+export type HostPromptFormat={type:'text'}|{type:'json_schema';schema:Record<string,unknown>;retryCount?:number}
 export interface ChildSessionPort{
-  capabilities:{create:boolean;prompt:boolean;abort:boolean;status:boolean;diff:boolean;summarize:boolean;fork:boolean}
+  capabilities:{create:boolean;prompt:boolean;abort:boolean;status:boolean;diff:boolean;summarize:boolean;fork:boolean;structuredOutput?:boolean}
   create(request:ChildSessionCreateRequest):Promise<ChildSessionCreateResult>
-  prompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>,messageID?:string):Promise<unknown>
+  prompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>,messageID?:string,format?:HostPromptFormat):Promise<unknown>
   abort(sessionID:string):Promise<'server'|'server-reconciled'|'client'|'client-reconciled'|'unavailable'>
   status(sessionID:string):Promise<HostChildSessionStatus>
   diff(sessionID:string):Promise<unknown>

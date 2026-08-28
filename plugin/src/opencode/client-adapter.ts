@@ -1,6 +1,7 @@
 import type { OpenCodeClient } from './types.js'
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client'
 import { EMPTY_TOKEN_USAGE,addTokenUsage,type ExecutionTokenUsage,type HostUsageObservation } from '../contracts/execution-usage.js'
+import type { HostPromptFormat } from '../runtime/host/port.js'
 export function dataOf<T=any>(value:any):T { return (value && typeof value==='object' && 'data' in value) ? value.data as T : value as T }
 
 // `prompt_async` is an immediate OpenCode host-acceptance mutation. This bounds only that acknowledgement; provider execution remains OpenCode-owned.
@@ -36,9 +37,9 @@ export function modelIdentity(model?:string):{providerID:string;modelID:string}|
   return{providerID:model.slice(0,slash),modelID:model.slice(slash+1)}
 }
 
-export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,text:string,agent?:string,model?:string,variant?:string,tools?:Record<string,boolean>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS,messageID?:string):Promise<void>{
+export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,text:string,agent?:string,model?:string,variant?:string,tools?:Record<string,boolean>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS,messageID?:string,format?:HostPromptFormat):Promise<void>{
   const edge=client as any
-  const body:any={parts:[{type:'text',text}]};if(messageID)body.messageID=messageID;if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant;if(tools&&Object.keys(tools).length)body.tools=tools
+  const body:any={parts:[{type:'text',text}]};if(messageID)body.messageID=messageID;if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant;if(tools&&Object.keys(tools).length)body.tools=tools;if(format)body.format=format
   if(typeof edge?.session?.promptAsync==='function'){const result=await awaitPromptAsyncAck(signal=>edge.session.promptAsync({path:{id:sessionID},body,signal,throwOnError:true}),`session.prompt_async:${sessionID}`,ackTimeoutMs);assertMutationAccepted(result,`session.prompt_async:${sessionID}`);return}
   if(typeof edge?.session?.prompt==='function'){const result=await edge.session.prompt({path:{id:sessionID},body,throwOnError:true});assertMutationAccepted(result,`session.prompt:${sessionID}`);return}
   throw new Error('OpenCode session prompt API unavailable')
@@ -143,6 +144,7 @@ export async function listAvailableModels(endpoint:OpenCodeLifecycleEndpoint={})
 }
 export function eventSessionID(event:any):string|undefined{return event?.properties?.sessionID??event?.properties?.sessionId??event?.properties?.id??event?.properties?.info?.id??event?.sessionID}
 export function lastAssistantText(messages:any[]):string{for(let i=messages.length-1;i>=0;i--){const msg=messages[i];const info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;const parts=msg?.parts??info?.parts??[];const text=parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim();if(text)return text}return''}
+export function lastAssistantStructured(messages:any[]):unknown{for(let i=messages.length-1;i>=0;i--){const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;if(info&&Object.prototype.hasOwnProperty.call(info,'structured'))return info.structured}return undefined}
 
 
 export interface AssistantActivityEvidence{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}

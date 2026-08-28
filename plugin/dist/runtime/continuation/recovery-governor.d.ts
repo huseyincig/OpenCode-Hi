@@ -18,14 +18,17 @@ export interface RecoveryStrategyRecord extends RecoveryStrategyContext {
 }
 export interface RecoveryModelHazard {
     open: boolean;
+    same_model_exhausted: boolean;
     reason: string;
     task_id?: string;
     worker_id?: string;
     model?: string;
     progress_signature: string;
+    failure_signature?: string;
     attempts: number;
     recovery_candidates: string[];
 }
+export declare function recoveryResultFailureSignature(m: MissionState): string | undefined;
 /** Recovery identity deliberately ignores activity-only churn such as worker status/attempt counters. */
 export declare function recoverySemanticSignature(m: MissionState): string;
 export declare function recoveryModelHazard(m: MissionState): RecoveryModelHazard;

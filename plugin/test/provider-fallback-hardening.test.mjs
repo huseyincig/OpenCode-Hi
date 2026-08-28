@@ -36,7 +36,7 @@ test('provider failure creates a fresh child on first fallback without stagnatio
   assert.equal(w.runtime_recovery_attempt,1)
   assert.equal(w.attempt,1)
   assert.equal(calls.length,1)
-  assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'fallback1'})
+  assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'fallback1'});assert.equal(calls[0].body.format.type,'json_schema');assert.equal(calls[0].body.format.retryCount,0);assert.ok(calls[0].body.format.schema.required.includes('evidence'))
   assert.equal(m.continuation.stagnation_count,4,'provider failure does not increment reasoning stagnation')
 })
 
@@ -179,28 +179,26 @@ test('uncertain fallback dispatch preserves active ownership',async()=>{
 })
 
 
-test('behavioral hazard opens one fresh recovery-only model after two same-model corrections without semantic gain',async()=>{
+test('behavioral hazard opens one fresh recovery-only model after one correction repeats the same normalized failure',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
   const {runtime,m,calls,aborts}=setup(async()=>{},true,models,undefined,'idle')
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
+  worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[];task.result={status:'FIX_REQUIRED',summary:'contract invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['worker-result-contract-retry: evidence must be nested']}
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
-  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
-  m.continuation.stagnation_count=3
+  m.continuation.stagnation_count=2
   const recovered=await runtime.recoverStagnation(m,3,'model-escalation')
   assert.equal(recovered,true);assert.equal(worker.model,'p/recovery');assert.equal(worker.session_id,'recovery-1');assert.equal(worker.forked_from_session_id,'child1')
   assert.equal(calls.length,1);assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'recovery'});assert.equal(aborts.length,0,'idle prior child is not destructively replayed or aborted')
   assert.equal(worker.fallbacks.length,0,'recovery-only candidate must not become a normal provider fallback')
-  assert.match(worker.fallback_history.at(-1).reason,/two same-model corrections without semantic gain/)
+  assert.match(worker.fallback_history.at(-1).reason,/one repeated same-failure correction/i)
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation'&&e.payload?.from==='p/primary'&&e.payload?.to==='p/recovery'))
 })
 
-test('behavioral model escalation is fail-closed before the hazard threshold',async()=>{
+test('behavioral model escalation is fail-closed before any same-failure correction is consumed',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
   const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle')
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
-  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
+  worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[];task.result={status:'FIX_REQUIRED',summary:'contract invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['worker-result-contract-retry']}
   assert.equal(await runtime.recoverStagnation(m,3,'model-escalation'),false);assert.equal(worker.model,'p/primary');assert.equal(calls.length,0)
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation.rejected'))
 })
@@ -220,7 +218,25 @@ test('unparseable terminal assistant output stays fail-closed but becomes resuma
   assert.equal(m.execution.scheduler.reservations.length,0,'terminal attempt releases execution capacity before same-session corrective resume')
 })
 
-test('normal task_id corrective resumes feed the behavioral hazard circuit and third no-gain resume switches to a fresh recovery-only model',async()=>{
+test('native structured WorkerResult is authoritative over compatibility text and settles normally',async()=>{
+  const {runtime,m}=setup()
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.projected_model='p/primary'
+  const structured={status:'FIX_REQUIRED',summary:'native structured correction',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['fix exact result']}
+  const settled=await runtime.settleHostIdleAssistantResult(m,worker,{text:'{"status":"DONE","source-provenance-evidence":{}}',structured,model:{model:'p/primary'}})
+  assert.equal(settled.applied,true);assert.equal(settled.result?.summary,'native structured correction');assert.equal(task.result.summary,'native structured correction')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-admitted'))
+})
+
+test('terminal StructuredOutputError becomes resumable WorkerResult FIX_REQUIRED instead of provider/runtime failure',async()=>{
+  const {runtime,m,calls}=setup()
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,{name:'StructuredOutputError',message:'Model did not produce structured output'})
+  assert.equal(settled.applied,true);assert.equal(settled.wakeResult,'FIX_REQUIRED');assert.equal(settled.result?.status,'FIX_REQUIRED');assert.equal(task.status,'waiting');assert.equal(worker.status,'ready');assert.equal(calls.length,0)
+  assert.ok(task.result.open_issues.includes('worker-result-contract-invalid:structured-output'));assert.equal(worker.last_runtime_failure_kind,undefined)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.result-contract-retryable'&&e.payload?.transport==='opencode-json-schema'))
+})
+
+test('normal task_id correction switches to a fresh recovery-only model when the first correction repeats the same failure',async()=>{
   const models=[
     {id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced']},
     {id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']},
@@ -233,20 +249,27 @@ test('normal task_id corrective resumes feed the behavioral hazard circuit and t
   const first=await runtime.resume(m,task.id)
   assert.equal(first.session_id,'child1');assert.equal(first.model,'p/primary');assert.equal(calls.length,1)
   let history=m.continuation.recovery_history?.filter(x=>x.task_id===task.id&&x.worker_id===worker.id&&x.action==='same-worker-resume')??[]
-  assert.deepEqual(history.map(x=>x.level),[1])
-  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'still invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']})
+  assert.deepEqual(history.map(x=>x.level),[1]);assert.ok(history[0].failure_signature)
+  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'same normalized failure again',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']})
 
   const second=await runtime.resume(m,task.id)
-  assert.equal(second.session_id,'child1');assert.equal(second.model,'p/primary');assert.equal(calls.length,2)
+  assert.equal(second.worker_id,worker.id);assert.equal(second.model,'p/recovery');assert.equal(second.session_id,'recovery-1');assert.equal(calls.length,2)
   history=m.continuation.recovery_history?.filter(x=>x.task_id===task.id&&x.worker_id===worker.id&&x.action==='same-worker-resume')??[]
-  assert.deepEqual(history.map(x=>x.level),[1,2]);assert.equal(history[0].progress_signature,history[1].progress_signature)
-  assert.match(JSON.stringify(calls[1]),/materially different corrective hypothesis or action/i)
-  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'still invalid after materially different correction',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']})
-
-  const third=await runtime.resume(m,task.id)
-  assert.equal(third.worker_id,worker.id);assert.equal(third.model,'p/recovery');assert.equal(third.session_id,'recovery-1');assert.equal(calls.length,3)
+  assert.deepEqual(history.map(x=>x.level),[1],'same-model correction must not get a level-2 replay for the same failure')
   assert.deepEqual(worker.fallbacks,[]);assert.equal(worker.forked_from_session_id,'child1')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation'&&e.payload?.from==='p/primary'&&e.payload?.to==='p/recovery'))
+})
+
+test('same failure with no authorized recovery model refuses a second same-model corrective prompt',async()=>{
+  const models=[{id:'p/primary',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle')
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=[];worker.requested_model=undefined
+  task.result={status:'FIX_REQUIRED',summary:'contract correction required',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']}
+  await runtime.resume(m,task.id);assert.equal(calls.length,1)
+  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'same normalized failure again',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']})
+  await assert.rejects(()=>runtime.resume(m,task.id),/Same-model corrective recovery is exhausted/);assert.equal(calls.length,1)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.same-model-correction-exhausted'))
 })
 
 

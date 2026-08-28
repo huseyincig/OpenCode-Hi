@@ -12,9 +12,27 @@ export interface RecoveryStrategyRecord extends RecoveryStrategyContext{
   attempted_at:number
   outcome:RecoveryAttemptOutcome
 }
-export interface RecoveryModelHazard{open:boolean;reason:string;task_id?:string;worker_id?:string;model?:string;progress_signature:string;attempts:number;recovery_candidates:string[]}
+export interface RecoveryModelHazard{open:boolean;same_model_exhausted:boolean;reason:string;task_id?:string;worker_id?:string;model?:string;progress_signature:string;failure_signature?:string;attempts:number;recovery_candidates:string[]}
 
 function fnv(value:string):string{let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+function failureClass(value:string):string{
+  const x=value.toLowerCase()
+  const known:[RegExp,string][]=[
+    [/worker-result-contract(?:-invalid|-retry)?/,'worker-result-contract'],[/source-provenance-claim-missing|exploration-clearance/,'exploration-clearance'],
+    [/review-verdict|required.*review-evidence|review-evidence.*required/,'review-verdict'],[/methodology-exit/,'methodology-exit'],[/diff-cleanliness|cleanup-(?:unverified|not-reverted)/,'diff-cleanliness'],
+    [/verification-coverage|visual-evidence-ref-correction/,'verification-coverage'],[/capability-unavailable/,'capability-unavailable'],[/provider-failure/,'provider-failure'],
+    [/dependency-(?:outcome|unavailable)/,'dependency-outcome'],[/runtime-restart/,'runtime-restart'],[/permission-denied/,'permission-denied'],
+  ]
+  for(const [pattern,label] of known)if(pattern.test(x))return label
+  return x.replace(/(?:t|w|ev|bo|msg|ses)_[a-z0-9_-]+/g,'<id>').replace(/[a-f0-9]{16,}/g,'<id>').replace(/\d+/g,'#').replace(/[^a-z0-9<>#-]+/g,' ').trim().split(/\s+/).slice(0,12).join('-')||'unspecified'
+}
+function currentResultFailureSignature(m:MissionState,worker?:WorkerState):string|undefined{
+  const resolved=worker??latestRecoveryWorker(m),task=resolved?m.execution.tasks.find(t=>t.id===resolved.task_id):undefined,result=task?.result
+  if(!result||result.status==='DONE')return undefined
+  const classes=[...new Set([...(result.open_issues??[]),...(result.needs_context??[])].map(x=>failureClass(String(x))).filter(Boolean))].sort()
+  return fnv(JSON.stringify({status:result.status,classes}))
+}
+export function recoveryResultFailureSignature(m:MissionState):string|undefined{return currentResultFailureSignature(m)}
 /** Recovery identity deliberately ignores activity-only churn such as worker status/attempt counters. */
 export function recoverySemanticSignature(m:MissionState):string{
   const s=m.continuation.semantic_progress_snapshot
@@ -26,12 +44,13 @@ function latestRecoveryWorker(m:MissionState):WorkerState|undefined{return[...m.
 function candidateModels(worker:WorkerState):string[]{return[...new Set([...(worker.fallbacks??[]),...(worker.recovery_candidates??[])].filter(id=>Boolean(id)&&id!==worker.model))]}
 export function recoveryModelHazard(m:MissionState):RecoveryModelHazard{
   const progress_signature=currentProgressSignature(m),worker=latestRecoveryWorker(m),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined
-  if(!worker||!task||!worker.model)return{open:false,reason:'no-recoverable-model-worker',progress_signature,attempts:0,recovery_candidates:[]}
-  const recovery_candidates=candidateModels(worker)
-  const attempts=(m.continuation.recovery_history??[]).filter(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.action==='same-worker-resume'&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.model===worker.model).length
-  if(!recovery_candidates.length)return{open:false,reason:'no-recovery-model-candidate',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,attempts,recovery_candidates}
-  if(worker.requested_model&&!worker.fallbacks.length)return{open:false,reason:'explicit-task-model-has-no-authorized-fallback',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,attempts,recovery_candidates:[]}
-  return{open:attempts>=2,reason:attempts>=2?'same-model-bounded-corrections-exhausted':'same-model-corrections-not-exhausted',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,attempts,recovery_candidates}
+  if(!worker||!task||!worker.model)return{open:false,same_model_exhausted:false,reason:'no-recoverable-model-worker',progress_signature,attempts:0,recovery_candidates:[]}
+  const failure_signature=currentResultFailureSignature(m,worker),recovery_candidates=candidateModels(worker)
+  const attempts=failure_signature?(m.continuation.recovery_history??[]).filter(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.action==='same-worker-resume'&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.model===worker.model&&item.failure_signature===failure_signature).length:0
+  const same_model_exhausted=attempts>=1
+  if(worker.requested_model&&!worker.fallbacks.length)return{open:false,same_model_exhausted,reason:same_model_exhausted?'explicit-task-model-same-failure-correction-exhausted':'explicit-task-model-has-no-authorized-fallback',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates:[]}
+  if(!recovery_candidates.length)return{open:false,same_model_exhausted,reason:same_model_exhausted?'same-model-same-failure-correction-exhausted-no-candidate':'no-recovery-model-candidate',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates}
+  return{open:same_model_exhausted,same_model_exhausted,reason:same_model_exhausted?'same-model-same-failure-correction-exhausted':'same-model-correction-not-exhausted',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates}
 }
 export function recoveryStrategyFingerprint(m:MissionState,plan:Pick<RecoveryPlan,'level'|'action'>):string{return`rg1:${fnv(JSON.stringify({generation:m.continuation.generation,level:plan.level,action:plan.action}))}`}
 
@@ -48,12 +67,18 @@ export function ambiguousConsequentialEffect(m:MissionState):string|undefined{
 export function recoveryStrategyEligibility(m:MissionState,plan:Pick<RecoveryPlan,'level'|'action'>):{allowed:boolean;reason:string;fingerprint:string;progress_signature:string}{
   const fingerprint=recoveryStrategyFingerprint(m,plan),progress_signature=currentProgressSignature(m),ambiguous=ambiguousConsequentialEffect(m)
   if(ambiguous)return{allowed:false,reason:ambiguous,fingerprint,progress_signature}
+  const worker=latestRecoveryWorker(m),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined,failure_signature=currentResultFailureSignature(m,worker)
+  if(plan.action==='same-worker-resume'&&worker?.model&&task&&failure_signature){
+    const equivalent=(m.continuation.recovery_history??[]).some(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.action==='same-worker-resume'&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.model===worker.model&&item.failure_signature===failure_signature)
+    if(equivalent)return{allowed:false,reason:'same-failure-same-model-correction-repeated-without-semantic-delta',fingerprint,progress_signature}
+  }
   const repeated=(m.continuation.recovery_history??[]).some(item=>item.fingerprint===fingerprint&&item.progress_signature===progress_signature&&item.outcome!=='failed')
   return repeated?{allowed:false,reason:'strategy-repeated-without-semantic-delta',fingerprint,progress_signature}:{allowed:true,reason:'strategy-admissible',fingerprint,progress_signature}
 }
 
 export function recordRecoveryStrategy(m:MissionState,plan:Pick<RecoveryPlan,'level'|'action'>,outcome:RecoveryAttemptOutcome='started',at=Date.now(),context:RecoveryStrategyContext={}):RecoveryStrategyRecord{
-  const record:RecoveryStrategyRecord={fingerprint:recoveryStrategyFingerprint(m,plan),level:plan.level,action:plan.action,progress_signature:currentProgressSignature(m),generation:m.continuation.generation,attempted_at:at,outcome,...context}
+  const worker=latestRecoveryWorker(m),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined,inferred:RecoveryStrategyContext=worker?{task_id:task?.id,worker_id:worker.id,model:worker.model,failure_signature:currentResultFailureSignature(m,worker)}:{}
+  const record:RecoveryStrategyRecord={fingerprint:recoveryStrategyFingerprint(m,plan),level:plan.level,action:plan.action,progress_signature:currentProgressSignature(m),generation:m.continuation.generation,attempted_at:at,outcome,...inferred,...context}
   const history=[...(m.continuation.recovery_history??[]),record]
   m.continuation.recovery_history=history.slice(-24)
   return record

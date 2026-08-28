@@ -40,17 +40,15 @@ test('material mechanical evidence delta permits the same recovery strategy agai
   assert.equal(recoveryStrategyEligibility(m,again).allowed,true)
 })
 
-test('equivalent failure marker churn does not manufacture a fresh same-worker correction epoch',()=>{
+test('equivalent failure marker churn exhausts same-model correction after one repeated normalized failure',()=>{
   const {store,m}=mission('rg-failure-marker-churn')
   const task=createTask(m,{objective:'bounded review',role:'security-reviewer',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b'];task.result={status:'FIX_REQUIRED',summary:'verdict missing',changed_files:[],evidence:[],open_issues:['review-verdict-required:'+task.id],needs_context:['review-evidence required']};store.updateProgress(m,false)
   const signature=recoverySemanticSignature(m)
-  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  const first=recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'});assert.ok(first.failure_signature)
   task.result={...task.result,open_issues:['{"id":"review-verdict-required:'+task.id+'","summary":"canonical verdict still missing"}'],needs_context:['review-verdict: canonical review-evidence required']};assert.equal(store.updateProgress(m,false),true,'failure description can be new diagnostic state without being recovery gain')
   assert.equal(recoverySemanticSignature(m),signature)
-  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/a'})
-  task.result={...task.result,open_issues:['review-verdict-required:'+task.id],needs_context:['review-evidence outcome=passed required']};store.updateProgress(m,false)
-  assert.equal(recoverySemanticSignature(m),signature)
-  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,2);assert.deepEqual(hazard.recovery_candidates,['p/b'])
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.same_model_exhausted,true);assert.equal(hazard.attempts,1);assert.deepEqual(hazard.recovery_candidates,['p/b'])
+  assert.equal(recoveryStrategyEligibility(m,{level:2,action:'same-worker-resume'}).allowed,false)
 })
 
 test('unknown consequential release outcome blocks automatic recovery until reconciliation',()=>{
@@ -99,35 +97,28 @@ test('recovery semantic signature ignores activity-only worker attempt churn',()
 })
 
 
-test('pending evidence churn does not reset same-model bounded-correction hazard signature',()=>{
+test('pending evidence churn does not reset one-correction same-failure hazard signature',()=>{
   const {store,m}=mission('rg-pending-evidence-churn')
-  const task=createTask(m,{objective:'visual verify',role:'visual-qa',category:'visual'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b'];store.updateProgress(m,false)
+  const task=createTask(m,{objective:'visual verify',role:'visual-qa',category:'visual'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b'];task.result={status:'FIX_REQUIRED',summary:'visual contract missing',changed_files:[],evidence:[],open_issues:['verification-coverage-missing'],needs_context:['visual evidence required']};store.updateProgress(m,false)
   const signature=recoverySemanticSignature(m)
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
   const pending1=addEvidence(m,{kind:'browser-evidence',summary:'attempt one inspect',source:'browser:bo_one',task_id:task.id,obligation_ids:[],outcome:'pending',reason:'raw browser observation'});store.updateProgress(m,false);pending1.invalidated_at=Date.now();store.updateProgress(m,false)
-  assert.equal(recoverySemanticSignature(m),signature)
-  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/a'})
-  const pending2=addEvidence(m,{kind:'visual-evidence',summary:'attempt two screenshot observation',source:'browser:bo_two',task_id:task.id,obligation_ids:[],outcome:'pending',reason:'raw browser observation'});store.updateProgress(m,false);pending2.invalidated_at=Date.now();store.updateProgress(m,false)
-  assert.equal(recoverySemanticSignature(m),signature)
-  m.continuation.stagnation_count=3
-  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,2);assert.deepEqual(hazard.recovery_candidates,['p/b'])
+  assert.equal(recoverySemanticSignature(m),signature);m.continuation.stagnation_count=2
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,1);assert.deepEqual(hazard.recovery_candidates,['p/b'])
 })
 
-test('two same-model bounded corrections open recovery-only model escalation on unchanged semantic gain state',()=>{
+test('one same-model correction with the same normalized failure opens recovery-only model escalation',()=>{
   const {store,m}=mission('rg-model-hazard')
-  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b','p/c'];store.updateProgress(m,false)
+  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b','p/c'];task.result={status:'FIX_REQUIRED',summary:'contract invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['worker-result-contract-retry']};store.updateProgress(m,false)
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
-  worker.attempt+=1;store.updateProgress(m,false)
-  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/a'})
-  worker.attempt+=1;store.updateProgress(m,false);m.continuation.stagnation_count=3
-  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,2);assert.deepEqual(hazard.recovery_candidates,['p/b','p/c'])
+  worker.attempt+=1;store.updateProgress(m,false);m.continuation.stagnation_count=2
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,1);assert.deepEqual(hazard.recovery_candidates,['p/b','p/c'])
   const plan=recoveryPlan(m);assert.equal(plan.level,3);assert.equal(plan.action,'model-escalation');assert.match(plan.prompt,/recovery-only model candidate/i)
 })
 
-test('explicit task model without authorized fallback never opens automatic model hazard escape',()=>{
+test('explicit task model exhausts same-failure correction without inventing model authority',()=>{
   const {store,m}=mission('rg-explicit-model')
-  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.requested_model='p/a';worker.recovery_candidates=['p/b'];store.updateProgress(m,false)
-  for(const [level,at] of [[1,10],[2,11]])recordRecoveryStrategy(m,{level,action:'same-worker-resume'},'started',at,{task_id:task.id,worker_id:worker.id,model:'p/a'})
-  m.continuation.stagnation_count=3
-  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,false);assert.equal(hazard.reason,'explicit-task-model-has-no-authorized-fallback');assert.equal(recoveryPlan(m).action,'narrow-task')
+  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.requested_model='p/a';worker.recovery_candidates=['p/b'];task.result={status:'FIX_REQUIRED',summary:'contract invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['worker-result-contract-retry']};store.updateProgress(m,false)
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'});m.continuation.stagnation_count=2
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,false);assert.equal(hazard.same_model_exhausted,true);assert.match(hazard.reason,/explicit-task-model.*exhausted/);assert.equal(recoveryPlan(m).action,'narrow-task')
 })

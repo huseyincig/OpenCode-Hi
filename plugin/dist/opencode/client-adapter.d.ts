@@ -1,12 +1,13 @@
 import type { OpenCodeClient } from './types.js';
 import { type HostUsageObservation } from '../contracts/execution-usage.js';
+import type { HostPromptFormat } from '../runtime/host/port.js';
 export declare function dataOf<T = any>(value: any): T;
 export declare function createChildSession(client: OpenCodeClient, parentID: string, title: string, agent?: string, model?: string, variant?: string, workspaceID?: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<any>;
 export declare function modelIdentity(model?: string): {
     providerID: string;
     modelID: string;
 } | undefined;
-export declare function sendPromptAsync(client: OpenCodeClient, sessionID: string, text: string, agent?: string, model?: string, variant?: string, tools?: Record<string, boolean>, ackTimeoutMs?: number, messageID?: string): Promise<void>;
+export declare function sendPromptAsync(client: OpenCodeClient, sessionID: string, text: string, agent?: string, model?: string, variant?: string, tools?: Record<string, boolean>, ackTimeoutMs?: number, messageID?: string, format?: HostPromptFormat): Promise<void>;
 export declare function listMessages(client: OpenCodeClient, sessionID: string, limit?: number): Promise<any[]>;
 export declare function sendSyntheticContinuation(client: OpenCodeClient, sessionID: string, text: string, metadata: Record<string, unknown>, ackTimeoutMs?: number): Promise<boolean>;
 export interface OpenCodeLifecycleEndpoint {
@@ -22,6 +23,7 @@ export declare function listProviders(client: OpenCodeClient): Promise<unknown>;
 export declare function listAvailableModels(endpoint?: OpenCodeLifecycleEndpoint): Promise<unknown[] | undefined>;
 export declare function eventSessionID(event: any): string | undefined;
 export declare function lastAssistantText(messages: any[]): string;
+export declare function lastAssistantStructured(messages: any[]): unknown;
 export interface AssistantActivityEvidence {
     message_id?: string;
     observed_at: number;

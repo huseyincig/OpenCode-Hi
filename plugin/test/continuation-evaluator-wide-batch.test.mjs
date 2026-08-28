@@ -139,6 +139,25 @@ test('child terminal wake is deferred while parent is busy and delivered exactly
   }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
 })
 
+test('child StructuredOutputError event settles as resumable WorkerResult contract failure',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hi-structured-output-event-'));mkdirSync(join(dir,'src'));writeFileSync(join(dir,'src','a.ts'),'export const a=1\n')
+  const {client}=baseClient(['child-structured-output'])
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
+  try{
+    await hooks['chat.message']({sessionID:'parent-structured-output'},{message:{role:'user'},parts:[{type:'text',text:'inspect src/a.ts'}]})
+    await assessPluginMission(hooks,'parent-structured-output',{task_kind:'review',required_capabilities:['repository-analysis'],likely_targets:['src/a.ts'],likely_verification:[]})
+    const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect src/a.ts',role:'repository-explorer',category:'quick',scope:'src/a.ts'},{sessionID:'parent-structured-output'}))
+    assert.ok(started.worker_id)
+    await hooks.event({event:{type:'session.error',properties:{sessionID:'child-structured-output',error:{name:'StructuredOutputError',data:{message:'Model did not produce structured output',retries:0}}}}})
+    const rows=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'parent-structured-output'})),row=rows.find(x=>x.task.id===started.task_id)
+    assert.equal(row.task.status,'waiting');assert.equal(row.worker.status,'ready');assert.equal(row.task.result.status,'FIX_REQUIRED')
+    assert.ok(row.task.result.open_issues.includes('worker-result-contract-invalid:structured-output'))
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:180},{sessionID:'parent-structured-output'}))
+    assert.ok(ledger.events.some(e=>e.type==='worker.result-contract-retryable'&&e.payload?.transport==='opencode-json-schema'&&e.payload?.event_path==='session-error'))
+    assert.equal(ledger.events.some(e=>e.type==='worker.failed'&&e.worker_id===started.worker_id),false)
+  }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
+})
+
 test('failed child defers parent continuation while a sibling worker is still pending',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'hi-parent-wake-'));mkdirSync(join(dir,'src'));writeFileSync(join(dir,'src','a.ts'),'export const a=1\n');writeFileSync(join(dir,'src','b.ts'),'export const b=1\n')
   const {client,promptCalls}=baseClient(['child-a','child-b'])

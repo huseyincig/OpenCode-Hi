@@ -12,7 +12,8 @@
     "engineering_state_root_markdown": [
       "AGENTS.md",
       "PROJECT_POLICY.md",
-      "TASKS.md"
+      "TASKS.md",
+      "REFERENCE_FAILURE_DEBUGGING.md"
     ]
   },
   "public_documents": [

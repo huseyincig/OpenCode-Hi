@@ -5,6 +5,7 @@ import { redactProviderContext } from '../privacy/boundary.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { reconcileModelExecutionIdentity } from '../../contracts/model.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+import { workerResultOutputFormat } from '../../contracts/worker-result-schema.js';
 import { clearCapabilityUnavailable, markCapabilityUnavailable } from '../readiness/capability-failure.js';
 function normFile(value) { return normalizeBoundedProjectPath(value) ?? ''; }
 function nativeDiffMap(raw) {
@@ -53,7 +54,7 @@ export class ChildExecutionCoordinator {
         ;
         throw new Error(`Host child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`);
     } return created; }
-    async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID) { const safe = redactProviderContext(text); return this.host.prompt(sessionID, safe.providerText, role, model, variant, tools, messageID); }
+    async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID) { const safe = redactProviderContext(text), format = this.host.capabilities.structuredOutput === true ? workerResultOutputFormat() : undefined; return this.host.prompt(sessionID, safe.providerText, role, model, variant, tools, messageID, format); }
     async status(sessionID) { return this.host.status(sessionID); }
     recordModelProjection(worker, model, variant) { worker.projected_model = model ?? 'host-default'; worker.projected_model_variant = variant; worker.updated_at = Date.now(); }
     async abortNativeSession(m, sessionID, reason, workerID, taskID) { try {

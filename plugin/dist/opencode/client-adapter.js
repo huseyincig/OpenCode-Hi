@@ -63,7 +63,7 @@ export function modelIdentity(model) {
         return undefined;
     return { providerID: model.slice(0, slash), modelID: model.slice(slash + 1) };
 }
-export async function sendPromptAsync(client, sessionID, text, agent, model, variant, tools, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS, messageID) {
+export async function sendPromptAsync(client, sessionID, text, agent, model, variant, tools, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS, messageID, format) {
     const edge = client;
     const body = { parts: [{ type: 'text', text }] };
     if (messageID)
@@ -77,6 +77,8 @@ export async function sendPromptAsync(client, sessionID, text, agent, model, var
         body.variant = variant;
     if (tools && Object.keys(tools).length)
         body.tools = tools;
+    if (format)
+        body.format = format;
     if (typeof edge?.session?.promptAsync === 'function') {
         const result = await awaitPromptAsyncAck(signal => edge.session.promptAsync({ path: { id: sessionID }, body, signal, throwOnError: true }), `session.prompt_async:${sessionID}`, ackTimeoutMs);
         assertMutationAccepted(result, `session.prompt_async:${sessionID}`);
@@ -260,6 +262,13 @@ export function lastAssistantText(messages) { for (let i = messages.length - 1; 
     if (text)
         return text;
 } return ''; }
+export function lastAssistantStructured(messages) { for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;
+    if (info?.role && info.role !== 'assistant')
+        continue;
+    if (info && Object.prototype.hasOwnProperty.call(info, 'structured'))
+        return info.structured;
+} return undefined; }
 export function lastMeaningfulAssistantActivity(messages) {
     for (let i = messages.length - 1; i >= 0; i--) {
         const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;

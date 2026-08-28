@@ -107,3 +107,11 @@ test('worker prompt forwards caller-owned OpenCode messageID without changing si
   await sendPromptAsync(client,'child-message-id','x','coder','p/m',undefined,{bash:false},50,messageID)
   assert.equal(calls.length,1);assert.equal(calls[0].body.messageID,messageID);assert.equal(calls[0].throwOnError,true);assert.equal(calls[0].body.model.providerID,'p');assert.equal(calls[0].body.model.modelID,'m')
 })
+
+
+test('worker prompt forwards native json-schema format exactly once without host retry authority',async()=>{
+  const calls=[];const client={session:{promptAsync:async arg=>{calls.push(arg);return{data:{}}}}}
+  const format={type:'json_schema',schema:{type:'object',required:['status'],properties:{status:{type:'string'}}},retryCount:0}
+  await sendPromptAsync(client,'child-structured','return result','coder','p/m',undefined,{bash:false},50,'msg_000000000001bbbbbbbbbbbbbb',format)
+  assert.equal(calls.length,1);assert.deepEqual(calls[0].body.format,format);assert.equal(calls[0].body.format.retryCount,0)
+})

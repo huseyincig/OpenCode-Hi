@@ -92,7 +92,8 @@ export declare class TaskRuntime {
     settleHostIdleRuntimeError(m: MissionState, worker: WorkerState, error: HostAssistantError): Promise<{
         applied: boolean;
         reason: string;
-        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED';
+        result?: WorkerResult;
+        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED' | 'FIX_REQUIRED';
         failureKind?: WorkerState['last_runtime_failure_kind'];
     }>;
     settleHostIdlePermissionDenial(m: MissionState, worker: WorkerState): Promise<{
@@ -104,7 +105,7 @@ export declare class TaskRuntime {
         applied: boolean;
         reason: string;
         result?: WorkerResult;
-        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED';
+        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED' | 'FIX_REQUIRED';
         failureKind?: WorkerState['last_runtime_failure_kind'];
     }>;
     childCallbackDisposition(m: MissionState, worker: WorkerState): import("./task-recovery-coordinator.js").ChildCallbackDisposition;

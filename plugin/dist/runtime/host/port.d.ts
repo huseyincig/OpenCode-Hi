@@ -34,6 +34,7 @@ export interface HostAssistantActivity {
 }
 export interface HostAssistantResult {
     text: string;
+    structured?: unknown;
     model?: {
         model?: string;
         variant?: string;
@@ -105,6 +106,13 @@ export interface ChildSessionCreateResult {
     };
 }
 export type HostChildSessionStatus = 'idle' | 'busy' | 'retry' | 'unknown';
+export type HostPromptFormat = {
+    type: 'text';
+} | {
+    type: 'json_schema';
+    schema: Record<string, unknown>;
+    retryCount?: number;
+};
 export interface ChildSessionPort {
     capabilities: {
         create: boolean;
@@ -114,9 +122,10 @@ export interface ChildSessionPort {
         diff: boolean;
         summarize: boolean;
         fork: boolean;
+        structuredOutput?: boolean;
     };
     create(request: ChildSessionCreateRequest): Promise<ChildSessionCreateResult>;
-    prompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>, messageID?: string): Promise<unknown>;
+    prompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>, messageID?: string, format?: HostPromptFormat): Promise<unknown>;
     abort(sessionID: string): Promise<'server' | 'server-reconciled' | 'client' | 'client-reconciled' | 'unavailable'>;
     status(sessionID: string): Promise<HostChildSessionStatus>;
     diff(sessionID: string): Promise<unknown>;

@@ -61,7 +61,7 @@ export function runSchedulerEconomicsBenchmarks() {
     const modelBlocked = evaluateSchedulingResourceCapacity(capacity, 'w3', { provider: 'beta', model: 'alpha/m1' });
     const admitted = evaluateSchedulingResourceCapacity({ ...capacity, running: [] }, 'w2', { provider: 'alpha', model: 'alpha/m2' });
     const reasonText = (x) => x.ok ? 'ready' : `${x.reason?.code ?? 'blocked'}${x.reason?.detail ? `:${x.reason.detail}` : ''}`;
-    const recoveryMission = { continuation: { stagnation_count: 1 } };
+    const recoveryMission = { continuation: { stagnation_count: 1, generation: 1, recovery_history: [] }, execution: { workers: [], tasks: [], obligations: [] }, authority: {}, release: {} };
     const same = recoveryPlan(recoveryMission);
     recoveryMission.continuation.stagnation_count = 2;
     const escalated = recoveryPlan(recoveryMission);
@@ -76,7 +76,7 @@ export function runSchedulerEconomicsBenchmarks() {
 }
 /** Counterfactual policy ablation: old counter-only selection vs semantic-state strategy fencing. */
 export function runRecoveryGovernorAblation() {
-    const base = { continuation: { stagnation_count: 1, generation: 1, last_progress_signature: 'deadbeef', recovery_history: [] }, authority: {}, release: {} };
+    const base = { continuation: { stagnation_count: 1, generation: 1, last_progress_signature: 'deadbeef', recovery_history: [] }, execution: { workers: [], tasks: [], obligations: [] }, authority: {}, release: {} };
     const baselineFirst = recoveryPlan({ ...base, continuation: { ...base.continuation, recovery_history: [] } }), baselineSecond = recoveryPlan({ ...base, continuation: { ...base.continuation, recovery_history: [] } });
     const governedMission = structuredClone(base), first = recoveryPlan(governedMission);
     recordRecoveryStrategy(governedMission, first, 'started', 1);

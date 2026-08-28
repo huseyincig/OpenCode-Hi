@@ -5,6 +5,7 @@ import { methodologySkillCandidates, resolveSkillPlan } from '../skills/registry
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
 import { createTask, createWorker, beginWorkerAttempt, retireTaskResultIssues, workerFingerprint } from '../worker/worker-runtime.js';
 import { parseWorkerResult } from './result-parser.js';
+import { isWorkerResultContract, normalizeWorkerResult } from '../../contracts/worker-result.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
 import { bindMethodologyNeeds, methodologyNames, reconcileTaskEvidenceMethodologyNeeds, releaseCancelledTaskMethodologyNeeds, releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js';
@@ -45,6 +46,7 @@ const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
     constructor() { super('Hi bounded dispatch queue is full'); this.name = 'TaskQueueCapacityError'; }
 }
+function resultContractFailure(summary, marker = 'worker-result-contract-invalid') { return { status: 'FIX_REQUIRED', summary, changed_files: [], evidence: [], open_issues: [marker], needs_context: ['worker-result-contract-retry: continue the same task/session and return the exact schema-bound WorkerResult; all evidence claims belong under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}] and no evidence kind may be a top-level key'] }; }
 function ownerForObligation(m, kind) {
     const caps = new Set(m.identity.intent.requiredCapabilities);
     if (kind === 'research')
@@ -255,6 +257,16 @@ export class TaskRuntime {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return { applied: false, reason: 'task-not-found' };
+        if (error.name === 'StructuredOutputError') {
+            let result = resultContractFailure(`OpenCode rejected the child result because it did not satisfy the schema-bound WorkerResult transport contract. ${error.message}`, 'worker-result-contract-invalid:structured-output');
+            appendLedger(m, 'worker.result-contract-retryable', { task_id: task.id, worker_id: worker.id, payload: { model: worker.model, attempt: worker.attempt, generation: m.continuation.generation, transport: 'opencode-json-schema', error: error.message, event_path: 'session-error' } });
+            result = await this.reconcileNativeResult(m, worker.id, result);
+            result = await this.reintegrateWorkspaceResult(m, worker.id, result);
+            this.applyResult(m, worker.id, result);
+            worker.restart_reconcile_pending = false;
+            this.registry.set(worker);
+            return { applied: true, reason: 'host-terminal-structured-result-contract-failed', result, wakeResult: 'FIX_REQUIRED' };
+        }
         const detail = [error.name, error.message].filter(Boolean).join(': ');
         await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
         const recovery = await this.#recovery.recoverHostTerminalFailure(m, worker.id, error);
@@ -311,16 +323,30 @@ export class TaskRuntime {
         }
         if (assistant.usage)
             this.noteUsage(m, worker.id, assistant.usage);
+        if (assistant.error?.name === 'StructuredOutputError')
+            return this.settleHostIdleRuntimeError(m, worker, assistant.error);
         if (assistant.error)
             return this.settleHostIdleRuntimeError(m, worker, assistant.error);
-        if (!assistant.model && !assistant.text)
+        if (!assistant.model && !assistant.text && assistant.structured === undefined)
             return { applied: false, reason: 'assistant-result-not-ready' };
         const effective = this.noteEffectiveModel(m, worker.id, assistant.model ? { ...assistant.model, source: 'assistant-message-metadata' } : undefined);
-        let result = parseWorkerResult(assistant.text);
+        let result;
+        if (assistant.structured !== undefined) {
+            if (isWorkerResultContract(assistant.structured)) {
+                result = normalizeWorkerResult(assistant.structured);
+                appendLedger(m, 'worker.structured-result-admitted', { task_id: task.id, worker_id: worker.id, payload: { transport: 'opencode-json-schema', attempt: worker.attempt, generation: m.continuation.generation } });
+            }
+            else {
+                result = resultContractFailure('OpenCode returned a structured child payload that failed the canonical WorkerResult contract after transport.', 'worker-result-contract-invalid:structured-payload');
+                appendLedger(m, 'worker.structured-result-invalid', { task_id: task.id, worker_id: worker.id, payload: { attempt: worker.attempt, generation: m.continuation.generation } });
+            }
+        }
+        else
+            result = parseWorkerResult(assistant.text);
         const unparseableWorkerContract = result.status === 'FAILED' && (result.open_issues ?? []).includes('Worker did not return parseable structured result');
         if (unparseableWorkerContract) {
-            result = { ...result, status: 'FIX_REQUIRED', summary: result.summary || 'Worker response did not satisfy the structured WorkerResult contract.', open_issues: [...new Set([...(result.open_issues ?? []), 'worker-result-contract-invalid'])], needs_context: [...new Set([...(result.needs_context ?? []), 'worker-result-contract-retry: continue the same task/session and return the exact structured WorkerResult contract; do not claim completion from prose'])] };
-            appendLedger(m, 'worker.result-contract-retryable', { task_id: task.id, worker_id: worker.id, payload: { model: worker.model, attempt: worker.attempt, generation: m.continuation.generation } });
+            result = { ...result, status: 'FIX_REQUIRED', summary: result.summary || 'Worker response did not satisfy the structured WorkerResult contract.', open_issues: [...new Set([...(result.open_issues ?? []), 'worker-result-contract-invalid'])], needs_context: [...new Set([...(result.needs_context ?? []), 'worker-result-contract-retry: continue the same task/session and return the exact structured WorkerResult contract; evidence claims must be nested under evidence:[{...}]; do not claim completion from prose'])] };
+            appendLedger(m, 'worker.result-contract-retryable', { task_id: task.id, worker_id: worker.id, payload: { model: worker.model, attempt: worker.attempt, generation: m.continuation.generation, transport: 'text-compatibility' } });
         }
         if (!effective.ok)
             result = { ...result, status: 'BLOCKED', summary: `Effective child model could not be verified against the selected execution model. ${effective.reason}`, open_issues: [...new Set([...(result.open_issues ?? []), effective.reason])], needs_context: [...new Set([...(result.needs_context ?? []), 'effective-model-reconcile: refresh runtime inventory/provider policy and resume with a verified role-selected model'])] };
@@ -750,10 +776,12 @@ export class TaskRuntime {
             const oldTask = m.execution.tasks.find(t => t.id === existing.task_id);
             if (existing.status === 'ready' && existing.session_id && oldTask?.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(oldTask.result.status)) {
                 const hazardBeforeResume = recoveryModelHazard(m);
-                if (hazardBeforeResume.open && hazardBeforeResume.worker_id === existing.id && hazardBeforeResume.model === existing.model) {
-                    const escalated = await this.#recovery.recoverStagnation(m, 3, 'model-escalation');
+                if (hazardBeforeResume.same_model_exhausted && hazardBeforeResume.worker_id === existing.id && hazardBeforeResume.model === existing.model) {
+                    const escalated = hazardBeforeResume.open ? await this.#recovery.recoverStagnation(m, 3, 'model-escalation') : false;
                     if (escalated)
-                        return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['behavioral-recovery:model-escalation-after-two-no-gain-corrections'], readiness: 'READY', preconditions: preflight.items };
+                        return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['behavioral-recovery:model-escalation-after-repeated-same-failure-correction'], readiness: 'READY', preconditions: preflight.items };
+                    appendLedger(m, 'worker.same-model-correction-exhausted', { task_id: oldTask.id, worker_id: existing.id, payload: { reason: hazardBeforeResume.reason, attempts: hazardBeforeResume.attempts, failure_signature: hazardBeforeResume.failure_signature, recovery_candidates: hazardBeforeResume.recovery_candidates } });
+                    throw new Error(`Same-model corrective recovery is exhausted for the unchanged failure on task ${oldTask.id}. Use a mechanically different parent strategy${hazardBeforeResume.recovery_candidates.length ? ' or an admitted recovery-only model candidate' : ''}; do not resume the same task/model again.`);
                 }
                 const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x));
                 if (existing.restart_reconcile_pending) {
@@ -785,8 +813,8 @@ export class TaskRuntime {
                 const correctionLevel = Math.min(2, hazardBeforeResume.attempts + 1);
                 beginWorkerAttempt(oldTask, existing);
                 this.recordModelProjection(existing, nextModel, resumeVariant);
-                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `TASK REQUIRED EVIDENCE: ${oldTask.requiredEvidence.join(', ') || 'none'}.`, reviewVerdictContract, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT TASK-OWNED FRESH EVIDENCE: ${freshEvidence || 'none'}.`, sourceRevalidation, processResumeContext, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, correctionLevel === 1 ? 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.' : 'Resume the SAME task/session, but use a materially different corrective hypothesis or action from the prior correction. Do not repeat the failed strategy, restart planning, or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, taskPromptToolOverrides(oldTask.execution_profile?.tools ?? [], this.getHostConfig(), oldTask.execution_profile?.mcp_servers ?? []), existing.attempt_prompt_message_id);
-                recordRecoveryStrategy(m, { level: correctionLevel, action: 'same-worker-resume' }, 'started', Date.now(), { task_id: oldTask.id, worker_id: existing.id, model: nextModel, failure_signature: existing.last_runtime_failure_kind });
+                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `TASK REQUIRED EVIDENCE: ${oldTask.requiredEvidence.join(', ') || 'none'}.`, reviewVerdictContract, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT TASK-OWNED FRESH EVIDENCE: ${freshEvidence || 'none'}.`, sourceRevalidation, processResumeContext, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, correctionLevel === 1 ? 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again; every evidence claim MUST be nested under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}], never as its own top-level key.' : 'Resume the SAME task/session, but use a materially different corrective hypothesis or action from the prior correction. Do not repeat the failed strategy, restart planning, or create sub-orchestrators. Return the structured WorkerResult again; every evidence claim MUST be nested under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}], never as its own top-level key.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, taskPromptToolOverrides(oldTask.execution_profile?.tools ?? [], this.getHostConfig(), oldTask.execution_profile?.mcp_servers ?? []), existing.attempt_prompt_message_id);
+                recordRecoveryStrategy(m, { level: correctionLevel, action: 'same-worker-resume' }, 'started', Date.now(), { task_id: oldTask.id, worker_id: existing.id, model: nextModel, failure_signature: hazardBeforeResume.failure_signature });
                 existing.model_variant = resumeVariant;
                 existing.restart_reconcile_pending = false;
                 appendLedger(m, nextModel !== previousModel ? 'worker.model-escalated' : 'worker.resumed', { task_id: oldTask.id, worker_id: existing.id, payload: { status: oldTask.result.status, model: nextModel, correction_level: correctionLevel, recovery_progress_signature: hazardBeforeResume.progress_signature } });

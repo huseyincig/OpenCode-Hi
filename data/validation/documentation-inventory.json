@@ -5,7 +5,7 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "6dbbc60e944b87d0ca22d94ee14030c039f20133439897c3ee5280e39e28e969"
+    "sha256": "f87608d7574f8ae655fad6898b46444985672f73d9a807dc4b389d2a989cb358"
   },
   "summary": {
     "public_documents": 16,
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "fa7edb9d01392d17f157509d15a69278ad932d2e04356dd6aea589bf65e61552",
+      "sha256": "5c0b6ad1179685722b679151454d0b979df78f424548de9e6e1008db81a9dfd5",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "6b9b98138c34a8ee8b18185e607fbc7f465687a12b1f9e990c186e00aef44e71",
+      "sha256": "aaaaff462c578b53f80f78e2e4e7709ba08a3a4676c499c0c27feea38dbfabaf",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "51d72a9762d09b670348a865be6131aab791c0d173a3f71f2e2def0b4cad4348",
+      "sha256": "33a7ba818a2e037fa2cb35b745a7618b9f3595e97ad64774918ad2383c44c324",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "8cd3d29474ac4ce86fc4bc8f51db2891af9838ece19d493a730ed3f9ccb48ce3",
+      "sha256": "63d47a77a25a499991d893aa2946ca95e067b4db3f5b7e7673afc41eab2db045",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

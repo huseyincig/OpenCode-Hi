@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "8f10a9b312512f37b99f623008aab27d4055206f066744394645d92a8692d289",
+      "owner_sha256": "f798f430b78fbbf5f279535338b10076a0e0cd0ab97656bcd756970aff587637",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "984c2a09458b8aad12d96e6493cbe2207d8ae8fffd2436f6effe387b9c1163e8",
+      "owner_sha256": "e49bc3aea9c5263d06f40a870ca3a19d2e7528bc0f0104950e80f61a37884976",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -46,7 +46,7 @@
       "area": "worker",
       "canonical_owner": "WorkerRuntime",
       "owner_path": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "a08038c9e64aa11329984e37222aa2960641e7e7b802ec8aa7c616a93e6c4712",
+      "owner_sha256": "ceef9349807d043672589b022ee5358a55bca55c6f55b645c09970b7408a0f47",
       "producer_or_contract_paths": [
         "plugin/src/contracts/worker.ts",
         "plugin/src/contracts/worker-result.ts"
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "9d2f380f8f46a7e57861e424293844310aaf48ebc9cec492e5904c3b3ca54a2d",
+      "owner_sha256": "b32dd19e3c40e43c4495adfe7ce664c4bb9a93e0958bfff6716b3f0b1804106e",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -252,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "838ffb29a4050631aa1c6367c2890dba11b7864523fe1364cc4952efef929af8",
+      "owner_sha256": "ead87477d55da57d12a37c352bfa90222a4054d30510e7c385193db67608b3ac",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",
@@ -272,7 +272,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "e462078037b1894ccdbcba27849080a183bb8075d0e93d39b15bb028a2e10578",
+      "owner_sha256": "b0ea598dc9d37ddb519696603862f64ffc33f9e536cbb4440b88c9394dfb30b5",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
@@ -291,7 +291,7 @@
       "area": "process",
       "canonical_owner": "ProcessContract/Runtime",
       "owner_path": "plugin/src/contracts/process.ts",
-      "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "owner_sha256": "7c5c3a3ed5e5b64c04301f819617a4c7827c92bc70afb947fb2e7d5340f1a1b0",
       "producer_or_contract_paths": [
         "plugin/src/runtime/process/runtime.ts",
         "plugin/src/runtime/process/executor.ts"
@@ -348,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "1b65f7d482ce48aeb487e17da3bf4233d647f8a1f70ed2252386677230f9e33f",
+      "owner_sha256": "3f1595614782dc851235ba437ccd1f366d12d028a8abe542ebc2b81069f245e7",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",
