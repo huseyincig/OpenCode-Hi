@@ -100,6 +100,8 @@ OpenCode owns native host primitives such as sessions, child sessions, provider/
 
 `TaskRuntime` is the canonical Task application facade. Mechanical child execution, result reconciliation and recovery are delegated to bounded collaborators; none owns a second Task store. A model-facing cancel cannot retire a `FIX_REQUIRED`/`NEEDS_CONTEXT` Task while it still owns an open obligation: that exact Task must be reconciled instead, so cancellation cannot manufacture a fresh identity for an equivalent recovery strategy. Canonical user STOP/runtime-owned cancellation remains a separate lifecycle path.
 
+Mission lifecycle status is also an execution boundary: once a Mission is `waiting-user`, `stopped`, `completed`, or otherwise non-active, ordinary tool execution fails closed at the generic tool-before boundary. Only bounded inspection/reconciliation/control surfaces, an exact registered rollback path, and the already-bound exact authority recovery contract remain admitted until canonical lifecycle resolution; a non-active Mission cannot gain fresh write/process/delegation authority merely because a native tool exists.
+
 A Worker is one execution attempt bound to a Task. `WorkerResult` is boundary-untrusted input and does not own completion.
 
 Completed DAG dependencies feed successors through a bounded direct-edge outcome projection at actual dispatch time. Each projected item is fenced to the accepted producer worker attempt/run/generation and result digest, excludes worker evidence claims/findings, and is explicitly non-Evidence. The projection is recomputed after child creation and before the first provider prompt so an await-time generation/result race cannot leak stale predecessor output into a new execution.

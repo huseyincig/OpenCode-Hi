@@ -1,5 +1,5 @@
 import { isVerificationCommand, normalizeProjectPath, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
-import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
+import { actionContract, beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
 import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
 import { hasProjectedPosixBackgroundExecution } from '../runtime/safety/execution-projection.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
@@ -19,9 +19,22 @@ import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer
 import { recordToolOperationProgress } from '../runtime/liveness/assessment.js';
 const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
 const SETTINGS_CONTROL_TARGETS = new Set(['hi_settings', 'hi_role_models']);
+const NON_ACTIVE_INSPECTION_TOOLS = new Set(['read', 'glob', 'grep', 'list', 'lsp', 'todoread', 'hi_status', 'hi_metrics', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models', 'hi_intent_assess', 'hi_context_artifacts', 'hi_task_await', 'hi_task_peek', 'hi_task_list', 'hi_process_read', 'hi_process_wait', 'hi_process_kill', 'hi_process_cleanup', 'hi_process_list']);
+const NON_ACTIVE_RECOVERY_TOOLS = new Set(['hi_temporary_mutation_revert']);
 function assessedExplicitSettingsRequest(m) {
     const targets = (m.identity.intent.likelyTargets ?? []).map((value) => String(value).trim().split('(')[0]);
     return targets.length > 0 && targets.every((target) => SETTINGS_CONTROL_TARGETS.has(target)) && m.identity.intent.requiredCapabilities.length === 0 && m.identity.intent.requestedExternalActions.length === 0;
+}
+function exactAuthorityRecovery(m, tool, args) {
+    if (tool !== 'bash' || typeof args?.command !== 'string' || !privilegedAction(args.command))
+        return false;
+    try {
+        const hash = actionContract(args.command, args?.cwd).hash, a = m.authority.authority, d = m.authority.human_decision, refs = [a?.pending?.hash, a?.approved?.hash, a?.executing?.hash, d?.status === 'OPEN' ? d.authority_ref : undefined];
+        return refs.includes(hash);
+    }
+    catch {
+        return false;
+    }
 }
 function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
 function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
@@ -46,6 +59,22 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         const tool = String(input?.tool ?? ''), rawArgs = output?.args ?? input?.args ?? {}, args = HI_PROCESS_EXECUTION_TOOL_IDS.includes(tool) && rawArgs?.input && typeof rawArgs.input === 'object' && !Array.isArray(rawArgs.input) ? { ...rawArgs, ...rawArgs.input } : rawArgs;
         if (!child && !NON_MATERIAL_CONTROL_TOOLS.has(tool) && store.reopenContradictedNonMaterial(String(sid), tool))
             throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`);
+        if (!child && m.identity.status === 'completed' && tool === 'bash' && typeof args?.command === 'string') {
+            const kind = verificationCommandKind(args.command);
+            if (kind)
+                throw new Error(`Hi mission already completed from fresh required evidence; additional verifier '${kind}' is not admitted. Stop instead of running more checks.`);
+        }
+        if (m.identity.status !== 'active' && tool === 'bash' && typeof args?.command === 'string' && (isReleaseCreate(args.command) || isPackagePublish(args.command)))
+            assertReleaseChainPrecondition(m, args.command, projectRoot ?? args?.cwd);
+        if (m.identity.status !== 'active') {
+            const rollback = tool === 'bash' && typeof args?.command === 'string' ? matchRollback(m, args.command) : undefined, safeInspection = NON_ACTIVE_INSPECTION_TOOLS.has(tool), safeRecovery = NON_ACTIVE_RECOVERY_TOOLS.has(tool) || Boolean(rollback) || exactAuthorityRecovery(m, tool, args);
+            if (safeInspection)
+                return;
+            if (!safeRecovery) {
+                appendLedger(m, 'tool.lifecycle-admission-blocked', { worker_id: child?.id, payload: { tool, status: m.identity.status, reason: 'mission-non-active', human_decision: m.authority.human_decision?.status === 'OPEN' ? m.authority.human_decision.reason_code : undefined } });
+                throw new Error(`Hi lifecycle guard: mission is ${m.identity.status}; ordinary execution tool '${tool}' is blocked until canonical lifecycle resolution. Only bounded inspection/reconciliation and exact registered rollback/authority recovery are admitted.`);
+            }
+        }
         const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, verificationOnlyChild = Boolean(childTask?.obligation_ids.length && childTask.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification'))), resourceOnlyProcessSupport = Boolean(childTask?.execution_profile?.process_lifecycle === true && !childTask.obligation_ids.length && !childTask.requiredEvidence.length);
         if (child && resourceOnlyProcessSupport && toolMayMutate(tool, args)) {
             appendLedger(m, 'worker.process-support-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'process-resource-only-contract' } });
@@ -122,11 +151,6 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             appendLedger(m, 'tool.economy-blocked', { payload: { tool: 'todowrite', reason: 'low-risk-local-direct-mission-uses-canonical-obligations' } });
             throw new Error(`Hi tool economy: native todos are unnecessary for this low-risk local direct mission. Use Hi canonical obligations/control state instead; do not create a parallel todo plan.`);
         }
-        if (!child && m.identity.status === 'completed' && tool === 'bash' && typeof args?.command === 'string') {
-            const kind = verificationCommandKind(args.command);
-            if (kind)
-                throw new Error(`Hi mission already completed from fresh required evidence; additional verifier '${kind}' is not admitted. Stop instead of running more checks.`);
-        }
         if (!child && m.identity.status === 'active' && ['DIRECT', 'EVIDENCE'].includes(m.execution.adaptive_execution?.path ?? '') && m.identity.intent.scope === 'local' && !['high', 'authority-boundary'].includes(m.identity.risk) && tool === 'bash' && typeof args?.command === 'string') {
             const kind = verificationCommandKind(args.command);
             if (kind && !verificationKindAdmittedForMission(m, kind)) {
@@ -185,8 +209,6 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
                 throw new Error('Hi authority boundary: another exact privileged action already owns the pending/approved/executing authority slot. Resolve or invalidate it before starting a different external effect.');
             beginAuthorizedAction(m, args.command, args?.cwd);
         }
-        if (m.identity.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
-            return;
         const operationID = String(input?.callID ?? input?.callId ?? '').trim();
         if (operationID)
             recordToolOperationProgress(m, { operation_id: operationID, session_id: String(sid ?? ''), tool, generation: child?.generation_at_spawn ?? m.continuation.generation }, 'started');
