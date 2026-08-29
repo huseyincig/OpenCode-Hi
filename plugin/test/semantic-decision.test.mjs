@@ -90,7 +90,7 @@ test('semantic entry gate preserves the complete closed contract',()=>{
   assert.match(gate,/scope\/dependency describe material change units/)
   assert.match(gate,/user-unchanged test files excluded/)
   assert.match(gate,/one change\+verification != sequential/)
-  assert.match(gate,/task_kind=implementation\|bug-fix\|diagnosis\|review/);assert.match(gate,/diagnosis is read-only root cause\/no fix/);assert.match(gate,/otherwise intent\.debugging requires material diagnosis \+ repository-analysis/)
+  assert.match(gate,/task_kind=implementation\|bug-fix\|diagnosis\|review/);assert.match(gate,/diagnosis=no-fix/);assert.match(gate,/review=no-write/);assert.match(gate,/review\+fix=>bug-fix\+C:implementation/);assert.match(gate,/docs=>C:documentation/);assert.match(gate,/verify!=test-authoring/);assert.match(gate,/intent\.debugging=>diagnosis\+repository-analysis/)
   assert.match(gate,/requested_external_actions=X\[\]/);assert.match(gate,/risk=low\|medium\|high\|authority-boundary/);assert.match(gate,/X nonempty=>risk=authority-boundary/);assert.match(gate,/file\/repo\/tool work=>mission=true; pure chat=>non-material=false/)
   for(const value of [...SEMANTIC_CAPABILITIES,...SEMANTIC_EXTERNAL_ACTIONS,...SEMANTIC_VERIFICATION_KINDS])assert.ok(gate.includes(value),`missing closed enum ${value}`)
   assert.match(gate,/likely_verification=V\[\];verification_cases\[\];nonvisual_request_units\[\]/);assert.match(gate,/source_units:RU\[\]/);assert.match(gate,/visual-check=>.*all RU=/);assert.match(gate,/else both=\[\];no RU trace/);assert.doesNotMatch(gate,/\bvisual_request_units\b/);assert.match(gate,/intent_signals=\[\] by default/);assert.match(gate,/intent\.<slug>/);assert.match(gate,/intent\.tdd/);assert.match(gate,/unknown signals reject/)

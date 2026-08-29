@@ -13,9 +13,14 @@ export const SEMANTIC_EXTERNAL_ACTIONS=['git-push','release-create','package-pub
 export type SemanticExternalAction=typeof SEMANTIC_EXTERNAL_ACTIONS[number]
 export const SEMANTIC_VERIFICATION_KINDS=['targeted-tests','typecheck','lint','build','changed-surface-sanity','visual-check','review-evidence'] as const
 export type SemanticVerificationKind=typeof SEMANTIC_VERIFICATION_KINDS[number]
-const DIAGNOSIS_WRITE_CAPABILITIES=new Set<SemanticCapability>(['implementation','documentation','test-authoring','dependency-change'])
-export function diagnosisWriteCapabilities(taskKind:string,capabilities:readonly string[]):string[]{return taskKind==='diagnosis'?[...new Set(capabilities.filter(cap=>DIAGNOSIS_WRITE_CAPABILITIES.has(cap as SemanticCapability)))]:[]}
-export function assertSemanticTaskCapabilityConsistency(taskKind:string,capabilities:readonly string[]):void{const conflicting=diagnosisWriteCapabilities(taskKind,capabilities);if(conflicting.length)throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${conflicting.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`)}
+const READ_ONLY_TASK_WRITE_CAPABILITIES=new Set<SemanticCapability>(['implementation','documentation','test-authoring','dependency-change'])
+function conflictingWriteCapabilities(taskKind:string,capabilities:readonly string[],kind:'diagnosis'|'review'):string[]{return taskKind===kind?[...new Set(capabilities.filter(cap=>READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap as SemanticCapability)))]:[]}
+export function diagnosisWriteCapabilities(taskKind:string,capabilities:readonly string[]):string[]{return conflictingWriteCapabilities(taskKind,capabilities,'diagnosis')}
+export function reviewWriteCapabilities(taskKind:string,capabilities:readonly string[]):string[]{return conflictingWriteCapabilities(taskKind,capabilities,'review')}
+export function assertSemanticTaskCapabilityConsistency(taskKind:string,capabilities:readonly string[]):void{
+  const diagnosis=diagnosisWriteCapabilities(taskKind,capabilities);if(diagnosis.length)throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`)
+  const review=reviewWriteCapabilities(taskKind,capabilities);if(review.length)throw new Error(`task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`)
+}
 export interface SemanticIntentAssessment{
   material:boolean
   message_kind:SemanticMessageKind

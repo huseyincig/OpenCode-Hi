@@ -101,3 +101,24 @@ test('ordinary bug-fix still requires implementation and verification',()=>{
   assert.ok(m.execution.obligations.some(o=>o.kind==='implementation'))
   assert.ok(m.execution.obligations.some(o=>o.kind==='verification'))
 })
+
+
+test('review is structurally read-only while mixed review plus remediation is admitted as bug-fix with specialist review retained',async()=>{
+  const pureReview={...diagnosis,task_kind:'review',risk:'high',required_capabilities:['repository-analysis','security-review','verification'],likely_targets:['app.py','README.md']}
+  const parsed=parseSemanticIntentAssessment(pureReview);assert.equal(parsed.task_kind,'review')
+  assert.throws(()=>parseSemanticIntentAssessment({...pureReview,required_capabilities:[...pureReview.required_capabilities,'implementation']}),/review.*read-only.*write capability.*implementation/)
+  assert.throws(()=>parseSemanticIntentAssessment({...pureReview,required_capabilities:[...pureReview.required_capabilities,'documentation']}),/review.*read-only.*write capability.*documentation/)
+  const store=new MissionStore(),m=store.start('review-pure','Perform a security review only; report findings.');store.applyInitialSemanticAssessment('review-pure',pureReview)
+  assert.ok(m.execution.obligations.some(o=>o.kind==='review'));assert.ok(!m.execution.obligations.some(o=>o.kind==='implementation'||o.kind==='documentation'));assert.equal(validateMissionEnvelope(m),true)
+  m.identity.intent.requiredCapabilities.push('implementation');assert.equal(validateMissionEnvelope(m),false,'durable review/write contradiction must fail closed')
+
+  const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='review-remediation-admission'
+  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Review the security problems, fix them, verify the fixes, and update README.md security notes.'}]})
+  const invalid=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...pureReview,required_capabilities:[...pureReview.required_capabilities,'implementation','documentation']})},{sessionID:sid}))
+  assert.equal(invalid.status,'INVALID_ASSESSMENT');assert.match(invalid.error,/review.*read-only.*write capability/)
+  const corrected=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...pureReview,task_kind:'bug-fix',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','security-review','verification','documentation']})},{sessionID:sid}))
+  assert.equal(corrected.status,'ASSESSED');assert.equal(corrected.task_kind,'bug-fix')
+  const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));const kinds=ledger.obligations.map(o=>o.kind)
+  assert.ok(kinds.includes('implementation'));assert.ok(kinds.includes('documentation'));assert.ok(kinds.includes('verification'));assert.ok(kinds.includes('review'))
+  await hooks.dispose?.()
+})

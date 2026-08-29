@@ -16,7 +16,7 @@ export function renderSemanticAssessmentGate(m) {
         ...atomLines,
         `C=${SEMANTIC_CAPABILITIES.join('|')};X=${SEMANTIC_EXTERNAL_ACTIONS.join('|')};V=${SEMANTIC_VERIFICATION_KINDS.join('|')}. visual-check=>verification_cases=1..16{id,subject,required_browser_actions:A[],source_units:RU[]};all RU=case source_units|nonvisual_request_units;else both=[];no RU trace;${semantic.phase === 'followup' ? 'resume/constraint empty cases+RU keeps prior; ' : ''}A=open|navigate|click|type|key|inspect|viewport|screenshot|wait|close;reload=navigate+inspect;intent_signals=[] by default;intent.<slug>:intent.tdd;unknown signals reject;capability-named signals reject.`,
         'scope/dependency describe material change units;user-unchanged test files excluded;one change+verification != sequential.',
-        'diagnosis is read-only root cause/no fix;otherwise intent.debugging requires material diagnosis + repository-analysis;independent-review only for explicit user independence or risk/policy requirement;interactive-process=persistent;X nonempty=>risk=authority-boundary.',
+        'diagnosis=no-fix;review=no-write;review+fix=>bug-fix+C:implementation;docs=>C:documentation;verify!=test-authoring;intent.debugging=>diagnosis+repository-analysis;independent-review=explicit/risk;interactive-process=persistent;X nonempty=>risk=authority-boundary.',
         phaseRule,
     ].join('\n');
 }

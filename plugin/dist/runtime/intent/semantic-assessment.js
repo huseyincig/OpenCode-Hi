@@ -5,10 +5,18 @@ import { verificationCaseValidationError } from '../../contracts/verification-ca
 export const SEMANTIC_CAPABILITIES = ['implementation', 'repository-analysis', 'review', 'verification', 'independent-review', 'security-review', 'visual-qa', 'design-exploration', 'multi-stream-delegation', 'source-verification', 'external-research', 'documentation', 'test-authoring', 'qa-review', 'dependency-change', 'interactive-process', 'mcp'];
 export const SEMANTIC_EXTERNAL_ACTIONS = ['git-push', 'release-create', 'package-publish', 'deploy'];
 export const SEMANTIC_VERIFICATION_KINDS = ['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity', 'visual-check', 'review-evidence'];
-const DIAGNOSIS_WRITE_CAPABILITIES = new Set(['implementation', 'documentation', 'test-authoring', 'dependency-change']);
-export function diagnosisWriteCapabilities(taskKind, capabilities) { return taskKind === 'diagnosis' ? [...new Set(capabilities.filter(cap => DIAGNOSIS_WRITE_CAPABILITIES.has(cap)))] : []; }
-export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities) { const conflicting = diagnosisWriteCapabilities(taskKind, capabilities); if (conflicting.length)
-    throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${conflicting.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`); }
+const READ_ONLY_TASK_WRITE_CAPABILITIES = new Set(['implementation', 'documentation', 'test-authoring', 'dependency-change']);
+function conflictingWriteCapabilities(taskKind, capabilities, kind) { return taskKind === kind ? [...new Set(capabilities.filter(cap => READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap)))] : []; }
+export function diagnosisWriteCapabilities(taskKind, capabilities) { return conflictingWriteCapabilities(taskKind, capabilities, 'diagnosis'); }
+export function reviewWriteCapabilities(taskKind, capabilities) { return conflictingWriteCapabilities(taskKind, capabilities, 'review'); }
+export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities) {
+    const diagnosis = diagnosisWriteCapabilities(taskKind, capabilities);
+    if (diagnosis.length)
+        throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`);
+    const review = reviewWriteCapabilities(taskKind, capabilities);
+    if (review.length)
+        throw new Error(`task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`);
+}
 const PATH = /((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|txt|css|yml)))(?![\w.-])/gi;
 const HTTP_TARGET = /^https?:\/\/[^\s]+$/i;
 const TECHNICAL_VERIFIER_PATTERNS = [

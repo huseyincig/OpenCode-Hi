@@ -78,7 +78,7 @@ test('semantic gate does not invent independent review for deterministic low-ris
   const store=new MissionStore(process.cwd())
   const mission=store.start('phase2-review-prior','Fix src/a.ts and stop after the targeted test passes')
   const gate=renderSemanticAssessmentGate(mission)
-  assert.match(gate,/independent-review only for explicit user independence or risk\/policy requirement/)
+  assert.match(gate,/independent-review=explicit\/risk/)
 })
 
 test('follow-up semantic gate distinguishes resume from amendment to avoid duplicate continuation work',()=>{
