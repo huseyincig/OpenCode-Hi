@@ -10,17 +10,31 @@ function conflictingWriteCapabilities(taskKind, capabilities, kind) { return tas
 export function diagnosisWriteCapabilities(taskKind, capabilities) { return conflictingWriteCapabilities(taskKind, capabilities, 'diagnosis'); }
 export function reviewWriteCapabilities(taskKind, capabilities) { return conflictingWriteCapabilities(taskKind, capabilities, 'review'); }
 export function releaseReadinessWriteCapabilities(taskKind, scope, capabilities) { return taskKind === 'release-readiness' && scope !== 'external' ? [...new Set(capabilities.filter(cap => READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap)))] : []; }
-export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities, scope = 'local') {
+export function semanticTaskCapabilityConsistencyError(taskKind, capabilities, scope = 'local', mutationTargets = []) {
     const diagnosis = diagnosisWriteCapabilities(taskKind, capabilities);
     if (diagnosis.length)
-        throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`);
+        return `task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`;
     const review = reviewWriteCapabilities(taskKind, capabilities);
     if (review.length)
-        throw new Error(`task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`);
+        return `task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`;
     const release = releaseReadinessWriteCapabilities(taskKind, scope, capabilities);
     if (release.length)
-        throw new Error(`local task_kind=release-readiness is read-only inspection/verification and cannot include repository write capability(s): ${release.join(', ')}; use task_kind=bug-fix, implementation, or performance when local release preparation requires material changes`);
+        return `local task_kind=release-readiness is read-only inspection/verification and cannot include repository write capability(s): ${release.join(', ')}; use task_kind=bug-fix, implementation, or performance when local release preparation requires material changes`;
+    if (!mutationTargets.length)
+        return undefined;
+    if (taskKind === 'diagnosis')
+        return 'task_kind=diagnosis is read-only root cause/no fix and cannot declare non-empty mutation_targets; use bug-fix, implementation, or performance for a material write outcome';
+    if (taskKind === 'review')
+        return 'task_kind=review is read-only findings/reporting and cannot declare non-empty mutation_targets; use bug-fix, implementation, or performance for remediation';
+    if (taskKind === 'release-readiness' && scope !== 'external')
+        return 'local task_kind=release-readiness is read-only inspection/verification and cannot declare non-empty mutation_targets; use bug-fix, implementation, or performance for local release changes';
+    const writes = [...new Set(capabilities.filter(cap => READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap)))];
+    if (!writes.length)
+        return 'non-empty mutation_targets require at least one write capability: implementation, documentation, test-authoring, or dependency-change';
+    return undefined;
 }
+export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities, scope = 'local', mutationTargets = []) { const issue = semanticTaskCapabilityConsistencyError(taskKind, capabilities, scope, mutationTargets); if (issue)
+    throw new Error(issue); }
 const PATH = /((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|txt|css|yml)))(?![\w.-])/gi;
 const HTTP_TARGET = /^https?:\/\/[^\s]+$/i;
 const TECHNICAL_VERIFIER_PATTERNS = [
@@ -224,7 +238,6 @@ export function parseSemanticIntentAssessment(raw) {
     if (effectiveVerification.includes('visual-check') && !requiredCapabilities.includes('visual-qa'))
         requiredCapabilities.push('visual-qa');
     const taskKind = take('task_kind', taskKinds), scope = take('scope', scopes);
-    assertSemanticTaskCapabilityConsistency(taskKind, requiredCapabilities, scope);
     const assessment = {
         material: v.material, message_kind: messageKind,
         task_kind: taskKind, scope, risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
@@ -238,6 +251,7 @@ export function parseSemanticIntentAssessment(raw) {
         if (outside.length)
             throw new Error(`mutation_targets must be a subset of likely_targets: ${outside.join(', ')}`);
     }
+    assertSemanticTaskCapabilityConsistency(taskKind, requiredCapabilities, scope, assessment.mutation_targets ?? []);
     if (messageKind !== 'constraint' && assessment.constraint_atoms.length)
         throw new Error('constraint_atoms are allowed only for message_kind=constraint');
     const visualRequired = assessment.likely_verification.includes('visual-check');

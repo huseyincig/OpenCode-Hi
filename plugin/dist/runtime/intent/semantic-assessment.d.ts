@@ -13,7 +13,8 @@ export type SemanticVerificationKind = typeof SEMANTIC_VERIFICATION_KINDS[number
 export declare function diagnosisWriteCapabilities(taskKind: string, capabilities: readonly string[]): string[];
 export declare function reviewWriteCapabilities(taskKind: string, capabilities: readonly string[]): string[];
 export declare function releaseReadinessWriteCapabilities(taskKind: string, scope: string, capabilities: readonly string[]): string[];
-export declare function assertSemanticTaskCapabilityConsistency(taskKind: string, capabilities: readonly string[], scope?: string): void;
+export declare function semanticTaskCapabilityConsistencyError(taskKind: string, capabilities: readonly string[], scope?: string, mutationTargets?: readonly string[]): string | undefined;
+export declare function assertSemanticTaskCapabilityConsistency(taskKind: string, capabilities: readonly string[], scope?: string, mutationTargets?: readonly string[]): void;
 export interface SemanticIntentAssessment {
     material: boolean;
     message_kind: SemanticMessageKind;

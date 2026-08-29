@@ -90,7 +90,7 @@ test('semantic entry gate preserves the complete closed contract',()=>{
   assert.match(gate,/scope\/dependency describe material change units/)
   assert.match(gate,/user-unchanged test files excluded/)
   assert.match(gate,/one change\+verification != sequential/)
-  assert.match(gate,/task_kind=implementation\|bug-fix\|diagnosis\|review/);assert.match(gate,/diagnosis=no-fix/);assert.match(gate,/review=no-write/);assert.match(gate,/review\+fix=>bug-fix\+C:implementation/);assert.match(gate,/docs=>C:documentation/);assert.match(gate,/verify!=test-authoring/);assert.match(gate,/intent\.debugging=>diagnosis\+repository-analysis/)
+  assert.match(gate,/task_kind=implementation\|bug-fix\|diagnosis\|review/);assert.match(gate,/diagnosis=no-write/);assert.match(gate,/review=no-write/);assert.match(gate,/fix\/project=>bug-fix\+C:implementation/);assert.match(gate,/docs=>C:documentation/);assert.match(gate,/verify!=test-authoring/);assert.match(gate,/intent\.debugging=>diagnosis\+repository-analysis/)
   assert.match(gate,/requested_external_actions=X\[\]/);assert.match(gate,/risk=low\|medium\|high\|authority-boundary/);assert.match(gate,/X=>risk=authority-boundary/);assert.match(gate,/file\/repo\/tool=>mission=true;chat-only=>non-material=false/)
   for(const value of [...SEMANTIC_CAPABILITIES,...SEMANTIC_EXTERNAL_ACTIONS,...SEMANTIC_VERIFICATION_KINDS])assert.ok(gate.includes(value),`missing closed enum ${value}`)
   assert.match(gate,/likely_verification=V\[\];verification_cases\[\];nonvisual_request_units\[\]/);assert.match(gate,/source_units:RU\[\]/);assert.match(gate,/visual-check=>.*RU=/);assert.match(gate,/no visual=>cases\/RU=\[\]/);assert.doesNotMatch(gate,/\bvisual_request_units\b/);assert.match(gate,/intent_signals=\[\]/);assert.match(gate,/intent\.<slug>/);assert.match(gate,/intent\.tdd/);assert.match(gate,/signals unknown\/capability-named reject/)
@@ -102,13 +102,17 @@ test('semantic entry gate stays within the established provider-visible reductio
   assert.ok(gate.length<=maxChars,`gate=${gate.length}, maximum=${maxChars}; baseline=${SEMANTIC_GATE_PRE_COMPACTION_CHARS}, minimum_reduction=${SEMANTIC_GATE_MIN_REDUCTION}`)
 })
 
-test('semantic assessment separates context relevance from exact mutation surface',()=>{
+test('semantic assessment separates context relevance from exact mutation surface and requires write ownership',()=>{
   const base={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],user_verification:[],verification_ceiling:false,verification_cases:[],nonvisual_request_units:[],capability_request_units:{},likely_targets:['test-lab/config/model-pool.json','src/a.ts'],mutation_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]}
   const parsed=parseSemanticIntentAssessment(base)
   assert.deepEqual(parsed.likely_targets,base.likely_targets)
   assert.deepEqual(parsed.mutation_targets,['src/a.ts'])
   assert.throws(()=>parseSemanticIntentAssessment({...base,mutation_targets:['src/not-relevant.ts']}),/mutation_targets must be a subset of likely_targets/)
-  const gate=semanticEntryGate();assert.match(gate,/mutation_targets⊆likely_targets;write/);assert.match(gate,/exclude context\/source-of-truth/)
+  assert.throws(()=>parseSemanticIntentAssessment({...base,task_kind:'diagnosis',required_capabilities:['repository-analysis']}),/diagnosis.*mutation_targets|mutation_targets.*diagnosis/)
+  assert.throws(()=>parseSemanticIntentAssessment({...base,required_capabilities:['repository-analysis']}),/mutation_targets.*write capability/)
+  const docs=parseSemanticIntentAssessment({...base,likely_targets:['README.md'],mutation_targets:['README.md'],required_capabilities:['documentation']})
+  assert.deepEqual(docs.required_capabilities,['documentation'])
+  const gate=semanticEntryGate();assert.match(gate,/mutation_targets⊆likely_targets;write/);assert.match(gate,/exclude context\/source-of-truth/);assert.match(gate,/diagnosis=no-write/);assert.match(gate,/fix\/project=>bug-fix\+C:implementation/)
 })
 
 test('semantic visual-case input canonicalizes only unambiguous ID near-misses while strict validator remains strict',()=>{

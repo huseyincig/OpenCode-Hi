@@ -111,7 +111,7 @@ export class MissionStore {
     syncMissionGates(mission);appendLedger(mission,'mission.provisional',{payload:{semantic_revision:1,technical_targets:intent.likelyTargets??[],repo:{name:this.#repo.name,ecosystems:this.#repo.ecosystems,markers:this.#repo.markers,native:this.#repo.native}}});this.syncProgressBaseline(mission);this.#bySession.set(sessionID,mission);return mission
   }
   applyInitialSemanticAssessment(sessionID:string,assessment:SemanticIntentAssessment):MissionState{
-    assertSemanticTaskCapabilityConsistency(assessment.task_kind,assessment.required_capabilities,assessment.scope)
+    assertSemanticTaskCapabilityConsistency(assessment.task_kind,assessment.required_capabilities,assessment.scope,assessment.mutation_targets??[])
     const m=this.get(sessionID);if(!m)throw new Error('No active Hi mission')
     if(m.identity.semantic_assessment.status!=='pending'||m.identity.semantic_assessment.phase!=='initial')throw new Error('Hi semantic assessment is not pending for initial mission')
     if(!['mission','non-material'].includes(assessment.message_kind))throw new Error('Initial semantic assessment requires message_kind=mission or non-material')
@@ -170,7 +170,7 @@ export class MissionStore {
     appendLedger(m,'semantic.followup-pending',{payload:{revision:m.identity.semantic_assessment.revision,generation:m.continuation.generation,preview:text.slice(0,180)}});syncMissionGates(m);m.identity.updated_at=Date.now();this.syncProgressBaseline(m);return m
   }
   applyFollowupSemanticAssessment(sessionID:string,assessment:SemanticIntentAssessment):MissionState{
-    assertSemanticTaskCapabilityConsistency(assessment.task_kind,assessment.required_capabilities,assessment.scope)
+    assertSemanticTaskCapabilityConsistency(assessment.task_kind,assessment.required_capabilities,assessment.scope,assessment.mutation_targets??[])
     const m=this.get(sessionID);if(!m)throw new Error('No active Hi mission')
     if(m.identity.semantic_assessment.status!=='pending'||m.identity.semantic_assessment.phase!=='followup')throw new Error('Hi semantic assessment is not pending for a follow-up')
     if(assessment.message_kind==='mission')throw new Error('A follow-up assessment cannot use message_kind=mission')

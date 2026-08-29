@@ -18,11 +18,18 @@ function conflictingWriteCapabilities(taskKind:string,capabilities:readonly stri
 export function diagnosisWriteCapabilities(taskKind:string,capabilities:readonly string[]):string[]{return conflictingWriteCapabilities(taskKind,capabilities,'diagnosis')}
 export function reviewWriteCapabilities(taskKind:string,capabilities:readonly string[]):string[]{return conflictingWriteCapabilities(taskKind,capabilities,'review')}
 export function releaseReadinessWriteCapabilities(taskKind:string,scope:string,capabilities:readonly string[]):string[]{return taskKind==='release-readiness'&&scope!=='external'?[...new Set(capabilities.filter(cap=>READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap as SemanticCapability)))]:[]}
-export function assertSemanticTaskCapabilityConsistency(taskKind:string,capabilities:readonly string[],scope='local'):void{
-  const diagnosis=diagnosisWriteCapabilities(taskKind,capabilities);if(diagnosis.length)throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`)
-  const review=reviewWriteCapabilities(taskKind,capabilities);if(review.length)throw new Error(`task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`)
-  const release=releaseReadinessWriteCapabilities(taskKind,scope,capabilities);if(release.length)throw new Error(`local task_kind=release-readiness is read-only inspection/verification and cannot include repository write capability(s): ${release.join(', ')}; use task_kind=bug-fix, implementation, or performance when local release preparation requires material changes`)
+export function semanticTaskCapabilityConsistencyError(taskKind:string,capabilities:readonly string[],scope='local',mutationTargets:readonly string[]=[]):string|undefined{
+  const diagnosis=diagnosisWriteCapabilities(taskKind,capabilities);if(diagnosis.length)return `task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`
+  const review=reviewWriteCapabilities(taskKind,capabilities);if(review.length)return `task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`
+  const release=releaseReadinessWriteCapabilities(taskKind,scope,capabilities);if(release.length)return `local task_kind=release-readiness is read-only inspection/verification and cannot include repository write capability(s): ${release.join(', ')}; use task_kind=bug-fix, implementation, or performance when local release preparation requires material changes`
+  if(!mutationTargets.length)return undefined
+  if(taskKind==='diagnosis')return 'task_kind=diagnosis is read-only root cause/no fix and cannot declare non-empty mutation_targets; use bug-fix, implementation, or performance for a material write outcome'
+  if(taskKind==='review')return 'task_kind=review is read-only findings/reporting and cannot declare non-empty mutation_targets; use bug-fix, implementation, or performance for remediation'
+  if(taskKind==='release-readiness'&&scope!=='external')return 'local task_kind=release-readiness is read-only inspection/verification and cannot declare non-empty mutation_targets; use bug-fix, implementation, or performance for local release changes'
+  const writes=[...new Set(capabilities.filter(cap=>READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap as SemanticCapability)))];if(!writes.length)return 'non-empty mutation_targets require at least one write capability: implementation, documentation, test-authoring, or dependency-change'
+  return undefined
 }
+export function assertSemanticTaskCapabilityConsistency(taskKind:string,capabilities:readonly string[],scope='local',mutationTargets:readonly string[]=[]):void{const issue=semanticTaskCapabilityConsistencyError(taskKind,capabilities,scope,mutationTargets);if(issue)throw new Error(issue)}
 export interface SemanticIntentAssessment{
   material:boolean
   message_kind:SemanticMessageKind
@@ -174,7 +181,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   if(semanticSignals.includes('intent.documentation')&&!requiredCapabilities.includes('documentation'))requiredCapabilities.push('documentation')
   if(semanticSignals.includes('intent.tdd')&&!requiredCapabilities.includes('test-authoring'))requiredCapabilities.push('test-authoring')
   if(effectiveVerification.includes('visual-check')&&!requiredCapabilities.includes('visual-qa'))requiredCapabilities.push('visual-qa')
-  const taskKind=take('task_kind',taskKinds),scope=take('scope',scopes);assertSemanticTaskCapabilityConsistency(taskKind,requiredCapabilities,scope)
+  const taskKind=take('task_kind',taskKinds),scope=take('scope',scopes)
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:taskKind,scope,risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
@@ -183,6 +190,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],
   }
   if(assessment.mutation_targets){const likely=new Set(assessment.likely_targets),outside=assessment.mutation_targets.filter(path=>!likely.has(path));if(outside.length)throw new Error(`mutation_targets must be a subset of likely_targets: ${outside.join(', ')}`)}
+  assertSemanticTaskCapabilityConsistency(taskKind,requiredCapabilities,scope,assessment.mutation_targets??[])
   if(messageKind!=='constraint'&&assessment.constraint_atoms.length)throw new Error('constraint_atoms are allowed only for message_kind=constraint')
   const visualRequired=assessment.likely_verification.includes('visual-check');if(visualRequired&&!assessment.verification_cases.length&&!['resume','constraint'].includes(messageKind))throw new Error('visual-check requires non-empty top-level verification_cases[]');if(!visualRequired&&assessment.verification_cases.length)throw new Error('verification_cases require visual-check');if(!visualRequired&&assessment.nonvisual_request_units.length)throw new Error('nonvisual_request_units are only used to partition visual-check request traces; when visual-check is absent set nonvisual_request_units=[]');const caseIDs=assessment.verification_cases.map(c=>c.id);if(new Set(caseIDs).size!==caseIDs.length)throw new Error('verification_cases ids must be unique')
   const materialTargets=materialSemanticTargets(assessment),localSequential=assessment.scope==='local'&&assessment.dependency_class==='sequential',boundedSingleMaterialTarget=assessment.scope==='multi-file'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&materialTargets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))

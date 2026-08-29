@@ -119,6 +119,6 @@ test('pending semantic gate distinguishes material implementation scope from ver
   assert.match(text,/user-unchanged test files excluded/)
   assert.match(text,/one change\+verification != sequential/)
   assert.match(text,/task_kind=implementation\|bug-fix\|diagnosis\|review/)
-  assert.match(text,/diagnosis=no-fix/);assert.match(text,/review=no-write/);assert.match(text,/review\+fix=>bug-fix\+C:implementation/);assert.match(text,/docs=>C:documentation/);assert.match(text,/verify!=test-authoring/)
+  assert.match(text,/diagnosis=no-write/);assert.match(text,/review=no-write/);assert.match(text,/fix\/project=>bug-fix\+C:implementation/);assert.match(text,/docs=>C:documentation/);assert.match(text,/verify!=test-authoring/)
   assert.match(text,/intent\.debugging=>diagnosis\+repository-analysis/)
 })
