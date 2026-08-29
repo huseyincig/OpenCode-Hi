@@ -7,6 +7,11 @@ All notable changes to OpenCode-Hi are documented here.
 - Compare canonical reviewer finding projection semantically rather than by JSON object key insertion order while preserving fail-closed loss/evidence-binding checks for real reviewer roles.
 
 
+### Fixed — Scenario 05 parent shell ownership guard
+- Treat inline interpreter execution (`python -c`, `node -e`, shell `-c`, and equivalents) as mutation-capable at Hi mission ownership boundaries unless it is a canonical verification invocation. This closes a parent parallel-topology bypass where a multiline Python payload could mutate the fixture while being recorded as read-only review input.
+- Added regression coverage for the exact multiline Python write shape and preserved admitted parent verifier commands such as `python3 -m pytest`.
+
+
 ## Unreleased
 
 - Prevents `authority-boundary` risk classification alone from fabricating a user-approval obligation. Hi now opens mission-level `o-authority` only when the semantic contract contains a concrete requested external action; exact hash-bound authority, native permission asks, release/publish approval, and uncertain-action reconciliation remain unchanged.

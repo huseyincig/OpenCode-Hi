@@ -13,7 +13,11 @@ function id():string{return`ev_${Date.now().toString(36)}_${Math.random().toStri
 const WRITE_TOOLS=new Set(['write','edit','patch','apply_patch','multiedit'])
 const SHELL_MUTATION_COMMAND=/(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i
 const SHELL_REDIRECTION=/(?:^|[^<>])(?:>>?|2>>?|1>>?)\s*[^&|]/
-export function shellMayMutate(command:string):boolean{return SHELL_MUTATION_COMMAND.test(command)||SHELL_REDIRECTION.test(command)}
+// Inline interpreters are arbitrary execution surfaces: a static shell regex cannot prove
+// that `python -c`, `node -e`, shell `-c`, etc. are repository-read-only. Treat them as
+// mutation-capable at the mission ownership boundary. Canonical verifier invocations are
+// recognized separately below and remain admissible through the verifier exception.
+const SHELL_INLINE_INTERPRETER=/(?:^|[;&|]\s*)(?:(?:sudo|env(?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s]+)*)\s+)?(?:[^\s;&|]*\/)?(?:python(?:\d+(?:\.\d+)*)?|node|perl|ruby|sh|bash|zsh|dash|powershell(?:\.exe)?|pwsh(?:\.exe)?)\s+(?:(?:-[^\s]+\s+)*)(?:-c|-e|-E|--eval(?:=|\s)|--print(?:=|\s)|-Command\b|-EncodedCommand\b)/i
 const SHELL_BOUNDARY='(?:^|[;&|]\\s*)'
 const PREFIX='(?:(?:sudo|env(?:\\s+[A-Za-z_][A-Za-z0-9_]*=[^\\s]+)*)\\s+)?'
 const PACKAGE='(?:npm|pnpm|yarn|bun)'
@@ -24,6 +28,7 @@ const BUILD_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?
 const CHECK_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}${PACKAGE}\\s+(?:(?:run\\s+)?check(?:\\b|:))`, 'i')
 export function verificationCommandKind(command:string):MissionEvidenceKind|undefined{if(TEST_INVOCATION.test(command))return'targeted-tests';if(TYPECHECK_INVOCATION.test(command))return'typecheck';if(LINT_INVOCATION.test(command))return'lint';if(BUILD_INVOCATION.test(command))return'build';if(CHECK_INVOCATION.test(command))return'changed-surface-sanity';return undefined}
 export function isVerificationCommand(command:string):boolean{return verificationCommandKind(command)!==undefined}
+export function shellMayMutate(command:string):boolean{return SHELL_MUTATION_COMMAND.test(command)||SHELL_REDIRECTION.test(command)||(SHELL_INLINE_INTERPRETER.test(command)&&!isVerificationCommand(command))}
 export function toolMayMutate(tool:string,args:any):boolean{return WRITE_TOOLS.has(tool)||(tool==='bash'&&shellMayMutate(typeof args?.command==='string'?args.command:''))}
 function numericExit(output:any):number|undefined{for(const v of [output?.metadata?.exit,output?.metadata?.exitCode,output?.metadata?.exit_code,output?.exit,output?.exitCode,output?.exit_code]){if(typeof v==='number'&&Number.isFinite(v))return v;if(typeof v==='string'&&/^-?\d+$/.test(v.trim()))return Number(v)}return undefined}
 const ENVIRONMENT_FAILURE=/(command not found|not recognized as an internal|no module named|cannot find module|module not found|missing dependency|enoent|spawn .* (?:not found|failed)|executable .* not found|permission denied|eacces|network.*unreachable|temporary failure in name resolution|connection refused|connection reset|socket hang|timed?\s*out|timeout|unable to resolve host|could not resolve host|certificate (?:verify|verification)|tls handshake)/i

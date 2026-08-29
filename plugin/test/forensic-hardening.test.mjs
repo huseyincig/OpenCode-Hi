@@ -426,7 +426,7 @@ test('parent direct ownership ignores an observed file that native current diff 
 import {addEvidence,observeToolBefore} from '../dist/runtime/evidence/evidence-runtime.js'
 
 test('bash mutation variants invalidate prior fresh evidence while read-only git status does not',()=>{
-  const mutators=['printf x > src/a.ts',`node -e "require('fs').writeFileSync('src/a.ts','x')"`,'git apply fix.patch','chmod 600 src/a.ts','patch -p1 < fix.patch','echo x > src/a.ts']
+  const mutators=['printf x > src/a.ts',`node -e "require('fs').writeFileSync('src/a.ts','x')"`,`python3 -c "\nwith open('src/a.ts','w') as f:\n    f.write('x')\nprint('written')\n"\ncat src/a.ts`,`python3 -c "import os; os.remove('src/a.ts')"`,'git apply fix.patch','chmod 600 src/a.ts','patch -p1 < fix.patch','echo x > src/a.ts']
   for(const command of mutators){const m=new MissionStore().start(command,'Update src/a.ts');addEvidence(m,{kind:'changed-surface-sanity',summary:'old proof',source:'test',pass:true,outcome:'passed'});assert.equal(m.execution.evidence.fresh,true);observeToolBefore(m,'bash',{command});assert.equal(m.execution.evidence.fresh,false,command)}
   const readOnly=new MissionStore().start('read-only','Update src/a.ts');addEvidence(readOnly,{kind:'changed-surface-sanity',summary:'old proof',source:'test',pass:true,outcome:'passed'});observeToolBefore(readOnly,'bash',{command:'git status --porcelain'});assert.equal(readOnly.execution.evidence.fresh,true)
 })

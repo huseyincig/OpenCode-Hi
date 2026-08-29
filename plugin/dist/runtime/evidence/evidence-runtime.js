@@ -10,7 +10,11 @@ function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(3
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
 const SHELL_MUTATION_COMMAND = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i;
 const SHELL_REDIRECTION = /(?:^|[^<>])(?:>>?|2>>?|1>>?)\s*[^&|]/;
-export function shellMayMutate(command) { return SHELL_MUTATION_COMMAND.test(command) || SHELL_REDIRECTION.test(command); }
+// Inline interpreters are arbitrary execution surfaces: a static shell regex cannot prove
+// that `python -c`, `node -e`, shell `-c`, etc. are repository-read-only. Treat them as
+// mutation-capable at the mission ownership boundary. Canonical verifier invocations are
+// recognized separately below and remain admissible through the verifier exception.
+const SHELL_INLINE_INTERPRETER = /(?:^|[;&|]\s*)(?:(?:sudo|env(?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s]+)*)\s+)?(?:[^\s;&|]*\/)?(?:python(?:\d+(?:\.\d+)*)?|node|perl|ruby|sh|bash|zsh|dash|powershell(?:\.exe)?|pwsh(?:\.exe)?)\s+(?:(?:-[^\s]+\s+)*)(?:-c|-e|-E|--eval(?:=|\s)|--print(?:=|\s)|-Command\b|-EncodedCommand\b)/i;
 const SHELL_BOUNDARY = '(?:^|[;&|]\\s*)';
 const PREFIX = '(?:(?:sudo|env(?:\\s+[A-Za-z_][A-Za-z0-9_]*=[^\\s]+)*)\\s+)?';
 const PACKAGE = '(?:npm|pnpm|yarn|bun)';
@@ -26,6 +30,7 @@ export function verificationCommandKind(command) { if (TEST_INVOCATION.test(comm
     return 'build'; if (CHECK_INVOCATION.test(command))
     return 'changed-surface-sanity'; return undefined; }
 export function isVerificationCommand(command) { return verificationCommandKind(command) !== undefined; }
+export function shellMayMutate(command) { return SHELL_MUTATION_COMMAND.test(command) || SHELL_REDIRECTION.test(command) || (SHELL_INLINE_INTERPRETER.test(command) && !isVerificationCommand(command)); }
 export function toolMayMutate(tool, args) { return WRITE_TOOLS.has(tool) || (tool === 'bash' && shellMayMutate(typeof args?.command === 'string' ? args.command : '')); }
 function numericExit(output) { for (const v of [output?.metadata?.exit, output?.metadata?.exitCode, output?.metadata?.exit_code, output?.exit, output?.exitCode, output?.exit_code]) {
     if (typeof v === 'number' && Number.isFinite(v))
