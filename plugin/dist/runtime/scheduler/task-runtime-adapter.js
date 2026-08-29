@@ -22,7 +22,8 @@ export function taskRuntimeSchedulingSnapshot(m, scheduler, override, peerView =
         }
     }
     for (const unit of graph.executionUnits) {
-        unitTraits[unit.id] = { readOnly: isHiReadOnlyChildRole(unit.role) };
+        const worker = m.execution.workers.find(item => item.task_id === unit.workNodeId), current = worker?.id === override?.workerId, pending = Boolean(worker && ['created', 'queued', 'starting'].includes(worker.status));
+        unitTraits[unit.id] = { readOnly: isHiReadOnlyChildRole(unit.role), admissionEligible: current || pending };
     }
     for (const worker of m.execution.workers) {
         const model = worker.id === override?.workerId ? override.model : worker.model, unit = unitID(worker);

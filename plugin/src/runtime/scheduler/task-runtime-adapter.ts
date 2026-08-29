@@ -27,7 +27,7 @@ export function taskRuntimeSchedulingSnapshot(m:MissionState,scheduler:Concurren
       if(node)node.status='waiting'
     }
   }
-  for(const unit of graph.executionUnits){unitTraits[unit.id]={readOnly:isHiReadOnlyChildRole(unit.role)}}
+  for(const unit of graph.executionUnits){const worker=m.execution.workers.find(item=>item.task_id===unit.workNodeId),current=worker?.id===override?.workerId,pending=Boolean(worker&&['created','queued','starting'].includes(worker.status));unitTraits[unit.id]={readOnly:isHiReadOnlyChildRole(unit.role),admissionEligible:current||pending}}
   for(const worker of m.execution.workers){
     const model=worker.id===override?.workerId?override.model:worker.model,unit=unitID(worker)
     resolvedResources[unit]={...(providerOf(model)?{provider:providerOf(model)}:{}),...(model&&model!=='host-default'?{model}:{})}

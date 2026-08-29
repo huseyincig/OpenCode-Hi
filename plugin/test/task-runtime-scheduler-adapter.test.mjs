@@ -88,3 +88,15 @@ test('adapter counts peer-mission durable reservations toward project global/mod
   const localOnly=taskRuntimeSchedulingSnapshot(b,createConcurrencyPolicySource(()=>({global:4})),{workerId:wb.id,model:'p/same'},projectSchedulingPeerView(b,[a,b]))
   assert.equal(localOnly.capacity.topology,1,'peer work must not consume this mission topology limit')
 })
+
+
+test('new dispatch admission ignores retained waiting results while exact corrective resume stays admissible',()=>{
+  const m=mission('adapter-waiting-starvation');m.execution.execution_mode='single';m.execution.topology={mode:'single-agent',parallelism:1,reason:['test']}
+  const writerTask=createTask(m,{objective:'review docs',role:'technical-writer',category:'documentation',scope:['CHANGELOG.md','packages/cli/index.js']}),writer=createWorker(m,writerTask,'p/m')
+  writerTask.created_at=10;writerTask.updated_at=10;writerTask.status='waiting';writerTask.result={status:'FIX_REQUIRED',summary:'reconcile bounded scope expansion',changed_files:['CHANGELOG.md'],evidence:[],open_issues:['diff-cleanliness'],needs_context:['reconcile']};writer.status='ready';writer.session_id='writer-session';writer.attempt=2
+  const reviewTask=createTask(m,{objective:'independent dependency review',role:'security-reviewer',category:'deep',scope:['packages/cli/package.json']}),reviewer=createWorker(m,reviewTask,'p/m')
+  reviewTask.created_at=20;reviewTask.updated_at=20;reviewTask.status='queued';reviewer.status='queued'
+  const scheduler=createConcurrencyPolicySource(()=>({global:4,providers:{p:4},models:{'p/m':4}}))
+  assert.equal(taskRuntimeAdmittedModel(m,reviewer,['p/m'],scheduler),'p/m','retained waiting result must not consume a new-dispatch admission slot')
+  assert.equal(taskRuntimeAdmittedModel(m,writer,['p/m'],scheduler,undefined,writerTask.id),'p/m','explicit exact-task corrective resume must remain schedulable')
+})

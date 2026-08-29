@@ -285,6 +285,8 @@ export interface SchedulingResourceBinding {
 
 export interface SchedulingUnitTraits {
   readOnly:boolean
+  /** Call-scoped admission frontier hint; false keeps durable graph/conflict visibility without competing for a new reservation. */
+  admissionEligible?:boolean
 }
 
 export interface SchedulingRunningAllocation extends SchedulingResourceBinding {

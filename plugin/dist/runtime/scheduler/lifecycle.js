@@ -125,7 +125,7 @@ export function planSchedulerAdmissions(snapshot, state, limit = Number.POSITIVE
     while (selected.length < limit) {
         const decision = planner({ ...snapshot.capacity, running });
         const candidates = decision.units
-            .filter(item => item.disposition === 'RUNNABLE' && !reserved.has(item.executionUnitId) && !selectedSet.has(item.executionUnitId))
+            .filter(item => item.disposition === 'RUNNABLE' && !reserved.has(item.executionUnitId) && !selectedSet.has(item.executionUnitId) && snapshot.unitTraits[item.executionUnitId]?.admissionEligible !== false)
             .sort((a, b) => {
             const au = units.get(a.executionUnitId), bu = units.get(b.executionUnitId), an = au ? nodes.get(au.workNodeId) : undefined, bn = bu ? nodes.get(bu.workNodeId) : undefined;
             return (an?.createdAt ?? 0) - (bn?.createdAt ?? 0) || a.executionUnitId.localeCompare(b.executionUnitId);
