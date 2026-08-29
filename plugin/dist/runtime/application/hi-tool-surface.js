@@ -64,6 +64,7 @@ function optionalScopeList(value) {
     return out.length ? [...new Set(out)] : undefined;
 }
 import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
+import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../browser/executor.js';
 import { normalizeBrowserAllowedOrigins } from '../browser/backend-policy.js';
 import { applyProjectSettings, hasProjectSettings } from '../../config/project-settings.js';
 import { resolveHiConfigWithReport } from '../../config/resolver.js';
@@ -874,6 +875,43 @@ export function createHiToolSurface(input) {
             return `Process list failed: ${String(error)}`;
         } } });
     const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_settings: settingsTool, hi_role_models: roleModelsTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool, hi_browser_preview_open: browserPreviewOpenTool, hi_browser_open: browserOpenTool, hi_browser_navigate: browserNavigateTool, hi_browser_click: browserClickTool, hi_browser_type: browserTypeTool, hi_browser_key: browserKeyTool, hi_browser_inspect: browserInspectTool, hi_browser_viewport: browserViewportTool, hi_browser_screenshot: browserScreenshotTool, hi_browser_wait: browserWaitTool, hi_browser_close: browserCloseTool };
+    const browserOperationInFlight = new Map();
+    for (const toolID of HI_BROWSER_EXECUTION_TOOL_IDS) {
+        const definition = toolSurface[toolID], original = definition?.execute;
+        if (typeof original !== 'function')
+            continue;
+        definition.execute = async (a, c) => {
+            const sid = String(c?.sessionID ?? ''), taskID = String(a?.task_id ?? '');
+            let mission, owner;
+            for (const candidate of store.all()) {
+                const resolved = resolveBrowserExecutionOwner(candidate, { sessionID: sid, taskID });
+                if (resolved) {
+                    mission = candidate;
+                    owner = resolved;
+                    break;
+                }
+            }
+            if (!mission || !owner)
+                return original(a, c);
+            const key = `${mission.identity.mission_id}:${owner.task.id}:${owner.worker.id}:${owner.worker.session_id}:${owner.worker.generation_at_spawn}:${owner.worker.attempt ?? 0}`, active = browserOperationInFlight.get(key);
+            if (active) {
+                if (!active.reported) {
+                    active.reported = true;
+                    appendLedger(mission, 'browser.operation-overlap-rejected', { task_id: owner.task.id, worker_id: owner.worker.id, payload: { active_operation: active.tool, requested_operation: toolID, policy: 'single-in-flight-browser-operation-per-exact-owner' } });
+                }
+                return JSON.stringify({ status: 'BLOCKED', reason: 'browser-operation-in-flight', active_operation: active.tool, requested_operation: toolID, retry_same_call: false });
+            }
+            const token = Symbol(toolID);
+            browserOperationInFlight.set(key, { token, tool: toolID, reported: false });
+            try {
+                return await original(a, c);
+            }
+            finally {
+                if (browserOperationInFlight.get(key)?.token === token)
+                    browserOperationInFlight.delete(key);
+            }
+        };
+    }
     assertHiToolNamespace(Object.keys(toolSurface));
     return { toolSurface };
 }

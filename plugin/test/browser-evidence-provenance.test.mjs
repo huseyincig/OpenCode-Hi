@@ -190,3 +190,31 @@ test('screenshot tool returns canonical ref plus native image attachment instead
     assert.doesNotMatch(result.output,/\.opencode\/hi\/artifacts/)
   } finally {rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('browser tool surface rejects overlapping operations for the same exact visual owner before executor fan-out',async()=>{
+  const f=fixture('m13-browser-overlap-admission')
+  let calls=0,releaseFirst,markFirstStarted
+  const firstStarted=new Promise(resolve=>{markFirstStarted=resolve})
+  const firstGate=new Promise(resolve=>{releaseFirst=resolve})
+  const toolSurface=surface(f,{inspect:async()=>{
+    calls+=1
+    if(calls===1){markFirstStarted();await firstGate}
+    return observation(f.task.id)
+  },health:async()=>({available:true})})
+  const first=toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})
+  await firstStarted
+  const second=await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id})
+  releaseFirst()
+  const firstResult=JSON.parse(await first)
+  assert.ok(firstResult.evidence_ref)
+  const blocked=JSON.parse(second)
+  assert.equal(blocked.status,'BLOCKED')
+  assert.equal(blocked.reason,'browser-operation-in-flight')
+  assert.equal(blocked.retry_same_call,false)
+  assert.equal(calls,1)
+  const third=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+  assert.ok(third.evidence_ref)
+  assert.equal(calls,2)
+  assert.equal(f.m.execution.evidence.items.filter(e=>e.kind==='browser-evidence').length,2)
+})

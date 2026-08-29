@@ -61,7 +61,8 @@ import type { MissionStore } from '../mission/mission-store.js'
 import type { TaskRuntime } from '../task/task-runtime.js'
 import type { ProcessRuntime } from '../process/runtime.js'
 import type { WorkspaceRuntime } from '../workspace/runtime.js'
-import type { BrowserExecutor } from '../browser/executor.js'
+import {HI_BROWSER_EXECUTION_TOOL_IDS} from '../browser/executor.js'
+import type {BrowserExecutor} from '../browser/executor.js'
 import type { LocalPreviewManager } from '../browser/local-preview.js'
 import { normalizeBrowserAllowedOrigins } from '../browser/backend-policy.js'
 import { applyProjectSettings,hasProjectSettings } from '../../config/project-settings.js'
@@ -195,6 +196,23 @@ export function createHiToolSurface(input:{state:PluginRuntimeState;store:Missio
   const processCleanupTool=tool({description:'Cleanup one terminal process. Active execution remains child-only; after the exact process-lifecycle task/worker is terminal, the parent may cleanup only that retained same-mission ProcessContract. Cleanup never terminates a running process and original task/worker ownership is preserved.',args:{id:tool.schema.string()},execute:async(a:any,c:any)=>{try{const cx=processToolContext(c);if(!cx)return'No active Hi mission';const id=String(a.id);if(cx.parent){const admission=parentRetainedProcessAdmission(cx,id,'cleanup','hi_process_cleanup');if(admission.blocked)return admission.blocked;if(admission.owner!.item.status==='RUNNING')return'BLOCKED: retained running process must be killed before cleanup'}else assertChildProcessOwner(cx,id);await processRuntime.cleanup(cx.m,id);return'OK'}catch(error){return`Process cleanup failed: ${String(error)}`}}})
   const processListTool=tool({description:'List bounded durable ProcessContracts for the active child owner, or only exact retained same-mission processes whose process-lifecycle task/worker is terminal when called by the parent. Active child resources never transfer parent custody.',args:{},execute:async(_a:any,c:any)=>{try{const cx=processToolContext(c);if(!cx)return'No active Hi mission';const rows=processRuntime.list(cx.m);if(cx.parent)return JSON.stringify(rows.filter((item:any)=>Boolean(terminalProcessOwner(cx.m,item))));return JSON.stringify(rows.filter((item:any)=>item.worker_id===cx.child.id&&item.task_id===cx.child.task_id))}catch(error){return`Process list failed: ${String(error)}`}}})
   const toolSurface:Record<string,unknown>={hi_doctor:doctorTool,hi_status:statusTool,hi_settings:settingsTool,hi_role_models:roleModelsTool,hi_metrics:metricsTool,hi_ledger:ledgerTool,hi_readiness:readinessTool,hi_intent_assess:intentAssessTool,hi_context_artifact_add:artifactAddTool,hi_context_artifacts:artifactsTool,hi_temporary_mutation_register:mutationTool,hi_temporary_mutation_revert:nativeRollbackTool,hi_direct_progress:directProgressTool,hi_task_start:startTool,hi_task_await:awaitTool,hi_task_peek:peekTool,hi_task_list:listTool,hi_task_cancel:cancelTool,hi_process_spawn:processSpawnTool,hi_process_read:processReadTool,hi_process_write:processWriteTool,hi_process_wait:processWaitTool,hi_process_kill:processKillTool,hi_process_cleanup:processCleanupTool,hi_process_list:processListTool,hi_browser_preview_open:browserPreviewOpenTool,hi_browser_open:browserOpenTool,hi_browser_navigate:browserNavigateTool,hi_browser_click:browserClickTool,hi_browser_type:browserTypeTool,hi_browser_key:browserKeyTool,hi_browser_inspect:browserInspectTool,hi_browser_viewport:browserViewportTool,hi_browser_screenshot:browserScreenshotTool,hi_browser_wait:browserWaitTool,hi_browser_close:browserCloseTool}
+  const browserOperationInFlight=new Map<string,{token:symbol;tool:string;reported:boolean}>()
+  for(const toolID of HI_BROWSER_EXECUTION_TOOL_IDS){
+    const definition=toolSurface[toolID] as any,original=definition?.execute
+    if(typeof original!=='function')continue
+    definition.execute=async(a:any,c:any)=>{
+      const sid=String(c?.sessionID??''),taskID=String(a?.task_id??'');let mission:any,owner:any
+      for(const candidate of store.all()){const resolved=resolveBrowserExecutionOwner(candidate,{sessionID:sid,taskID});if(resolved){mission=candidate;owner=resolved;break}}
+      if(!mission||!owner)return original(a,c)
+      const key=`${mission.identity.mission_id}:${owner.task.id}:${owner.worker.id}:${owner.worker.session_id}:${owner.worker.generation_at_spawn}:${owner.worker.attempt??0}`,active=browserOperationInFlight.get(key)
+      if(active){
+        if(!active.reported){active.reported=true;appendLedger(mission,'browser.operation-overlap-rejected',{task_id:owner.task.id,worker_id:owner.worker.id,payload:{active_operation:active.tool,requested_operation:toolID,policy:'single-in-flight-browser-operation-per-exact-owner'}})}
+        return JSON.stringify({status:'BLOCKED',reason:'browser-operation-in-flight',active_operation:active.tool,requested_operation:toolID,retry_same_call:false})
+      }
+      const token=Symbol(toolID);browserOperationInFlight.set(key,{token,tool:toolID,reported:false})
+      try{return await original(a,c)}finally{if(browserOperationInFlight.get(key)?.token===token)browserOperationInFlight.delete(key)}
+    }
+  }
   assertHiToolNamespace(Object.keys(toolSurface))
   return {toolSurface}
 }
