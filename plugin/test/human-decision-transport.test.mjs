@@ -165,7 +165,7 @@ test('plugin dispose preserves an active worker recipe for restart reconciliatio
     hooks=await HiPlugin({directory:root,worktree:root,project:{},client});await hooks.config({})
     const sid='h1-dispose-active';await hooks['chat.message']({sessionID:sid,agent:'working-manager'},userOutput('fix local bug'))
     await assessPluginMission(hooks,sid,{task_kind:'bug-fix',required_capabilities:['implementation'],likely_verification:['targeted-tests']})
-    const started=JSON.parse(String(await hooks.tool.hi_task_start.execute({input:{role:'coder',objective:'fix local bug'}},{sessionID:sid})))
+    const started=JSON.parse(String(await hooks.tool.hi_task_start.execute({input:{role:'coder',objective:'fix local bug',scope:'src/a.ts'}},{sessionID:sid})))
     assert.match(started.task_id,/^t_/);assert.match(started.worker_id,/^w_/)
     await hooks.dispose();hooks=undefined
     const after=new RuntimePersistence(root).load().find(x=>x.identity.session_id===sid)

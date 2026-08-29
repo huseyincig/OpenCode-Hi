@@ -52,7 +52,7 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
   client.session.create=async req=>{const model=req.body?.model?.id;if(model==='primary'&&failPrimary){failPrimary=false;throw new Error('provider unavailable')}const id='child-fallback';created.push({id,req});return {data:{id}}}
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
-  const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard'})
+  const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard',scope:['src/fix.ts']})
   const w=m.execution.workers.find(x=>x.id===out.worker_id)
   const t=m.execution.tasks.find(x=>x.id===out.task_id)
   assert.equal(w.model,'p/fallback')

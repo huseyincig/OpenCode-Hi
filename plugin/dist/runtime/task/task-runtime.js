@@ -897,7 +897,8 @@ export class TaskRuntime {
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
-        const requestedScope = input.scope ?? (implicitProcessSupport ? [] : isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []), scopeAdmission = input.resumeTaskId ? { accepted: true, scope: [...requestedScope], reason: 'unchanged', unbound: [], canonical_targets: [] } : admitNewTaskScope({ projectRoot: this.projectRoot, role, ambiguity: m.identity.intent.ambiguity, missionTargets: m.identity.intent.likelyTargets, requestedScope });
+        const readOnlyRole = isHiReadOnlyChildRole(role), explicitScope = (input.scope ?? []).filter(Boolean), canonicalMutationScope = taskIntent.mutationTargets ?? [], requestedScope = explicitScope.length ? explicitScope : (implicitProcessSupport ? [] : readOnlyRole && m.vcs.changed_files.length ? m.vcs.changed_files : readOnlyRole ? taskIntent.likelyTargets ?? [] : canonicalMutationScope);
+        const scopeAdmission = input.resumeTaskId ? { accepted: true, scope: [...requestedScope], reason: 'unchanged', unbound: [], canonical_targets: [] } : admitNewTaskScope({ projectRoot: this.projectRoot, role, ambiguity: m.identity.intent.ambiguity, missionTargets: m.identity.intent.likelyTargets, requestedScope });
         if (!scopeAdmission.accepted) {
             appendLedger(m, 'task.scope-admission-rejected', { payload: { role, requested_scope: requestedScope.slice(0, 40), unbound_scope: scopeAdmission.unbound.slice(0, 40), canonical_targets: scopeAdmission.canonical_targets.slice(0, 40), reason: scopeAdmission.reason, policy: 'repository-explorer-scope-requires-current-project-identity-or-canonical-mission-target' } });
             throw new Error(`Repository explorer scope is not canonical: ${scopeAdmission.unbound.join(', ')}. Use current project-relative filesystem paths or exact canonical Mission targets; when the repository target is still unknown, omit scope so bounded discovery can resolve it.`);
@@ -937,6 +938,10 @@ export class TaskRuntime {
         void this.events?.(runtimeSignal('task.preflight', m.identity.mission_id, { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } }));
         if (preflight.decision === 'RESOLVE' || preflight.decision === 'USER_ACTION_REQUIRED')
             throw new TaskPreconditionError(preflight);
+        if (!input.resumeTaskId && !implicitProcessSupport && !readOnlyRole && !requestedScope.length) {
+            appendLedger(m, 'task.scope-admission-rejected', { payload: { role, requested_scope: [], canonical_mutation_targets: canonicalMutationScope.slice(0, 40), context_targets: (taskIntent.likelyTargets ?? []).slice(0, 40), reason: 'write-scope-unbound', policy: 'write-task-requires-explicit-or-canonical-mutation-scope' } });
+            throw new Error('Write-capable Hi task requires explicit bounded project-relative scope when Mission has no canonical mutation_targets. Pass the exact write scope to hi_task_start; context-only likely_targets never grant mutation authority.');
+        }
         if (existing) {
             this.workspaceBinding(m, existing.task_id);
             const oldTask = m.execution.tasks.find(t => t.id === existing.task_id);

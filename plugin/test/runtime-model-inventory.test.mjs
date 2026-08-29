@@ -34,7 +34,7 @@ test('runtime inventory -> project routing -> child uses effective per-role mode
     assert.equal(existsSync(join(dir,'.opencode','hi','policy','routing.json')),false,'runtime inventory must not silently persist project policy')
 
     const result=JSON.parse(await hooks.tool.hi_task_start.execute(
-      {objective:'login fix implementation',role:'coder',category:'deep'},
+      {objective:'login fix implementation',role:'coder',category:'deep',scope:'src/login.ts'},
       {sessionID:'parent-1'},
     ))
     assert.equal(result.model,'opencode-go/deepseek-v4-pro')

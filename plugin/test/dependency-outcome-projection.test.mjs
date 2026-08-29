@@ -70,7 +70,7 @@ test('queued successor receives dependency result produced after queueing, witho
 
 test('corrupt completed dependency blocks before any child-session mutation',async()=>{
   const {client,creates,prompts}=nativeClient(),r=runtime(client),m=mission('dep-precreate-block'),pre=createTask(m,{objective:'pre',role:'coder',category:'standard'});done(m,pre);m.execution.workers.find(w=>w.task_id===pre.id).last_result_digest=undefined
-  await assert.rejects(()=>r.start(m,{objective:'dependent',role:'coder',category:'standard',dependencies:[pre.id],requiredEvidence:[]}),/accepted result digest is missing or invalid/)
+  await assert.rejects(()=>r.start(m,{objective:'dependent',role:'coder',category:'standard',scope:['src/dependent.ts'],dependencies:[pre.id],requiredEvidence:[]}),/accepted result digest is missing or invalid/)
   assert.equal(creates.length,0);assert.equal(prompts.length,0);const blocked=m.execution.tasks.find(t=>t.objective==='dependent');assert.equal(blocked?.status,'blocked');assert.match(blocked?.result?.open_issues?.[0]??'',/^dependency-outcome-unavailable:/)
 })
 
@@ -78,7 +78,7 @@ test('dependency result is revalidated after child-create await and stale proven
   let releaseCreate;const creates=[],prompts=[],aborts=[];const createGate=new Promise(resolve=>{releaseCreate=()=>resolve({data:{id:'child-race'}})})
   const client={session:{create:async req=>{creates.push(req);return createGate},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async req=>{aborts.push(req);return{data:true}},diff:async()=>({data:[]})}}
   const r=runtime(client),m=mission('dep-revalidate-race'),pre=createTask(m,{objective:'stable prerequisite',role:'coder',category:'standard'}),preWorker=done(m,pre,{summary:'initial accepted contract'})
-  const startPromise=r.start(m,{objective:'dependent after await',role:'coder',category:'standard',dependencies:[pre.id],requiredEvidence:[]})
+  const startPromise=r.start(m,{objective:'dependent after await',role:'coder',category:'standard',scope:['src/dependent.ts'],dependencies:[pre.id],requiredEvidence:[]})
   await new Promise(resolve=>setImmediate(resolve));assert.equal(creates.length,1);assert.equal(prompts.length,0)
   preWorker.last_result_digest=undefined
   releaseCreate()

@@ -26,6 +26,26 @@ test('role primary missing does not claim recommended fast path; configured live
   assert.ok(r.reason.includes('explicit ordered role mapping:coder'))
 })
 
+test('write-capable task without explicit scope fails closed when Mission has no canonical mutation targets',async()=>{
+  const created=[]
+  const client={session:{create:async req=>{created.push(req);return{data:{id:'should-not-spawn'}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'scope-missing','create a small project',{likely_targets:['test-lab/config/model-pool.json']})
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>inventory,()=>({}))
+  await assert.rejects(()=>runtime.start(m,{objective:'create package.json and src/value.ts',role:'coder',category:'standard'}),/write-capable.*explicit.*scope|mutation_targets/i)
+  assert.equal(created.length,0)
+  assert.equal(m.execution.tasks.length,0)
+})
+
+test('write-capable task with omitted scope inherits only canonical Mission mutation targets',async()=>{
+  const created=[]
+  const client={session:{create:async req=>{created.push(req);return{data:{id:'child-mutation-scope'}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'scope-mutation','change src/value.ts',{likely_targets:['test-lab/config/model-pool.json','src/value.ts'],mutation_targets:['src/value.ts']})
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>inventory,()=>({}))
+  const out=await runtime.start(m,{objective:'change src/value.ts',role:'coder',category:'standard'})
+  assert.deepEqual(m.execution.tasks.find(t=>t.id===out.task_id)?.scope,['src/value.ts'])
+  assert.equal(created.length,1)
+})
+
 test('dispatch revalidates provider policy and skips a provider denied after initial role resolution',async()=>{
   const created=[];let hostReads=0
   const inv=[{id:'p/live',provider:'p',writeCapable:true,tags:['balanced']},{id:'q/other',provider:'q',writeCapable:true,tags:['balanced']}]
@@ -36,7 +56,7 @@ test('dispatch revalidates provider policy and skips a provider denied after ini
   const cfg=resolveHiConfig({routing:{roleModels:{coder:['p/live','q/other']}}})
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:3,providers:{},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>inv,()=>{hostReads++;return hostReads===1?{}:{disabled_providers:['p']}})
-  const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard'})
+  const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard',scope:['src/fix.ts']})
   assert.equal(out.model,'q/other')
   assert.equal(created.length,1)
   assert.equal(created[0].body.model.providerID,'q')
@@ -68,7 +88,7 @@ async function pluginScenario(observedModel,includeModelMetadata=true){
     messages:async()=>({data:[{info:{id:'msg1',role:'assistant',...(includeModelMetadata?{providerID:'p',modelID:observedModel}:{})},parts:[{type:'text',text:JSON.stringify(result)}]}]}),
   }}
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent'},{message:{role:'user'},parts:[{type:'text',text:'fix it'}]});await assessPluginMission(hooks,'parent')
-  const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected'},{sessionID:'parent'}))
+  const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected',scope:'src/a.ts'},{sessionID:'parent'}))
   await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-model'}}})
   const state=JSON.parse(await hooks.tool.hi_task_peek.execute({id:started.task_id},{sessionID:'parent'}))
   const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:80},{sessionID:'parent'}))
@@ -115,7 +135,7 @@ test('pre-assistant child idle is ignored until native assistant model evidence 
       :[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]},{info:{id:'a1',role:'assistant',providerID:'p',modelID:'expected'},parts:[{type:'text',text:JSON.stringify(result)}]}]}),
   }}
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent-race'},{message:{role:'user'},parts:[{type:'text',text:'fix it'}]});await assessPluginMission(hooks,'parent-race')
-  const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected'},{sessionID:'parent-race'}))
+  const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected',scope:'src/a.ts'},{sessionID:'parent-race'}))
   await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-race'}}})
   const first=JSON.parse(await hooks.tool.hi_task_peek.execute({id:started.task_id},{sessionID:'parent-race'}))
   const firstLedger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:80},{sessionID:'parent-race'}))

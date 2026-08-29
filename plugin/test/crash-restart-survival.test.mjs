@@ -15,13 +15,13 @@ function persistedBusy({session=true}={}){
   const m=store.start('parent-1','fix local bug')
   store.applyInitialSemanticAssessment('parent-1',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const impl=m.execution.obligations.find(o=>o.kind==='implementation')
-  const task=createTask(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],constraints:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:impl?[impl.id]:[]})
+  const task=createTask(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:impl?[impl.id]:[]})
   const worker=createWorker(m,task,'host-default',[],[],[])
   worker.status='busy'; worker.started_at=Date.now()-1000
   if(session)worker.session_id='child-old'
   task.status='running'
   m.authority.pending_permissions=2;m.authority.pending_permission_ids=['p1','p2']
-  m.execution.evidence.fresh=true;m.execution.evidence.items=[{id:'e1',kind:'targeted-tests',summary:'pass before crash',scope:[],source:'worker',observed_at:Date.now()-500,pass:true,outcome:'passed'}]
+  m.execution.evidence.fresh=true;m.execution.evidence.items=[{id:'e1',kind:'targeted-tests',summary:'pass before crash',scope:['src/a.ts'],source:'worker',observed_at:Date.now()-500,pass:true,outcome:'passed'}]
   return structuredClone(m)
 }
 
@@ -82,7 +82,7 @@ test('restart observes live host-active child and waits without aborting or disp
   const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
   const m=restored.get('parent-1');assert.ok(m)
   const {runtime,calls}=restartHarness(m,{status:'busy'}),old=m.execution.workers[0]
-  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'WAIT');assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0)
   assert.equal(old.attempt,1);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running')
   const reservation=m.execution.scheduler.reservations[0];assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,1);assert.equal(reservation.hostExecutionId,'child-old')
@@ -94,7 +94,7 @@ test('restart recovers a stable stale empty assistant successor by aborting only
   const m=restored.get('parent-1');assert.ok(m);const old=m.execution.workers[0],now=Date.now();old.attempt_prompt_message_id='msg-user-attempt-1';old.started_at=now-120_000
   const assistant={text:'prior completed observations',model:{model:'p/m',message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-60_000},activity:{message_id:'msg-completed-tools',observed_at:now-61_000,output_tokens:10,reasoning_tokens:0,tool_calls:3,text_chars:40},incomplete_turn:{message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-60_000,empty:true}}
   const {runtime,calls}=restartHarness(m,{status:'busy',assistant})
-  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,2);assert.equal(calls.aborts.length,1);assert.equal(calls.prompts.length,1)
   assert.equal(old.session_id,'child-old');assert.equal(old.attempt,2);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running')
   assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2)
@@ -107,7 +107,7 @@ test('restart leaves a fresh empty assistant turn host-active and does not abort
   const m=restored.get('parent-1');assert.ok(m);const old=m.execution.workers[0],now=Date.now();old.attempt_prompt_message_id='msg-user-attempt-1';old.started_at=now-5000
   const assistant={model:{model:'p/m',message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-1000},activity:{message_id:'msg-completed-tools',observed_at:now-2000,output_tokens:10,reasoning_tokens:0,tool_calls:1,text_chars:10},incomplete_turn:{message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-1000,empty:true}}
   const {runtime,calls}=restartHarness(m,{status:'busy',assistant})
-  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.readiness,'WAIT');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0);assert.equal(old.attempt,1);assert.equal(old.status,'busy')
 })
 
@@ -116,7 +116,7 @@ test('restart ingests an idle completed attempt and does not repeat already-fini
   const m=restored.get('parent-1');assert.ok(m)
   const assistant={text:JSON.stringify({status:'DONE',summary:'completed before restart',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}
   const {runtime,calls}=restartHarness(m,{status:'idle',assistant}),old=m.execution.workers[0]
-  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0)
   assert.equal(old.attempt,1);assert.equal(old.status,'completed');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'completed');assert.equal(m.execution.tasks[0].result?.summary,'completed before restart')
   assert.equal(m.execution.scheduler.reservations.length,0,'recovered terminal attempt must release its durable reservation exactly once')
@@ -128,7 +128,7 @@ test('restart opens attempt 2 only after an idle FIX_REQUIRED result is ingested
   const m=restored.get('parent-1');assert.ok(m)
   const assistant={text:JSON.stringify({status:'FIX_REQUIRED',summary:'one correction remains',changed_files:[],evidence:[],open_issues:['fix-one'],needs_context:[]})}
   const {runtime,calls}=restartHarness(m,{status:'idle',assistant}),old=m.execution.workers[0]
-  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,1)
   assert.equal(old.attempt,2);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running');assert.equal(m.execution.tasks[0].result?.summary,'one correction remains')
   assert.equal(m.execution.scheduler.reservations.length,1);const reservation=m.execution.scheduler.reservations[0];assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,2);assert.equal(reservation.hostExecutionId,'child-old')
@@ -140,7 +140,7 @@ test('restart with unverified host status stays quarantined without abort or pro
   const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
   const m=restored.get('parent-1');assert.ok(m)
   const {runtime,calls}=restartHarness(m,{status:'unknown'}),old=m.execution.workers[0]
-  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.readiness,'WAIT');assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0);assert.equal(calls.reads,0)
   assert.equal(old.status,'ready');assert.equal(old.attempt,1);assert.equal(old.restart_reconcile_pending,true);assert.equal(m.execution.scheduler.reservations[0].phase,'RECONCILING')
   assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconcile-deferred'&&e.payload?.host_status==='unknown'))

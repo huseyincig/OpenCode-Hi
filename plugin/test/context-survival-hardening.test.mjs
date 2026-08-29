@@ -44,7 +44,7 @@ test('oversized relevant context is replaced by native summary instead of being 
   const store=new MissionStore(),m=startAssessedMission(store,'parent-context','opaque bounded context task')
   const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const huge=`FULL_TRANSCRIPT_MARKER_${'z'.repeat(DEFAULT_CONTEXT_BUDGET.max_context_chars+5000)}`
-  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',relevantContext:[huge]})
+  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts'],relevantContext:[huge]})
   assert.equal(prompts.length,1)
   const text=prompts[0].body.parts[0].text
   assert.ok(text.length<=DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
@@ -61,7 +61,7 @@ test('handoff remains within total budget when native summarization is unavailab
   }}
   const store=new MissionStore(),m=startAssessedMission(store,'parent-context-no-summary','opaque bounded context task')
   const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',relevantContext:Array.from({length:40},(_,i)=>`context-${i}-${'q'.repeat(1000)}`)})
+  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts'],relevantContext:Array.from({length:40},(_,i)=>`context-${i}-${'q'.repeat(1000)}`)})
   const text=prompts[0].body.parts[0].text
   assert.ok(text.length<=DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
   assert.match(text,/Hi WORKER HANDOFF/)
@@ -77,7 +77,7 @@ test('task handoff includes only explicitly selected mission context artifacts',
     {id:'ca-unselected',kind:'research',title:'Unselected',summary:'UNSELECTED_ARTIFACT_MARKER',sha256:'b'.repeat(64),added_at:2},
   )
   const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',contextArtifactIds:['ca-selected']})
+  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts'],contextArtifactIds:['ca-selected']})
   const text=prompts[0].body.parts[0].text
   assert.match(text,/SELECTED_ARTIFACT_MARKER/)
   assert.doesNotMatch(text,/UNSELECTED_ARTIFACT_MARKER/)
@@ -88,7 +88,7 @@ test('unknown task context artifact id fails closed instead of widening context'
   const client={session:{create:async()=>({data:{id:'child-artifact-unknown'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}})}}
   const store=new MissionStore(),m=startAssessedMission(store,'parent-artifact-unknown','opaque bounded context task')
   const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-  await assert.rejects(()=>rt.start(m,{objective:'small fix',role:'coder',category:'quick',contextArtifactIds:['ca-missing']}),/Unknown context artifact/)
+  await assert.rejects(()=>rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts'],contextArtifactIds:['ca-missing']}),/Unknown context artifact/)
   assert.equal(m.execution.tasks.length,0)
 })
 
@@ -121,7 +121,7 @@ test('fresh durable context artifact content is loaded only while source-bound f
     const m1=startAssessedMission(new MissionStore(root),'parent-durable-1','opaque durable context task')
     m1.context.context_artifacts.push(ref)
     const rt1=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-    const started=await rt1.start(m1,{objective:'first fix',role:'coder',category:'quick',contextArtifactIds:[durable.artifact_id]})
+    const started=await rt1.start(m1,{objective:'first fix',role:'coder',category:'quick',scope:['src/a.ts'],contextArtifactIds:[durable.artifact_id]})
     assert.match(prompts[0].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
     assert.ok(new ContextArtifactStore(root).get(durable.artifact_id).consumer_refs.includes(started.task_id))
     await rt1.noteNativeWriteSet(m1,started.worker_id,['src/a.ts'])
@@ -130,7 +130,7 @@ test('fresh durable context artifact content is loaded only while source-bound f
     const m2=startAssessedMission(new MissionStore(root),'parent-durable-2','opaque second durable context task')
     m2.context.context_artifacts.push(ref)
     const rt2=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-    await rt2.start(m2,{objective:'second fix',role:'coder',category:'quick',contextArtifactIds:[durable.artifact_id]})
+    await rt2.start(m2,{objective:'second fix',role:'coder',category:'quick',scope:['src/a.ts'],contextArtifactIds:[durable.artifact_id]})
     assert.match(prompts[1].body.parts[0].text,new RegExp(`artifact-stale:${durable.artifact_id}`))
     assert.doesNotMatch(prompts[1].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
   }finally{rmSync(root,{recursive:true,force:true})}
