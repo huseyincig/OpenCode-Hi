@@ -516,9 +516,10 @@ export class TaskResultReconciler {
         if (effectiveResult.status === 'DONE') {
             const now = Date.now();
             if (explorationClearance.admitted && worker.role === 'repository-explorer' && m.identity.intent.ambiguity !== 'none') {
-                if (!(m.identity.intent.likelyTargets?.length) && explorationClearance.source_scope.length) {
+                if ((!m.identity.intent.likelyTargets?.length || task.scope.length === 0) && explorationClearance.source_scope.length) {
+                    const priorTargets = [...(m.identity.intent.likelyTargets ?? [])];
                     m.identity.intent.likelyTargets = [...explorationClearance.source_scope];
-                    appendLedger(m, 'intent.targets.resolved', { task_id: task.id, worker_id: worker.id, payload: { source: 'repository-explorer-clearance', targets: [...explorationClearance.source_scope], source_state_hash: explorationClearance.source_state_hash, authority: 'runtime-bound-current-source-scope' } });
+                    appendLedger(m, 'intent.targets.resolved', { task_id: task.id, worker_id: worker.id, payload: { source: 'repository-explorer-clearance', prior_targets: priorTargets, targets: [...explorationClearance.source_scope], source_state_hash: explorationClearance.source_state_hash, authority: 'runtime-bound-current-source-scope', reason: task.scope.length === 0 ? 'unbound-discovery-promoted-current-source' : 'previously-unresolved-target' } });
                 }
                 m.identity.intent.ambiguity = 'none';
                 appendLedger(m, 'intent.ambiguity.resolved', { task_id: task.id, worker_id: worker.id, payload: { source: 'repository-explorer-clearance', source_state_hash: explorationClearance.source_state_hash, evidence_authority: false } });

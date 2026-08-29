@@ -9,9 +9,9 @@ export interface NewTaskScopeAdmission {
 /**
  * A model-supplied read scope becomes canonical repository authority only when it
  * resolves to a current project-contained filesystem identity. An exact Mission
- * target is also authoritative because Mission admission already bound it to an
- * explicit user target or a current project identity (future user-named files are
- * therefore retained without requiring current existence).
+ * target is authoritative only when repository-shaped authority can be established:
+ * it resolves to a current project identity or is an unmistakably file-shaped future
+ * target. Semantic slash terms remain discovery hints rather than filesystem scope.
  */
 export declare function projectContainedExistingScope(projectRoot: string, candidate: string): boolean;
 /**

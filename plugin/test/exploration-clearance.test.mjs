@@ -119,6 +119,22 @@ test('rerun20-shaped unbound explorer scope normalizes to discovery and exact ro
 
 
 
+
+test('scenario05-shaped semantic slash target normalizes to empty explorer discovery and promotes observed source',async()=>{
+  const r=root();try{
+    const store=new MissionStore(r),m=store.start('semantic-slash-scope','repair the session/auth service')
+    store.applyInitialSemanticAssessment('semantic-slash-scope',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'multi-file',risk:'high',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['session/auth'],intent_signals:[],suppressed_intent_signals:[]})
+    const created=[],client={session:{create:async()=>({data:{id:`explorer-${created.push(1)}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:true})}}
+    const rt=runtime(r,client),analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+    const started=await rt.start(m,{objective:'map the security-relevant repository source',role:'repository-explorer',obligationIds:[analysis.id]})
+    const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task&&worker)
+    assert.deepEqual(task.scope,[],'semantic slash target cannot become repository filesystem authority before discovery')
+    assert.ok(m.execution.ledger.some(e=>e.type==='task.scope-unbound-discovery-normalized'&&e.payload?.unbound_scope?.includes('session/auth')))
+    rt.applyResult(m,worker.id,result({evidence:[sourceClaimWithReceipt(r,m,task,worker)]}))
+    assert.equal(task.result.status,'DONE');assert.equal(m.identity.intent.ambiguity,'none');assert.deepEqual(m.identity.intent.likelyTargets,['src/contract.ts'])
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
 test('runtime-bound explorer clearance promotes discovered source scope into canonical Mission targets',()=>{
   const r=root();try{
     const store=new MissionStore(r),m=store.start('target-promotion',"Fix dashboard fixture with unresolved source location")

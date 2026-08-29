@@ -17,9 +17,9 @@ function uniqueBounded(items) {
 /**
  * A model-supplied read scope becomes canonical repository authority only when it
  * resolves to a current project-contained filesystem identity. An exact Mission
- * target is also authoritative because Mission admission already bound it to an
- * explicit user target or a current project identity (future user-named files are
- * therefore retained without requiring current existence).
+ * target is authoritative only when repository-shaped authority can be established:
+ * it resolves to a current project identity or is an unmistakably file-shaped future
+ * target. Semantic slash terms remain discovery hints rather than filesystem scope.
  */
 export function projectContainedExistingScope(projectRoot, candidate) {
     try {
@@ -29,6 +29,25 @@ export function projectContainedExistingScope(projectRoot, candidate) {
     catch {
         return false;
     }
+}
+/**
+ * A non-existent Mission target can still be repository authority when it is
+ * unmistakably file-shaped (for example `src/future.ts` or `.env`). Arbitrary
+ * extensionless slash terms are not enough: natural-language concepts such as
+ * `session/auth` must remain search/discovery hints until a real source path is
+ * observed.
+ */
+function explicitFutureFileScope(candidate) {
+    const basename = candidate.split('/').filter(Boolean).at(-1) ?? '';
+    if (!basename)
+        return false;
+    if (basename.startsWith('.') && basename.length > 1)
+        return true;
+    const dot = basename.lastIndexOf('.');
+    return dot > 0 && dot < basename.length - 1;
+}
+function repositoryAuthoritativeTarget(projectRoot, candidate) {
+    return projectContainedExistingScope(projectRoot, candidate) || explicitFutureFileScope(candidate);
 }
 /**
  * Reconcile scope only for NEW repository-explorer tasks. Exact task resume must
@@ -44,7 +63,7 @@ export function projectContainedExistingScope(projectRoot, candidate) {
 export function admitNewTaskScope(input) {
     if (input.role !== 'repository-explorer')
         return { accepted: true, scope: [...input.requestedScope], reason: 'unchanged', unbound: [], canonical_targets: [] };
-    const requested = uniqueBounded(input.requestedScope), targets = uniqueBounded((input.missionTargets ?? []).filter(target => !/^https?:\/\//i.test(target))).values;
+    const requested = uniqueBounded(input.requestedScope), candidateTargets = uniqueBounded((input.missionTargets ?? []).filter(target => !/^https?:\/\//i.test(target))).values, targets = candidateTargets.filter(target => repositoryAuthoritativeTarget(input.projectRoot, target));
     if (requested.invalid.length)
         return { accepted: false, scope: requested.values, reason: 'repository-scope-invalid', unbound: [...requested.invalid], canonical_targets: targets };
     if (!requested.values.length)

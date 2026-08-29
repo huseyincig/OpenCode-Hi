@@ -42,6 +42,20 @@ test('unbound explorer scope is rejected once Mission has canonical target autho
   }finally{rmSync(r,{recursive:true,force:true})}
 })
 
+test('semantic slash Mission target is discovery context, not filesystem authority when no such path exists',()=>{
+  const r=root();try{
+    const out=admitNewTaskScope({projectRoot:r,role:'repository-explorer',ambiguity:'resolvable',missionTargets:['session/auth'],requestedScope:['session/auth']})
+    assert.equal(out.accepted,true);assert.deepEqual(out.scope,[]);assert.equal(out.reason,'repository-discovery-unbound-normalized');assert.deepEqual(out.unbound,['session/auth']);assert.deepEqual(out.canonical_targets,[])
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
+test('existing extensionless slash Mission target remains concrete repository authority',()=>{
+  const r=root();try{mkdirSync(join(r,'session','auth'),{recursive:true})
+    const out=admitNewTaskScope({projectRoot:r,role:'repository-explorer',ambiguity:'resolvable',missionTargets:['session/auth'],requestedScope:['session/auth']})
+    assert.equal(out.accepted,true);assert.deepEqual(out.scope,['session/auth']);assert.equal(out.reason,'unchanged');assert.deepEqual(out.canonical_targets,['session/auth'])
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
 test('writer future-file scope is untouched by repository-explorer admission policy',()=>{
   const r=root();try{
     const out=admitNewTaskScope({projectRoot:r,role:'coder',ambiguity:'none',missionTargets:[],requestedScope:['src/new.ts']})
