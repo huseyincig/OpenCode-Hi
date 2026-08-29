@@ -2,6 +2,10 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — bounded busy/no-progress child recovery
+- Preserve generic OpenCode `busy`/`retry` as healthy live execution by default, but after three same-attempt `hi_task_await` timeouts spanning the existing 120-second no-progress window with no later assistant/tool progress, expose one explicit `hi_task_cancel` recovery route for that exact stalled worker. Fresh child activity invalidates the stall evidence, so healthy long-running work remains protected.
+- Prevent `hi_context_artifact_add` from accepting canonical `*-evidence` kinds; context artifacts remain context-only and cannot substitute for worker/host verification or review evidence.
+
 ### Fixed — Scenario 05 review authority settlement
 - Materialize a canonical `review` obligation whenever the resolved verification policy requires independent review, including authority-boundary remediation/security-review missions. This keeps external-action authority separate while giving fresh reviewer evidence an exact assurance/verification claim to close instead of ending in `review-obligation-missing`.
 - Claim-link independent reviewer tasks to an open verification obligation when that exact verification contract requires `review-evidence`, while keeping unrelated technical/visual evidence off the reviewer execution contract. This lets one fresh source-bound reviewer observation satisfy both assurance and verification provenance without prose/context-artifact promotion.
