@@ -37,6 +37,8 @@ function validObligation(value) {
         return false;
     if (value.requiredTargets !== undefined && (!stringArray(value.requiredTargets) || !['implementation', 'documentation', 'test-authoring'].includes(String(value.kind)) || !value.requiredTargets.every(target => normalizeBoundedProjectPath(target) === target)))
         return false;
+    if (value.requestUnits !== undefined && (!recordArray(value.requestUnits) || !['implementation', 'documentation', 'test-authoring'].includes(String(value.kind)) || value.requestUnits.length === 0 || value.requestUnits.some(unit => typeof unit.id !== 'string' || !/^ru[1-9][0-9]*$/.test(unit.id) || typeof unit.text !== 'string' || !unit.text.trim()) || new Set(value.requestUnits.map(unit => unit.id)).size !== value.requestUnits.length))
+        return false;
     if (value.blocker !== undefined && typeof value.blocker !== 'string')
         return false;
     if (value.closedAt !== undefined && typeof value.closedAt !== 'number')

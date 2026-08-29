@@ -43,6 +43,36 @@ test('coder DONE cannot close an implementation obligation it does not own',()=>
   assert.equal(base.status,'open','task-owned completion must not consume the other open implementation obligation')
 })
 
+
+test('multi-stream capability request trace preserves independent output obligations until each owned unit completes',()=>{
+  const text='- Fix API pagination.\n- Fix UI empty state.\n- Update the docs.\n- Add API regression tests.'
+  const store=new MissionStore(),m=store.start('ownership-multistream-request-units',text)
+  store.applyInitialSemanticAssessment(m.identity.session_id,{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'multi-stream',risk:'medium',ambiguity:'none',dependency_class:'independent-multi',required_capabilities:['implementation','documentation','test-authoring','multi-stream-delegation'],requested_external_actions:[],likely_verification:[],user_verification:[],verification_ceiling:false,verification_cases:[],nonvisual_request_units:[],capability_request_units:{implementation:['ru1','ru2'],documentation:['ru3'],'test-authoring':['ru4'],'multi-stream-delegation':['ru1','ru2','ru3','ru4']},likely_targets:['src/api.js','web/index.html','README.md','test/api.test.mjs'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]})
+  const implementation=m.execution.obligations.filter(o=>o.kind==='implementation')
+  assert.deepEqual(implementation.map(o=>o.id),['o-implementation-ru1','o-implementation-ru2'])
+  assert.deepEqual(implementation.map(o=>o.requestUnits),[[{id:'ru1',text:'Fix API pagination'}],[{id:'ru2',text:'Fix UI empty state'}]])
+  assert.deepEqual(m.execution.obligations.filter(o=>o.kind==='documentation').map(o=>o.id),['o-documentation-ru3'])
+  assert.deepEqual(m.execution.obligations.filter(o=>o.kind==='test-authoring').map(o=>o.id),['o-test-authoring-ru4'])
+  assert.equal(m.execution.obligations.some(o=>o.id==='o-implementation'),false,'traced multi-stream mission must not retain a coarse sibling-erasing implementation obligation')
+
+  const ui=createTask(m,{objective:'fix UI',role:'coder',category:'standard',scope:['web/index.html'],requiredEvidence:[],obligationIds:['o-implementation-ru2']})
+  const worker=createWorker(m,ui,'host-default');worker.status='busy';worker.started_at=Date.now()-5
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'UI fixed',changed_files:['web/index.html'],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(m.execution.obligations.find(o=>o.id==='o-implementation-ru2')?.status,'closed')
+  assert.equal(m.execution.obligations.find(o=>o.id==='o-implementation-ru1')?.status,'open','UI completion must not erase the API implementation unit')
+})
+
+test('one bounded task may intentionally own and close multiple same-role request-unit obligations',()=>{
+  const text='- Implement alpha.\n- Implement beta.'
+  const store=new MissionStore(),m=store.start('ownership-multistream-grouped-units',text)
+  store.applyInitialSemanticAssessment(m.identity.session_id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-stream',risk:'low',ambiguity:'none',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],requested_external_actions:[],likely_verification:[],user_verification:[],verification_ceiling:false,verification_cases:[],nonvisual_request_units:[],capability_request_units:{implementation:['ru1','ru2'],'multi-stream-delegation':['ru1','ru2']},likely_targets:[],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]})
+  const ids=m.execution.obligations.filter(o=>o.kind==='implementation').map(o=>o.id);assert.deepEqual(ids,['o-implementation-ru1','o-implementation-ru2'])
+  const task=createTask(m,{objective:'implement both bounded units',role:'coder',category:'standard',requiredEvidence:[],obligationIds:ids})
+  const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'both done',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.ok(ids.every(id=>m.execution.obligations.find(o=>o.id===id)?.status==='closed'))
+})
+
 test('worker verification claim satisfies neither its owned nor another verification obligation',()=>{
   const m=assessedMission('ownership-2','fix bug and test it',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   m.execution.verification_policy={requiredKinds:['targeted-tests'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}

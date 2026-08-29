@@ -29,7 +29,7 @@ export type Category = 'quick' | 'standard' | 'deep' | 'visual' | 'critical'
 export type GateStatus = 'open'|'ready'|'blocked'|'closed'
 export type GateKind = 'verification'|'user-authority'|'reviewer'|'prerequisite-task'|'precondition'|'rollback'
 
-export interface Obligation { id:string; status:ObligationStatus; kind:ObligationKind; summary:string; requiredEvidence?:string[]; requiredTargets?:string[]; verificationCases?:VerificationCase[]; blocker?:string; closedAt?:number }
+export interface Obligation { id:string; status:ObligationStatus; kind:ObligationKind; summary:string; requiredEvidence?:string[]; requiredTargets?:string[]; requestUnits?:Array<{id:string;text:string}>; verificationCases?:VerificationCase[]; blocker?:string; closedAt?:number }
 export interface ContextArtifact { id:string; kind:string; uri?:string; title?:string; summary?:string; sha256?:string; added_at:number }
 export interface MissionGate { id:string; kind:GateKind; summary:string; status:GateStatus; reason?:string; updated_at:number }
 export interface RuntimeNudge { id:string; reason:string; instruction:string; created_at:number; generation:number; task_id?:string; worker_id?:string }

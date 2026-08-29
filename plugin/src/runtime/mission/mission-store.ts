@@ -1,4 +1,4 @@
-import { assessedIntent, assertSemanticTaskCapabilityConsistency, provisionalIntent, resolveAdaptiveVerificationAssessment, technicalTargets, userRequiredMaterialTargets, type SemanticIntentAssessment } from '../intent/semantic-assessment.js'
+import { assessedIntent, assertSemanticTaskCapabilityConsistency, provisionalIntent, resolveAdaptiveVerificationAssessment, technicalTargets, userRequiredMaterialTargets, type SemanticCapability, type SemanticIntentAssessment } from '../intent/semantic-assessment.js'
 import { collectRepoContext, type RepoContext, type NativeProjectContext } from '../intent/repo-context.js'
 import { continuationBudget } from '../routing/category.js'
 import { appendLedger } from '../ledger/ledger.js'
@@ -19,7 +19,15 @@ import { isAbsolute,relative,resolve,sep } from 'node:path'
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js'
 import { semanticProgressDelta,semanticProgressMade,semanticProgressSnapshot } from '../progress/semantic-progress.js'
 import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js'
-function obligation(id:string,kind:Obligation['kind'],summary:string,requiredEvidence:string[]=[],requiredTargets:string[]=[],verificationCases:VerificationCase[]=[]):Obligation{return{id,kind,summary,status:'open',requiredEvidence,...(requiredTargets.length?{requiredTargets:[...new Set(requiredTargets)]}:{}),...(verificationCases.length?{verificationCases:verificationCases.map(c=>({...c,required_browser_actions:[...c.required_browser_actions],...(c.source_units?.length?{source_units:[...c.source_units]}:{})}))}:{})}}
+import { semanticRequestUnits } from '../intent/request-units.js'
+function obligation(id:string,kind:Obligation['kind'],summary:string,requiredEvidence:string[]=[],requiredTargets:string[]=[],verificationCases:VerificationCase[]=[],requestUnits:Array<{id:string;text:string}>=[]):Obligation{return{id,kind,summary,status:'open',requiredEvidence,...(requiredTargets.length?{requiredTargets:[...new Set(requiredTargets)]}:{}),...(requestUnits.length?{requestUnits:requestUnits.map(unit=>({...unit}))}:{}),...(verificationCases.length?{verificationCases:verificationCases.map(c=>({...c,required_browser_actions:[...c.required_browser_actions],...(c.source_units?.length?{source_units:[...c.source_units]}:{})}))}:{})}}
+const OUTPUT_CAPABILITY_OBLIGATIONS:Partial<Record<SemanticCapability,{kind:Obligation['kind'];id:string;summary:string}>>={implementation:{kind:'implementation',id:'o-implementation',summary:'Requested change completed'},documentation:{kind:'documentation',id:'o-documentation',summary:'Requested documentation change completed'},'test-authoring':{kind:'test-authoring',id:'o-test-authoring',summary:'Requested test-source change completed'}}
+function outputCapabilityObligations(assessment:SemanticIntentAssessment,pendingText:string,capability:'implementation'|'documentation'|'test-authoring',requiredTargets:string[]):Obligation[]{
+  const spec=OUTPUT_CAPABILITY_OBLIGATIONS[capability]!;const ids=assessment.scope==='multi-stream'&&assessment.message_kind==='mission'?[...new Set(assessment.capability_request_units?.[capability]??[])]:[]
+  if(!ids.length)return[obligation(spec.id,spec.kind,spec.summary,[],requiredTargets)]
+  const units=new Map(semanticRequestUnits(pendingText).map(unit=>[unit.id,unit])),targetSet=new Set(requiredTargets)
+  return ids.map(id=>{const unit=units.get(id);if(!unit)throw new Error(`capability_request_units.${capability} contains unknown request unit ${id}`);const unitTargets=technicalTargets(unit.text).filter(target=>targetSet.has(target));return obligation(`${spec.id}-${id}`,spec.kind,`${spec.summary}: [${id}] ${unit.text}`,[],unitTargets,[],[unit])})
+}
 function ensureRequiredReviewObligation(m:MissionState):void{
   if(!m.execution.verification_policy.requireReview)return
   const open=m.execution.obligations.find(o=>o.kind==='review'&&o.status==='open')
@@ -116,10 +124,10 @@ export class MissionStore {
     const reconciledSignals=reconciledIntentMethodologySignals(effectiveAssessment,m.identity.semantic_assessment.pending_text),obligations:Obligation[]=[],bugFixAnalysisRequired=m.identity.intent.taskKind==='bug-fix'&&(m.identity.intent.scope!=='local'||m.identity.intent.ambiguity!=='none'||reconciledSignals.active.includes('intent.debugging'))
     if(bugFixAnalysisRequired||m.identity.intent.taskKind==='performance'||m.identity.intent.taskKind==='diagnosis')obligations.push(obligation('o-analysis','analysis',m.identity.intent.taskKind==='performance'?'Relevant performance bottleneck identified':'Root cause understood'))
     const caps=new Set(m.identity.intent.requiredCapabilities),nonProductSpecialist=[...caps].some(cap=>['documentation','test-authoring','external-research','review','independent-review','security-review','qa-review','visual-qa','design-exploration','repository-analysis','source-verification'].includes(cap)),specialistOnly=nonProductSpecialist&&!caps.has('implementation')&&!caps.has('dependency-change'),productImplementation=caps.has('implementation')||m.identity.intent.taskKind==='bug-fix'||m.identity.intent.taskKind==='performance'||(!specialistOnly&&m.identity.intent.taskKind==='implementation')
-    if(productImplementation&&!['diagnosis','review','release-readiness'].includes(m.identity.intent.taskKind))obligations.push(obligation('o-implementation','implementation','Requested change completed',[],requiredMaterialTargets))
+    if(productImplementation&&!['diagnosis','review','release-readiness'].includes(m.identity.intent.taskKind))obligations.push(...outputCapabilityObligations(effectiveAssessment,m.identity.semantic_assessment.pending_text,'implementation',requiredMaterialTargets))
     if(caps.has('external-research'))obligations.push(obligation('o-research','research','Required external/reference evidence synthesized'))
-    if(caps.has('documentation'))obligations.push(obligation('o-documentation','documentation','Requested documentation change completed',[],requiredMaterialTargets))
-    if(caps.has('test-authoring'))obligations.push(obligation('o-test-authoring','test-authoring','Requested test-source change completed',[],requiredMaterialTargets))
+    if(caps.has('documentation'))obligations.push(...outputCapabilityObligations(effectiveAssessment,m.identity.semantic_assessment.pending_text,'documentation',requiredMaterialTargets))
+    if(caps.has('test-authoring'))obligations.push(...outputCapabilityObligations(effectiveAssessment,m.identity.semantic_assessment.pending_text,'test-authoring',requiredMaterialTargets))
     if(m.identity.intent.taskKind==='review')obligations.push(obligation('o-review','review','Requested review completed',['review-evidence']))
     if(m.identity.intent.taskKind!=='diagnosis')obligations.push(obligation('o-verification','verification',m.identity.intent.likelyVerification.join(', '),m.identity.intent.likelyVerification,[],m.identity.intent.verificationCases??[]))
     if(m.identity.intent.risk==='high')obligations.push(obligation('o-high-assurance','review','Security-sensitive change reviewed',['review-evidence']))

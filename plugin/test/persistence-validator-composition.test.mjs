@@ -43,4 +43,5 @@ test('required implementation targets persist only as bounded project-relative i
   const traversal=structuredClone(m);traversal.execution.obligations.find(o=>o.kind==='implementation').requiredTargets=['../outside.ts'];assert.equal(validateMissionEnvelope(traversal),false)
   const absolute=structuredClone(m);absolute.execution.obligations.find(o=>o.kind==='implementation').requiredTargets=['/tmp/outside.ts'];assert.equal(validateMissionEnvelope(absolute),false)
   const wrongKind=structuredClone(m);const verification=wrongKind.execution.obligations.find(o=>o.kind==='verification');verification.requiredTargets=['src/a.ts'];assert.equal(validateMissionEnvelope(wrongKind),false)
+  const malformedUnit=structuredClone(m);const traced=malformedUnit.execution.obligations.find(o=>o.kind==='implementation');traced.requestUnits=[{id:'bad_unit',text:'bounded output'}];assert.equal(validateMissionEnvelope(malformedUnit),false)
 })

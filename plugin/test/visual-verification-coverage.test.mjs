@@ -53,7 +53,7 @@ test('multi-stream request capability trace fails closed and restores specialist
   ],nonvisual_request_units:['ru1','ru2','ru4'],capability_request_units:{implementation:['ru2','ru3'],documentation:['ru3','ru5'],'multi-stream-delegation':['ru1']}})
   assert.throws(()=>assertCapabilityRequestTrace(text,missing),/capability request trace incomplete; unclassified unit\(s\): ru4/)
   const store=new MissionStore(process.cwd()),m=store.start('multi-stream-capability-trace',text);store.applyInitialSemanticAssessment('multi-stream-capability-trace',incomplete)
-  assert.ok(m.execution.obligations.some(o=>o.id==='o-documentation'&&o.kind==='documentation'))
+  assert.deepEqual(m.execution.obligations.filter(o=>o.kind==='documentation').map(o=>o.id),['o-documentation-ru3','o-documentation-ru5'])
 })
 
 test('request trace rejects unknown, overlapping and untraced visual ownership',()=>{

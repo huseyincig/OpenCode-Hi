@@ -35,6 +35,10 @@ export interface Obligation {
     summary: string;
     requiredEvidence?: string[];
     requiredTargets?: string[];
+    requestUnits?: Array<{
+        id: string;
+        text: string;
+    }>;
     verificationCases?: VerificationCase[];
     blocker?: string;
     closedAt?: number;
