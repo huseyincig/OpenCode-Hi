@@ -62,7 +62,7 @@ export function assertVerificationRequestTrace(text, assessment) {
     const unknownNonvisual = nonvisual.filter(id => !unitMap.has(id));
     if (unknownNonvisual.length)
         throw new Error(`nonvisual_request_units contain unknown id(s): ${unknownNonvisual.join(',')}; ${challenge()}`);
-    const visualRefs = new Set();
+    const visualRefs = new Set(), visualCapabilityRefs = new Set(assessment.capability_request_units?.['visual-qa'] ?? []), enforceVisualCapabilityTrace = assessment.scope === 'multi-stream' && visualCapabilityRefs.size > 0;
     for (const c of assessment.verification_cases) {
         const refs = c.source_units ?? [];
         if (!refs.length)
@@ -70,6 +70,8 @@ export function assertVerificationRequestTrace(text, assessment) {
         for (const id of refs) {
             if (!unitMap.has(id))
                 throw new Error(`verification case ${c.id} source_units contains unknown id ${id}; ${challenge()}`);
+            if (enforceVisualCapabilityTrace && !visualCapabilityRefs.has(id))
+                throw new Error(`verification case ${c.id} source_units contains non-visual request unit ${id}; verification_cases may only reference request units mapped to capability_request_units.visual-qa in multi-stream assessments; ${challenge()}`);
             visualRefs.add(id);
         }
     }

@@ -56,6 +56,22 @@ test('multi-stream request capability trace fails closed and restores specialist
   assert.deepEqual(m.execution.obligations.filter(o=>o.kind==='documentation').map(o=>o.id),['o-documentation-ru3','o-documentation-ru5'])
 })
 
+test('multi-stream visual cases cannot absorb nonvisual API or docs request units',()=>{
+  const text=`Fix three independent defects.
+- Repair API pagination.
+- Repair UI empty state.
+- Correct CLI docs.
+- Verify API tests, browser UI, and docs parity.`
+  const assessment=parseSemanticIntentAssessment({...base,scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','documentation','test-authoring','visual-qa','multi-stream-delegation'],verification_cases:[
+    {id:'vc_api',subject:'API pagination',required_browser_actions:['inspect'],source_units:['ru2']},
+    {id:'vc_ui',subject:'UI empty state',required_browser_actions:['open','click','inspect'],source_units:['ru3','ru6']},
+    {id:'vc_docs',subject:'CLI docs parity',required_browser_actions:['inspect'],source_units:['ru4']},
+  ],nonvisual_request_units:['ru1','ru5'],capability_request_units:{implementation:['ru2','ru3'],documentation:['ru4'],'test-authoring':['ru5'],'visual-qa':['ru3','ru6'],'multi-stream-delegation':['ru1','ru2','ru3','ru4','ru5']}})
+  assert.throws(()=>assertVerificationRequestTrace(text,assessment),/verification case vc_api source_units contains non-visual request unit ru2.*capability_request_units\.visual-qa/)
+  const corrected={...assessment,verification_cases:[assessment.verification_cases[1]],nonvisual_request_units:['ru1','ru2','ru4','ru5','ru7']}
+  assert.doesNotThrow(()=>assertVerificationRequestTrace(text,corrected))
+})
+
 test('request trace rejects unknown, overlapping and untraced visual ownership',()=>{
   const text='Repair UI.\n- Verify keyboard behavior.'
   const noSource=parseSemanticIntentAssessment({...base,verification_cases:[{id:'vc_keyboard',subject:'keyboard',required_browser_actions:['key','inspect']}],nonvisual_request_units:['ru1']})
