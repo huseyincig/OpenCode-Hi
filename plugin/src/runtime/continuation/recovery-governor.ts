@@ -12,7 +12,7 @@ export interface RecoveryStrategyRecord extends RecoveryStrategyContext{
   attempted_at:number
   outcome:RecoveryAttemptOutcome
 }
-export interface RecoveryModelHazard{open:boolean;same_model_exhausted:boolean;reason:string;task_id?:string;worker_id?:string;model?:string;progress_signature:string;failure_signature?:string;attempts:number;recovery_candidates:string[]}
+export interface RecoveryModelHazard{open:boolean;same_model_exhausted:boolean;cross_model_exhausted:boolean;reason:string;task_id?:string;worker_id?:string;model?:string;progress_signature:string;failure_signature?:string;attempts:number;recovery_candidates:string[]}
 
 function fnv(value:string):string{let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
 function failureClass(value:string):string{
@@ -44,13 +44,14 @@ function latestRecoveryWorker(m:MissionState):WorkerState|undefined{return[...m.
 function candidateModels(worker:WorkerState):string[]{const attempted=new Set<string>();if(worker.model)attempted.add(worker.model);for(const transition of worker.fallback_history??[]){if(transition.from)attempted.add(transition.from);if(transition.to)attempted.add(transition.to)}return[...new Set([...(worker.fallbacks??[]),...(worker.recovery_candidates??[])].filter(id=>Boolean(id)&&!attempted.has(id)))]}
 export function recoveryModelHazard(m:MissionState):RecoveryModelHazard{
   const progress_signature=currentProgressSignature(m),worker=latestRecoveryWorker(m),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined
-  if(!worker||!task||!worker.model)return{open:false,same_model_exhausted:false,reason:'no-recoverable-model-worker',progress_signature,attempts:0,recovery_candidates:[]}
-  const failure_signature=currentResultFailureSignature(m,worker),recovery_candidates=candidateModels(worker)
-  const attempts=failure_signature?(m.continuation.recovery_history??[]).filter(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.action==='same-worker-resume'&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.model===worker.model&&item.failure_signature===failure_signature).length:0
-  const same_model_exhausted=attempts>=1
-  if(worker.requested_model&&!worker.fallbacks.length)return{open:false,same_model_exhausted,reason:same_model_exhausted?'explicit-task-model-same-failure-correction-exhausted':'explicit-task-model-has-no-authorized-fallback',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates:[]}
-  if(!recovery_candidates.length)return{open:false,same_model_exhausted,reason:same_model_exhausted?'same-model-same-failure-correction-exhausted-no-candidate':'no-recovery-model-candidate',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates}
-  return{open:same_model_exhausted,same_model_exhausted,reason:same_model_exhausted?'same-model-same-failure-correction-exhausted':'same-model-correction-not-exhausted',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates}
+  if(!worker||!task||!worker.model)return{open:false,same_model_exhausted:false,cross_model_exhausted:false,reason:'no-recoverable-model-worker',progress_signature,attempts:0,recovery_candidates:[]}
+  const failure_signature=currentResultFailureSignature(m,worker),recovery_candidates=candidateModels(worker),history=(m.continuation.recovery_history??[]).filter(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.failure_signature===failure_signature)
+  const attempts=failure_signature?history.filter(item=>item.action==='same-worker-resume'&&item.model===worker.model).length:0,cross_model_exhausted=Boolean(failure_signature&&history.some(item=>item.action==='model-escalation'))
+  const same_model_exhausted=attempts>=1||cross_model_exhausted
+  if(cross_model_exhausted)return{open:false,same_model_exhausted:true,cross_model_exhausted:true,reason:'model-escalation-reproduced-same-failure-without-semantic-delta',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates:[]}
+  if(worker.requested_model&&!worker.fallbacks.length)return{open:false,same_model_exhausted,cross_model_exhausted:false,reason:same_model_exhausted?'explicit-task-model-same-failure-correction-exhausted':'explicit-task-model-has-no-authorized-fallback',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates:[]}
+  if(!recovery_candidates.length)return{open:false,same_model_exhausted,cross_model_exhausted:false,reason:same_model_exhausted?'same-model-same-failure-correction-exhausted-no-candidate':'no-recovery-model-candidate',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates}
+  return{open:same_model_exhausted,same_model_exhausted,cross_model_exhausted:false,reason:same_model_exhausted?'same-model-same-failure-correction-exhausted':'same-model-correction-not-exhausted',task_id:task.id,worker_id:worker.id,model:worker.model,progress_signature,failure_signature,attempts,recovery_candidates}
 }
 export function recoveryStrategyFingerprint(m:MissionState,plan:Pick<RecoveryPlan,'level'|'action'>):string{return`rg1:${fnv(JSON.stringify({generation:m.continuation.generation,level:plan.level,action:plan.action}))}`}
 
@@ -69,6 +70,8 @@ export function recoveryStrategyEligibility(m:MissionState,plan:Pick<RecoveryPla
   if(ambiguous)return{allowed:false,reason:ambiguous,fingerprint,progress_signature}
   const worker=latestRecoveryWorker(m),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined,failure_signature=currentResultFailureSignature(m,worker)
   if(plan.action==='same-worker-resume'&&worker?.model&&task&&failure_signature){
+    const crossModelRepeated=(m.continuation.recovery_history??[]).some(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.action==='model-escalation'&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.failure_signature===failure_signature)
+    if(crossModelRepeated)return{allowed:false,reason:'model-escalation-reproduced-same-failure-without-semantic-delta',fingerprint,progress_signature}
     const equivalent=(m.continuation.recovery_history??[]).some(item=>item.generation===m.continuation.generation&&item.progress_signature===progress_signature&&item.action==='same-worker-resume'&&item.outcome!=='failed'&&item.task_id===task.id&&item.worker_id===worker.id&&item.model===worker.model&&item.failure_signature===failure_signature)
     if(equivalent)return{allowed:false,reason:'same-failure-same-model-correction-repeated-without-semantic-delta',fingerprint,progress_signature}
   }

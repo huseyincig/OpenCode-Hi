@@ -122,3 +122,23 @@ test('review is structurally read-only while mixed review plus remediation is ad
   assert.ok(kinds.includes('implementation'));assert.ok(kinds.includes('documentation'));assert.ok(kinds.includes('verification'));assert.ok(kinds.includes('review'))
   await hooks.dispose?.()
 })
+
+
+test('release-readiness is read-only while requests to make the repository release-ready require a write task kind',async()=>{
+  const readiness={...diagnosis,task_kind:'release-readiness',risk:'high',required_capabilities:['repository-analysis','verification','independent-review'],likely_targets:['package.json','README.md']}
+  assert.equal(parseSemanticIntentAssessment(readiness).task_kind,'release-readiness')
+  assert.throws(()=>parseSemanticIntentAssessment({...readiness,required_capabilities:[...readiness.required_capabilities,'implementation']}),/release-readiness.*read-only.*write capability.*implementation/)
+  assert.throws(()=>parseSemanticIntentAssessment({...readiness,required_capabilities:[...readiness.required_capabilities,'test-authoring']}),/release-readiness.*read-only.*write capability.*test-authoring/)
+  assert.throws(()=>parseSemanticIntentAssessment({...readiness,required_capabilities:[...readiness.required_capabilities,'documentation']}),/release-readiness.*read-only.*write capability.*documentation/)
+  assert.doesNotThrow(()=>parseSemanticIntentAssessment({...readiness,scope:'external',risk:'authority-boundary',required_capabilities:[...readiness.required_capabilities,'implementation'],requested_external_actions:['git-push']}),'external release transaction semantics remain compatible with implementation capability')
+  const store=new MissionStore(),m=store.start('release-readiness-pure','Inspect release readiness only.');store.applyInitialSemanticAssessment('release-readiness-pure',readiness)
+  assert.ok(!m.execution.obligations.some(o=>['implementation','documentation','test-authoring'].includes(o.kind)));assert.equal(validateMissionEnvelope(m),true)
+  m.identity.intent.requiredCapabilities.push('test-authoring');assert.equal(validateMissionEnvelope(m),false,'durable release-readiness/write contradiction must fail closed')
+
+  const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='release-readiness-fix-admission'
+  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Make this workspace release-ready: fix package version/dependency drift, repair the failing test implementation, update docs if behavior changes, then verify locally. Do not publish.'}]})
+  const invalid=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...readiness,required_capabilities:['repository-analysis','verification','test-authoring','documentation']})},{sessionID:sid}))
+  assert.equal(invalid.status,'INVALID_ASSESSMENT');assert.match(invalid.error,/release-readiness.*read-only.*write capability/)
+  const corrected=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...readiness,task_kind:'bug-fix',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification','test-authoring','documentation','independent-review']})},{sessionID:sid}))
+  assert.equal(corrected.status,'ASSESSED');assert.equal(corrected.task_kind,'bug-fix');const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));const kinds=ledger.obligations.map(o=>o.kind);assert.ok(kinds.includes('implementation'));assert.ok(kinds.includes('test-authoring'));assert.ok(kinds.includes('documentation'));assert.ok(kinds.includes('verification'));await hooks.dispose?.()
+})

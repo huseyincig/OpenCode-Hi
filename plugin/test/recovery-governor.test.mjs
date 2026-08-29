@@ -129,3 +129,13 @@ test('explicit task model exhausts same-failure correction without inventing mod
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'});m.continuation.stagnation_count=2
   const hazard=recoveryModelHazard(m);assert.equal(hazard.open,false);assert.equal(hazard.same_model_exhausted,true);assert.match(hazard.reason,/explicit-task-model.*exhausted/);assert.equal(recoveryPlan(m).action,'narrow-task')
 })
+
+
+test('same normalized failure after behavioral model escalation exhausts task-level equivalent recovery',()=>{
+  const {store,m}=mission('rg-cross-model-same-failure')
+  const task=createTask(m,{objective:'bounded analysis',role:'repository-explorer',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child-a';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b','p/c'];task.result={status:'FIX_REQUIRED',summary:'contract invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid:structured-output'],needs_context:['worker-result-contract-retry']};store.updateProgress(m,false)
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  recordRecoveryStrategy(m,{level:3,action:'model-escalation'},'started',20,{task_id:task.id,worker_id:worker.id,model:'p/a'});worker.fallback_history=[{from:'p/a',to:'p/b',reason:'behavioral recovery',phase:'runtime',at:20}];worker.model='p/b';worker.session_id='child-b';worker.attempt+=1;task.result={...task.result,open_issues:['worker-result-contract-invalid:structured-payload']};store.updateProgress(m,false)
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,false);assert.equal(hazard.same_model_exhausted,true);assert.equal(hazard.cross_model_exhausted,true);assert.equal(hazard.recovery_candidates.length,0);assert.match(hazard.reason,/model-escalation-reproduced-same-failure/)
+  const eligibility=recoveryStrategyEligibility(m,{level:1,action:'same-worker-resume'});assert.equal(eligibility.allowed,false);assert.match(eligibility.reason,/model-escalation-reproduced-same-failure/)
+})

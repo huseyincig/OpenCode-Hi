@@ -19,6 +19,7 @@ export interface RecoveryStrategyRecord extends RecoveryStrategyContext {
 export interface RecoveryModelHazard {
     open: boolean;
     same_model_exhausted: boolean;
+    cross_model_exhausted: boolean;
     reason: string;
     task_id?: string;
     worker_id?: string;

@@ -144,7 +144,7 @@ export class MissionStore {
         return mission;
     }
     applyInitialSemanticAssessment(sessionID, assessment) {
-        assertSemanticTaskCapabilityConsistency(assessment.task_kind, assessment.required_capabilities);
+        assertSemanticTaskCapabilityConsistency(assessment.task_kind, assessment.required_capabilities, assessment.scope);
         const m = this.get(sessionID);
         if (!m)
             throw new Error('No active Hi mission');
@@ -277,7 +277,7 @@ export class MissionStore {
         return m;
     }
     applyFollowupSemanticAssessment(sessionID, assessment) {
-        assertSemanticTaskCapabilityConsistency(assessment.task_kind, assessment.required_capabilities);
+        assertSemanticTaskCapabilityConsistency(assessment.task_kind, assessment.required_capabilities, assessment.scope);
         const m = this.get(sessionID);
         if (!m)
             throw new Error('No active Hi mission');

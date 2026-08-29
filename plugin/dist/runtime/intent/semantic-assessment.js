@@ -9,13 +9,17 @@ const READ_ONLY_TASK_WRITE_CAPABILITIES = new Set(['implementation', 'documentat
 function conflictingWriteCapabilities(taskKind, capabilities, kind) { return taskKind === kind ? [...new Set(capabilities.filter(cap => READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap)))] : []; }
 export function diagnosisWriteCapabilities(taskKind, capabilities) { return conflictingWriteCapabilities(taskKind, capabilities, 'diagnosis'); }
 export function reviewWriteCapabilities(taskKind, capabilities) { return conflictingWriteCapabilities(taskKind, capabilities, 'review'); }
-export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities) {
+export function releaseReadinessWriteCapabilities(taskKind, scope, capabilities) { return taskKind === 'release-readiness' && scope !== 'external' ? [...new Set(capabilities.filter(cap => READ_ONLY_TASK_WRITE_CAPABILITIES.has(cap)))] : []; }
+export function assertSemanticTaskCapabilityConsistency(taskKind, capabilities, scope = 'local') {
     const diagnosis = diagnosisWriteCapabilities(taskKind, capabilities);
     if (diagnosis.length)
         throw new Error(`task_kind=diagnosis is read-only root cause/no fix and cannot include write capability(s): ${diagnosis.join(', ')}; use task_kind=bug-fix, implementation, or performance when a material change is requested`);
     const review = reviewWriteCapabilities(taskKind, capabilities);
     if (review.length)
         throw new Error(`task_kind=review is read-only findings/reporting and cannot include write capability(s): ${review.join(', ')}; use task_kind=bug-fix, implementation, or performance when remediation or another material change is requested`);
+    const release = releaseReadinessWriteCapabilities(taskKind, scope, capabilities);
+    if (release.length)
+        throw new Error(`local task_kind=release-readiness is read-only inspection/verification and cannot include repository write capability(s): ${release.join(', ')}; use task_kind=bug-fix, implementation, or performance when local release preparation requires material changes`);
 }
 const PATH = /((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|txt|css|yml)))(?![\w.-])/gi;
 const HTTP_TARGET = /^https?:\/\/[^\s]+$/i;
@@ -203,11 +207,11 @@ export function parseSemanticIntentAssessment(raw) {
         requiredCapabilities.push('test-authoring');
     if (effectiveVerification.includes('visual-check') && !requiredCapabilities.includes('visual-qa'))
         requiredCapabilities.push('visual-qa');
-    const taskKind = take('task_kind', taskKinds);
-    assertSemanticTaskCapabilityConsistency(taskKind, requiredCapabilities);
+    const taskKind = take('task_kind', taskKinds), scope = take('scope', scopes);
+    assertSemanticTaskCapabilityConsistency(taskKind, requiredCapabilities, scope);
     const assessment = {
         material: v.material, message_kind: messageKind,
-        task_kind: taskKind, scope: take('scope', scopes), risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
+        task_kind: taskKind, scope, risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
         required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => semanticVerificationCase(item, index)) : [], nonvisual_request_units: requestUnitIdList(v.nonvisual_request_units), likely_targets: semanticTargets(v.likely_targets, 20),
         intent_signals: semanticSignals, suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))
