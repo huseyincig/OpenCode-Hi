@@ -4,7 +4,7 @@ import type { HostCapabilityContract } from '../../contracts/host-capability.js'
 
 export type HostLogLevel='debug'|'info'|'warn'|'error'
 export type HostEventKind=
-  | 'session-idle'|'session-error'|'session-deleted'|'session-status'|'session-diff'|'session-compacted'
+  | 'session-idle'|'session-error'|'session-deleted'|'session-status'|'session-diff'|'session-compacted'|'assistant-message-updated'
   | 'todo-updated'|'permission-asked'|'permission-replied'|'file-edited'|'file-watcher-updated'
   | 'lsp-diagnostics'|'installation-updated'|'unknown'
 
@@ -17,6 +17,7 @@ export interface HostEvent{
   status:string
   permission?:{id?:string;reply:'once'|'always'|'reject'|'unknown';decision:'allow'|'deny'|'unknown';patterns:string[]}
   error?:HostAssistantError
+  assistant?:HostAssistantResult
 }
 export interface HostAssistantError{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
 export interface HostAssistantActivity{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}

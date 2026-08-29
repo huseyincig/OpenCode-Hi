@@ -335,6 +335,57 @@ export class TaskRuntime {
         appendLedger(m, 'worker.permission-denial.settled', { task_id: task.id, worker_id: worker.id, payload: { permission_id: denial.permission_id, status: result.status, attempt: denial.attempt, generation: denial.generation } });
         return { applied: true, reason: 'host-idle-native-permission-denied', result };
     }
+    recordHostAssistantResultEvent(m, worker, assistant) {
+        if (assistant.structured === undefined || !worker.session_id || worker.generation_at_spawn !== m.continuation.generation || worker.attempt < 1 || ['completed', 'failed', 'cancelled'].includes(worker.status))
+            return false;
+        const expectedParent = worker.attempt_prompt_message_id, observedParent = assistant.model?.parent_id, createdAt = assistant.model?.created_at, parentMismatch = Boolean(expectedParent && observedParent && expectedParent !== observedParent), predatesAttempt = Boolean(Number.isFinite(createdAt) && worker.started_at !== undefined && Number(createdAt) < worker.started_at);
+        if (parentMismatch || predatesAttempt) {
+            appendLedger(m, 'worker.structured-event.stale-attempt-ignored', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, message_id: assistant.model?.message_id, parent_id: observedParent, expected_parent_id: expectedParent, created_at: createdAt, attempt_started_at: worker.started_at, attempt: worker.attempt, generation: worker.generation_at_spawn } });
+            return false;
+        }
+        let structured_json;
+        try {
+            structured_json = JSON.stringify(assistant.structured);
+        }
+        catch {
+            return false;
+        }
+        if (!structured_json || structured_json.length > 262144) {
+            appendLedger(m, 'worker.structured-event.oversize-ignored', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, chars: structured_json?.length ?? 0, attempt: worker.attempt, generation: worker.generation_at_spawn } });
+            return false;
+        }
+        worker.pending_host_assistant_result = { session_id: worker.session_id, attempt: worker.attempt, generation: worker.generation_at_spawn, observed_at: Date.now(), structured_json, ...(assistant.model?.message_id ? { message_id: assistant.model.message_id } : {}), ...(assistant.model?.parent_id ? { parent_id: assistant.model.parent_id } : {}), ...(assistant.model?.created_at !== undefined ? { created_at: assistant.model.created_at } : {}), ...(assistant.model?.model ? { model: assistant.model.model } : {}), ...(assistant.model?.variant ? { variant: assistant.model.variant } : {}), ...(assistant.usage ? { usage: assistant.usage } : {}) };
+        worker.updated_at = Date.now();
+        this.registry.set(worker);
+        appendLedger(m, 'worker.structured-result-cached', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, message_id: assistant.model?.message_id, parent_id: assistant.model?.parent_id, attempt: worker.attempt, generation: worker.generation_at_spawn, transport: 'message.updated' } });
+        return true;
+    }
+    async settlePendingHostAssistantResult(m, worker) {
+        const receipt = worker.pending_host_assistant_result;
+        if (!receipt)
+            return { applied: false, reason: 'pending-assistant-result-missing' };
+        const current = receipt.session_id === worker.session_id && receipt.attempt === worker.attempt && receipt.generation === (worker.generation_at_spawn ?? m.continuation.generation);
+        if (!current) {
+            delete worker.pending_host_assistant_result;
+            appendLedger(m, 'worker.structured-result-cache.stale-attempt-ignored', { task_id: worker.task_id, worker_id: worker.id, payload: { receipt_session_id: receipt.session_id, worker_session_id: worker.session_id, receipt_attempt: receipt.attempt, worker_attempt: worker.attempt, receipt_generation: receipt.generation, worker_generation: worker.generation_at_spawn } });
+            return { applied: false, reason: 'pending-assistant-result-stale-attempt' };
+        }
+        let structured;
+        try {
+            structured = JSON.parse(receipt.structured_json);
+        }
+        catch {
+            delete worker.pending_host_assistant_result;
+            return { applied: false, reason: 'pending-assistant-result-invalid-json' };
+        }
+        const assistant = { text: '', structured, model: { ...(receipt.model ? { model: receipt.model } : {}), ...(receipt.variant ? { variant: receipt.variant } : {}), ...(receipt.message_id ? { message_id: receipt.message_id } : {}), ...(receipt.parent_id ? { parent_id: receipt.parent_id } : {}), ...(receipt.created_at !== undefined ? { created_at: receipt.created_at } : {}) }, ...(receipt.usage ? { usage: receipt.usage } : {}) };
+        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant);
+        if (settled.applied) {
+            delete worker.pending_host_assistant_result;
+            appendLedger(m, 'worker.structured-result-cache.consumed', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: receipt.session_id, message_id: receipt.message_id, attempt: receipt.attempt, generation: receipt.generation, result: settled.wakeResult ?? settled.result?.status ?? 'UNKNOWN' } });
+        }
+        return settled;
+    }
     async settleHostIdleAssistantResult(m, worker, assistant) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
@@ -504,6 +555,17 @@ export class TaskRuntime {
             return 'WAIT';
         }
         appendLedger(m, 'scheduler.restart-reconciled', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, outcome: 'host-idle-result-pending', host_status: observed.hostStatus, attempt_id: observed.binding?.attempt.attemptId } });
+        if (worker.pending_host_assistant_result) {
+            const pending = await this.settlePendingHostAssistantResult(m, worker);
+            if (pending.applied) {
+                const recovered = pending.wakeResult ?? pending.result?.status ?? 'UNKNOWN';
+                worker.restart_reconcile_pending = false;
+                appendLedger(m, 'worker.restart-result-recovered', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, result: recovered, attempt_id: observed.binding?.attempt.attemptId, source: 'message.updated-cache' } });
+                if (pending.wakeResult === 'RUNTIME_FALLBACK' || pending.wakeResult === 'QUARANTINED')
+                    return 'WAIT';
+                return ['completed', 'failed', 'cancelled'].includes(worker.status) || pending.wakeResult === 'BLOCKED' ? 'TERMINAL' : 'CONTINUE';
+            }
+        }
         if (!this.readAssistantResult) {
             appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'assistant-result-reader-unavailable', session_id: worker.session_id } });
             return 'WAIT';
@@ -1280,7 +1342,16 @@ export class TaskRuntime {
         return { live_status, progress_observed };
     }
     async reconcileIdleAwaitResult(m, worker) {
-        if (!this.readAssistantResult || !worker.session_id || worker.generation_at_spawn !== m.continuation.generation || ['completed', 'failed', 'cancelled'].includes(worker.status))
+        if (!worker.session_id || worker.generation_at_spawn !== m.continuation.generation || ['completed', 'failed', 'cancelled'].includes(worker.status))
+            return false;
+        if (worker.pending_host_assistant_result) {
+            const pending = await this.settlePendingHostAssistantResult(m, worker);
+            if (pending.applied) {
+                appendLedger(m, 'worker.await-idle-result-reconciled', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, result: pending.wakeResult ?? pending.result?.status ?? 'UNKNOWN', attempt: worker.attempt, generation: worker.generation_at_spawn, source: 'message.updated-cache' } });
+                return true;
+            }
+        }
+        if (!this.readAssistantResult)
             return false;
         let assistant;
         try {

@@ -95,7 +95,13 @@ export async function listMessages(client, sessionID, limit = 20) {
     const edge = client;
     if (typeof edge?.session?.messages !== 'function')
         return [];
-    const payload = dataOf(await edge.session.messages({ path: { id: sessionID }, query: { limit } }));
+    const response = await edge.session.messages({ path: { id: sessionID }, query: { limit } });
+    const error = response?.error;
+    if (error) {
+        const name = typeof error?.name === 'string' ? error.name : 'OpenCodeMessageReadError', data = error?.data && typeof error.data === 'object' ? error.data : error, detail = String(data?.message ?? error?.message ?? name).slice(0, 1200);
+        throw new Error(`${name}: ${detail}`);
+    }
+    const payload = dataOf(response);
     if (Array.isArray(payload))
         return payload;
     return Array.isArray(payload?.data) ? payload.data : [];

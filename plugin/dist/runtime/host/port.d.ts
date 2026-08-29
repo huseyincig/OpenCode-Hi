@@ -2,7 +2,7 @@ import type { HostUsageObservation } from '../../contracts/execution-usage.js';
 import type { AvailableModel } from '../routing/model-resolver.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 export type HostLogLevel = 'debug' | 'info' | 'warn' | 'error';
-export type HostEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
+export type HostEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'assistant-message-updated' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
 export interface HostEvent {
     kind: HostEventKind;
     rawType: string;
@@ -17,6 +17,7 @@ export interface HostEvent {
         patterns: string[];
     };
     error?: HostAssistantError;
+    assistant?: HostAssistantResult;
 }
 export interface HostAssistantError {
     name?: string;

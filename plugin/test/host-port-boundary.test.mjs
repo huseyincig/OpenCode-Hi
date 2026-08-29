@@ -8,6 +8,7 @@ import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurr
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import { dispatchContinuation } from '../dist/runtime/continuation/dispatcher.js'
+import { normalizeOpenCodeEvent } from '../dist/opencode/event-adapter.js'
 
 const source=rel=>readFileSync(new URL(`../src/${rel}`,import.meta.url),'utf8')
 
@@ -73,4 +74,13 @@ test('alternate host child-session port can execute a Hi task without OpenCode c
   const started=await runtime.start(m,{objective:'Implement x',role:'coder',scope:['x.ts']})
   assert.equal(started.session_id,'alt-child-1');assert.equal(creates,1);assert.equal(prompts,1)
   assert.equal(m.execution.workers.find(w=>w.id===started.worker_id)?.session_id,'alt-child-1')
+})
+
+
+test('message.updated crosses the OpenCode boundary as a structured assistant host event',()=>{
+  const structured={status:'DONE',summary:'event result',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  const ev=normalizeOpenCodeEvent({type:'message.updated',properties:{sessionID:'child-event',info:{id:'msg-event',role:'assistant',parentID:'msg-parent',providerID:'p',modelID:'code',time:{created:123,completed:124},tokens:{input:1,output:2,reasoning:0,cache:{read:0,write:0}},cost:0,structured}}})
+  assert.equal(ev.kind,'assistant-message-updated');assert.equal(ev.sessionID,'child-event');assert.deepEqual(ev.assistant?.structured,structured)
+  assert.deepEqual(ev.assistant?.model,{model:'p/code',variant:undefined,message_id:'msg-event',parent_id:'msg-parent',created_at:123})
+  assert.equal(ev.assistant?.usage?.token_source,'opencode-assistant-message')
 })

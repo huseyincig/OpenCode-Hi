@@ -183,6 +183,12 @@ export class RuntimeEventController {
                 persistence.save(store.all());
                 return;
             }
+            if (ev.kind === 'assistant-message-updated') {
+                if (ev.assistant?.structured !== undefined && typeof tasks.recordHostAssistantResultEvent === 'function')
+                    tasks.recordHostAssistantResultEvent(m, child, ev.assistant);
+                persistence.save(store.all());
+                return;
+            }
             if (ev.kind === 'session-status') {
                 const nativeStatus = ev.status;
                 tasks.noteNativeStatus(m, child.id, nativeStatus);
@@ -257,7 +263,26 @@ export class RuntimeEventController {
                         return;
                     }
                 }
-                const assistant = await host.readAssistantResult(sid), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
+                if (child.pending_host_assistant_result && typeof tasks.settlePendingHostAssistantResult === 'function') {
+                    const pending = await tasks.settlePendingHostAssistantResult(m, child);
+                    if (pending.applied) {
+                        store.updateProgress(m);
+                        const wakeResult = pending.wakeResult ?? pending.result?.status ?? 'UNKNOWN';
+                        await afterChildWake(wakeResult, 'child-result-event-cache', undefined, pending.failureKind);
+                        persistence.save(store.all());
+                        return;
+                    }
+                }
+                let assistant;
+                try {
+                    assistant = await host.readAssistantResult(sid);
+                }
+                catch (readError) {
+                    appendLedger(m, 'worker.idle.assistant-read-deferred', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, error: String(readError).slice(0, 500), policy: 'await-message-updated-or-later-readback' } });
+                    persistence.save(store.all());
+                    return;
+                }
+                const settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
                 if (!settled.applied) {
                     appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });
                     persistence.save(store.all());

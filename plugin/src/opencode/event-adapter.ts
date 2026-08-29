@@ -1,14 +1,14 @@
-import { assistantErrorEvidence,eventSessionID } from './client-adapter.js'
+import { assistantErrorEvidence,eventSessionID,lastAssistantError,lastAssistantModel,lastAssistantStructured,lastAssistantUsage } from './client-adapter.js'
 import type { HostEvent } from '../runtime/host/port.js'
 
 export type HiNativeEventKind =
-  | 'session-idle'|'session-error'|'session-deleted'|'session-status'|'session-diff'|'session-compacted'
+  | 'session-idle'|'session-error'|'session-deleted'|'session-status'|'session-diff'|'session-compacted'|'assistant-message-updated'
   | 'todo-updated'|'permission-asked'|'permission-replied'|'file-edited'|'file-watcher-updated'
   | 'lsp-diagnostics'|'installation-updated'|'unknown'
 
 export type NormalizedOpenCodeEvent=HostEvent
 const MAP:Record<string,HiNativeEventKind>={
-  'session.idle':'session-idle','session.error':'session-error','session.deleted':'session-deleted','session.status':'session-status','session.diff':'session-diff','session.compacted':'session-compacted',
+  'session.idle':'session-idle','session.error':'session-error','session.deleted':'session-deleted','session.status':'session-status','session.diff':'session-diff','session.compacted':'session-compacted','message.updated':'assistant-message-updated',
   'todo.updated':'todo-updated','permission.asked':'permission-asked','permission.replied':'permission-replied','file.edited':'file-edited','file.watcher.updated':'file-watcher-updated',
   'lsp.client.diagnostics':'lsp-diagnostics','installation.updated':'installation-updated',
 }
@@ -31,4 +31,4 @@ export function permissionPatterns(event:NormalizedOpenCodeEvent):string[]{const
 
 export function permissionEventID(event:NormalizedOpenCodeEvent):string|undefined{const p=event.properties??{};const raw=p.id??p.permissionID??p.permissionId??p.requestID??p.requestId??p.permission?.id??p.request?.id;return typeof raw==='string'&&raw.trim()?raw.trim():undefined}
 
-export function normalizeOpenCodeEvent(event:any):NormalizedOpenCodeEvent{const rawType=String(event?.type??''),base:any={kind:MAP[rawType]??'unknown',rawType,sessionID:eventSessionID(event),properties:event?.properties??{},filePaths:[],status:'unknown'};base.filePaths=eventFilePaths(base);base.status=eventStatus(base);if(base.kind==='session-error')base.error=assistantErrorEvidence(base.properties?.error);const id=permissionEventID(base),reply=permissionReply(base),decision=permissionDecision(base),patterns=permissionPatterns(base);if(id||patterns.length||base.kind==='permission-asked'||base.kind==='permission-replied')base.permission={id,reply,decision,patterns};return base}
+export function normalizeOpenCodeEvent(event:any):NormalizedOpenCodeEvent{const rawType=String(event?.type??''),base:any={kind:MAP[rawType]??'unknown',rawType,sessionID:eventSessionID(event),properties:event?.properties??{},filePaths:[],status:'unknown'};base.filePaths=eventFilePaths(base);base.status=eventStatus(base);if(base.kind==='session-error')base.error=assistantErrorEvidence(base.properties?.error);if(base.kind==='assistant-message-updated'){const info=base.properties?.info,one=info?[{info,parts:[]}]:[];if(info?.role==='assistant')base.assistant={text:'',structured:lastAssistantStructured(one),model:lastAssistantModel(one),usage:lastAssistantUsage(one),error:lastAssistantError(one)}}const id=permissionEventID(base),reply=permissionReply(base),decision=permissionDecision(base),patterns=permissionPatterns(base);if(id||patterns.length||base.kind==='permission-asked'||base.kind==='permission-replied')base.permission={id,reply,decision,patterns};return base}

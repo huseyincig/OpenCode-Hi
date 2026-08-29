@@ -1,5 +1,5 @@
 import type { HostEvent } from '../runtime/host/port.js';
-export type HiNativeEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
+export type HiNativeEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'assistant-message-updated' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
 export type NormalizedOpenCodeEvent = HostEvent;
 export declare function eventStatus(event: NormalizedOpenCodeEvent): string;
 export declare function eventFilePaths(event: NormalizedOpenCodeEvent): string[];

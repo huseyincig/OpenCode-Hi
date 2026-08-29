@@ -101,6 +101,14 @@ export declare class TaskRuntime {
         reason: string;
         result?: WorkerResult;
     }>;
+    recordHostAssistantResultEvent(m: MissionState, worker: WorkerState, assistant: HostAssistantResult): boolean;
+    settlePendingHostAssistantResult(m: MissionState, worker: WorkerState): Promise<{
+        applied: boolean;
+        reason: string;
+        result?: WorkerResult;
+        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED' | 'FIX_REQUIRED';
+        failureKind?: WorkerState['last_runtime_failure_kind'];
+    }>;
     settleHostIdleAssistantResult(m: MissionState, worker: WorkerState, assistant: HostAssistantResult): Promise<{
         applied: boolean;
         reason: string;

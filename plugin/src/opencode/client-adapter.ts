@@ -48,7 +48,10 @@ export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,tex
 export async function listMessages(client:OpenCodeClient,sessionID:string,limit=20):Promise<any[]>{
   const edge=client as any
   if(typeof edge?.session?.messages!=='function')return[]
-  const payload=dataOf<any>(await edge.session.messages({path:{id:sessionID},query:{limit}}))
+  const response=await edge.session.messages({path:{id:sessionID},query:{limit}})
+  const error=response?.error
+  if(error){const name=typeof error?.name==='string'?error.name:'OpenCodeMessageReadError',data=error?.data&&typeof error.data==='object'?error.data:error,detail=String(data?.message??error?.message??name).slice(0,1200);throw new Error(`${name}: ${detail}`)}
+  const payload=dataOf<any>(response)
   if(Array.isArray(payload))return payload
   return Array.isArray(payload?.data)?payload.data:[]
 }

@@ -188,3 +188,21 @@ test('canonical internal stop cancellation still aborts a live busy worker',asyn
   assert.equal(aborts(),1)
   assert.equal(m.execution.workers.find(w=>w.id===started.worker_id).status,'cancelled')
 })
+
+
+test('await settles durable structured message.updated cache before broken session message readback',async()=>{
+  const {runtime,m,setStatus,activityReads}=setup()
+  const started=await runtime.start(m,{objective:'finish bounded cached-result work',role:'coder',scope:['app.py']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(worker?.session_id&&worker.attempt_prompt_message_id)
+  const cached={status:'DONE',summary:'event-owned result complete',changed_files:[],evidence:[],open_issues:[],needs_context:[],context_gap:'none',failure_finding:'none'}
+  assert.equal(runtime.recordHostAssistantResultEvent(m,worker,{text:'',structured:cached,model:{model:'p/code',message_id:'msg-event-final',parent_id:worker.attempt_prompt_message_id,created_at:Date.now()}}),true)
+  assert.ok(worker.pending_host_assistant_result)
+  setStatus('idle')
+  const out=await runtime.awaitTask(m,started.task_id,1)
+  assert.equal(out.status,'completed');assert.equal(out.task?.result?.status,'DONE');assert.equal(out.changed,true);assert.equal(out.timed_out,false)
+  assert.equal(worker.pending_host_assistant_result,undefined,'event receipt is consumed exactly once')
+  assert.equal(activityReads(),0,'idle cache settlement must not fall through to host message readback')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-cached'&&e.worker_id===worker.id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-cache.consumed'&&e.worker_id===worker.id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.await-idle-result-reconciled'&&e.payload?.source==='message.updated-cache'))
+})

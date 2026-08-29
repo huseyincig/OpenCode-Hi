@@ -49,12 +49,15 @@ test('WorkerContract starts at attempt zero and beginWorkerAttempt preserves ide
   assert.equal(worker.updated_at,before+10)
   worker.last_result_digest='attempt-1-result';worker.last_result_at=before+15
   worker.pending_native_permission_denial={permission_id:'perm-1',session_id:'child-1',patterns:['pip install -r requirements.txt'],attempt:worker.attempt,generation:worker.generation_at_spawn,observed_at:before+16}
+  worker.pending_host_assistant_result={session_id:'child-1',attempt:worker.attempt,generation:worker.generation_at_spawn,observed_at:before+17,structured_json:JSON.stringify({status:'DONE'})}
+  assert.equal(isWorkerContract(worker),true,'schema-bound pending assistant receipt is durable worker state')
   beginWorkerAttempt(task,worker,before+20)
   assert.equal(worker.attempt,2)
   assert.equal(worker.id,id)
   assert.equal(worker.last_result_digest,undefined,'a new attempt must not inherit prior-attempt content idempotency')
   assert.equal(worker.last_result_at,undefined)
   assert.equal(worker.pending_native_permission_denial,undefined,'new attempt must never inherit a prior native permission denial')
+  assert.equal(worker.pending_host_assistant_result,undefined,'new attempt must never inherit a prior structured assistant receipt')
 })
 
 test('WorkerContract rejects malformed recovery/effective-model state instead of persistence ignoring it',()=>{

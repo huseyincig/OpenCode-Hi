@@ -1,4 +1,4 @@
-import type { ExecutionUsageObservation } from './execution-usage.js';
+import type { ExecutionUsageObservation, HostUsageObservation } from './execution-usage.js';
 export declare const WORKER_STATUSES: readonly ["created", "queued", "starting", "ready", "busy", "completed", "failed", "cancelled"];
 export type WorkerContractStatus = typeof WORKER_STATUSES[number];
 export interface NativePermissionDenialReceipt {
@@ -8,6 +8,19 @@ export interface NativePermissionDenialReceipt {
     attempt: number;
     generation: number;
     observed_at: number;
+}
+export interface PendingHostAssistantResultReceipt {
+    session_id: string;
+    attempt: number;
+    generation: number;
+    observed_at: number;
+    structured_json: string;
+    message_id?: string;
+    parent_id?: string;
+    created_at?: number;
+    model?: string;
+    variant?: string;
+    usage?: HostUsageObservation;
 }
 export interface WorkerContract {
     id: string;
@@ -66,5 +79,6 @@ export interface WorkerContract {
     semantic_pause_revision?: number;
     usage_observations?: ExecutionUsageObservation[];
     pending_native_permission_denial?: NativePermissionDenialReceipt;
+    pending_host_assistant_result?: PendingHostAssistantResultReceipt;
 }
 export declare function isWorkerContract(v: unknown): v is WorkerContract;

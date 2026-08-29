@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {lastAssistantError,lastAssistantModel,lastIncompleteAssistantTurn,lastMeaningfulAssistantActivity} from '../dist/opencode/client-adapter.js'
+import {lastAssistantError,lastAssistantModel,lastIncompleteAssistantTurn,lastMeaningfulAssistantActivity,listMessages} from '../dist/opencode/client-adapter.js'
 import {createHostPort} from '../dist/opencode/host-port.js'
 
 test('OpenCode assistant error projection preserves exact V1 named-error identity and message',()=>{
@@ -84,4 +84,10 @@ test('OpenCode assistant-result readback normalizes a nested SDK message envelop
 test('incomplete assistant turn projection rejects a completed newest message and marks an empty open successor',()=>{
   assert.equal(lastIncompleteAssistantTurn([{info:{id:'done',role:'assistant',time:{created:1,completed:2}},parts:[]}]),undefined)
   assert.deepEqual(lastIncompleteAssistantTurn([{info:{id:'open',role:'assistant',parentID:'user-1',time:{created:3},tokens:{output:0,reasoning:0}},parts:[]}]),{message_id:'open',parent_id:'user-1',created_at:3,empty:true})
+})
+
+
+test('listMessages surfaces SDK message-read errors instead of converting them to empty history',async()=>{
+  const client={session:{messages:async()=>({error:{name:'BadRequest',data:{message:'Expected OutputFormatJsonSchema'}}})}}
+  await assert.rejects(()=>listMessages(client,'child-broken-format',20),/BadRequest: Expected OutputFormatJsonSchema/)
 })
