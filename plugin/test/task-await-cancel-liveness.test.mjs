@@ -9,7 +9,7 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {makeChildSessionPort} from './helpers/host-port.mjs'
 
 function setup(){
-  let liveStatus='busy',aborts=0,activityRead=0
+  let liveStatus='busy',aborts=0,activityRead=0,assistantResult
   const child=makeChildSessionPort({
     status:async()=>liveStatus,
     abort:async()=>{aborts++;return liveStatus==='idle'?false:'client'},
@@ -17,12 +17,13 @@ function setup(){
   const registry=new BackgroundRegistry()
   const scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
   const readAssistantResult=async()=>{
+    if(assistantResult)return assistantResult
     activityRead++
     return {text:'',activity:{message_id:`msg_activity_${activityRead}`,observed_at:10_000+activityRead,output_tokens:activityRead*10,reasoning_tokens:0,tool_calls:activityRead,text_chars:activityRead*20}}
   }
   const runtime=new TaskRuntime(child,registry,scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,readAssistantResult)
   const m=startAssessedMission(new MissionStore(),'await-cancel-live','run owned server and verify',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_verification:[]})
-  return{runtime,m,setStatus:value=>{liveStatus=value},aborts:()=>aborts,activityReads:()=>activityRead}
+  return{runtime,m,setStatus:value=>{liveStatus=value},setAssistantResult:value=>{assistantResult=value},aborts:()=>aborts,activityReads:()=>activityRead}
 }
 
 
@@ -86,6 +87,27 @@ test('await timeout reconciles exact busy child activity without redefining regi
   assert.equal(out.progress_observed,true,'new child activity across the wait must be surfaced')
   assert.equal(m.execution.ledger.filter(e=>e.type==='assistant.progress-observed').length,2,'pre/post activity observations establish a real delta')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.await-progress-observed'&&e.worker_id===started.worker_id))
+})
+
+test('await reconciles a valid result that becomes visible after the one-shot child idle event',async()=>{
+  const {runtime,m,setStatus,setAssistantResult}=setup()
+  const started=await runtime.start(m,{objective:'finish bounded implementation work',role:'coder',scope:['app.py']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(worker?.session_id)
+  setStatus('idle')
+  setAssistantResult({
+    text:'',
+    model:{model:'p/code',message_id:'msg-final',created_at:Date.now()},
+    structured:{status:'DONE',summary:'bounded work complete',changed_files:[],evidence:[],open_issues:[],needs_context:[],context_gap:'none',failure_finding:'none'},
+  })
+  const out=await runtime.awaitTask(m,started.task_id,1)
+  assert.equal(out.status,'completed')
+  assert.equal(out.terminal,true)
+  assert.equal(out.changed,true)
+  assert.equal(out.timed_out,false)
+  assert.equal(out.live_status,'idle')
+  assert.equal(out.task?.result?.status,'DONE')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.structured-result-admitted'&&e.worker_id===started.worker_id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.await-idle-result-reconciled'&&e.worker_id===started.worker_id))
 })
 
 test('model-facing cancellation refuses healthy, unreconciled, or unverified active child execution',async()=>{

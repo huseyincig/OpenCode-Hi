@@ -493,7 +493,28 @@ export class TaskRuntime{
     if((live_status==='busy'||live_status==='retry')&&this.readAssistantResult)try{const activity=(await this.readAssistantResult(worker.session_id)).activity;if(activity)progress_observed=recordAssistantProgress(m,{worker_id:worker.id,task_id:worker.task_id,session_id:worker.session_id,generation:worker.generation_at_spawn??m.continuation.generation,message_id:activity.message_id,observed_at:activity.observed_at,output_tokens:activity.output_tokens,reasoning_tokens:activity.reasoning_tokens,tool_calls:activity.tool_calls,text_chars:activity.text_chars})}catch{}
     return{live_status,progress_observed}
   }
-  async awaitTask(m:MissionState,id:string,timeoutMs=30_000):Promise<any>{let current=this.peek(m,id),status=current?.task?.status??current?.worker?.status??'unknown';if(['completed','failed','cancelled','blocked'].includes(status))return{...current,status,terminal:true,changed:false,timed_out:false,live_status:'idle',progress_observed:false};const worker=current?.worker;if(!worker)return{...current,status,terminal:false,changed:false,timed_out:false,live_status:'unknown',progress_observed:false};await this.observeWorkerLiveness(m,worker);const changed=await this.registry.waitForChange(worker.id,timeoutMs);current=this.peek(m,id);status=current?.task?.status??current?.worker?.status??'unknown';const terminal=['completed','failed','cancelled','blocked'].includes(status),observed=terminal?{live_status:'idle' as const,progress_observed:false}:await this.observeWorkerLiveness(m,current?.worker??worker);if(!changed&&!terminal&&observed.progress_observed)appendLedger(m,'worker.await-progress-observed',{task_id:current?.task?.id,worker_id:(current?.worker??worker).id,payload:{session_id:(current?.worker??worker).session_id,attempt:(current?.worker??worker).attempt,live_status:observed.live_status}});return{...current,status,terminal,changed,timed_out:!changed&&!terminal,...observed}}
+  private async reconcileIdleAwaitResult(m:MissionState,worker:WorkerState):Promise<boolean>{
+    if(!this.readAssistantResult||!worker.session_id||worker.generation_at_spawn!==m.continuation.generation||['completed','failed','cancelled'].includes(worker.status))return false
+    let assistant:HostAssistantResult
+    try{assistant=await this.readAssistantResult(worker.session_id)}catch(error){appendLedger(m,'worker.await-idle-result-deferred',{task_id:worker.task_id,worker_id:worker.id,payload:{session_id:worker.session_id,reason:'assistant-result-read-failed',error:String(error).slice(0,500)}});return false}
+    const settled=await this.settleHostIdleAssistantResult(m,worker,assistant)
+    if(!settled.applied){appendLedger(m,'worker.await-idle-result-deferred',{task_id:worker.task_id,worker_id:worker.id,payload:{session_id:worker.session_id,reason:settled.reason}});return false}
+    appendLedger(m,'worker.await-idle-result-reconciled',{task_id:worker.task_id,worker_id:worker.id,payload:{session_id:worker.session_id,result:settled.wakeResult??settled.result?.status??'UNKNOWN',attempt:worker.attempt,generation:worker.generation_at_spawn}})
+    return true
+  }
+  async awaitTask(m:MissionState,id:string,timeoutMs=30_000):Promise<any>{
+    let current=this.peek(m,id),status=current?.task?.status??current?.worker?.status??'unknown'
+    if(['completed','failed','cancelled','blocked'].includes(status))return{...current,status,terminal:true,changed:false,timed_out:false,live_status:'idle',progress_observed:false}
+    const worker=current?.worker;if(!worker)return{...current,status,terminal:false,changed:false,timed_out:false,live_status:'unknown',progress_observed:false}
+    const before=await this.observeWorkerLiveness(m,worker)
+    if(before.live_status==='idle'&&await this.reconcileIdleAwaitResult(m,worker)){current=this.peek(m,id);status=current?.task?.status??current?.worker?.status??'unknown';return{...current,status,terminal:['completed','failed','cancelled','blocked'].includes(status),changed:true,timed_out:false,live_status:'idle',progress_observed:false}}
+    const changed=await this.registry.waitForChange(worker.id,timeoutMs)
+    current=this.peek(m,id);status=current?.task?.status??current?.worker?.status??'unknown'
+    let terminal=['completed','failed','cancelled','blocked'].includes(status),observed=terminal?{live_status:'idle' as const,progress_observed:false}:await this.observeWorkerLiveness(m,current?.worker??worker)
+    if(!terminal&&observed.live_status==='idle'&&await this.reconcileIdleAwaitResult(m,current?.worker??worker)){current=this.peek(m,id);status=current?.task?.status??current?.worker?.status??'unknown';terminal=['completed','failed','cancelled','blocked'].includes(status);observed={live_status:'idle',progress_observed:false};return{...current,status,terminal,changed:true,timed_out:false,...observed}}
+    if(!changed&&!terminal&&observed.progress_observed)appendLedger(m,'worker.await-progress-observed',{task_id:current?.task?.id,worker_id:(current?.worker??worker).id,payload:{session_id:(current?.worker??worker).session_id,attempt:(current?.worker??worker).attempt,live_status:observed.live_status}})
+    return{...current,status,terminal,changed,timed_out:!changed&&!terminal,...observed}
+  }
   private busyNoProgressCancellationEvidence(m:MissionState,worker:WorkerState):{admitted:boolean;timeouts:number;window_ms:number;first_timeout_at?:number;last_timeout_at?:number;last_progress_at:number}{
     const sessionID=worker.session_id??'',attempt=worker.attempt,lastProgress=Math.max(worker.started_at??0,...m.execution.ledger.filter(event=>
       event.worker_id===worker.id&&event.type==='assistant.progress-observed'||
