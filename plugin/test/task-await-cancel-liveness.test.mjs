@@ -12,7 +12,7 @@ function setup(){
   let liveStatus='busy',aborts=0,activityRead=0
   const child=makeChildSessionPort({
     status:async()=>liveStatus,
-    abort:async()=>{aborts++;return'client'},
+    abort:async()=>{aborts++;return liveStatus==='idle'?false:'client'},
   })
   const registry=new BackgroundRegistry()
   const scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
@@ -107,7 +107,7 @@ test('model-facing cancellation refuses healthy, unreconciled, or unverified act
 })
 
 test('model-facing cancellation cannot retire an unresolved result owner to create an equivalent replacement task',async()=>{
-  const {runtime,m,aborts}=setup()
+  const {runtime,m,setStatus,aborts}=setup()
   const started=await runtime.start(m,{objective:'fix owned file',role:'coder',scope:['app.py']})
   runtime.applyResult(m,started.worker_id,{status:'FIX_REQUIRED',summary:'one correction remains',changed_files:[],scope_expansions:[],evidence:[],open_issues:['fix-one'],needs_context:[]})
   const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
@@ -117,9 +117,12 @@ test('model-facing cancellation cannot retire an unresolved result owner to crea
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.admission-blocked'&&e.task_id===started.task_id&&e.payload?.reason==='child-result-reconcile-required'))
   await assert.rejects(()=>runtime.start(m,{objective:'replacement for same obligation',role:'coder',scope:['app.py'],obligationIds:task.obligation_ids}),/Canonical task .* unresolved FIX_REQUIRED/)
   for(const id of task.obligation_ids){const obligation=m.execution.obligations.find(o=>o.id===id);if(obligation)obligation.status='closed'}
+  const retainedBusy=await runtime.modelCancelAdmission(m,started.task_id)
+  assert.equal(retainedBusy.allowed,false);assert.equal(retainedBusy.reason,'healthy-worker-active');assert.equal(retainedBusy.live_status,'busy')
+  setStatus('idle')
   const reconciled=await runtime.modelCancelAdmission(m,started.task_id)
-  assert.equal(reconciled.allowed,true);assert.equal(reconciled.reason,'non-running-task')
-  assert.equal(await runtime.cancel(m,started.task_id),true);assert.equal(aborts(),1)
+  assert.equal(reconciled.allowed,true);assert.equal(reconciled.reason,'non-running-task');assert.equal(reconciled.live_status,'idle')
+  assert.equal(await runtime.cancel(m,started.task_id),true);assert.equal(aborts(),0,'quiescent retained session must not require host abort to retire canonical task state')
 })
 
 

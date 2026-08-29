@@ -1253,8 +1253,16 @@ export class TaskRuntime {
             appendLedger(m, 'worker.cancel.admission-blocked', { task_id: resolvedTask.id, worker_id: worker.id, payload: { reason: 'child-result-reconcile-required', result_status: resolvedTask.result.status, open_obligations: resolvedTask.obligation_ids.filter(id => m.execution.obligations.some(o => o.id === id && o.status === 'open')) } });
             return { allowed: false, reason: 'child-result-reconcile-required', live_status: 'idle', task_id: resolvedTask.id, worker_id: worker.id };
         }
-        if (worker.status === 'ready' || worker.status === 'created' || worker.status === 'queued')
-            return { allowed: true, reason: 'non-running-task', task_id: resolvedTask?.id, worker_id: worker.id };
+        if (worker.status === 'ready' || worker.status === 'created' || worker.status === 'queued') {
+            if (!worker.session_id)
+                return { allowed: true, reason: 'non-running-task', task_id: resolvedTask?.id, worker_id: worker.id };
+            const observed = await this.observeWorkerLiveness(m, worker);
+            if (observed.live_status === 'idle')
+                return { allowed: true, reason: 'non-running-task', live_status: 'idle', task_id: resolvedTask?.id, worker_id: worker.id };
+            const reason = observed.live_status === 'busy' || observed.live_status === 'retry' ? 'healthy-worker-active' : 'active-worker-liveness-unverified';
+            appendLedger(m, 'worker.cancel.admission-blocked', { task_id: resolvedTask?.id, worker_id: worker.id, payload: { reason, live_status: observed.live_status, progress_observed: observed.progress_observed, session_id: worker.session_id, attempt: worker.attempt, stored_status: worker.status } });
+            return { allowed: false, reason, live_status: observed.live_status, task_id: resolvedTask?.id, worker_id: worker.id };
+        }
         if (!worker.session_id)
             return { allowed: false, reason: 'active-worker-session-unverified', live_status: 'unknown', task_id: resolvedTask?.id, worker_id: worker.id };
         const observed = await this.observeWorkerLiveness(m, worker);
@@ -1274,11 +1282,21 @@ export class TaskRuntime {
                 n++; return n; }
     async cancel(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); if (!worker)
         return false; if (worker.session_id) {
-        const stopped = await this.abortNativeSession(m, worker.session_id, 'worker-cancel', worker.id, worker.task_id);
-        if (!stopped) {
-            appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable' } });
-            return false;
+        let hostStatus = 'unknown';
+        try {
+            hostStatus = await this.#child.status(worker.session_id);
         }
+        catch { }
+        const quiescentRetained = ['ready', 'created', 'queued'].includes(worker.status) && hostStatus === 'idle';
+        if (!quiescentRetained) {
+            const stopped = await this.abortNativeSession(m, worker.session_id, 'worker-cancel', worker.id, worker.task_id);
+            if (!stopped) {
+                appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable', host_status: hostStatus, stored_status: worker.status } });
+                return false;
+            }
+        }
+        else
+            appendLedger(m, 'worker.cancel.quiescent-session-retired', { task_id: worker.task_id, worker_id: worker.id, payload: { session_id: worker.session_id, host_status: hostStatus, stored_status: worker.status, policy: 'idle-session-needs-no-abort' } });
         const browserClean = await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
         if (!browserClean) {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'browser-cleanup-failed' } });
