@@ -203,24 +203,20 @@ test('failed child defers parent continuation while a sibling worker is still pe
   await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
 })
 
-test('resource-only process capability failure stays task-local and never opens a user decision',async()=>{
+test('resource-only process capability failure is preflighted task-locally and never opens a user decision',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'hi-child-wake-capability-'));mkdirSync(join(dir,'src'));writeFileSync(join(dir,'src','a.ts'),'export const a=1\n')
   const {client,promptCalls}=baseClient(['child-capability'])
-  client.session.messages=async()=>({data:[{info:{role:'assistant'},parts:[{type:'text',text:JSON.stringify({status:'BLOCKED',summary:'auxiliary process resource unavailable',changed_files:[],evidence:[],open_issues:['process-support-capability-unavailable'],needs_context:[]})}]}]})
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   try{
     await hooks['chat.message']({sessionID:'parent-capability'},{message:{role:'user'},parts:[{type:'text',text:'inspect the repository and keep a process available if needed'}]})
     await assessPluginMission(hooks,'parent-capability',{task_kind:'review',required_capabilities:['repository-analysis','interactive-process'],likely_targets:['src/a.ts']})
     const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'keep an auxiliary process available if possible',process_lifecycle:true},{sessionID:'parent-capability'}))
-    assert.ok(started.worker_id)
-    const processBlocked=JSON.parse(await hooks.tool.hi_process_spawn.execute({worker_id:started.worker_id,command:'node',args_json:'[\"server.js\"]'},{sessionID:'child-capability',directory:dir}))
-    assert.equal(processBlocked.status,'BLOCKED');assert.equal(processBlocked.scope,'task-local-resource');assert.equal(processBlocked.mission_blocking,false)
-    await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-capability'}}})
+    assert.equal(started.status,'BLOCKED');assert.equal(started.reason,'process-support-capability-unavailable');assert.equal(started.scope,'task-preflight-resource');assert.equal(started.mission_blocking,false);assert.equal(started.task_created,false);assert.equal(started.retry_same_start,false)
+    assert.equal(promptCalls.some(x=>x.path?.id==='child-capability'),false,'known-unavailable auxiliary process capability must not create a child merely to rediscover the same failure')
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:180},{sessionID:'parent-capability'}))
-    assert.ok(ledger.events.some(e=>e.type==='capability.optional-unavailable'&&e.task_id===started.task_id&&e.payload?.mission_blocking===false))
+    assert.ok(ledger.events.some(e=>e.type==='capability.optional-unavailable'&&e.payload?.scope==='task-preflight-resource'&&e.payload?.mission_blocking===false&&e.payload?.task_created===false))
     assert.equal(ledger.events.some(e=>e.type==='user.action.required'&&e.payload?.reason_code==='capability-unavailable'),false)
     const status=await hooks.tool.hi_status.execute({},{sessionID:'parent-capability'});assert.doesNotMatch(String(status),/waiting.user|user action required/i)
-    assert.ok(promptCalls.filter(x=>x.path?.id==='parent-capability').length>=1,'parent should be allowed to continue after auxiliary process failure')
   }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
 })
 

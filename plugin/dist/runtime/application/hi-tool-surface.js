@@ -475,6 +475,29 @@ export function createHiToolSurface(input) {
                 return JSON.stringify({ status: 'BLOCKED', reason: 'canonical-predecessor-obligation-open', predecessor_obligations: predecessors.map(o => ({ id: o.id, kind: o.kind })), control });
             }
             const input = { ...rawArgs, forkFromSession: rawArgs.fork_from_session ? String(rawArgs.fork_from_session) : undefined, modelVariant: rawArgs.model_variant ? String(rawArgs.model_variant) : undefined, isolationRequired: rawArgs.isolation_required === true, isolationReason: rawArgs.isolation_reason ? String(rawArgs.isolation_reason) : undefined, mcpServers: rawArgs.mcp_servers ? String(rawArgs.mcp_servers).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, browserBackend: rawArgs.browser_backend ? (String(rawArgs.browser_backend) === 'playwright' || String(rawArgs.browser_backend) === 'hi' ? 'bounded-playwright' : String(rawArgs.browser_backend)) : undefined, browserAllowedOrigins: rawArgs.browser_allowed_origins ? String(rawArgs.browser_allowed_origins).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, browserRequiredOrigins: rawArgs.browser_required_origins ? String(rawArgs.browser_required_origins).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, processLifecycle: rawArgs.process_lifecycle === true, scope: optionalScopeList(rawArgs.scope), constraints: rawArgs.constraints ? [String(rawArgs.constraints)] : undefined, dependencies: optionalIdList(rawArgs.dependencies), requiredEvidence: rawArgs.required_evidence ? String(rawArgs.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: rawArgs.obligation_ids ? String(rawArgs.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: rawArgs.context_artifact_ids ? String(rawArgs.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            if (input.processLifecycle && refreshOwnedHostCapability) {
+                let health;
+                try {
+                    health = await refreshOwnedHostCapability('process-lifecycle');
+                }
+                catch (error) {
+                    health = { available: false, detail: String(error) };
+                }
+                if (!health.available) {
+                    const detail = health.detail ?? 'native process lifecycle is unavailable on the active OpenCode host', staticScope = requestedRole === 'visual-qa' && (input.scope ?? []).some((path) => /\.html?$/i.test(path)), retainedLive = m.execution.processes.some(process => process.status === 'RUNNING'), resourceOnly = !(input.requiredEvidence ?? []).length && !(input.obligationIds ?? []).length;
+                    if (staticScope && !retainedLive) {
+                        appendLedger(m, 'capability.preflight-fallback', { payload: { capability: 'process-lifecycle', requested_role: requestedRole, detail, fallback: 'hi-owned-static-preview', task_created: false } });
+                        return JSON.stringify({ status: 'BLOCKED', reason: 'process-lifecycle-unavailable-static-preview-available', capability: 'process-lifecycle', retry_same_start: false, task_created: false, detail, static_preview_available: true, instruction: 'Process lifecycle is unavailable and there is no retained live service owner. This visual scope contains a local static HTML target. If the live origin is a user/canonical requirement, preserve it and report the capability blocker; otherwise replan the same visual verification without process_lifecycle and without browser_allowed_origins/browser_required_origins so the visual-qa worker uses hi_browser_preview_open. Do not retry the same process-backed task.' });
+                    }
+                    if (resourceOnly) {
+                        appendLedger(m, 'capability.optional-unavailable', { payload: { capability: 'process-lifecycle', detail, scope: 'task-preflight-resource', mission_blocking: false, task_created: false } });
+                        return JSON.stringify({ status: 'BLOCKED', reason: 'process-support-capability-unavailable', capability: 'process-lifecycle', scope: 'task-preflight-resource', mission_blocking: false, retry_same_start: false, task_created: false, detail, instruction: 'This auxiliary process resource is unavailable on the active host. Do not create a child merely to rediscover the same capability failure; continue through any available internal verification/execution path.' });
+                    }
+                    const marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail });
+                    return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, retry_same_start: false, task_created: false, detail });
+                }
+                clearCapabilityUnavailable(m, 'process-lifecycle');
+            }
             const control = projectControlDecision(m, missionRoot), technicalVerificationKinds = new Set(['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity']), requestedTechnical = (input.requiredEvidence ?? []).filter((kind) => technicalVerificationKinds.has(kind)), testAuthoring = m.identity.intent.requiredCapabilities.includes('test-authoring');
             if (!input.processLifecycle && control.action === 'VERIFY' && control.verification_route_status === 'none' && requestedTechnical.length && !testAuthoring) {
                 appendLedger(m, 'verification.worker-admission-blocked', { payload: { reason: 'no-admissible-repo-native-verifier', requested_evidence: requestedTechnical, requested_role: String(input.role ?? ''), routes: control.verification_routes } });

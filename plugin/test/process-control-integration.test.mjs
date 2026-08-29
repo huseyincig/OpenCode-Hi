@@ -145,6 +145,28 @@ test('parent process execution is blocked even when it names an existing worker'
   assert.deepEqual({tasks:m.execution.tasks.length,workers:m.execution.workers.length,processes:m.execution.processes.length},before,'blocked spawn must not fabricate ownership or process state')
 })
 
+test('task start preflights unavailable process lifecycle before creating a resource-only child',async()=>{
+  const store=new MissionStore(),m=assessed(store,'m12-process-preflight-resource'),calls=[]
+  const tasks={start:async()=>{calls.push('start');return{}}}
+  const processRuntime={list:()=>[],stopMission:async()=>0}
+  const capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true})
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');return{available:false,detail:'OpenCode PTY list rejected: Unable to connect'}}})
+  const out=JSON.parse(await toolSurface.hi_task_start.execute({input:{objective:'start local static server only',role:'coder',scope:'web',process_lifecycle:true}},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-support-capability-unavailable');assert.equal(out.scope,'task-preflight-resource');assert.equal(out.mission_blocking,false);assert.equal(out.retry_same_start,false);assert.equal(out.task_created,false);assert.deepEqual(calls,[])
+})
+
+test('static visual task preflight exposes Hi-owned preview recovery when process lifecycle is unavailable',async()=>{
+  const store=new MissionStore(),m=assessed(store,'m12-process-preflight-preview'),calls=[]
+  m.execution.obligations=m.execution.obligations.filter(o=>o.kind==='verification');if(!m.execution.obligations.length)m.execution.obligations.push({id:'o-verification',kind:'verification',summary:'visual-check',status:'open',requiredEvidence:['visual-check']})
+  const verification=m.execution.obligations[0];verification.status='open';verification.kind='verification';verification.requiredEvidence=['visual-check']
+  const tasks={start:async()=>{calls.push('start');return{}}}
+  const processRuntime={list:()=>[],stopMission:async()=>0}
+  const capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true})
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async()=>({available:false,detail:'OpenCode PTY list rejected: Unable to connect'})})
+  const out=JSON.parse(await toolSurface.hi_task_start.execute({input:{objective:'verify local static HTML at http://localhost:8000',role:'visual-qa',scope:'web/index.html',required_evidence:'visual-check',obligation_ids:verification.id,browser_allowed_origins:'http://localhost:8000',browser_required_origins:'http://localhost:8000',process_lifecycle:true}},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-lifecycle-unavailable-static-preview-available');assert.equal(out.static_preview_available,true);assert.equal(out.retry_same_start,false);assert.equal(out.task_created,false);assert.match(out.instruction,/without process_lifecycle.*without browser_allowed_origins\/browser_required_origins.*hi_browser_preview_open/i);assert.deepEqual(calls,[]);assert.ok(m.execution.ledger.some(e=>e.type==='capability.preflight-fallback'))
+})
+
 test('admitted child still fails closed when live native PTY capability is unavailable',async()=>{
   const {store,worker}=processOwnedChildFixture(),calls=[]
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
