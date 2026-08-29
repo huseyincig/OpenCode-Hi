@@ -751,8 +751,13 @@ export class TaskRuntime {
         }
         else if (browserDecision.backend)
             clearCapabilityUnavailable(m, 'browser-execution');
-        const explicitBrowserRequiredOrigins = normalizeBrowserAllowedOrigins([...(input.browserRequiredOrigins ?? []), ...browserOriginsFromText(requestedObjective), ...browserOriginsFromTargets(taskIntent.likelyTargets ?? [])]), persistentProcesses = m.execution.processes.filter(isPersistentRunningProcess), liveServiceOrigins = normalizeBrowserAllowedOrigins(persistentProcesses.flatMap(process => process.service_origins ?? []));
+        const suppliedBrowserRequiredOrigins = normalizeBrowserAllowedOrigins(input.browserRequiredOrigins ?? []), objectiveBrowserOrigins = normalizeBrowserAllowedOrigins(browserOriginsFromText(requestedObjective)), targetBrowserOrigins = normalizeBrowserAllowedOrigins(browserOriginsFromTargets(taskIntent.likelyTargets ?? [])), groundedTextOrigins = normalizeBrowserAllowedOrigins([...objectiveBrowserOrigins, ...targetBrowserOrigins]), explicitBrowserRequiredOrigins = normalizeBrowserAllowedOrigins([...suppliedBrowserRequiredOrigins, ...groundedTextOrigins]), persistentProcesses = m.execution.processes.filter(isPersistentRunningProcess), liveServiceOrigins = normalizeBrowserAllowedOrigins(persistentProcesses.flatMap(process => process.service_origins ?? []));
         let browserRequiredOrigins = [...explicitBrowserRequiredOrigins];
+        if (browserDecision.backend === 'bounded-playwright' && browserRequested && suppliedBrowserRequiredOrigins.length && !persistentProcesses.length) {
+            const ungrounded = suppliedBrowserRequiredOrigins.filter(origin => !groundedTextOrigins.includes(origin));
+            if (ungrounded.length)
+                throw new Error(`Visual task required live origin has no retained service owner or objective/target URL: ${ungrounded.join(', ')}. For a local static file omit browser_required_origins and use Hi-owned preview; for a real live service first establish/retain its process origin or name the exact live URL in the task objective.`);
+        }
         if (browserDecision.backend === 'bounded-playwright' && browserRequested && persistentProcesses.length) {
             if (!browserRequiredOrigins.length && liveServiceOrigins.length === 1)
                 browserRequiredOrigins = [...liveServiceOrigins];

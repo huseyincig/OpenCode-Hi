@@ -81,6 +81,15 @@ test('local visual task can defer origin creation to Hi-owned preview and receiv
 
 
 
+test('ungrounded caller-supplied live origin is rejected before a static visual task can lose preview fallback',async()=>{
+  const prompts=[],m=mission('m13-ungrounded-live-origin',['visual-qa']),preview=new LocalPreviewManager(repoRoot)
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
+  await assert.rejects(()=>rt.start(m,{objective:'Visual verification of the empty-state fix in web/index.html.',role:'visual-qa',category:'visual',scope:['web/index.html'],requiredEvidence:['visual-check'],browserAllowedOrigins:['http://127.0.0.1'],browserRequiredOrigins:['http://127.0.0.1']}),/required live origin has no retained service owner or objective\/target URL.*omit browser_required_origins.*Hi-owned preview/i)
+  assert.equal(prompts.length,0);assert.equal(m.execution.tasks.length,0);assert.equal(preview.active('anything'),false)
+  await preview.dispose()
+})
+
+
 test('visual task binds explicit live objective URL as immutable browser target and does not offer static preview substitution',async()=>{
   const prompts=[],m=mission('m13-live-objective',['visual-qa']),preview=new LocalPreviewManager(repoRoot)
   const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
