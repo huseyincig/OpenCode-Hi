@@ -1,5 +1,6 @@
 import type { VerificationCase } from '../../contracts/verification-case.js'
-import type { SemanticCapability,SemanticIntentAssessment } from './semantic-assessment.js'
+import { technicalTargets,type SemanticCapability,type SemanticIntentAssessment } from './semantic-assessment.js'
+import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
 export interface SemanticRequestUnit { id:string; text:string }
 const LIST_ITEM=/^(?:[-*+]\s+|\d+[.)]\s+)/
@@ -45,6 +46,13 @@ export function assertCapabilityRequestTrace(text:string,assessment:SemanticInte
   const mapping=assessment.capability_request_units??{},entries=Object.entries(mapping) as [SemanticCapability,string[]][]
   const units=semanticRequestUnits(text),unitMap=new Map(units.map(unit=>[unit.id,unit])),challenge=()=>renderRequestUnitChallenge(text)
   for(const [cap,ids] of entries){for(const id of ids){if(!unitMap.has(id))throw new Error(`capability_request_units.${cap} contains unknown id ${id}; ${challenge()}`)}}
+  const writeCapabilities=new Set<SemanticCapability>(['implementation','documentation','test-authoring','dependency-change'])
+  for(const target of assessment.mutation_targets??[]){
+    const mentioningUnitIDs=units.filter(unit=>technicalTargets(unit.text).map(path=>normalizeBoundedProjectPath(path)).includes(target)).map(unit=>unit.id)
+    if(!mentioningUnitIDs.length)continue
+    const mentioningCaps=entries.filter(([,ids])=>ids.some(id=>mentioningUnitIDs.includes(id))).map(([cap])=>cap)
+    if(mentioningCaps.length&&!mentioningCaps.some(cap=>writeCapabilities.has(cap)))throw new Error(`mutation_targets contains ${target}, but every capability-mapped request unit that explicitly names this path is owned only by read/context capability(s): ${[...new Set(mentioningCaps)].join(', ')}; keep it in likely_targets unless a write-capability request unit owns the mutation; ${challenge()}`)
+  }
   const exhaustive=assessment.material&&assessment.message_kind==='mission'&&assessment.scope==='multi-stream'&&units.length>1
   if(!exhaustive)return
   if(!entries.length)throw new Error(`multi-stream semantic contract requires capability_request_units; ${challenge()}`)

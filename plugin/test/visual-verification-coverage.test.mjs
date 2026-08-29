@@ -134,3 +134,11 @@ test('hi_intent_assess keeps incomplete visual request trace pending until corre
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+test('mutation target cannot contradict explicit request-unit capability ownership',()=>{
+  const text='Use test-lab/config/model-pool.json as the model allowlist source. Create a small project.'
+  const candidate={...base,scope:'multi-file',likely_targets:['test-lab/config/model-pool.json'],mutation_targets:['test-lab/config/model-pool.json'],capability_request_units:{'source-verification':['ru1']}}
+  assert.throws(()=>assertCapabilityRequestTrace(text,candidate),/owned only by read\/context capability\(s\): source-verification/)
+  const writeOwned={...candidate,capability_request_units:{'source-verification':['ru1'],implementation:['ru1']}}
+  assert.doesNotThrow(()=>assertCapabilityRequestTrace(text,writeOwned))
+})

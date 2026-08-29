@@ -1,3 +1,5 @@
+import { technicalTargets } from './semantic-assessment.js';
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 const LIST_ITEM = /^(?:[-*+]\s+|\d+[.)]\s+)/;
 const HEADING = /^#{1,6}\s+/;
 const CLAUSE_SPLIT = /(?:[.!?;]+(?:\s+|$)|:\s+|,\s+|\s+\+\s+)/u;
@@ -94,6 +96,15 @@ export function assertCapabilityRequestTrace(text, assessment) {
             if (!unitMap.has(id))
                 throw new Error(`capability_request_units.${cap} contains unknown id ${id}; ${challenge()}`);
         }
+    }
+    const writeCapabilities = new Set(['implementation', 'documentation', 'test-authoring', 'dependency-change']);
+    for (const target of assessment.mutation_targets ?? []) {
+        const mentioningUnitIDs = units.filter(unit => technicalTargets(unit.text).map(path => normalizeBoundedProjectPath(path)).includes(target)).map(unit => unit.id);
+        if (!mentioningUnitIDs.length)
+            continue;
+        const mentioningCaps = entries.filter(([, ids]) => ids.some(id => mentioningUnitIDs.includes(id))).map(([cap]) => cap);
+        if (mentioningCaps.length && !mentioningCaps.some(cap => writeCapabilities.has(cap)))
+            throw new Error(`mutation_targets contains ${target}, but every capability-mapped request unit that explicitly names this path is owned only by read/context capability(s): ${[...new Set(mentioningCaps)].join(', ')}; keep it in likely_targets unless a write-capability request unit owns the mutation; ${challenge()}`);
     }
     const exhaustive = assessment.material && assessment.message_kind === 'mission' && assessment.scope === 'multi-stream' && units.length > 1;
     if (!exhaustive)

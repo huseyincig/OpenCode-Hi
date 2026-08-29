@@ -1,5 +1,5 @@
 import type { VerificationCase } from '../../contracts/verification-case.js';
-import type { SemanticIntentAssessment } from './semantic-assessment.js';
+import { type SemanticIntentAssessment } from './semantic-assessment.js';
 export interface SemanticRequestUnit {
     id: string;
     text: string;
