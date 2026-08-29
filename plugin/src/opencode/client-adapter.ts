@@ -121,20 +121,24 @@ async function reconcileClientAbort(edge:any,sessionID:string):Promise<boolean>{
 }
 export async function abortSession(client:OpenCodeClient,sessionID:string,endpoint:OpenCodeLifecycleEndpoint={}):Promise<AbortSessionResult>{
   const edge=client as any
-  if(endpoint.serverUrl){
-    const base=endpoint.serverUrl.replace(/\/$/,'')
+  // The plugin-injected SDK is the canonical in-process host boundary. Prefer its
+  // single abort mutation whenever present; a handcrafted HTTP call back into the
+  // same OpenCode server can self-deadlock while the current plugin request owns
+  // instance/session execution. Never replay an ambiguous SDK abort through HTTP.
+  if(typeof edge?.session?.abort==='function'){
     try{
-      const response=await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`,{method:'POST',headers:lifecycleHeaders(endpoint.directory),signal:AbortSignal.timeout(5000)})
-      if(response.ok){try{if(await response.json()===true)return await serverAbortSettled(base,sessionID,endpoint.directory)?'server':'unavailable'}catch{}}
+      const result=await edge.session.abort({path:{id:sessionID}})
+      if((result===true||dataOf(result)===true)&&!(result&&typeof result==='object'&&result.error))return'client'
     }catch{}
-    return await reconcileServerAbort(base,sessionID,endpoint.directory)?'server-reconciled':'unavailable'
+    return await reconcileClientAbort(edge,sessionID)?'client-reconciled':'unavailable'
   }
-  if(typeof edge?.session?.abort!=='function')return'unavailable'
+  if(!endpoint.serverUrl)return'unavailable'
+  const base=endpoint.serverUrl.replace(/\/$/,'')
   try{
-    const result=await edge.session.abort({path:{id:sessionID}})
-    if((result===true||dataOf(result)===true)&&!(result&&typeof result==='object'&&result.error))return'client'
+    const response=await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`,{method:'POST',headers:lifecycleHeaders(endpoint.directory),signal:AbortSignal.timeout(5000)})
+    if(response.ok){try{if(await response.json()===true)return await serverAbortSettled(base,sessionID,endpoint.directory)?'server':'unavailable'}catch{}}
   }catch{}
-  return await reconcileClientAbort(edge,sessionID)?'client-reconciled':'unavailable'
+  return await reconcileServerAbort(base,sessionID,endpoint.directory)?'server-reconciled':'unavailable'
 }
 export async function listProviders(client:OpenCodeClient):Promise<unknown>{const edge=client as any;if(typeof edge?.provider?.list==='function')return dataOf(await edge.provider.list());return undefined}
 export async function listAvailableModels(endpoint:OpenCodeLifecycleEndpoint={}):Promise<unknown[]|undefined>{

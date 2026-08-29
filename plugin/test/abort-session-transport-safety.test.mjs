@@ -3,10 +3,9 @@ import assert from 'node:assert/strict'
 import {abortSession} from '../dist/opencode/client-adapter.js'
 import {createOpenCodeChildSessionPort} from '../dist/opencode/child-session-port.js'
 
-test('server abort ambiguity reconciles through status without replaying SDK abort',async()=>{
+test('server-only abort ambiguity reconciles through status',async()=>{
   const originalFetch=globalThis.fetch
   const calls=[]
-  let sdkAbort=0
   globalThis.fetch=async(input,init={})=>{
     const url=String(input),method=String(init.method??'GET').toUpperCase();calls.push({method,url})
     if(method==='POST'&&url==='http://127.0.0.1:9/session/child-1/abort')return new Response(JSON.stringify({error:'ambiguous'}),{status:503,headers:{'content-type':'application/json'}})
@@ -14,9 +13,8 @@ test('server abort ambiguity reconciles through status without replaying SDK abo
     throw new Error(`unexpected request: ${method} ${url}`)
   }
   try{
-    const client={session:{abort:async()=>{sdkAbort++;return{data:true}}}}
+    const client={session:{}}
     assert.equal(await abortSession(client,'child-1',{serverUrl:'http://127.0.0.1:9'}),'server-reconciled')
-    assert.equal(sdkAbort,0,'an ambiguous server mutation must never trigger SDK abort replay')
     assert.deepEqual(calls,[
       {method:'POST',url:'http://127.0.0.1:9/session/child-1/abort'},
       {method:'GET',url:'http://127.0.0.1:9/session/status'},
@@ -35,9 +33,8 @@ test('server abort ambiguity fails closed while host still reports busy',async()
     throw new Error(`unexpected request: ${method} ${url}`)
   }
   try{
-    const client={session:{abort:async()=>{sdkAbort++;return{data:true}}}}
+    const client={session:{}}
     assert.equal(await abortSession(client,'child-2',{serverUrl:'http://127.0.0.1:9'}),'unavailable')
-    assert.equal(sdkAbort,0,'busy reconciliation must fail closed instead of replaying the mutation')
   }finally{globalThis.fetch=originalFetch}
 })
 
@@ -70,6 +67,17 @@ test('acknowledged server abort ignores pending native permissions owned by othe
   }
   try{assert.equal(await abortSession({session:{}},'child-clean',{serverUrl:'http://127.0.0.1:9'}),'server')}
   finally{globalThis.fetch=originalFetch}
+})
+
+test('plugin-injected SDK abort is preferred over lifecycle server HTTP',async()=>{
+  const originalFetch=globalThis.fetch
+  let fetches=0,aborts=0
+  globalThis.fetch=async()=>{fetches++;throw new Error('server HTTP path must not run when native SDK abort exists')}
+  try{
+    const client={session:{abort:async input=>{aborts++;assert.deepEqual(input,{path:{id:'child-native'}});return{data:true}},status:async()=>({data:{}})}}
+    assert.equal(await abortSession(client,'child-native',{serverUrl:'http://127.0.0.1:9',directory:'/repo'}),'client')
+    assert.equal(aborts,1);assert.equal(fetches,0)
+  }finally{globalThis.fetch=originalFetch}
 })
 
 test('SDK abort chooses one mutation and uses SDK status only for ambiguous acknowledgement',async()=>{
