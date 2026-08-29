@@ -51,7 +51,7 @@ import { explorationClearanceFreshness } from '../execution/exploration-clearanc
 import { QueuedWorkerDispatcher } from './queued-worker-dispatcher.js'
 import {projectSchedulingPeerView,type ProjectSchedulingPeerView} from '../scheduler/project-peer-view.js'
 import { isPersistentRunningProcess } from '../../contracts/process.js'
-import {assessMissionLiveness,recordAssistantProgress,type MissionLivenessAssessment,type ProcessLivenessObservation} from '../liveness/assessment.js'
+import {DEFAULT_NO_PROGRESS_WINDOW_MS,assessMissionLiveness,recordAssistantProgress,type MissionLivenessAssessment,type ProcessLivenessObservation} from '../liveness/assessment.js'
 import { verificationKindAdmittedForMission } from '../verification/policy.js'
 import { admitNewTaskScope } from './scope-admission.js'
 
@@ -471,6 +471,13 @@ export class TaskRuntime{
     return{live_status,progress_observed}
   }
   async awaitTask(m:MissionState,id:string,timeoutMs=30_000):Promise<any>{let current=this.peek(m,id),status=current?.task?.status??current?.worker?.status??'unknown';if(['completed','failed','cancelled','blocked'].includes(status))return{...current,status,terminal:true,changed:false,timed_out:false,live_status:'idle',progress_observed:false};const worker=current?.worker;if(!worker)return{...current,status,terminal:false,changed:false,timed_out:false,live_status:'unknown',progress_observed:false};await this.observeWorkerLiveness(m,worker);const changed=await this.registry.waitForChange(worker.id,timeoutMs);current=this.peek(m,id);status=current?.task?.status??current?.worker?.status??'unknown';const terminal=['completed','failed','cancelled','blocked'].includes(status),observed=terminal?{live_status:'idle' as const,progress_observed:false}:await this.observeWorkerLiveness(m,current?.worker??worker);if(!changed&&!terminal&&observed.progress_observed)appendLedger(m,'worker.await-progress-observed',{task_id:current?.task?.id,worker_id:(current?.worker??worker).id,payload:{session_id:(current?.worker??worker).session_id,attempt:(current?.worker??worker).attempt,live_status:observed.live_status}});return{...current,status,terminal,changed,timed_out:!changed&&!terminal,...observed}}
+  private busyNoProgressCancellationEvidence(m:MissionState,worker:WorkerState):{admitted:boolean;timeouts:number;window_ms:number;first_timeout_at?:number;last_timeout_at?:number;last_progress_at:number}{
+    const sessionID=worker.session_id??'',attempt=worker.attempt,lastProgress=Math.max(worker.started_at??0,...m.execution.ledger.filter(event=>
+      event.worker_id===worker.id&&event.type==='assistant.progress-observed'||
+      event.type==='tool.operation-result'&&String(event.payload?.session_id??'')===sessionID
+    ).map(event=>event.at),0),timeouts=m.execution.ledger.filter(event=>event.type==='worker.await-timeout'&&event.worker_id===worker.id&&Number(event.payload?.attempt)===attempt&&['busy','retry'].includes(String(event.payload?.live_status??''))&&event.payload?.progress_observed!==true&&event.at>lastProgress).sort((a,b)=>a.at-b.at),first=timeouts[0]?.at,last=timeouts.at(-1)?.at,span=first!==undefined&&last!==undefined?last-first:0
+    return{admitted:timeouts.length>=3&&span>=DEFAULT_NO_PROGRESS_WINDOW_MS,timeouts:timeouts.length,window_ms:span,first_timeout_at:first,last_timeout_at:last,last_progress_at:lastProgress}
+  }
   async modelCancelAdmission(m:MissionState,id:string):Promise<{allowed:boolean;reason:string;live_status?:'idle'|'busy'|'retry'|'unknown';task_id?:string;worker_id?:string}>{
     const task=m.execution.tasks.find(t=>t.id===id),worker=m.execution.workers.find(w=>w.id===id||w.id===task?.worker_id),resolvedTask=worker?m.execution.tasks.find(t=>t.id===worker.task_id):task
     if(!worker)return{allowed:false,reason:'worker-not-found'}
@@ -479,8 +486,10 @@ export class TaskRuntime{
     if(worker.status==='ready'||worker.status==='created'||worker.status==='queued')return{allowed:true,reason:'non-running-task',task_id:resolvedTask?.id,worker_id:worker.id}
     if(!worker.session_id)return{allowed:false,reason:'active-worker-session-unverified',live_status:'unknown',task_id:resolvedTask?.id,worker_id:worker.id}
     const observed=await this.observeWorkerLiveness(m,worker)
+    const stall=this.busyNoProgressCancellationEvidence(m,worker)
+    if((observed.live_status==='busy'||observed.live_status==='retry')&&stall.admitted){appendLedger(m,'worker.cancel.stall-admitted',{task_id:resolvedTask?.id,worker_id:worker.id,payload:{reason:'bounded-busy-no-progress-stall',live_status:observed.live_status,session_id:worker.session_id,attempt:worker.attempt,timeouts:stall.timeouts,window_ms:stall.window_ms,last_progress_at:stall.last_progress_at}});return{allowed:true,reason:'bounded-busy-no-progress-stall',live_status:observed.live_status,task_id:resolvedTask?.id,worker_id:worker.id}}
     const reason=observed.live_status==='busy'||observed.live_status==='retry'?'healthy-worker-active':observed.live_status==='idle'?'child-result-reconcile-required':'active-worker-liveness-unverified'
-    appendLedger(m,'worker.cancel.admission-blocked',{task_id:resolvedTask?.id,worker_id:worker.id,payload:{reason,live_status:observed.live_status,progress_observed:observed.progress_observed,session_id:worker.session_id,attempt:worker.attempt}})
+    appendLedger(m,'worker.cancel.admission-blocked',{task_id:resolvedTask?.id,worker_id:worker.id,payload:{reason,live_status:observed.live_status,progress_observed:observed.progress_observed,session_id:worker.session_id,attempt:worker.attempt,stall_timeouts:stall.timeouts,stall_window_ms:stall.window_ms}})
     return{allowed:false,reason,live_status:observed.live_status,task_id:resolvedTask?.id,worker_id:worker.id}
   }
   list(m:MissionState):any[]{return m.execution.tasks.map(t=>({task:t,worker:m.execution.workers.find(w=>w.id===t.worker_id)}))}

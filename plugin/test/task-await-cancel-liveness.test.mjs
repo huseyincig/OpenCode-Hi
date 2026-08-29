@@ -122,6 +122,39 @@ test('model-facing cancellation cannot retire an unresolved result owner to crea
   assert.equal(await runtime.cancel(m,started.task_id),true);assert.equal(aborts(),1)
 })
 
+
+test('repeated bounded busy/no-progress awaits admit explicit stalled-worker cancellation without weakening healthy busy protection',async()=>{
+  let liveStatus='busy',aborts=0
+  const child=makeChildSessionPort({status:async()=>liveStatus,abort:async()=>{aborts++;return'client'}})
+  const registry=new BackgroundRegistry()
+  const scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
+  const readAssistantResult=async()=>({text:'',activity:undefined})
+  const runtime=new TaskRuntime(child,registry,scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,readAssistantResult)
+  const m=startAssessedMission(new MissionStore(),'await-cancel-stalled','review security boundary',{task_kind:'review',scope:'local',required_capabilities:['security-review'],likely_verification:['review-evidence']})
+  const started=await runtime.start(m,{objective:'review auth surface',role:'security-reviewer',scope:['app.py'],requiredEvidence:['review-evidence']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(worker)
+  const base=Date.now()-130_000;worker.started_at=base-5_000
+  for(const [i,at] of [base,base+65_000,base+125_000].entries())m.execution.ledger.push({id:`stall-${i}`,at,type:'worker.await-timeout',task_id:started.task_id,worker_id:started.worker_id,payload:{session_id:worker.session_id,attempt:worker.attempt,timeout_ms:60_000,live_status:'busy',progress_observed:false}})
+  const stalled=await runtime.modelCancelAdmission(m,started.task_id)
+  assert.deepEqual({allowed:stalled.allowed,reason:stalled.reason,live_status:stalled.live_status},{allowed:true,reason:'bounded-busy-no-progress-stall',live_status:'busy'})
+  assert.equal(await runtime.cancel(m,started.task_id),true);assert.equal(aborts,1)
+})
+
+test('fresh child activity invalidates prior busy/no-progress await stall evidence',async()=>{
+  let activity
+  const child=makeChildSessionPort({status:async()=>'busy',abort:async()=> 'client'})
+  const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
+  const runtime=new TaskRuntime(child,registry,scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,async()=>({text:'',activity}))
+  const m=startAssessedMission(new MissionStore(),'await-cancel-progress-reset','review security boundary',{task_kind:'review',scope:'local',required_capabilities:['security-review'],likely_verification:['review-evidence']})
+  const started=await runtime.start(m,{objective:'review auth surface',role:'security-reviewer',scope:['app.py'],requiredEvidence:['review-evidence']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(worker)
+  const base=Date.now()-130_000;worker.started_at=base-5_000
+  for(const [i,at] of [base,base+65_000,base+125_000].entries())m.execution.ledger.push({id:`stall-progress-${i}`,at,type:'worker.await-timeout',task_id:started.task_id,worker_id:started.worker_id,payload:{session_id:worker.session_id,attempt:worker.attempt,timeout_ms:60_000,live_status:'busy',progress_observed:false}})
+  activity={message_id:'msg-fresh',observed_at:Date.now()-1000,output_tokens:12,reasoning_tokens:4,tool_calls:0,text_chars:20}
+  const healthy=await runtime.modelCancelAdmission(m,started.task_id)
+  assert.deepEqual({allowed:healthy.allowed,reason:healthy.reason},{allowed:false,reason:'healthy-worker-active'})
+})
+
 test('canonical internal stop cancellation still aborts a live busy worker',async()=>{
   const {runtime,m,aborts}=setup()
   const started=await runtime.start(m,{objective:'run owned server',role:'coder',scope:['app.py'],processLifecycle:true})

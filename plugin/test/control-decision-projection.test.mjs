@@ -117,6 +117,25 @@ test('hi_task_await returns terminal WorkerResult and canonical mission control 
 })
 
 
+
+test('hi_task_await exposes cancellation only after bounded busy/no-progress stall admission',async()=>{
+  const {store,m}=localMission('phase6-await-stall')
+  const worker={id:'w-stalled',session_id:'s-stalled',attempt:1},task={id:'t-stalled',status:'running'}
+  const tasks={awaitTask:async()=>({status:'running',terminal:false,changed:false,timed_out:true,live_status:'busy',progress_observed:false,worker,task}),modelCancelAdmission:async()=>({allowed:true,reason:'bounded-busy-no-progress-stall',task_id:task.id,worker_id:worker.id,live_status:'busy'})}
+  const processRuntime={stopMission:async()=>0,list:()=>[]},state={config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.25'}
+  const {toolSurface}=createHiToolSurface({state,store,tasks,processRuntime,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}})
+  const out=JSON.parse(await toolSurface.hi_task_await.execute({id:task.id,timeout_ms:1},{sessionID:m.identity.session_id}))
+  assert.equal(out.retry_same_await,false);assert.deepEqual(out.recovery,{action:'hi_task_cancel',reason:'bounded-busy-no-progress-stall',task_id:task.id,worker_id:worker.id,retry_same_await:false})
+})
+
+test('context artifact tool refuses canonical evidence-shaped kinds',async()=>{
+  const {store,m}=localMission('phase6-artifact-evidence-boundary')
+  const tasks={awaitTask:async()=>({status:'waiting',terminal:false,changed:false,timed_out:true})},processRuntime={stopMission:async()=>0,list:()=>[]},state={config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.25'}
+  const {toolSurface}=createHiToolSurface({state,store,tasks,processRuntime,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}})
+  const out=JSON.parse(await toolSurface.hi_context_artifact_add.execute({kind:'review-evidence',summary:'prose copied from a still-running reviewer'},{sessionID:m.identity.session_id}))
+  assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'context-artifact-cannot-create-canonical-evidence');assert.equal(out.retry_same_call,false);assert.equal(m.context.context_artifacts.length,0)
+})
+
 test('route projection reports no admissible verifier instead of inviting arbitrary rechecks',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p6-no-route-'))
   try{

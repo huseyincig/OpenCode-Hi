@@ -174,6 +174,7 @@ export declare class TaskRuntime {
     peek(m: MissionState, id: string): any;
     private observeWorkerLiveness;
     awaitTask(m: MissionState, id: string, timeoutMs?: number): Promise<any>;
+    private busyNoProgressCancellationEvidence;
     modelCancelAdmission(m: MissionState, id: string): Promise<{
         allowed: boolean;
         reason: string;
