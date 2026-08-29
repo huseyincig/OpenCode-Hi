@@ -159,6 +159,21 @@ test('direct progress on o-verification returns EVIDENCE_REQUIRED and cannot clo
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+test('direct progress reports stale verification as fresh-evidence instead of an empty missing set',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-verification-stale-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    const sid='s-verification-stale'
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Fix src/a.ts and verify it with the focused test.'}]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts'],mutation_targets:['src/a.ts']})
+    await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test test/a.test.mjs'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
+    await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.ts'}})
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Verification is complete.',obligation_id:'o-verification'},{sessionID:sid}))
+    assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'verification-is-evidence-owned');assert.deepEqual(result.missing_kinds,['fresh-evidence']);assert.equal(result.checks[0].result,'passed')
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:sid}));assert.equal(ledger.obligations.find(o=>o.id==='o-verification').status,'open')
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('review-evidence-only verification handle collapses to direct review after fresh review input',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-review-alias-'))
   try{

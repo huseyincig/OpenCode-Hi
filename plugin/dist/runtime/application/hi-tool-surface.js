@@ -301,7 +301,7 @@ export function createHiToolSurface(input) {
             if (!summary)
                 return 'BLOCKED: direct progress requires a non-empty bounded summary';
             if (requestedOpen?.kind === 'verification' && !directReviewAlias) {
-                const envelope = verificationEnvelopeFor(m, requestedOpen.id, missionRoot), missing = envelope.checks.filter(check => check.result !== 'passed').map(check => check.kind), progressSignature = store.signature(m), priorSame = m.execution.ledger.filter(event => event.type === 'verification.direct-progress-rejected' && event.payload?.obligation === requestedOpen.id && event.payload?.progress_signature === progressSignature).length;
+                const envelope = verificationEnvelopeFor(m, requestedOpen.id, missionRoot), verification = verificationSatisfied(m, requestedOpen.id, missionRoot), missing = verification.missing, progressSignature = store.signature(m), priorSame = m.execution.ledger.filter(event => event.type === 'verification.direct-progress-rejected' && event.payload?.obligation === requestedOpen.id && event.payload?.progress_signature === progressSignature).length;
                 if (priorSame >= 2)
                     return JSON.stringify({ status: 'STAGNATION_FENCED', reason: 'repeated-verification-direct-progress-no-gain', obligation_id: requestedOpen.id, retry_same_call: false, progress_signature: progressSignature, control: projectControlDecision(m, missionRoot) });
                 appendLedger(m, 'verification.direct-progress-rejected', { payload: { obligation: requestedOpen.id, missing, reason: 'verification-is-evidence-owned', progress_signature: progressSignature, repeat_count: priorSame + 1 } });
