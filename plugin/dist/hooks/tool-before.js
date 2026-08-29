@@ -17,6 +17,7 @@ import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
 import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js';
 import { recordToolOperationProgress } from '../runtime/liveness/assessment.js';
+import { isResourceOnlyProcessSupportTask } from '../runtime/worker/worker-runtime.js';
 const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
 const SETTINGS_CONTROL_TARGETS = new Set(['hi_settings', 'hi_role_models']);
 const NON_ACTIVE_INSPECTION_TOOLS = new Set(['read', 'glob', 'grep', 'list', 'lsp', 'todoread', 'hi_status', 'hi_metrics', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models', 'hi_intent_assess', 'hi_context_artifacts', 'hi_task_await', 'hi_task_peek', 'hi_task_list', 'hi_process_read', 'hi_process_wait', 'hi_process_kill', 'hi_process_cleanup', 'hi_process_list']);
@@ -75,7 +76,7 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
                 throw new Error(`Hi lifecycle guard: mission is ${m.identity.status}; ordinary execution tool '${tool}' is blocked until canonical lifecycle resolution. Only bounded inspection/reconciliation and exact registered rollback/authority recovery are admitted.`);
             }
         }
-        const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, verificationOnlyChild = Boolean(childTask?.obligation_ids.length && childTask.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification'))), resourceOnlyProcessSupport = Boolean(childTask?.execution_profile?.process_lifecycle === true && !childTask.obligation_ids.length && !childTask.requiredEvidence.length);
+        const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, verificationOnlyChild = Boolean(childTask?.obligation_ids.length && childTask.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification'))), resourceOnlyProcessSupport = isResourceOnlyProcessSupportTask(childTask);
         if (child && resourceOnlyProcessSupport && toolMayMutate(tool, args)) {
             appendLedger(m, 'worker.process-support-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'process-resource-only-contract' } });
             throw new Error(`Hi process-support ownership guard: task ${child.task_id} owns only a runtime process resource and cannot mutate repository state through '${tool}'. Use read-only observations plus hi_process_* for the owned process; implementation mutation belongs to a separate obligation owner.`);

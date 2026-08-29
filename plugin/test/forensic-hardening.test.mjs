@@ -68,6 +68,16 @@ test('resolving one task issue does not clear the same blocker still owned by an
   assert.ok(m.execution.blockers.includes('shared:blocker'))
 })
 
+test('resource-only process-support BLOCKED result remains task-local and does not become a mission blocker',()=>{
+  const m=new MissionStore().start('s-process-local','use an auxiliary server if available')
+  const task={id:'t-process-local',objective:'keep auxiliary server ready',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{process_lifecycle:true},gate_ids:[],worker_id:'w-process-local',created_at:1,updated_at:1}
+  const worker={id:'w-process-local',task_id:task.id,role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'process-local',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.tasks.push(task);m.execution.workers.push(worker)
+  const rt=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  rt.applyResult(m,worker.id,{status:'BLOCKED',summary:'PTY unavailable for auxiliary resource',changed_files:[],evidence:[],open_issues:['process-support-capability-unavailable'],needs_context:[]})
+  assert.equal(task.result.status,'BLOCKED');assert.deepEqual(task.result.open_issues,['process-support-capability-unavailable']);assert.equal(m.execution.blockers.includes('process-support-capability-unavailable'),false)
+})
+
 test('DONE worker open issues remain provenance and do not become mission blockers',()=>{
   const m=new MissionStore().start('s-done-info','finish bounded work')
   const task={id:'t-done',objective:'done',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w-done',created_at:1,updated_at:1}

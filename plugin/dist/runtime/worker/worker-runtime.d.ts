@@ -21,6 +21,7 @@ export declare function createTask(m: MissionState, input: {
     executionProfile?: ExecutionProfile;
 }): MissionTask;
 export declare function createWorker(m: MissionState, task: MissionTask, model?: string, fallbacks?: string[], selectedMethodologies?: string[], methodologyProvenanceItems?: MethodologyProvenance[]): WorkerState;
+export declare function isResourceOnlyProcessSupportTask(task: MissionTask | undefined): boolean;
 export declare function workerAttemptPromptMessageID(worker: WorkerState, at: number): string;
 export declare function beginWorkerAttempt(task: MissionTask, worker: WorkerState, at?: number): void;
 export declare function retireTaskResultIssues(m: MissionState, taskID: string, issues: string[], replacementIssues?: string[]): string[];

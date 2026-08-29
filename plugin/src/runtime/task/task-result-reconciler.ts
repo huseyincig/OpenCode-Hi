@@ -30,6 +30,7 @@ import { deniedMutationAtoms } from '../constraint/constraint-atoms.js'
 import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
 import { assessExplorationClearance,explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js'
 import {materializeReviewFindingRework} from './review-finding-rework.js'
+import { isResourceOnlyProcessSupportTask } from '../worker/worker-runtime.js'
 
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
 
@@ -261,7 +262,7 @@ export class TaskResultReconciler{
     }
     if(explorationClearance.admitted&&explorationClearance.ambiguity!=='none'&&explorationClearance.source_state_hash){const clearanceEvidence=addEvidence(m,{kind:'source-provenance-evidence',summary:`Runtime-bound repository exploration clearance for ${explorationClearance.ambiguity} ambiguity.`,scope:explorationClearance.source_scope,source:explorationClearanceEvidenceSource(explorationClearance.ambiguity,task.id),trusted_source_class:'runtime-observation',source_session_id:worker.session_id,source_state_hash:explorationClearance.source_state_hash,scope_state_hash:explorationClearance.source_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,producer_attempt,outcome:'passed',pass:true,reason:'current bounded source bytes were captured by Hi at explorer settlement; this proves source provenance/freshness, not semantic correctness'});appendLedger(m,'exploration.clearance-admitted',{task_id:task.id,worker_id:worker.id,payload:{ambiguity:explorationClearance.ambiguity,source_scope:explorationClearance.source_scope.slice(0,40),source_state_hash:explorationClearance.source_state_hash,decision_scope:explorationClearance.decision_scope.slice(0,40),clearance_evidence_id:clearanceEvidence.id,decision_claim_authority:false}})}
 
-    const resourceOnlyProcessSupport=task.execution_profile?.process_lifecycle===true&&task.requiredEvidence.length===0&&task.obligation_ids.length===0,terminalProcessCapabilityBlocker=m.execution.blockers.includes('capability-unavailable:process-lifecycle')
+    const resourceOnlyProcessSupport=isResourceOnlyProcessSupportTask(task),terminalProcessCapabilityBlocker=m.execution.blockers.includes('capability-unavailable:process-lifecycle')
     if(effectiveResult.status==='DONE'&&resourceOnlyProcessSupport&&!terminalProcessCapabilityBlocker){
       const retained=m.execution.processes.filter(process=>process.task_id===task.id&&process.worker_id===worker.id&&process.status==='RUNNING'&&process.timeout_at===undefined&&process.cleanup_state==='ACTIVE')
       const requiredOrigins=task.execution_profile?.browser_required_origins??[],retainedOrigins=[...new Set(retained.flatMap(process=>process.service_origins??[]))],missingOrigins=requiredOrigins.filter(origin=>!retainedOrigins.includes(origin))

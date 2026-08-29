@@ -31,6 +31,7 @@ import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
 import { MODEL_ROUTED_CHILD_ROLES, isModelRoutedChildRole } from '../../config/schema.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+import { isResourceOnlyProcessSupportTask } from '../worker/worker-runtime.js';
 function optionalIdList(value) {
     if (value === undefined || value === null)
         return undefined;
@@ -713,7 +714,12 @@ export function createHiToolSurface(input) {
             catch (error) {
                 observed = { available: false, detail: String(error) };
             } const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (observed?.available === false || processCapability?.status !== 'SUPPORTED') {
-            const detail = observed?.detail ?? 'native process lifecycle is unavailable on the active OpenCode host', marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: workerID });
+            const detail = observed?.detail ?? 'native process lifecycle is unavailable on the active OpenCode host';
+            if (isResourceOnlyProcessSupportTask(cx.task)) {
+                appendLedger(m, 'capability.optional-unavailable', { task_id: cx.task.id, worker_id: workerID, payload: { capability: 'process-lifecycle', detail, scope: 'task-local-resource', mission_blocking: false } });
+                return JSON.stringify({ status: 'BLOCKED', reason: 'process-support-capability-unavailable', capability: 'process-lifecycle', scope: 'task-local-resource', mission_blocking: false, retry_same_spawn: false, detail, instruction: 'This auxiliary process resource is unavailable on the active host. Return BLOCKED for this resource-only task without requesting user action; the parent must continue through any available internal verification/execution path.' });
+            }
+            const marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, taskId: cx.task.id, workerId: workerID });
             return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
         } clearCapabilityUnavailable(m, 'process-lifecycle'); try {
             return JSON.stringify(await processRuntime.spawn(m, { worker_id: workerID, command: admitted.command, args, cwd: String(a.cwd ?? c?.directory ?? projectRoot), timeout_ms: a.timeout_ms === undefined ? undefined : Number(a.timeout_ms), title: a.title ? String(a.title) : undefined, service_origins: declaredServiceOrigins, ask: async (request) => c.ask({ permission: request.permission, patterns: request.patterns, always: request.always, metadata: request.metadata }) }));
@@ -728,7 +734,12 @@ export function createHiToolSurface(input) {
                     after = { available: false, detail: String(probeError) };
                 }
                 if (!after.available) {
-                    const detail = after.detail ?? String(error), marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: workerID });
+                    const detail = after.detail ?? String(error);
+                    if (isResourceOnlyProcessSupportTask(cx.task)) {
+                        appendLedger(m, 'capability.optional-unavailable', { task_id: cx.task.id, worker_id: workerID, payload: { capability: 'process-lifecycle', detail, scope: 'task-local-resource', mission_blocking: false, phase: 'post-spawn-reobserve' } });
+                        return JSON.stringify({ status: 'BLOCKED', reason: 'process-support-capability-unavailable', capability: 'process-lifecycle', scope: 'task-local-resource', mission_blocking: false, retry_same_spawn: false, detail, instruction: 'This auxiliary process resource is unavailable on the active host. Return BLOCKED for this resource-only task without requesting user action; the parent must continue through any available internal verification/execution path.' });
+                    }
+                    const marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, taskId: cx.task.id, workerId: workerID });
                     return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
                 }
             }

@@ -251,7 +251,17 @@ test('child process spawn reobserves a stale SUPPORTED PTY capability and fails 
   const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
   const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo'}))
-  assert.equal(probes,1);assert.deepEqual(calls,[]);assert.equal(out.status,'USER_ACTION_REQUIRED');assert.equal(out.blocker,'capability-unavailable:process-lifecycle');assert.match(out.detail,/PTY list unavailable|process lifecycle is unavailable/i)
+  assert.equal(probes,1);assert.deepEqual(calls,[]);assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'process-support-capability-unavailable');assert.equal(out.scope,'task-local-resource');assert.equal(out.mission_blocking,false);assert.equal(out.retry_same_spawn,false);assert.equal(m.execution.blockers.includes('capability-unavailable:process-lifecycle'),false);assert.ok(m.execution.ledger.some(e=>e.type==='capability.optional-unavailable'&&e.task_id==='t_process'&&e.payload?.mission_blocking===false));assert.match(out.detail,/PTY list unavailable|process lifecycle is unavailable/i)
+})
+
+test('obligation-owning process task still fails closed as a mission capability blocker when PTY is unavailable',async()=>{
+  const {store,m,task,worker}=processOwnedChildFixture(),calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0
+  task.requiredEvidence=['targeted-tests'];task.execution_profile.task.required_evidence=['targeted-tests']
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'should-not-spawn',status:'RUNNING'}}}
+  const tasks={resolveChildCallback:sid=>sid===worker.session_id?worker:undefined}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks,processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async()=>{probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:worker.id,command:'node',args_json:'[\"server.js\"]',cwd:'/repo'},{sessionID:worker.session_id,directory:'/repo'}))
+  assert.equal(probes,1);assert.deepEqual(calls,[]);assert.equal(out.status,'USER_ACTION_REQUIRED');assert.equal(out.blocker,'capability-unavailable:process-lifecycle');assert.ok(m.execution.blockers.includes(out.blocker));assert.ok(m.execution.ledger.some(e=>e.type==='capability.unavailable'&&e.task_id===task.id&&e.payload?.capability==='process-lifecycle'))
 })
 
 test('child process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{

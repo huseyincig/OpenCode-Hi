@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ### Fixed — Scenario 05 review authority settlement
+- Keep unavailable native process-lifecycle support task-local for obligation/evidence-free auxiliary process workers, so an optional PTY path cannot spuriously force the whole mission into user-action wait.
 - Ignore reviewer-shaped `findings[]` emitted by non-reviewer workers before canonical normalization so unauthorized metadata cannot poison task liveness or scheduler admission.
 - Compare canonical reviewer finding projection semantically rather than by JSON object key insertion order while preserving fail-closed loss/evidence-binding checks for real reviewer roles.
 
