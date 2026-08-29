@@ -1,5 +1,6 @@
 import test from 'node:test'
 import {readFileSync} from 'node:fs'
+import {fileURLToPath} from 'node:url'
 import assert from 'node:assert/strict'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
@@ -385,6 +386,24 @@ test('same-session corrective resume preserves the original execution tool surfa
   records=m.continuation.recovery_history?.filter(x=>x.action==='same-worker-resume'&&x.task_id===first.task_id&&x.worker_id===first.worker_id)??[]
   assert.equal(records.length,1);assert.equal(records[0].level,1)
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.same-model-correction-exhausted'&&e.task_id===first.task_id))
+})
+
+test('visual corrective resume does not project prior-attempt browser proof as fresh and requires re-observation',async()=>{
+  const created=[],prompts=[],c=client(created,prompts),models=[{id:'p/vision',provider:'p',writeCapable:true,visionCapable:true,tags:['coding','balanced','vision']}]
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),fileURLToPath(new URL('../../',import.meta.url)),()=>resolveHiConfig({}),()=>models,()=>host,undefined,[],undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,{})
+  const store=new MissionStore(process.cwd()),m=store.start('visual-resume-freshness','verify UI state')
+  assess(store,'visual-resume-freshness',{task_kind:'bug-fix',likely_targets:['src/runtime/task/task-runtime.ts'],likely_verification:['visual-check']})
+  const first=await runtime.start(m,{objective:'inspect UI state',role:'coder',category:'quick',scope:['src/runtime/task/task-runtime.ts'],requiredEvidence:['visual-check']})
+  const task=m.execution.tasks.find(t=>t.id===first.task_id),worker=m.execution.workers.find(w=>w.id===first.worker_id);assert.ok(task&&worker)
+  for(const obligation of m.execution.obligations)if(obligation.kind==='implementation')obligation.status='closed'
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);verification.requiredEvidence=[];m.execution.verification_policy.requiredKinds=[];task.obligation_ids=[verification.id];task.requiredEvidence=[];task.execution_profile.task.required_evidence=[]
+  task.role='visual-qa';worker.role='visual-qa';task.verification_cases=[{id:'vc_reload',subject:'state survives reload',required_browser_actions:['open','navigate','inspect']}]
+  task.execution_profile.task.verification_cases=structuredClone(task.verification_cases)
+  m.execution.evidence.items.push({id:'ev_prior_visual_ref',observed_at:Date.now(),kind:'visual-evidence',summary:'PRIOR ATTEMPT VISUAL PASS MUST NOT BE PROJECTED AS FRESH',scope:['src/runtime/task/task-runtime.ts'],source:'browser:prior',trusted_source_class:'browser-observation',task_id:task.id,producer_attempt:{worker_id:worker.id,execution_unit_id:`eu:${task.id}`,attempt_id:`eu:${task.id}:g1:a1`,run_id:`worker:${worker.id}:g1:a1`,ordinal:1,generation:1},pass:true,outcome:'passed'})
+  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'visual coverage must be re-observed',changed_files:[],evidence:[],verification_coverage:[{case_id:'vc_reload',outcome:'failed',evidence_refs:['ev_prior_visual_ref']}],open_issues:['visual-coverage-unsatisfied'],needs_context:['rerun browser actions in the next attempt']})
+  await runtime.resume(m,task.id)
+  const text=JSON.stringify(prompts[1]);assert.doesNotMatch(text,/PRIOR ATTEMPT VISUAL PASS MUST NOT BE PROJECTED AS FRESH/)
+  assert.match(text,/VISUAL CORRECTIVE ATTEMPT FRESHNESS/);assert.match(text,/Prior browser\/visual\/accessibility evidence is historical only/);assert.match(text,/Rerun every required browser action/)
 })
 
 test('exact task resume preserves stored role identity when later mission routing moves to visual-qa',async()=>{
