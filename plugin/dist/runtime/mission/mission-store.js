@@ -17,6 +17,23 @@ import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js';
 function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) } : {}) }; }
+function ensureRequiredReviewObligation(m) {
+    if (!m.execution.verification_policy.requireReview)
+        return;
+    const open = m.execution.obligations.find(o => o.kind === 'review' && o.status === 'open');
+    if (open) {
+        open.requiredEvidence = [...new Set([...(open.requiredEvidence ?? []), 'review-evidence'])];
+        return;
+    }
+    const reusable = m.execution.obligations.find(o => o.id === 'o-high-assurance' && o.kind === 'review');
+    if (reusable) {
+        reusable.status = 'open';
+        reusable.closedAt = undefined;
+        reusable.requiredEvidence = [...new Set([...(reusable.requiredEvidence ?? []), 'review-evidence'])];
+        return;
+    }
+    m.execution.obligations.push(obligation('o-high-assurance', 'review', 'Independent review required by the verification policy', ['review-evidence']));
+}
 function explicitTestFirstRequested(text) {
     const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
     if (!normalized)
@@ -181,6 +198,7 @@ export class MissionStore {
             obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
         m.execution.obligations = obligations;
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
+        ensureRequiredReviewObligation(m);
         const decision = decideSemanticExecution({ intent: m.identity.intent, verification: m.execution.verification_policy, primaryMode: m.execution.primary_mode, topology: this.#getTopology() });
         m.execution.execution_mode = decision.topology.executionMode;
         m.execution.primary_mode = decision.primary;
@@ -382,11 +400,10 @@ export class MissionStore {
             suppressIntentMethodologySignals(m, reconciledSignals.suppressed, `Host primary semantic follow-up superseded or runtime-reconciled intent methodology at revision ${m.identity.semantic_assessment.revision}.`);
         for (const signal of reconciledSignals.active)
             activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: `Host primary semantic follow-up assessment revision ${m.identity.semantic_assessment.revision}.` });
-        if (m.identity.intent.risk === 'high' && !m.execution.obligations.some(o => o.id === 'o-high-assurance' && o.status === 'open'))
-            m.execution.obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
         if (m.identity.intent.risk === 'authority-boundary' && m.identity.intent.requestedExternalActions.length > 0 && !m.execution.obligations.some(o => o.kind === 'authority' && o.status === 'open'))
             m.execution.obligations.push(obligation(`o-authority-${now.toString(36)}`, 'authority', 'External action explicitly authorized and completed'));
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
+        ensureRequiredReviewObligation(m);
         for (const signal of architectureMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
         for (const signal of requiredVerificationMethodologySignals(m.identity.intent))
