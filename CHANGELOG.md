@@ -2,6 +2,10 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — queued reconciliation control priority
+- Prevent a sessionless queued worker from masking an older `FIX_REQUIRED`/reconcilable task result when the parent reaches idle. Live `created`/`starting`/`busy` children still retain WAIT priority, while queued-only state now yields to parent reconciliation before returning to WAIT, avoiding a durable no-actor deadlock without weakening mutable-surface scheduler serialization.
+- Added regression coverage for both the exact queued-plus-unreconciled deadlock and the guard that a genuinely live child still wins WAIT.
+
 ### Fixed — bounded busy/no-progress child recovery
 - Preserve generic OpenCode `busy`/`retry` as healthy live execution by default, but after three same-attempt `hi_task_await` timeouts spanning the existing 120-second no-progress window with no later assistant/tool progress, expose one explicit `hi_task_cancel` recovery route for that exact stalled worker. Fresh child activity invalidates the stall evidence, so healthy long-running work remains protected.
 - Prevent `hi_context_artifact_add` from accepting canonical `*-evidence` kinds; context artifacts remain context-only and cannot substitute for worker/host verification or review evidence.

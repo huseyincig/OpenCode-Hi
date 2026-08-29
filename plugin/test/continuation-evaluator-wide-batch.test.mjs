@@ -5,6 +5,7 @@ import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import HiPlugin from '../dist/plugin.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {evaluateIdle,shouldCountStagnation} from '../dist/runtime/continuation/evaluator.js'
 import {dispatchContinuation} from '../dist/runtime/continuation/dispatcher.js'
 import {startAssessedMission,applyStructuredFollowup,DEFAULT_ASSESSMENT} from './helpers/semantic.mjs'
@@ -34,6 +35,31 @@ test('permission WAIT and pending-worker WAIT never accumulate reasoning stagnat
   w.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'worker',parent_mission_id:w.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'x',status:'busy',generation_at_spawn:w.continuation.generation})
   for(let i=0;i<4;i++)assert.equal(idleTick(store,w).decision.reason_code,'waiting-worker')
   assert.equal(w.continuation.stagnation_count,0)
+})
+
+
+test('sessionless queue cannot mask an older FIX_REQUIRED result that only parent reconciliation can clear',()=>{
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'queued-reconcile','repair package release prep',{task_kind:'implementation',likely_verification:[]})
+  const explorer=createTask(m,{objective:'inspect packages',role:'repository-explorer',category:'quick',scope:['packages'],requiredEvidence:[],obligationIds:[]})
+  const explorerWorker=createWorker(m,explorer,'p/read');explorer.status='waiting';explorerWorker.status='ready';explorerWorker.session_id='child-explorer';explorer.result={status:'FIX_REQUIRED',summary:'source provenance escaped bounded scope',changed_files:[],evidence:[],open_issues:['source-provenance-outside-task-scope'],needs_context:[]}
+  const impl=m.execution.obligations.find(o=>o.kind==='implementation')
+  const coder=createTask(m,{objective:'repair cli',role:'coder',category:'standard',scope:['packages/cli'],requiredEvidence:[],obligationIds:impl?[impl.id]:[]})
+  const coderWorker=createWorker(m,coder,'p/code');coder.status='queued';coderWorker.status='queued'
+  const decision=evaluateIdle(m)
+  assert.equal(decision.decision,'RECONCILE')
+  assert.equal(decision.reason_code,'worker-result-unreconciled')
+  assert.match(decision.prompt??'',/Reconcile the latest worker result/)
+})
+
+test('actual live child still wins WAIT over an unrelated unreconciled result',()=>{
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'live-child-priority','repair package release prep',{task_kind:'implementation',likely_verification:[]})
+  const old=createTask(m,{objective:'old analysis',role:'repository-explorer',category:'quick',scope:['packages'],requiredEvidence:[],obligationIds:[]})
+  const oldWorker=createWorker(m,old,'p/read');old.status='waiting';oldWorker.status='ready';oldWorker.session_id='child-old';old.result={status:'FIX_REQUIRED',summary:'needs bounded correction',changed_files:[],evidence:[],open_issues:['scope'],needs_context:[]}
+  const live=createTask(m,{objective:'live independent analysis',role:'repository-explorer',category:'quick',scope:['README.md'],requiredEvidence:[],obligationIds:[]})
+  const liveWorker=createWorker(m,live,'p/read');live.status='running';liveWorker.status='busy';liveWorker.session_id='child-live'
+  const decision=evaluateIdle(m)
+  assert.equal(decision.decision,'WAIT')
+  assert.equal(decision.reason_code,'waiting-worker')
 })
 
 test('open-obligation idles do advance the bounded reasoning recovery ladder',()=>{

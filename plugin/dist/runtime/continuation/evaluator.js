@@ -38,7 +38,11 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
     }
     if ((m.authority.pending_permissions ?? 0) > 0)
         return { decision: 'WAIT', reason: 'waiting-permission', reason_code: 'waiting-permission' };
-    if (m.execution.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
+    // A live/starting child can make progress without parent action, so preserve WAIT. A sessionless
+    // queued worker cannot: if an older worker result is already waiting for reconciliation, letting
+    // the queue mask that result creates a durable no-actor state (parent idles/exits while the
+    // scheduler conflict can only be cleared by parent reconciliation).
+    if (m.execution.workers.some(w => ['created', 'starting', 'busy'].includes(w.status)))
         return { decision: 'WAIT', reason: 'waiting-worker', reason_code: 'waiting-worker' };
     if (m.execution.processes.some(isWaitableRunningProcess))
         return { decision: 'WAIT', reason: 'waiting-process', reason_code: 'waiting-process' };
@@ -56,6 +60,8 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
         setRuntimeNudge(m, instruction, 'worker-result-unreconciled');
         return { decision: 'RECONCILE', reason: 'worker-result-unreconciled', reason_code: 'worker-result-unreconciled', prompt: continuationPrompt(m, instruction) };
     }
+    if (m.execution.workers.some(w => w.status === 'queued'))
+        return { decision: 'WAIT', reason: 'waiting-worker', reason_code: 'waiting-worker' };
     const pre = evaluatePreconditions(m, projectRoot), blockedPreconditions = pre.items.filter(x => x.status === 'blocked'), repoResolvable = blockedPreconditions.length > 0 && blockedPreconditions.every(x => ['gate-contract-ambiguity', 'gate-exploration-clearance'].includes(x.id));
     if (!pre.ready && repoResolvable) {
         const clearance = blockedPreconditions.find(x => x.id === 'gate-exploration-clearance');
