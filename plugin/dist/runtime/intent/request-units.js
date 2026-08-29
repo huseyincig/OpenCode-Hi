@@ -48,7 +48,7 @@ export function assertVerificationRequestTrace(text, assessment) {
     const visual = assessment.likely_verification.includes('visual-check'), nonvisual = assessment.nonvisual_request_units ?? [];
     if (!visual) {
         if (nonvisual.length)
-            throw new Error('nonvisual_request_units require visual-check');
+            throw new Error('nonvisual_request_units are only used to partition visual-check request traces; when visual-check is absent set nonvisual_request_units=[]');
         return;
     }
     if (['resume', 'constraint'].includes(assessment.message_kind) && assessment.verification_cases.length === 0 && nonvisual.length === 0)

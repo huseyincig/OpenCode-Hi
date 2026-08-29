@@ -12,6 +12,11 @@ All notable changes to OpenCode-Hi are documented here.
 - Added regression coverage for the exact multiline Python write shape and preserved admitted parent verifier commands such as `python3 -m pytest`.
 
 
+### Fixed — nonvisual semantic request-trace contract
+- Aligned the provider-visible semantic assessment gate with the parser's visual-only request-unit trace contract: `verification_cases` / `nonvisual_request_units` partitioning is required only for `visual-check`, while nonvisual missions must leave both arrays empty.
+- Made accidental nonvisual RU partitioning fail with actionable `nonvisual_request_units=[]` guidance and added regression coverage for a pure nonvisual security assessment.
+
+
 ## Unreleased
 
 - Prevents `authority-boundary` risk classification alone from fabricating a user-approval obligation. Hi now opens mission-level `o-authority` only when the semantic contract contains a concrete requested external action; exact hash-bound authority, native permission asks, release/publish approval, and uncertain-action reconciliation remain unchanged.

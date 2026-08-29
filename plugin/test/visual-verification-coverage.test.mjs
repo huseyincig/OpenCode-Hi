@@ -14,6 +14,15 @@ test('visual semantic contract requires bounded explicit verification cases',()=
   const x=parseSemanticIntentAssessment({...base,verification_cases:[tracedCase()]});assert.deepEqual(x.verification_cases[0].required_browser_actions,['navigate','inspect']);assert.deepEqual(x.verification_cases[0].source_units,['ru1'])
 })
 
+
+
+test('nonvisual semantic assessment needs no request-unit trace and rejects accidental RU partitioning with actionable guidance',()=>{
+  const nonvisual={...base,required_capabilities:['implementation','security-review'],likely_verification:['targeted-tests','review-evidence'],verification_cases:[],nonvisual_request_units:[],likely_targets:['app.py']}
+  const parsed=parseSemanticIntentAssessment(nonvisual)
+  assert.doesNotThrow(()=>assertVerificationRequestTrace('Fix password hashing and SQL injection.',parsed))
+  assert.throws(()=>parseSemanticIntentAssessment({...nonvisual,nonvisual_request_units:['ru1']}),/only used to partition visual-check request traces.*nonvisual_request_units=\[\]/)
+})
+
 test('visual request trace deterministically rejects silent user-outcome undercoverage',()=>{
   const text=`Fix the UI.\n- Verify desktop + mobile.\n- Verify filter.\n- Verify accessibility names, focus visibility.`
   const units=semanticRequestUnits(text);assert.deepEqual(units.map(x=>x.text),['Fix the UI','Verify desktop','mobile','Verify filter','Verify accessibility names','focus visibility'])
@@ -53,7 +62,7 @@ test('semantic assessment rejects object-shaped nonvisual_request_units with can
 
 test('semantic gate teaches request-unit traceability and all-cases browser action coverage',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('visual-gate','verify UI'),gate=renderSemanticAssessmentGate(m)
-  assert.match(gate,/verification_cases/);assert.match(gate,/source_units:RU\[\]/);assert.match(gate,/nonvisual_request_units=RU\[\]/);assert.match(gate,/all RU classified/);assert.match(gate,/navigate\|click/);assert.match(gate,/reload=navigate\+inspect/)
+  assert.match(gate,/verification_cases/);assert.match(gate,/source_units:RU\[\]/);assert.match(gate,/visual-check=>.*all RU=case source_units\|nonvisual_request_units/);assert.match(gate,/else both=\[\];no RU trace/);assert.match(gate,/navigate\|click/);assert.match(gate,/reload=navigate\+inspect/)
 })
 
 test('duplicate verification case IDs fail semantic admission and resume may preserve current traced case set',()=>{

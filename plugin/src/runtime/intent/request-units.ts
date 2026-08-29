@@ -27,7 +27,7 @@ export function renderRequestUnitChallenge(text:string):string{const units=seman
 
 export function assertVerificationRequestTrace(text:string,assessment:SemanticIntentAssessment):void{
   const visual=assessment.likely_verification.includes('visual-check'),nonvisual=assessment.nonvisual_request_units??[]
-  if(!visual){if(nonvisual.length)throw new Error('nonvisual_request_units require visual-check');return}
+  if(!visual){if(nonvisual.length)throw new Error('nonvisual_request_units are only used to partition visual-check request traces; when visual-check is absent set nonvisual_request_units=[]');return}
   if(['resume','constraint'].includes(assessment.message_kind)&&assessment.verification_cases.length===0&&nonvisual.length===0)return
   const unitMap=requestUnitMap(text),all=[...unitMap.keys()],challenge=()=>renderRequestUnitChallenge(text);if(!all.length)throw new Error('visual-check request trace requires at least one deterministic request unit')
   const nonvisualSet=new Set(nonvisual);if(nonvisualSet.size!==nonvisual.length)throw new Error(`nonvisual_request_units must not contain duplicates; ${challenge()}`)

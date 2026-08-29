@@ -213,7 +213,7 @@ export function parseSemanticIntentAssessment(raw) {
     if (!visualRequired && assessment.verification_cases.length)
         throw new Error('verification_cases require visual-check');
     if (!visualRequired && assessment.nonvisual_request_units.length)
-        throw new Error('nonvisual_request_units require visual-check');
+        throw new Error('nonvisual_request_units are only used to partition visual-check request traces; when visual-check is absent set nonvisual_request_units=[]');
     const caseIDs = assessment.verification_cases.map(c => c.id);
     if (new Set(caseIDs).size !== caseIDs.length)
         throw new Error('verification_cases ids must be unique');
