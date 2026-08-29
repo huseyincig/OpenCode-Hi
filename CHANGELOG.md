@@ -2,6 +2,10 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — grounded TDD authority projection
+- Stop `intent.tdd` from granting `test-authoring` write authority inside the raw semantic parser before user-text reconciliation. Hi now derives implicit test-authoring only after the TDD signal is grounded against the actual initial or follow-up user text, while explicit `required_capabilities` / capability request-unit ownership remains authoritative.
+- Added regressions proving generic test/verify or contradictory TDD signals create neither TDD methodology nor durable test-authoring capability/obligation, while explicit test-first requests and explicit test-authoring capability still retain canonical ownership.
+
 ### Fixed — queued reconciliation control priority
 - Prevent a sessionless queued worker from masking an older `FIX_REQUIRED`/reconcilable task result when the parent reaches idle. Live `created`/`starting`/`busy` children still retain WAIT priority, while queued-only state now yields to parent reconciliation before returning to WAIT, avoiding a durable no-actor deadlock without weakening mutable-surface scheduler serialization.
 - Added regression coverage for both the exact queued-plus-unreconciled deadlock and the guard that a genuinely live child still wins WAIT.

@@ -149,6 +149,8 @@ test('generic test/verify wording does not activate TDD methodology without expl
   const store=new MissionStore(process.cwd()),m=store.start('rw-no-false-tdd','Implement the local HTML game, then test and verify it.')
   store.applyInitialSemanticAssessment('rw-no-false-tdd',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['changed-surface-sanity'],user_verification:[],verification_ceiling:false,likely_targets:['index.html'],intent_signals:['intent.tdd'],suppressed_intent_signals:[]})
   assert.ok(!m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
+  assert.equal(m.identity.intent.requiredCapabilities.includes('test-authoring'),false,'suppressed false-TDD signal cannot become durable write authority')
+  assert.equal(m.execution.obligations.some(o=>o.kind==='test-authoring'),false,'suppressed false-TDD signal cannot create a phantom test-authoring obligation')
   const assessed=m.execution.ledger.find(e=>e.type==='semantic.assessed');assert.ok(assessed?.payload?.runtime_suppressed_intent_signals?.includes('intent.tdd'))
 })
 
@@ -156,6 +158,8 @@ test('explicit test-first request retains TDD methodology activation',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('rw-explicit-tdd','Write a failing test first, then implement the behavior using TDD.')
   store.applyInitialSemanticAssessment('rw-explicit-tdd',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],user_verification:[],verification_ceiling:false,likely_targets:['src/a.ts'],intent_signals:['intent.tdd'],suppressed_intent_signals:[]})
   assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
+  assert.ok(m.identity.intent.requiredCapabilities.includes('test-authoring'),'grounded explicit TDD must retain test-authoring authority')
+  assert.ok(m.execution.obligations.some(o=>o.kind==='test-authoring'),'grounded explicit TDD must create the test-authoring obligation')
 })
 
 

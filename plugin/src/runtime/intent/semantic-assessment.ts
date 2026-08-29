@@ -179,7 +179,6 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const semanticSignals=intentSignalList(v.intent_signals)
   if(semanticSignals.includes('intent.external-source')&&!requiredCapabilities.includes('external-research'))requiredCapabilities.push('external-research')
   if(semanticSignals.includes('intent.documentation')&&!requiredCapabilities.includes('documentation'))requiredCapabilities.push('documentation')
-  if(semanticSignals.includes('intent.tdd')&&!requiredCapabilities.includes('test-authoring'))requiredCapabilities.push('test-authoring')
   if(effectiveVerification.includes('visual-check')&&!requiredCapabilities.includes('visual-qa'))requiredCapabilities.push('visual-qa')
   const taskKind=take('task_kind',taskKinds),scope=take('scope',scopes)
   const assessment:SemanticIntentAssessment={

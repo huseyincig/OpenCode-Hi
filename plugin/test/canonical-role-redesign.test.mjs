@@ -111,7 +111,7 @@ test('category visual cannot override a nonvisual semantic owner',()=>{
 test('semantic assessment derives specialist capabilities from canonical intent signals',()=>{
   const base={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:[],requested_external_actions:[],likely_verification:[],user_verification:[],likely_targets:['README.md'],suppressed_intent_signals:[],constraint_atoms:[]}
   assert.ok(parseSemanticIntentAssessment({...base,intent_signals:['intent.documentation']}).required_capabilities.includes('documentation'))
-  assert.ok(parseSemanticIntentAssessment({...base,intent_signals:['intent.tdd']}).required_capabilities.includes('test-authoring'))
+  assert.equal(parseSemanticIntentAssessment({...base,intent_signals:['intent.tdd']}).required_capabilities.includes('test-authoring'),false,'methodology signal alone cannot grant write authority before user-text grounding')
   assert.ok(parseSemanticIntentAssessment({...base,task_kind:'review',scope:'external',likely_targets:[],intent_signals:['intent.external-source']}).required_capabilities.includes('external-research'))
 })
 

@@ -128,6 +128,13 @@ function reconciledIntentMethodologySignals(assessment, userText = '') {
     }
     return { active: assessment.intent_signals.filter(signal => !suppressed.has(signal)), suppressed: [...suppressed], runtimeSuppressed: [...new Set(runtimeSuppressed)] };
 }
+function groundedIntentAuthority(assessment, userText) {
+    const signals = reconciledIntentMethodologySignals(assessment, userText);
+    const requiredCapabilities = signals.active.includes('intent.tdd') && !assessment.required_capabilities.includes('test-authoring') ? [...assessment.required_capabilities, 'test-authoring'] : assessment.required_capabilities;
+    const grounded = requiredCapabilities === assessment.required_capabilities ? assessment : { ...assessment, required_capabilities: requiredCapabilities };
+    assertSemanticTaskCapabilityConsistency(grounded.task_kind, grounded.required_capabilities, grounded.scope, grounded.mutation_targets ?? []);
+    return { assessment: grounded, signals };
+}
 export class MissionStore {
     #bySession = new Map();
     #root;
@@ -183,12 +190,12 @@ export class MissionStore {
             this.syncProgressBaseline(m);
             return m;
         }
-        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, m.identity.semantic_assessment.pending_text, this.#workingRepo), effectiveAssessment = repositoryBoundAssessment(this.#root, m.identity.semantic_assessment.pending_text, verificationResolution.assessment), explicitUserVerification = verificationResolution.explicitUserVerification, boundedExplicitVerification = verificationResolution.ceilingApplied;
+        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, m.identity.semantic_assessment.pending_text, this.#workingRepo), boundedAssessment = repositoryBoundAssessment(this.#root, m.identity.semantic_assessment.pending_text, verificationResolution.assessment), groundedAuthority = groundedIntentAuthority(boundedAssessment, m.identity.semantic_assessment.pending_text), effectiveAssessment = groundedAuthority.assessment, reconciledSignals = groundedAuthority.signals, explicitUserVerification = verificationResolution.explicitUserVerification, boundedExplicitVerification = verificationResolution.ceilingApplied;
         m.identity.intent = assessedIntent(m.identity.intent, effectiveAssessment);
         m.identity.risk = m.identity.intent.risk;
         m.identity.objective = m.identity.intent.objective;
         const requiredMaterialTargets = userRequiredMaterialTargets(m.identity.semantic_assessment.pending_text, effectiveAssessment);
-        const reconciledSignals = reconciledIntentMethodologySignals(effectiveAssessment, m.identity.semantic_assessment.pending_text), obligations = [], bugFixAnalysisRequired = m.identity.intent.taskKind === 'bug-fix' && (m.identity.intent.scope !== 'local' || m.identity.intent.ambiguity !== 'none' || reconciledSignals.active.includes('intent.debugging'));
+        const obligations = [], bugFixAnalysisRequired = m.identity.intent.taskKind === 'bug-fix' && (m.identity.intent.scope !== 'local' || m.identity.intent.ambiguity !== 'none' || reconciledSignals.active.includes('intent.debugging'));
         if (bugFixAnalysisRequired || m.identity.intent.taskKind === 'performance' || m.identity.intent.taskKind === 'diagnosis')
             obligations.push(obligation('o-analysis', 'analysis', m.identity.intent.taskKind === 'performance' ? 'Relevant performance bottleneck identified' : 'Root cause understood'));
         const caps = new Set(m.identity.intent.requiredCapabilities), nonProductSpecialist = [...caps].some(cap => ['documentation', 'test-authoring', 'external-research', 'review', 'independent-review', 'security-review', 'qa-review', 'visual-qa', 'design-exploration', 'repository-analysis', 'source-verification'].includes(cap)), specialistOnly = nonProductSpecialist && !caps.has('implementation') && !caps.has('dependency-change'), productImplementation = caps.has('implementation') || m.identity.intent.taskKind === 'bug-fix' || m.identity.intent.taskKind === 'performance' || (!specialistOnly && m.identity.intent.taskKind === 'implementation');
@@ -339,7 +346,7 @@ export class MissionStore {
             this.syncProgressBaseline(m);
             return m;
         }
-        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), effectiveAssessment = repositoryBoundAssessment(this.#root, text, verificationResolution.assessment), kind = effectiveAssessment.message_kind;
+        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), boundedAssessment = repositoryBoundAssessment(this.#root, text, verificationResolution.assessment), groundedAuthority = groundedIntentAuthority(boundedAssessment, text), effectiveAssessment = groundedAuthority.assessment, reconciledSignals = groundedAuthority.signals, kind = effectiveAssessment.message_kind;
         if (kind === 'constraint') {
             m.execution.constraints ??= [];
             m.execution.constraint_atoms ??= [];
@@ -407,7 +414,6 @@ export class MissionStore {
         m.identity.intent = assessedIntent(m.identity.intent, effectiveAssessment);
         m.identity.intent.objective = m.identity.objective;
         m.identity.risk = m.identity.intent.risk;
-        const reconciledSignals = reconciledIntentMethodologySignals(effectiveAssessment, text);
         if (explicitTestMutationForbidden(text) && m.methodology.methodology_needs.some(x => x.signal === 'intent.tdd')) {
             if (!reconciledSignals.suppressed.includes('intent.tdd'))
                 reconciledSignals.suppressed.push('intent.tdd');

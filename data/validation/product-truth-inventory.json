@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "f798f430b78fbbf5f279535338b10076a0e0cd0ab97656bcd756970aff587637",
+      "owner_sha256": "8b0ca5b9cc487670879c0b7a66bd1a99f36a0f6db429011cbdbf46e487386772",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "f62461c66649b35de0aadff5e35c367e3c51107b0567c6703a31e12d6abb7857",
+      "owner_sha256": "34e39108eac2dc2a0d82710002649f63489902426f599aafb93ab2a62dada9b4",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -46,7 +46,7 @@
       "area": "worker",
       "canonical_owner": "WorkerRuntime",
       "owner_path": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "ceef9349807d043672589b022ee5358a55bca55c6f55b645c09970b7408a0f47",
+      "owner_sha256": "58bb735af669d8f732988542a855e1378dbe49f21fafc65a940f6a2d29f56ca8",
       "producer_or_contract_paths": [
         "plugin/src/contracts/worker.ts",
         "plugin/src/contracts/worker-result.ts"
@@ -252,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "ead87477d55da57d12a37c352bfa90222a4054d30510e7c385193db67608b3ac",
+      "owner_sha256": "ab4b8bae60ebaf772c92afe281f97c464a3d1049519b2abc96c53538d1be3378",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",
@@ -348,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "1817dfdc12bbeb1c6f0896e08c0cb1c8b8bd82b66e2b2799821f3e571b892833",
+      "owner_sha256": "430da1b8927605d3ed0db95fde9971b2e127936d0641b99a0ff8f3a7dcbd7cb6",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",
@@ -416,7 +416,7 @@
       "area": "scheduler",
       "canonical_owner": "SchedulingPlanner",
       "owner_path": "plugin/src/runtime/scheduler/planner.ts",
-      "owner_sha256": "49253e99725392ff6b5b174cfccf960fdd5578d51d3fe431d047475921c58449",
+      "owner_sha256": "e263657d390b4c586cf3ecdf5c01fae8b7cd928031cffad423fb4f46c16dfe33",
       "producer_or_contract_paths": [
         "plugin/src/runtime/scheduler/lifecycle.ts",
         "plugin/src/runtime/scheduler/task-runtime-adapter.ts"
