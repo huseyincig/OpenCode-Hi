@@ -177,7 +177,7 @@ export class MissionStore {
             obligations.push(obligation('o-verification', 'verification', m.identity.intent.likelyVerification.join(', '), m.identity.intent.likelyVerification, [], m.identity.intent.verificationCases ?? []));
         if (m.identity.intent.risk === 'high')
             obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed', ['review-evidence']));
-        if (m.identity.intent.risk === 'authority-boundary')
+        if (m.identity.intent.risk === 'authority-boundary' && m.identity.intent.requestedExternalActions.length > 0)
             obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
         m.execution.obligations = obligations;
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
@@ -384,7 +384,7 @@ export class MissionStore {
             activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: `Host primary semantic follow-up assessment revision ${m.identity.semantic_assessment.revision}.` });
         if (m.identity.intent.risk === 'high' && !m.execution.obligations.some(o => o.id === 'o-high-assurance' && o.status === 'open'))
             m.execution.obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
-        if (m.identity.intent.risk === 'authority-boundary' && !m.execution.obligations.some(o => o.kind === 'authority' && o.status === 'open'))
+        if (m.identity.intent.risk === 'authority-boundary' && m.identity.intent.requestedExternalActions.length > 0 && !m.execution.obligations.some(o => o.kind === 'authority' && o.status === 'open'))
             m.execution.obligations.push(obligation(`o-authority-${now.toString(36)}`, 'authority', 'External action explicitly authorized and completed'));
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
         for (const signal of architectureMethodologySignals(m.identity.intent))

@@ -55,6 +55,16 @@ test('E: release intent with publish triggers authority-boundary (higher than hi
   assert.ok(auth, 'authority-boundary must open o-authority obligation')
 })
 
+test('E2: authority-boundary risk without an external action does not fabricate user authority', () => {
+  const store = new MissionStore()
+  const m = startAssessedMission(store,'s1','opaque security-sensitive local implementation',{risk:'authority-boundary',required_capabilities:['implementation','security-review','independent-review'],requested_external_actions:[],likely_verification:['review-evidence']})
+  assert.equal(m.identity.intent.risk, 'authority-boundary')
+  assert.equal(m.identity.intent.requestedExternalActions.length, 0)
+  assert.equal(m.execution.obligations.some(x => x.kind === 'authority'), false, 'risk classification alone must not invent an external-action authority obligation')
+  const gate = m.execution.gates.find(x => x.id === 'gate-authority')
+  assert.equal(gate?.status, 'closed', 'authority gate stays closed until a concrete external action exists')
+})
+
 test('F: user-stop ends the mission and gates any later continuation', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'user stops during continuation')
@@ -234,6 +244,15 @@ test('Flow-04: security follow-up escalates risk and verification policy', () =>
   applyStructuredFollowup(store,'s1','opaque security follow-up',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['review-evidence']})
   assert.equal(m.identity.intent.risk, 'high')
   assert.ok(m.execution.verification_policy.requireReview, 'high risk follow-up opens requireReview')
+})
+
+test('Flow-04b: authority-boundary follow-up without external action keeps authority gate closed', () => {
+  const store = new MissionStore()
+  const m = startAssessedMission(store,'s1','opaque',{risk:'low'})
+  applyStructuredFollowup(store,'s1','opaque local authority-sensitive follow-up',{risk:'authority-boundary',required_capabilities:['implementation','security-review','independent-review'],requested_external_actions:[],likely_verification:['review-evidence']})
+  assert.equal(m.identity.intent.risk, 'authority-boundary')
+  assert.equal(m.execution.obligations.some(x => x.kind === 'authority'), false)
+  assert.equal(m.execution.gates.find(x => x.id === 'gate-authority')?.status, 'closed')
 })
 
 test('Flow-05: permission-pending is a runtime event, not stagnation', () => {
