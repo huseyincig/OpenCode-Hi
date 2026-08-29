@@ -44,6 +44,12 @@ export interface HostAssistantResult {
     };
     usage?: HostUsageObservation;
     activity?: HostAssistantActivity;
+    incomplete_turn?: {
+        message_id?: string;
+        parent_id?: string;
+        created_at: number;
+        empty: boolean;
+    };
     error?: HostAssistantError;
 }
 export interface HostCapabilityView {

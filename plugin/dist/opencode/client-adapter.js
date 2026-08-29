@@ -269,6 +269,22 @@ export function lastAssistantStructured(messages) { for (let i = messages.length
     if (info && Object.prototype.hasOwnProperty.call(info, 'structured'))
         return info.structured;
 } return undefined; }
+export function lastIncompleteAssistantTurn(messages) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;
+        if (info?.role && info.role !== 'assistant')
+            continue;
+        const completed = Number(info?.time?.completed);
+        if (Number.isFinite(completed) && completed >= 0)
+            return undefined;
+        const created = Number(info?.time?.created);
+        if (!Number.isFinite(created) || created < 0)
+            return undefined;
+        const parts = msg?.parts ?? info?.parts ?? [], output = Number(info?.tokens?.output ?? 0), reasoning = Number(info?.tokens?.reasoning ?? 0), empty = parts.length === 0 && (!Number.isFinite(output) || output === 0) && (!Number.isFinite(reasoning) || reasoning === 0), messageID = info?.id ?? msg?.id, parent = info?.parentID ?? info?.parentId;
+        return { ...(messageID ? { message_id: String(messageID) } : {}), ...(typeof parent === 'string' && parent ? { parent_id: parent } : {}), created_at: created, empty };
+    }
+    return undefined;
+}
 export function lastMeaningfulAssistantActivity(messages) {
     for (let i = messages.length - 1; i >= 0; i--) {
         const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;

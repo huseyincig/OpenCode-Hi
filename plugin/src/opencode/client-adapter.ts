@@ -147,6 +147,18 @@ export function lastAssistantText(messages:any[]):string{for(let i=messages.leng
 export function lastAssistantStructured(messages:any[]):unknown{for(let i=messages.length-1;i>=0;i--){const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;if(info&&Object.prototype.hasOwnProperty.call(info,'structured'))return info.structured}return undefined}
 
 
+export interface IncompleteAssistantTurnEvidence{message_id?:string;parent_id?:string;created_at:number;empty:boolean}
+export function lastIncompleteAssistantTurn(messages:any[]):IncompleteAssistantTurnEvidence|undefined{
+  for(let i=messages.length-1;i>=0;i--){
+    const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue
+    const completed=Number(info?.time?.completed);if(Number.isFinite(completed)&&completed>=0)return undefined
+    const created=Number(info?.time?.created);if(!Number.isFinite(created)||created<0)return undefined
+    const parts=msg?.parts??info?.parts??[],output=Number(info?.tokens?.output??0),reasoning=Number(info?.tokens?.reasoning??0),empty=parts.length===0&&(!Number.isFinite(output)||output===0)&&(!Number.isFinite(reasoning)||reasoning===0),messageID=info?.id??msg?.id,parent=info?.parentID??info?.parentId
+    return{...(messageID?{message_id:String(messageID)}:{}),...(typeof parent==='string'&&parent?{parent_id:parent}:{}),created_at:created,empty}
+  }
+  return undefined
+}
+
 export interface AssistantActivityEvidence{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}
 export function lastMeaningfulAssistantActivity(messages:any[]):AssistantActivityEvidence|undefined{
   for(let i=messages.length-1;i>=0;i--){

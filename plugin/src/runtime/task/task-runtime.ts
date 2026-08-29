@@ -58,6 +58,12 @@ import { admitNewTaskScope } from './scope-admission.js'
 export interface StartTaskInput{objective?:string;role?:string;category?:Category;scope?:string[];dependencies?:string[];requiredEvidence?:string[];obligationIds?:string[];model?:string;modelVariant?:string;relevantContext?:string[];contextArtifactIds?:string[];constraints?:string[];forkFromSession?:string;isolationRequired?:boolean;isolationReason?:string;mcpServers?:string[];browserBackend?:BrowserBackend;browserAllowedOrigins?:string[];browserRequiredOrigins?:string[];processLifecycle?:boolean;resumeTaskId?:string}
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
 const MAX_QUEUE=32
+const RESTART_INCOMPLETE_TURN_GRACE_MS=30_000
+function restartIncompleteTurnCandidate(worker:WorkerState,assistant:HostAssistantResult,now=Date.now()):boolean{
+  const turn=assistant.incomplete_turn,activity=assistant.activity,expectedParent=worker.attempt_prompt_message_id
+  return Boolean(turn?.empty&&expectedParent&&turn.parent_id===expectedParent&&worker.started_at!==undefined&&turn.created_at>=worker.started_at&&now-turn.created_at>=RESTART_INCOMPLETE_TURN_GRACE_MS&&activity&&activity.observed_at<turn.created_at)
+}
+function sameRestartIncompleteTurn(a:HostAssistantResult,b:HostAssistantResult):boolean{return Boolean(a.incomplete_turn?.message_id&&a.incomplete_turn.message_id===b.incomplete_turn?.message_id&&a.activity?.message_id===b.activity?.message_id&&a.activity?.observed_at===b.activity?.observed_at)}
 class TaskQueueCapacityError extends Error{constructor(){super('Hi bounded dispatch queue is full');this.name='TaskQueueCapacityError'}}
 function resultContractFailure(summary:string,marker='worker-result-contract-invalid'):WorkerResult{return{status:'FIX_REQUIRED',summary,changed_files:[],evidence:[],open_issues:[marker],needs_context:['worker-result-contract-retry: continue the same task/session and return the exact schema-bound WorkerResult; all evidence claims belong under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}] and no evidence kind may be a top-level key']}}
 function canonicalValue(value:unknown):unknown{if(Array.isArray(value))return value.map(canonicalValue);if(value&&typeof value==='object'){const record=value as Record<string,unknown>,out:Record<string,unknown>={};for(const key of Object.keys(record).sort())out[key]=canonicalValue(record[key]);return out}return value}
@@ -254,6 +260,22 @@ export class TaskRuntime{
     if(!worker.restart_reconcile_pending)return'CONTINUE'
     const observed=await this.admitTerminalEvent(m,worker)
     if(observed.decision==='WAIT'){
+      if(this.readAssistantResult&&worker.session_id){
+        let first:HostAssistantResult|undefined;try{first=await this.readAssistantResult(worker.session_id)}catch{}
+        if(first&&restartIncompleteTurnCandidate(worker,first)){
+          let second:HostAssistantResult|undefined;try{second=await this.readAssistantResult(worker.session_id)}catch{}
+          if(second&&restartIncompleteTurnCandidate(worker,second)&&sameRestartIncompleteTurn(first,second)){
+            const stopped=await this.abortNativeSession(m,worker.session_id,'restart-incomplete-terminal-turn',worker.id,task.id)
+            if(stopped){
+              const released=releaseTaskRuntimeReservation(m,worker.id,'RELEASE');if(!released.accepted){appendLedger(m,'worker.restart-incomplete-turn.deferred',{task_id:task.id,worker_id:worker.id,payload:{reason:released.reason,session_id:worker.session_id}});return'WAIT'}
+              worker.restart_reconcile_pending=false;worker.status='ready';task.status='waiting'
+              if(task.result){task.result={...task.result,needs_context:[...new Set([...(task.result.needs_context??[]).filter(item=>item!=='runtime-restart-reconcile'),'restart-incomplete-terminal-turn: the exact prior child session completed meaningful task actions but left an empty assistant successor without a structured WorkerResult. Preserve same-session completed observations/actions and return the schema-bound WorkerResult; do not repeat completed external/browser/process actions unless required evidence is missing or stale.'])]}}
+              this.registry.set(worker);appendLedger(m,'worker.restart-incomplete-turn.recovered',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,incomplete_message_id:first.incomplete_turn?.message_id,prior_activity_message_id:first.activity?.message_id,prior_activity_at:first.activity?.observed_at,policy:'stable-empty-turn-abort-then-same-session-result-resume'}});return'CONTINUE'
+            }
+            appendLedger(m,'worker.restart-incomplete-turn.deferred',{task_id:task.id,worker_id:worker.id,payload:{reason:'abort-unavailable',session_id:worker.session_id,incomplete_message_id:first.incomplete_turn?.message_id}})
+          }
+        }
+      }
       const reconciled=reconcileTaskRuntimeRestart(m,worker,'ACTIVE');if(!reconciled.accepted){appendLedger(m,'scheduler.restart-reconcile-blocked',{task_id:task.id,worker_id:worker.id,payload:{reason:reconciled.reason,session_id:worker.session_id,host_status:observed.hostStatus}});return'WAIT'}
       worker.restart_reconcile_pending=false;worker.status='busy';task.status='running';this.registry.set(worker);appendLedger(m,'scheduler.restart-reconciled',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,outcome:'host-active',host_status:observed.hostStatus,attempt_id:observed.binding?.attempt.attemptId}});return'WAIT'
     }

@@ -20,7 +20,7 @@ export interface HostEvent{
 }
 export interface HostAssistantError{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
 export interface HostAssistantActivity{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}
-export interface HostAssistantResult{text:string;structured?:unknown;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;activity?:HostAssistantActivity;error?:HostAssistantError}
+export interface HostAssistantResult{text:string;structured?:unknown;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;activity?:HostAssistantActivity;incomplete_turn?:{message_id?:string;parent_id?:string;created_at:number;empty:boolean};error?:HostAssistantError}
 export interface HostCapabilityView{
   childSessions:boolean;asyncPrompt:boolean;syncPrompt:boolean;abort:boolean;providerInventory:boolean;appLog:boolean
   sessionStatus:boolean;childSessionList:boolean;sessionTodo:boolean;sessionDiff:boolean;sessionFork:boolean;sessionSummarize:boolean;sessionRevert:boolean;sessionUnrevert:boolean

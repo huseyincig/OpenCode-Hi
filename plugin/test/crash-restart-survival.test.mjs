@@ -89,6 +89,28 @@ test('restart observes live host-active child and waits without aborting or disp
   assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconciled'&&e.payload?.outcome==='host-active'))
 })
 
+test('restart recovers a stable stale empty assistant successor by aborting only that turn and resuming the same session for structured result',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m);const old=m.execution.workers[0],now=Date.now();old.attempt_prompt_message_id='msg-user-attempt-1';old.started_at=now-120_000
+  const assistant={text:'prior completed observations',model:{model:'p/m',message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-60_000},activity:{message_id:'msg-completed-tools',observed_at:now-61_000,output_tokens:10,reasoning_tokens:0,tool_calls:3,text_chars:40},incomplete_turn:{message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-60_000,empty:true}}
+  const {runtime,calls}=restartHarness(m,{status:'busy',assistant})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,2);assert.equal(calls.aborts.length,1);assert.equal(calls.prompts.length,1)
+  assert.equal(old.session_id,'child-old');assert.equal(old.attempt,2);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running')
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2)
+  assert.match(JSON.stringify(calls.prompts[0]),/restart-incomplete-terminal-turn/);assert.match(JSON.stringify(calls.prompts[0]),/do not repeat completed external\/browser\/process actions/i)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-incomplete-turn.recovered'&&e.payload?.incomplete_message_id==='msg-open-empty'))
+})
+
+test('restart leaves a fresh empty assistant turn host-active and does not abort a potentially live execution',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m);const old=m.execution.workers[0],now=Date.now();old.attempt_prompt_message_id='msg-user-attempt-1';old.started_at=now-5000
+  const assistant={model:{model:'p/m',message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-1000},activity:{message_id:'msg-completed-tools',observed_at:now-2000,output_tokens:10,reasoning_tokens:0,tool_calls:1,text_chars:10},incomplete_turn:{message_id:'msg-open-empty',parent_id:'msg-user-attempt-1',created_at:now-1000,empty:true}}
+  const {runtime,calls}=restartHarness(m,{status:'busy',assistant})
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.readiness,'WAIT');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0);assert.equal(old.attempt,1);assert.equal(old.status,'busy')
+})
+
 test('restart ingests an idle completed attempt and does not repeat already-finished work',async()=>{
   const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
   const m=restored.get('parent-1');assert.ok(m)

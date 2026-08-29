@@ -24,6 +24,13 @@ export declare function listAvailableModels(endpoint?: OpenCodeLifecycleEndpoint
 export declare function eventSessionID(event: any): string | undefined;
 export declare function lastAssistantText(messages: any[]): string;
 export declare function lastAssistantStructured(messages: any[]): unknown;
+export interface IncompleteAssistantTurnEvidence {
+    message_id?: string;
+    parent_id?: string;
+    created_at: number;
+    empty: boolean;
+}
+export declare function lastIncompleteAssistantTurn(messages: any[]): IncompleteAssistantTurnEvidence | undefined;
 export interface AssistantActivityEvidence {
     message_id?: string;
     observed_at: number;
