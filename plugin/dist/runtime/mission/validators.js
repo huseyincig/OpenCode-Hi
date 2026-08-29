@@ -22,7 +22,7 @@ function uniqueRecordIDs(values) { const ids = values.map(value => isRecord(valu
 function validVerificationCases(value) { return Array.isArray(value) && value.every(isVerificationCase) && new Set(value.map((x) => x.id)).size === value.length; }
 function onlyKeys(value, keys) { const allowed = new Set(keys); return Object.keys(value).every(key => allowed.has(key)); }
 const IDENTITY_KEYS = ['mission_id', 'session_id', 'objective', 'intent', 'semantic_assessment', 'status', 'risk', 'created_at', 'updated_at'];
-const INTENT_KEYS = ['objective', 'likelyTargets', 'taskKind', 'scope', 'risk', 'ambiguity', 'dependencyClass', 'requiredCapabilities', 'requestedExternalActions', 'likelyVerification', 'verificationCases', 'avoid'];
+const INTENT_KEYS = ['objective', 'likelyTargets', 'mutationTargets', 'taskKind', 'scope', 'risk', 'ambiguity', 'dependencyClass', 'requiredCapabilities', 'requestedExternalActions', 'likelyVerification', 'verificationCases', 'avoid'];
 const SEMANTIC_ASSESSMENT_KEYS = ['status', 'phase', 'revision', 'source', 'pending_text', 'assessed_at'];
 const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'research', 'documentation', 'test-authoring', 'verification', 'review', 'authority']);
 const OBLIGATION_STATUSES = new Set(['open', 'closed', 'blocked']);
@@ -110,7 +110,8 @@ function validIntent(value) {
         && stringArray(value.likelyVerification) && value.likelyVerification.every(x => SEMANTIC_VERIFICATION_KINDS.includes(x))
         && (value.verificationCases === undefined || validVerificationCases(value.verificationCases))
         && stringArray(value.avoid)
-        && (value.likelyTargets === undefined || stringArray(value.likelyTargets));
+        && (value.likelyTargets === undefined || stringArray(value.likelyTargets))
+        && (value.mutationTargets === undefined || stringArray(value.mutationTargets));
 }
 export function validateTaskDAG(identity, execution) {
     if (!Array.isArray(execution.tasks) || !Array.isArray(execution.workers))

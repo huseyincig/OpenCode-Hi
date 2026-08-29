@@ -92,7 +92,7 @@ export function semanticTargets(value, max = 20) {
     return [...new Set(out)].slice(0, max);
 }
 function testLikeTarget(path) { return /(^|\/)(?:test|tests|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path); }
-export function materialSemanticTargets(assessment) { const verificationOwnsTests = assessment.likely_verification.includes('targeted-tests') && !assessment.intent_signals.includes('intent.tdd'); return assessment.likely_targets.filter(path => !(verificationOwnsTests && testLikeTarget(path))); }
+export function materialSemanticTargets(assessment) { const verificationOwnsTests = assessment.likely_verification.includes('targeted-tests') && !assessment.intent_signals.includes('intent.tdd'), surface = assessment.mutation_targets ?? assessment.likely_targets; return surface.filter(path => !(verificationOwnsTests && testLikeTarget(path))); }
 function normalizedDirectiveText(text) { return text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim(); }
 function preservationContextForPath(text, path) {
     const target = path.toLowerCase();
@@ -179,7 +179,7 @@ export function parseSemanticIntentAssessment(raw) {
     const x = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (!x || typeof x !== 'object' || Array.isArray(x))
         throw new Error('semantic assessment must be a JSON object');
-    const v = x, allowedKeys = new Set(['material', 'message_kind', 'task_kind', 'scope', 'risk', 'ambiguity', 'dependency_class', 'required_capabilities', 'requested_external_actions', 'likely_verification', 'user_verification', 'verification_ceiling', 'verification_cases', 'nonvisual_request_units', 'capability_request_units', 'likely_targets', 'intent_signals', 'suppressed_intent_signals', 'constraint_atoms']), unknownKeys = Object.keys(v).filter(key => !allowedKeys.has(key));
+    const v = x, allowedKeys = new Set(['material', 'message_kind', 'task_kind', 'scope', 'risk', 'ambiguity', 'dependency_class', 'required_capabilities', 'requested_external_actions', 'likely_verification', 'user_verification', 'verification_ceiling', 'verification_cases', 'nonvisual_request_units', 'capability_request_units', 'likely_targets', 'mutation_targets', 'intent_signals', 'suppressed_intent_signals', 'constraint_atoms']), unknownKeys = Object.keys(v).filter(key => !allowedKeys.has(key));
     if (unknownKeys.length) {
         const hint = unknownKeys.includes('visual_request_units') ? '; use top-level verification_cases[] and nonvisual_request_units as RU id strings' : '';
         throw new Error(`unsupported semantic assessment key(s): ${unknownKeys.join(', ')}${hint}`);
@@ -228,11 +228,16 @@ export function parseSemanticIntentAssessment(raw) {
     const assessment = {
         material: v.material, message_kind: messageKind,
         task_kind: taskKind, scope, risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
-        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => semanticVerificationCase(item, index)) : [], nonvisual_request_units: requestUnitIdList(v.nonvisual_request_units), capability_request_units: capabilityRequestUnits, likely_targets: semanticTargets(v.likely_targets, 20),
+        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => semanticVerificationCase(item, index)) : [], nonvisual_request_units: requestUnitIdList(v.nonvisual_request_units), capability_request_units: capabilityRequestUnits, likely_targets: semanticTargets(v.likely_targets, 20), ...(v.mutation_targets === undefined ? {} : { mutation_targets: semanticTargets(v.mutation_targets, 20) }),
         intent_signals: semanticSignals, suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))
             throw new Error('invalid constraint_atoms entry'); return item; }) : [],
     };
+    if (assessment.mutation_targets) {
+        const likely = new Set(assessment.likely_targets), outside = assessment.mutation_targets.filter(path => !likely.has(path));
+        if (outside.length)
+            throw new Error(`mutation_targets must be a subset of likely_targets: ${outside.join(', ')}`);
+    }
     if (messageKind !== 'constraint' && assessment.constraint_atoms.length)
         throw new Error('constraint_atoms are allowed only for message_kind=constraint');
     const visualRequired = assessment.likely_verification.includes('visual-check');
@@ -255,5 +260,5 @@ export function parseSemanticIntentAssessment(raw) {
 }
 export function assessedIntent(current, assessment) {
     const initialMission = assessment.message_kind === 'mission';
-    return { ...current, likelyTargets: assessment.likely_targets.length ? assessment.likely_targets : (initialMission ? undefined : current.likelyTargets), taskKind: assessment.task_kind, scope: assessment.scope, risk: assessment.risk, ambiguity: assessment.ambiguity, dependencyClass: assessment.scope === 'local' && assessment.dependency_class === 'sequential' ? 'independent' : assessment.dependency_class, requiredCapabilities: [...assessment.required_capabilities], requestedExternalActions: [...assessment.requested_external_actions], likelyVerification: [...assessment.likely_verification], verificationCases: (assessment.verification_cases ?? []).length ? (assessment.verification_cases ?? []).map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) : (assessment.message_kind === 'resume' || assessment.message_kind === 'constraint' ? current.verificationCases : []) };
+    return { ...current, likelyTargets: assessment.likely_targets.length ? assessment.likely_targets : (initialMission ? undefined : current.likelyTargets), mutationTargets: assessment.mutation_targets === undefined ? (initialMission ? undefined : current.mutationTargets) : [...assessment.mutation_targets], taskKind: assessment.task_kind, scope: assessment.scope, risk: assessment.risk, ambiguity: assessment.ambiguity, dependencyClass: assessment.scope === 'local' && assessment.dependency_class === 'sequential' ? 'independent' : assessment.dependency_class, requiredCapabilities: [...assessment.required_capabilities], requestedExternalActions: [...assessment.requested_external_actions], likelyVerification: [...assessment.likely_verification], verificationCases: (assessment.verification_cases ?? []).length ? (assessment.verification_cases ?? []).map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) : (assessment.message_kind === 'resume' || assessment.message_kind === 'constraint' ? current.verificationCases : []) };
 }

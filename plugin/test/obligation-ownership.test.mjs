@@ -216,6 +216,12 @@ test('implementation required-target traceability is user-grounded and excludes 
   const contextOnly=assessedMission('ownership-required-targets-context','Inspect src/b.ts for context, but change only src/a.ts.',{scope:'local',risk:'low',likely_targets:['src/a.ts']})
   assert.deepEqual(contextOnly.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
 
+  const structuredContext=assessedMission('ownership-required-targets-structured-context','Use test-lab/config/model-pool.json as the source of truth, then change src/a.ts only.',{scope:'local',risk:'low',required_capabilities:['implementation','test-authoring'],likely_targets:['test-lab/config/model-pool.json','src/a.ts'],mutation_targets:['src/a.ts']})
+  assert.deepEqual(structuredContext.identity.intent.likelyTargets,['test-lab/config/model-pool.json','src/a.ts'],'context path remains available to planning/provenance')
+  assert.deepEqual(structuredContext.identity.intent.mutationTargets,['src/a.ts'],'write intent is structurally distinct from context relevance')
+  assert.deepEqual(structuredContext.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'],'context/source-of-truth path must not become required implementation mutation coverage')
+  assert.deepEqual(structuredContext.execution.obligations.find(o=>o.kind==='test-authoring')?.requiredTargets,['src/a.ts'],'context/source-of-truth path must not become required test-authoring mutation coverage')
+
 
   const preservedData=assessedMission('ownership-required-targets-preserve-data','Fix src/server.js. Keep data.json at the exact tracked baseline; do not modify data.json.',{scope:'multi-file',risk:'low',ambiguity:'resolvable',likely_targets:['src/server.js','data.json']})
   assert.deepEqual(preservedData.identity.intent.likelyTargets,['src/server.js','data.json'],'preserved path remains context/safety-relevant')

@@ -100,7 +100,7 @@ test('semantic assessment rejects object-shaped nonvisual_request_units with can
 
 test('semantic gate teaches request-unit traceability and all-cases browser action coverage',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('visual-gate','verify UI'),gate=renderSemanticAssessmentGate(m)
-  assert.match(gate,/verification_cases/);assert.match(gate,/source_units:RU\[\]/);assert.match(gate,/visual-check=>.*all RU=case source_units\|nonvisual_request_units/);assert.match(gate,/else both=\[\];no RU trace/);assert.match(gate,/navigate\|click/);assert.match(gate,/reload=navigate\+inspect/)
+  assert.match(gate,/verification_cases/);assert.match(gate,/source_units:RU\[\]/);assert.match(gate,/visual-check=>.*RU=source_units\|nonvisual_request_units/);assert.match(gate,/no visual=>cases\/RU=\[\]/);assert.match(gate,/navigate\|click/);assert.match(gate,/reload=navigate\+inspect/)
 })
 
 test('duplicate verification case IDs fail semantic admission and resume may preserve current traced case set',()=>{

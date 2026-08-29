@@ -31,6 +31,8 @@ export interface SemanticIntentAssessment {
     nonvisual_request_units: string[];
     capability_request_units?: Partial<Record<SemanticCapability, string[]>>;
     likely_targets: string[];
+    /** Exact semantic write surface. likely_targets may additionally contain read/context/source-of-truth paths. */
+    mutation_targets?: string[];
     intent_signals: HiMethodologySignalName[];
     suppressed_intent_signals: HiMethodologySignalName[];
     constraint_atoms: ConstraintAtomDraft[];
@@ -50,14 +52,14 @@ export interface AdaptiveVerificationResolution {
  */
 export declare function resolveAdaptiveVerificationAssessment(assessment: SemanticIntentAssessment, userText: string, repo?: RepoContext): AdaptiveVerificationResolution;
 export declare function semanticTargets(value: unknown, max?: number): string[];
-export declare function materialSemanticTargets(assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'likely_verification' | 'intent_signals'>): string[];
+export declare function materialSemanticTargets(assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'mutation_targets' | 'likely_verification' | 'intent_signals'>): string[];
 /**
  * A path may be technically relevant without being an implementation target.
  * Keep explicit preservation / mutation-denial directives out of requiredTargets
  * while retaining the path in likelyTargets for context, safety and verification.
  */
 export declare function preservationOnlyTargets(userText: string): string[];
-export declare function userRequiredMaterialTargets(userText: string, assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'likely_verification' | 'intent_signals'>): string[];
+export declare function userRequiredMaterialTargets(userText: string, assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'mutation_targets' | 'likely_verification' | 'intent_signals'>): string[];
 export declare function provisionalIntent(text: string, repo?: RepoContext): NormalizedMissionIntent;
 export declare function parseSemanticIntentAssessment(raw: unknown): SemanticIntentAssessment;
 export declare function assessedIntent(current: NormalizedMissionIntent, assessment: SemanticIntentAssessment): NormalizedMissionIntent;

@@ -130,7 +130,7 @@ test('parent idle preserves an existing canonical operational HumanDecision inst
 
 test('semantic gate separates capability IDs from methodology intent signals',()=>{
   const store=new MissionStore(),m=store.start('m12-process-gate','start a development server and keep it running')
-  const gate=renderSemanticAssessmentGate(m);assert.match(gate,/interactive-process=persistent/);assert.match(gate,/capability-named signals reject/)
+  const gate=renderSemanticAssessmentGate(m);assert.match(gate,/interactive-process=persistent/);assert.match(gate,/signals unknown\/capability-named reject/)
 })
 
 test('parent process execution is blocked even when it names an existing worker',async()=>{

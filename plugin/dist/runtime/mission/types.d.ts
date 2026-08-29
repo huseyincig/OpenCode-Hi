@@ -186,6 +186,7 @@ export interface SemanticAssessmentState {
 export interface NormalizedMissionIntent {
     objective: string;
     likelyTargets?: string[];
+    mutationTargets?: string[];
     taskKind: string;
     scope: 'local' | 'multi-file' | 'repo-wide' | 'external' | 'multi-stream';
     risk: Risk;

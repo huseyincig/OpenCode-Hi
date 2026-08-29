@@ -79,10 +79,11 @@ function projectContainedExistingTarget(root, target) {
 }
 function repositoryBoundAssessment(root, userText, assessment) {
     const explicit = new Set(technicalTargets(userText).map(target => normalizeBoundedProjectPath(target)).filter((target) => Boolean(target)));
-    const likely_targets = assessment.likely_targets.filter(target => { if (/^https?:\/\//i.test(target))
+    const retain = (target) => { if (/^https?:\/\//i.test(target))
         return true; const bounded = normalizeBoundedProjectPath(target), pathShaped = Boolean(bounded && technicalTargets(target).some(candidate => candidate === target || normalizeBoundedProjectPath(candidate) === bounded)); if (!pathShaped)
-        return true; return Boolean(bounded && (explicit.has(bounded) || (existsSync(resolve(root, bounded)) && projectContainedExistingTarget(root, bounded)))); });
-    return likely_targets.length === assessment.likely_targets.length ? assessment : { ...assessment, likely_targets };
+        return true; return Boolean(bounded && (explicit.has(bounded) || (existsSync(resolve(root, bounded)) && projectContainedExistingTarget(root, bounded)))); };
+    const likely_targets = assessment.likely_targets.filter(retain), mutation_targets = assessment.mutation_targets?.filter(retain);
+    return likely_targets.length === assessment.likely_targets.length && mutation_targets?.length === assessment.mutation_targets?.length ? assessment : { ...assessment, likely_targets, ...(assessment.mutation_targets === undefined ? {} : { mutation_targets: mutation_targets ?? [] }) };
 }
 function initialNonMaterialExecutionIndicators(assessment) {
     if (assessment.material || assessment.message_kind !== 'non-material')
