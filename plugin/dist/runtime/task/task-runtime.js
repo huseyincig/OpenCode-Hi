@@ -190,6 +190,23 @@ function unresolvedResultOwner(m, obligationIds, excludeTaskId) {
     const owned = new Set(obligationIds);
     return m.execution.tasks.find(task => task.id !== excludeTaskId && task.status !== 'cancelled' && task.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT'].includes(task.result.status) && task.obligation_ids.some(id => owned.has(id)));
 }
+function cancellationRecoveryBlockedOwner(m, obligationIds, excludeTaskId) {
+    if (!obligationIds.length)
+        return undefined;
+    const owned = new Set(obligationIds);
+    return m.execution.tasks.find(task => {
+        if (task.id === excludeTaskId || !task.obligation_ids.some(id => owned.has(id)) || ['completed', 'failed', 'cancelled'].includes(task.status))
+            return false;
+        const worker = m.execution.workers.find(item => item.id === task.worker_id || item.task_id === task.id);
+        if (!worker?.session_id || ['completed', 'failed', 'cancelled'].includes(worker.status))
+            return false;
+        const blocked = [...m.execution.ledger].reverse().find(event => event.type === 'worker.cancel.blocked' && event.task_id === task.id && event.worker_id === worker.id && event.payload?.reason === 'abort-unavailable' && String(event.payload?.session_id ?? '') === worker.session_id && Number(event.payload?.attempt) === worker.attempt);
+        if (!blocked)
+            return false;
+        const freshProgress = m.execution.ledger.some(event => event.at > blocked.at && ((event.worker_id === worker.id && event.type === 'assistant.progress-observed') || (event.type === 'tool.operation-result' && String(event.payload?.session_id ?? '') === worker.session_id)));
+        return !freshProgress;
+    });
+}
 export class TaskRuntime {
     childHost;
     registry;
@@ -906,6 +923,12 @@ export class TaskRuntime {
             appendLedger(m, 'task.start.reconcile-required', { task_id: unresolvedOwner.id, payload: { requested_role: role, requested_obligations: obligationIds, unresolved_status: unresolvedOwner.result?.status } });
             throw new Error(`Canonical task ${unresolvedOwner.id} has unresolved ${unresolvedOwner.result?.status}; resume/reconcile that exact task before starting new work for obligation(s): ${obligationIds.filter(id => unresolvedOwner.obligation_ids.includes(id)).join(', ')}`);
         }
+        const cancelBlockedOwner = input.resumeTaskId ? undefined : cancellationRecoveryBlockedOwner(m, obligationIds, existing?.task_id);
+        if (cancelBlockedOwner) {
+            const ownerWorker = m.execution.workers.find(w => w.id === cancelBlockedOwner.worker_id || w.task_id === cancelBlockedOwner.id);
+            appendLedger(m, 'task.start.cancel-recovery-blocked', { task_id: cancelBlockedOwner.id, worker_id: ownerWorker?.id, payload: { requested_role: role, requested_obligations: obligationIds, reason: 'prior-cancel-abort-unavailable', policy: 'live-owner-must-settle-before-replacement' } });
+            throw new Error(`Canonical task ${cancelBlockedOwner.id} still owns obligation(s) after cancellation could not be confirmed by the host. Reconcile that exact live task/session before starting replacement work for obligation(s): ${obligationIds.filter(id => cancelBlockedOwner.obligation_ids.includes(id)).join(', ')}`);
+        }
         const resumeCapable = Boolean(existing?.session_id), clearanceFreshness = explorationClearanceFreshness(this.projectRoot, m), implementationOwner = !implicitProcessSupport && obligationIds.some(id => m.execution.obligations.some(o => o.id === id && o.kind === 'implementation' && o.status === 'open')), unresolvedRepositoryAmbiguity = m.identity.intent.ambiguity !== 'none' && m.execution.obligations.some(o => o.kind === 'analysis' && o.status === 'open'), exactCorrectiveImplementationResume = Boolean(input.resumeTaskId && resumeTask && resumeWorker?.session_id && implementationOwner && resumeTask.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(resumeTask.result.status)), staleExplorationClearance = clearanceFreshness.required && !clearanceFreshness.current, preflight = evaluateTaskPreconditions({ role, implementation: implementationOwner, dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || this.childHost.capabilities.create, prompt: this.childHost.capabilities.prompt }, hostConfig, methodologyResourceFailures, methodologyAdmissionFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', unresolvedRepositoryAmbiguity, staleExplorationClearance, correctiveResume: exactCorrectiveImplementationResume, authorityRequired: false });
         reconcileTaskCapabilityPreconditions(m, role, preflight);
         appendLedger(m, 'task.preflight', { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, corrective_resume: exactCorrectiveImplementationResume, items: preflight.items.slice(0, 12) } });
@@ -1426,6 +1449,11 @@ export class TaskRuntime {
             return { allowed: false, reason: 'active-worker-session-unverified', live_status: 'unknown', task_id: resolvedTask?.id, worker_id: worker.id };
         const observed = await this.observeWorkerLiveness(m, worker);
         const stall = this.busyNoProgressCancellationEvidence(m, worker);
+        const priorAbortBlock = [...m.execution.ledger].reverse().find(event => event.type === 'worker.cancel.blocked' && event.task_id === resolvedTask?.id && event.worker_id === worker.id && event.payload?.reason === 'abort-unavailable' && String(event.payload?.session_id ?? '') === worker.session_id && Number(event.payload?.attempt) === worker.attempt && event.at > stall.last_progress_at);
+        if ((observed.live_status === 'busy' || observed.live_status === 'retry') && priorAbortBlock) {
+            appendLedger(m, 'worker.cancel.admission-blocked', { task_id: resolvedTask?.id, worker_id: worker.id, payload: { reason: 'cancel-recovery-abort-unavailable', live_status: observed.live_status, session_id: worker.session_id, attempt: worker.attempt, prior_blocked_at: priorAbortBlock.at, retry_same_cancel: false } });
+            return { allowed: false, reason: 'cancel-recovery-abort-unavailable', live_status: observed.live_status, task_id: resolvedTask?.id, worker_id: worker.id };
+        }
         if ((observed.live_status === 'busy' || observed.live_status === 'retry') && stall.admitted) {
             appendLedger(m, 'worker.cancel.stall-admitted', { task_id: resolvedTask?.id, worker_id: worker.id, payload: { reason: 'bounded-busy-no-progress-stall', live_status: observed.live_status, session_id: worker.session_id, attempt: worker.attempt, timeouts: stall.timeouts, window_ms: stall.window_ms, last_progress_at: stall.last_progress_at } });
             return { allowed: true, reason: 'bounded-busy-no-progress-stall', live_status: observed.live_status, task_id: resolvedTask?.id, worker_id: worker.id };
@@ -1450,7 +1478,7 @@ export class TaskRuntime {
         if (!quiescentRetained) {
             const stopped = await this.abortNativeSession(m, worker.session_id, 'worker-cancel', worker.id, worker.task_id);
             if (!stopped) {
-                appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable', host_status: hostStatus, stored_status: worker.status } });
+                appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable', host_status: hostStatus, stored_status: worker.status, session_id: worker.session_id, attempt: worker.attempt, retry_same_cancel: false } });
                 return false;
             }
         }

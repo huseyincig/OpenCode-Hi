@@ -165,6 +165,25 @@ test('repeated bounded busy/no-progress awaits admit explicit stalled-worker can
   assert.equal(await runtime.cancel(m,started.task_id),true);assert.equal(aborts,1)
 })
 
+test('abort-unavailable after admitted bounded stall fences identical cancel retry and overlapping replacement ownership',async()=>{
+  let aborts=0
+  const child=makeChildSessionPort({status:async()=>'busy',abort:async()=>{aborts++;return'unavailable'}})
+  const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
+  const runtime=new TaskRuntime(child,registry,scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,async()=>({text:'',activity:undefined}))
+  const m=startAssessedMission(new MissionStore(),'await-cancel-abort-unavailable','inspect repository before implementation',{task_kind:'bug-fix',scope:'multi-file',required_capabilities:['repository-analysis','implementation'],likely_verification:['targeted-tests']})
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+  const started=await runtime.start(m,{objective:'bounded repository analysis',role:'repository-explorer',scope:['src/runtime/task/task-runtime.ts'],obligationIds:[analysis.id],requiredEvidence:['targeted-tests']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(worker)
+  const base=Date.now()-130_000;worker.started_at=base-5_000
+  for(const [i,at] of [base,base+65_000,base+125_000].entries())m.execution.ledger.push({id:`stall-abort-${i}`,at,type:'worker.await-timeout',task_id:started.task_id,worker_id:started.worker_id,payload:{session_id:worker.session_id,attempt:worker.attempt,timeout_ms:60_000,live_status:'busy',progress_observed:false}})
+  const admitted=await runtime.modelCancelAdmission(m,started.task_id);assert.equal(admitted.reason,'bounded-busy-no-progress-stall')
+  assert.equal(await runtime.cancel(m,started.task_id),false);assert.equal(aborts,1)
+  const retry=await runtime.modelCancelAdmission(m,started.task_id)
+  assert.deepEqual({allowed:retry.allowed,reason:retry.reason},{allowed:false,reason:'cancel-recovery-abort-unavailable'});assert.equal(aborts,1,'admission recheck must not replay abort')
+  await assert.rejects(()=>runtime.start(m,{objective:'different wording for the same repository clearance',role:'repository-explorer',scope:['src/runtime/task/task-runtime.ts'],obligationIds:[analysis.id],requiredEvidence:['targeted-tests']}),/still owns obligation\(s\) after cancellation could not be confirmed/i)
+  assert.equal(m.execution.tasks.length,1,'replacement task must not be materialized while prior live owner is unresolved')
+})
+
 test('fresh child activity invalidates prior busy/no-progress await stall evidence',async()=>{
   let activity
   const child=makeChildSessionPort({status:async()=>'busy',abort:async()=> 'client'})

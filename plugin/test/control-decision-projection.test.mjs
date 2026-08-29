@@ -118,14 +118,32 @@ test('hi_task_await returns terminal WorkerResult and canonical mission control 
 
 
 
-test('hi_task_await exposes cancellation only after bounded busy/no-progress stall admission',async()=>{
+test('hi_task_await preflights already-admitted bounded stall without another blocking await',async()=>{
   const {store,m}=localMission('phase6-await-stall')
-  const worker={id:'w-stalled',session_id:'s-stalled',attempt:1},task={id:'t-stalled',status:'running'}
-  const tasks={awaitTask:async()=>({status:'running',terminal:false,changed:false,timed_out:true,live_status:'busy',progress_observed:false,worker,task}),modelCancelAdmission:async()=>({allowed:true,reason:'bounded-busy-no-progress-stall',task_id:task.id,worker_id:worker.id,live_status:'busy'})}
+  const worker={id:'w-stalled',session_id:'s-stalled',attempt:1},task={id:'t-stalled',status:'running'};let awaits=0
+  const tasks={awaitTask:async()=>{awaits++;return{status:'running',terminal:false,changed:false,timed_out:true,live_status:'busy',progress_observed:false,worker,task}},modelCancelAdmission:async()=>({allowed:true,reason:'bounded-busy-no-progress-stall',task_id:task.id,worker_id:worker.id,live_status:'busy'})}
   const processRuntime={stopMission:async()=>0,list:()=>[]},state={config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.25'}
   const {toolSurface}=createHiToolSurface({state,store,tasks,processRuntime,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}})
-  const out=JSON.parse(await toolSurface.hi_task_await.execute({id:task.id,timeout_ms:1},{sessionID:m.identity.session_id}))
-  assert.equal(out.retry_same_await,false);assert.deepEqual(out.recovery,{action:'hi_task_cancel',reason:'bounded-busy-no-progress-stall',task_id:task.id,worker_id:worker.id,retry_same_await:false})
+  const out=JSON.parse(await toolSurface.hi_task_await.execute({id:task.id,timeout_ms:60_000},{sessionID:m.identity.session_id}))
+  assert.equal(awaits,0);assert.equal(out.retry_same_await,false);assert.deepEqual(out.recovery,{action:'hi_task_cancel',reason:'bounded-busy-no-progress-stall',task_id:task.id,worker_id:worker.id,retry_same_await:false})
+})
+
+test('hi_task_await returns immediately after unconfirmed stall cancellation instead of repeating await/cancel',async()=>{
+  const {store,m}=localMission('phase6-await-abort-unavailable');let awaits=0
+  const tasks={awaitTask:async()=>{awaits++;throw new Error('must not await')},modelCancelAdmission:async()=>({allowed:false,reason:'cancel-recovery-abort-unavailable',task_id:'t-stalled',worker_id:'w-stalled',live_status:'busy'})}
+  const processRuntime={stopMission:async()=>0,list:()=>[]},state={config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.25'}
+  const {toolSurface}=createHiToolSurface({state,store,tasks,processRuntime,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}})
+  const out=JSON.parse(await toolSurface.hi_task_await.execute({id:'t-stalled',timeout_ms:60_000},{sessionID:m.identity.session_id}))
+  assert.equal(awaits,0);assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'cancel-recovery-abort-unavailable');assert.equal(out.retry_same_await,false);assert.equal(out.retry_same_cancel,false)
+})
+
+test('hi_task_cancel returns structured abort-unavailable fence when admitted cancellation cannot settle',async()=>{
+  const {store,m}=localMission('phase6-cancel-abort-unavailable');let admissions=0,cancels=0
+  const tasks={modelCancelAdmission:async()=>{admissions++;return admissions===1?{allowed:true,reason:'bounded-busy-no-progress-stall',task_id:'t-stalled',worker_id:'w-stalled',live_status:'busy'}:{allowed:false,reason:'cancel-recovery-abort-unavailable',task_id:'t-stalled',worker_id:'w-stalled',live_status:'busy'}},cancel:async()=>{cancels++;return false}}
+  const processRuntime={stopMission:async()=>0,list:()=>[]},state={config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.25'}
+  const {toolSurface}=createHiToolSurface({state,store,tasks,processRuntime,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}})
+  const out=JSON.parse(await toolSurface.hi_task_cancel.execute({id:'t-stalled'},{sessionID:m.identity.session_id}))
+  assert.equal(cancels,1);assert.equal(admissions,2);assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'cancel-recovery-abort-unavailable');assert.equal(out.retry_same_cancel,false);assert.equal(out.retry_same_await,false)
 })
 
 test('context artifact tool refuses canonical evidence-shaped kinds',async()=>{
