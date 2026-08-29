@@ -82,4 +82,22 @@ export function assertVerificationRequestTrace(text, assessment) {
     if (!visualRefs.size)
         throw new Error(`visual-check requires at least one request unit mapped to verification_cases; ${challenge()}`);
 }
+export function assertCapabilityRequestTrace(text, assessment) {
+    const mapping = assessment.capability_request_units ?? {}, entries = Object.entries(mapping);
+    const units = semanticRequestUnits(text), unitMap = new Map(units.map(unit => [unit.id, unit])), challenge = () => renderRequestUnitChallenge(text);
+    for (const [cap, ids] of entries) {
+        for (const id of ids) {
+            if (!unitMap.has(id))
+                throw new Error(`capability_request_units.${cap} contains unknown id ${id}; ${challenge()}`);
+        }
+    }
+    const exhaustive = assessment.material && assessment.message_kind === 'mission' && assessment.scope === 'multi-stream' && units.length > 1;
+    if (!exhaustive)
+        return;
+    if (!entries.length)
+        throw new Error(`multi-stream semantic contract requires capability_request_units; ${challenge()}`);
+    const covered = new Set(entries.flatMap(([, ids]) => ids)), missing = units.map(unit => unit.id).filter(id => !covered.has(id));
+    if (missing.length)
+        throw new Error(`capability request trace incomplete; unclassified unit(s): ${missing.join(',')}; ${challenge()}`);
+}
 export function cloneVerificationCases(cases) { return cases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })); }

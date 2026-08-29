@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {parseSemanticIntentAssessment} from '../dist/runtime/intent/semantic-assessment.js'
-import {semanticRequestUnits,assertVerificationRequestTrace} from '../dist/runtime/intent/request-units.js'
+import {semanticRequestUnits,assertCapabilityRequestTrace,assertVerificationRequestTrace} from '../dist/runtime/intent/request-units.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {renderSemanticAssessmentGate} from '../dist/runtime/intent/semantic-assessment-gate.js'
 
@@ -34,6 +34,26 @@ test('visual request trace deterministically rejects silent user-outcome underco
   assert.throws(()=>assertVerificationRequestTrace(text,under),error=>/request trace incomplete; unclassified unit\(s\): ru5,ru6/.test(String(error))&&/ru5:"Verify accessibility names"/.test(String(error))&&/ru6:"focus visibility"/.test(String(error)))
   const complete=parseSemanticIntentAssessment({...base,verification_cases:[...under.verification_cases,{id:'vc_accessibility',subject:'accessible names and visible focus',required_browser_actions:['key','inspect'],source_units:['ru5','ru6']}],nonvisual_request_units:['ru1']})
   assert.doesNotThrow(()=>assertVerificationRequestTrace(text,complete))
+})
+
+test('multi-stream request capability trace fails closed and restores specialist documentation ownership',()=>{
+  const text=`Fix three independent defects.
+- Repair API pagination.
+- Repair UI empty state and update README docs.
+- Add the API test.
+- Verify browser behavior and docs parity.`
+  const units=semanticRequestUnits(text);assert.deepEqual(units.map(x=>x.id),['ru1','ru2','ru3','ru4','ru5'])
+  const incomplete=parseSemanticIntentAssessment({...base,scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation','test-authoring','visual-qa'],verification_cases:[
+    {id:'vc_ui',subject:'UI empty-state',required_browser_actions:['open','type','inspect'],source_units:['ru3','ru5']},
+  ],nonvisual_request_units:['ru1','ru2','ru4'],capability_request_units:{implementation:['ru2','ru3'],documentation:['ru3','ru5'],'test-authoring':['ru4'],verification:['ru5'],'multi-stream-delegation':['ru1']}})
+  assert.ok(incomplete.required_capabilities.includes('documentation'))
+  assert.doesNotThrow(()=>assertCapabilityRequestTrace(text,incomplete))
+  const missing=parseSemanticIntentAssessment({...base,scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],verification_cases:[
+    {id:'vc_ui',subject:'UI empty-state',required_browser_actions:['open','type','inspect'],source_units:['ru3','ru5']},
+  ],nonvisual_request_units:['ru1','ru2','ru4'],capability_request_units:{implementation:['ru2','ru3'],documentation:['ru3','ru5'],'multi-stream-delegation':['ru1']}})
+  assert.throws(()=>assertCapabilityRequestTrace(text,missing),/capability request trace incomplete; unclassified unit\(s\): ru4/)
+  const store=new MissionStore(process.cwd()),m=store.start('multi-stream-capability-trace',text);store.applyInitialSemanticAssessment('multi-stream-capability-trace',incomplete)
+  assert.ok(m.execution.obligations.some(o=>o.id==='o-documentation'&&o.kind==='documentation'))
 })
 
 test('request trace rejects unknown, overlapping and untraced visual ownership',()=>{

@@ -5,7 +5,7 @@ import { formatUserMissionStatus } from '../ledger/status.js';
 import { evaluatePreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
 import { clearCapabilityUnavailable, firstCapabilityBlocker, markCapabilityUnavailable } from '../readiness/capability-failure.js';
 import { parseSemanticIntentAssessment } from '../intent/semantic-assessment.js';
-import { assertVerificationRequestTrace, renderRequestUnitChallenge } from '../intent/request-units.js';
+import { assertCapabilityRequestTrace, assertVerificationRequestTrace, renderRequestUnitChallenge } from '../intent/request-units.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { redactProviderContext } from '../privacy/boundary.js';
@@ -230,6 +230,7 @@ export function createHiToolSurface(input) {
             return JSON.stringify({ status: 'STALE_ASSESSMENT', expected_revision: m.identity.semantic_assessment.revision }); try {
             const assessment = parseSemanticIntentAssessment(String(a.assessment_json)), phase = m.identity.semantic_assessment.phase, pendingText = m.identity.semantic_assessment.pending_text;
             assertVerificationRequestTrace(pendingText, assessment);
+            assertCapabilityRequestTrace(pendingText, assessment);
             const next = phase === 'initial' ? store.applyInitialSemanticAssessment(c.sessionID, assessment) : store.applyFollowupSemanticAssessment(c.sessionID, assessment);
             let reconciledWorkers = 0;
             if (phase === 'followup') {
@@ -247,7 +248,7 @@ export function createHiToolSurface(input) {
             return JSON.stringify({ status: assessment.material ? 'ASSESSED' : 'NON_MATERIAL', phase, revision: next.identity.semantic_assessment.revision, message_kind: assessment.message_kind, task_kind: next.identity.intent.taskKind, scope: next.identity.intent.scope, risk: next.identity.risk, methodologies: next.methodology.methodology_needs.map(x => x.name), reconciled_workers: reconciledWorkers, gates: syncMissionGates(next, projectRoot).filter(g => g.status !== 'closed').map(g => ({ id: g.id, status: g.status, reason: g.reason })) });
         }
         catch (error) {
-            const message = String(error), traceRelated = /verification_cases|source_units|nonvisual_request_units|visual-check|request trace|request unit/i.test(message), request_unit_challenge = traceRelated ? renderRequestUnitChallenge(m.identity.semantic_assessment.pending_text) : undefined;
+            const message = String(error), traceRelated = /verification_cases|source_units|nonvisual_request_units|capability_request_units|visual-check|request trace|request unit/i.test(message), request_unit_challenge = traceRelated ? renderRequestUnitChallenge(m.identity.semantic_assessment.pending_text) : undefined;
             appendLedger(m, 'semantic.assessment-rejected', { payload: { revision: m.identity.semantic_assessment.revision, error: message, ...(request_unit_challenge ? { request_unit_challenge } : {}) } });
             return JSON.stringify({ status: 'INVALID_ASSESSMENT', error: message, ...(request_unit_challenge ? { request_unit_challenge } : {}) });
         } } });

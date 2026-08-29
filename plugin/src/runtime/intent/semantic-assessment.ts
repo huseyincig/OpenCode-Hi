@@ -38,6 +38,7 @@ export interface SemanticIntentAssessment{
   verification_ceiling:boolean
   verification_cases:VerificationCase[]
   nonvisual_request_units:string[]
+  capability_request_units?:Partial<Record<SemanticCapability,string[]>>
   likely_targets:string[]
   intent_signals:HiMethodologySignalName[]
   suppressed_intent_signals:HiMethodologySignalName[]
@@ -131,6 +132,7 @@ export function provisionalIntent(text:string,repo?:RepoContext):NormalizedMissi
 function stringList(value:unknown,max=40):string[]{return Array.isArray(value)?[...new Set(value.filter(x=>typeof x==='string').map(x=>String(x).trim()).filter(Boolean))].slice(0,max):[]}
 function enumList<T extends readonly string[]>(value:unknown,allowed:T,max=40,field='semantic_enum'):T[number][]{const items=stringList(value,max),set=new Set<string>(allowed),unknown=items.filter(x=>!set.has(x));if(unknown.length)throw new Error(`unsupported ${field} value(s): ${unknown.join(', ')}`);return items as T[number][]}
 function requestUnitIdList(value:unknown,max=24):string[]{if(value===undefined)return[];if(!Array.isArray(value)||value.some(item=>typeof item!=='string'))throw new Error('nonvisual_request_units must be an array of RU id strings (for example [\"ru1\"])');const items=stringList(value,max),invalid=items.filter(id=>!/^ru[1-9][0-9]*$/.test(id));if(invalid.length)throw new Error(`invalid nonvisual_request_units id(s): ${invalid.join(', ')}`);return items}
+function capabilityRequestUnitMap(value:unknown):Partial<Record<SemanticCapability,string[]>>{if(value===undefined)return{};if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('capability_request_units must be an object mapping capability names to RU id arrays');const out:Partial<Record<SemanticCapability,string[]>>={},allowed=new Set<string>(SEMANTIC_CAPABILITIES);for(const [cap,raw] of Object.entries(value as Record<string,unknown>)){if(!allowed.has(cap))throw new Error(`capability_request_units contains unsupported capability: ${cap}`);if(!Array.isArray(raw)||raw.length===0||raw.some(item=>typeof item!=='string'))throw new Error(`capability_request_units.${cap} must be a non-empty RU id array`);const ids=[...new Set(raw.map(x=>String(x).trim()).filter(Boolean))];const invalid=ids.filter(id=>!/^ru[1-9][0-9]*$/.test(id));if(invalid.length)throw new Error(`capability_request_units.${cap} contains invalid RU id(s): ${invalid.join(', ')}`);out[cap as SemanticCapability]=ids}return out}
 function semanticVerificationCase(value:unknown,index:number):VerificationCase{let candidate=value;if(value&&typeof value==='object'&&!Array.isArray(value)){const raw=value as Record<string,unknown>;if(typeof raw.id==='string'){let id=raw.id.trim().toLowerCase();if(/^vc-[a-z0-9_-]+$/.test(id))id=`vc_${id.slice(3)}`;if(/^vc_[a-z0-9_-]+$/.test(id))id=`vc_${id.slice(3).replace(/_/g,'-')}`;candidate={...raw,id}}}const issue=verificationCaseValidationError(candidate);if(issue)throw new Error(`verification_cases[${index}]: ${issue}`);return candidate as VerificationCase}
 function intentSignalList(value:unknown):HiMethodologySignalName[]{
   const items=stringList(value,40),invalid=items.filter(name=>{
@@ -143,7 +145,7 @@ function intentSignalList(value:unknown):HiMethodologySignalName[]{
 export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessment{
   const x=typeof raw==='string'?JSON.parse(raw):raw
   if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('semantic assessment must be a JSON object')
-  const v=x as Record<string,unknown>,allowedKeys=new Set(['material','message_kind','task_kind','scope','risk','ambiguity','dependency_class','required_capabilities','requested_external_actions','likely_verification','user_verification','verification_ceiling','verification_cases','nonvisual_request_units','likely_targets','intent_signals','suppressed_intent_signals','constraint_atoms']),unknownKeys=Object.keys(v).filter(key=>!allowedKeys.has(key))
+  const v=x as Record<string,unknown>,allowedKeys=new Set(['material','message_kind','task_kind','scope','risk','ambiguity','dependency_class','required_capabilities','requested_external_actions','likely_verification','user_verification','verification_ceiling','verification_cases','nonvisual_request_units','capability_request_units','likely_targets','intent_signals','suppressed_intent_signals','constraint_atoms']),unknownKeys=Object.keys(v).filter(key=>!allowedKeys.has(key))
   if(unknownKeys.length){const hint=unknownKeys.includes('visual_request_units')?'; use top-level verification_cases[] and nonvisual_request_units as RU id strings':'';throw new Error(`unsupported semantic assessment key(s): ${unknownKeys.join(', ')}${hint}`)}
   const taskKinds=['implementation','bug-fix','diagnosis','review','performance','release-readiness'] as const
   const scopes=['local','multi-file','repo-wide','external','multi-stream'] as const
@@ -162,7 +164,8 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const inferredVerification=enumList(v.likely_verification,SEMANTIC_VERIFICATION_KINDS,12,'likely_verification'),userVerification=enumList(v.user_verification,SEMANTIC_VERIFICATION_KINDS,12,'user_verification'),verificationCeiling=v.verification_ceiling===true
   if(verificationCeiling&&!userVerification.length)throw new Error('verification_ceiling requires at least one explicit user_verification kind')
   const effectiveVerification=verificationCeiling?userVerification:[...new Set([...userVerification,...inferredVerification])]
-  const requiredCapabilities=enumList(v.required_capabilities,SEMANTIC_CAPABILITIES,40,'required_capabilities')
+  const requiredCapabilities=enumList(v.required_capabilities,SEMANTIC_CAPABILITIES,40,'required_capabilities'),capabilityRequestUnits=capabilityRequestUnitMap(v.capability_request_units)
+  for(const cap of Object.keys(capabilityRequestUnits) as SemanticCapability[])if(!requiredCapabilities.includes(cap))requiredCapabilities.push(cap)
   if(messageKind==='amendment'&&['implementation','bug-fix','performance'].includes(String(v.task_kind??''))&&!requiredCapabilities.includes('implementation'))throw new Error('message_kind=amendment for material implementation change requires required_capabilities to include implementation; use verification or resume when no implementation outcome is added/changed')
   const semanticSignals=intentSignalList(v.intent_signals)
   if(semanticSignals.includes('intent.external-source')&&!requiredCapabilities.includes('external-research'))requiredCapabilities.push('external-research')
@@ -173,7 +176,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:taskKind,scope,risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
-    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>semanticVerificationCase(item,index)):[],nonvisual_request_units:requestUnitIdList(v.nonvisual_request_units),likely_targets:semanticTargets(v.likely_targets,20),
+    required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>semanticVerificationCase(item,index)):[],nonvisual_request_units:requestUnitIdList(v.nonvisual_request_units),capability_request_units:capabilityRequestUnits,likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],
   }

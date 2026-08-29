@@ -29,6 +29,7 @@ export interface SemanticIntentAssessment {
     verification_ceiling: boolean;
     verification_cases: VerificationCase[];
     nonvisual_request_units: string[];
+    capability_request_units?: Partial<Record<SemanticCapability, string[]>>;
     likely_targets: string[];
     intent_signals: HiMethodologySignalName[];
     suppressed_intent_signals: HiMethodologySignalName[];
