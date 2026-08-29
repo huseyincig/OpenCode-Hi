@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ### Fixed — Scenario 05 review authority settlement
+- Claim-link independent reviewer tasks to an open verification obligation when that exact verification contract requires `review-evidence`, while keeping unrelated technical/visual evidence off the reviewer execution contract. This lets one fresh source-bound reviewer observation satisfy both assurance and verification provenance without prose/context-artifact promotion.
 - Make semantic review explicitly report-only and classify review-plus-remediation as write-capable bug-fix/implementation work while retaining specialist review ownership.
 - Keep unavailable native process-lifecycle support task-local for obligation/evidence-free auxiliary process workers, so an optional PTY path cannot spuriously force the whole mission into user-action wait.
 - Ignore reviewer-shaped `findings[]` emitted by non-reviewer workers before canonical normalization so unauthorized metadata cannot poison task liveness or scheduler admission.

@@ -231,6 +231,31 @@ test('exact review obligation overrides semantic evidence aliases and does not i
   assert.ok(m.execution.ledger.some(e=>e.type==='task.evidence-contract-reconciled'&&e.task_id===undefined&&e.payload?.requested_evidence?.includes('visual-check')&&e.payload?.authoritative_evidence?.includes('review-evidence')))
 })
 
+test('explicit review owner also claim-links matching review-evidence verification without inheriting unrelated verification kinds',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('review-claim-link','repair security issue then independently review it')
+  assess(store,'review-claim-link',{task_kind:'bug-fix',scope:'local',risk:'high',required_capabilities:['implementation','security-review','verification'],likely_targets:['src/auth.ts'],likely_verification:['targeted-tests','review-evidence']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation&&review&&verification)
+  implementation.status='closed';implementation.closedAt=Date.now();verification.requiredEvidence=['targeted-tests','review-evidence']
+  const out=await runtime.start(m,{objective:'independently review the repaired auth surface',role:'security-reviewer',category:'critical',scope:['src/auth.ts'],requiredEvidence:['review-evidence'],obligationIds:[review.id]})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),text=JSON.stringify(prompts[0]);assert.ok(task)
+  assert.deepEqual(task.obligation_ids,[review.id,verification.id]);assert.deepEqual(task.requiredEvidence,['review-evidence'])
+  assert.match(text,/Verification contract: review-evidence/i);assert.doesNotMatch(text,/Verification contract: targeted-tests/i)
+})
+
+test('explicit reviewer ownership does not claim-link verification that does not require review evidence',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('review-no-unrelated-claim','repair dependency then run unrelated technical verification')
+  assess(store,'review-no-unrelated-claim',{task_kind:'bug-fix',scope:'local',risk:'high',required_capabilities:['implementation','security-review','verification'],likely_targets:['requirements.txt'],likely_verification:['targeted-tests']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation&&review&&verification)
+  implementation.status='closed';implementation.closedAt=Date.now();verification.requiredEvidence=['targeted-tests']
+  const out=await runtime.start(m,{objective:'independently review dependency security',role:'security-reviewer',category:'critical',scope:['requirements.txt'],requiredEvidence:['review-evidence'],obligationIds:[review.id]})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.ok(task)
+  assert.deepEqual(task.obligation_ids,[review.id]);assert.deepEqual(task.requiredEvidence,['review-evidence'])
+})
+
 test('process lifecycle is an exact task-level opt-in and survives child handoff',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
