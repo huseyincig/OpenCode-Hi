@@ -28,6 +28,7 @@ export interface SchedulingConflictSurface {
   scope:string[]
   writeSet:string[]
   readOnly:boolean
+  admissionEligible?:boolean
   createdAt:number
 }
 
@@ -39,6 +40,7 @@ export function evaluateSchedulingSurfaceConflicts(candidate:SchedulingConflictS
     const peerKey=`${peer.missionId}:${peer.executionUnitId}`,peerPrecedes=peer.createdAt<candidate.createdAt||(peer.createdAt===candidate.createdAt&&peerKey<candidateKey)
     if(peer.status!=='running'&&!peerPrecedes)continue
     if(peer.missionId===candidate.missionId&&dependencies.includes(peer.workNodeId))continue
+    if(candidate.readOnly&&!peer.readOnly&&peer.admissionEligible===false)continue
     const peerSurface=mutableSurface(peer.scope,peer.writeSet),overlap=overlaps(peerSurface,candidateSurface)
     if(!candidate.readOnly&&!peer.readOnly&&(!candidateSurface.length||!peerSurface.length)){blocking.push(peer.executionUnitId);reasons.push(reason('unknown-mutable-surface',peer.executionUnitId));continue}
     if(overlap.length&&!(candidate.readOnly&&peer.readOnly)){blocking.push(peer.executionUnitId);reasons.push(reason('mutable-surface-conflict',`${peer.executionUnitId}:${overlap.join(',')}`))}
@@ -54,8 +56,8 @@ export function evaluateSchedulingResourceCapacity(capacity:SchedulingSnapshot['
   return{ok:true}
 }
 function conflictDecision(snapshot:SchedulingSnapshot,unit:ExecutionUnit,nodeByID:Map<string,WorkNode>):{blocking:string[];reasons:Array<{code:SchedulingReasonCode;detail?:string}>}{
-  const unitNode=nodeByID.get(unit.workNodeId)!,candidate:SchedulingConflictSurface={executionUnitId:unit.id,missionId:snapshot.graph.missionId,workNodeId:unit.workNodeId,status:unitNode.status,scope:[...unit.scope],writeSet:[...unit.writeSet],readOnly:snapshot.unitTraits[unit.id]?.readOnly??false,createdAt:unitNode.createdAt},peers:SchedulingConflictSurface[]=[]
-  for(const other of snapshot.graph.executionUnits){const otherNode=nodeByID.get(other.workNodeId);if(!otherNode)continue;peers.push({executionUnitId:other.id,missionId:snapshot.graph.missionId,workNodeId:other.workNodeId,status:otherNode.status,scope:[...other.scope],writeSet:[...other.writeSet],readOnly:snapshot.unitTraits[other.id]?.readOnly??false,createdAt:otherNode.createdAt})}
+  const unitNode=nodeByID.get(unit.workNodeId)!,candidate:SchedulingConflictSurface={executionUnitId:unit.id,missionId:snapshot.graph.missionId,workNodeId:unit.workNodeId,status:unitNode.status,scope:[...unit.scope],writeSet:[...unit.writeSet],readOnly:snapshot.unitTraits[unit.id]?.readOnly??false,admissionEligible:snapshot.unitTraits[unit.id]?.admissionEligible,createdAt:unitNode.createdAt},peers:SchedulingConflictSurface[]=[]
+  for(const other of snapshot.graph.executionUnits){const otherNode=nodeByID.get(other.workNodeId);if(!otherNode)continue;peers.push({executionUnitId:other.id,missionId:snapshot.graph.missionId,workNodeId:other.workNodeId,status:otherNode.status,scope:[...other.scope],writeSet:[...other.writeSet],readOnly:snapshot.unitTraits[other.id]?.readOnly??false,admissionEligible:snapshot.unitTraits[other.id]?.admissionEligible,createdAt:otherNode.createdAt})}
   for(const peer of snapshot.peerUnits??[])peers.push({executionUnitId:peer.executionUnitId,missionId:peer.missionId,workNodeId:peer.workNodeId,status:peer.status,scope:[...peer.scope],writeSet:[...peer.writeSet],readOnly:peer.readOnly,createdAt:peer.createdAt})
   return evaluateSchedulingSurfaceConflicts(candidate,peers,unit.dependencies)
 }

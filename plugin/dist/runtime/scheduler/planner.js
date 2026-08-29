@@ -24,6 +24,8 @@ export function evaluateSchedulingSurfaceConflicts(candidate, peers, dependencie
             continue;
         if (peer.missionId === candidate.missionId && dependencies.includes(peer.workNodeId))
             continue;
+        if (candidate.readOnly && !peer.readOnly && peer.admissionEligible === false)
+            continue;
         const peerSurface = mutableSurface(peer.scope, peer.writeSet), overlap = overlaps(peerSurface, candidateSurface);
         if (!candidate.readOnly && !peer.readOnly && (!candidateSurface.length || !peerSurface.length)) {
             blocking.push(peer.executionUnitId);
@@ -58,12 +60,12 @@ export function evaluateSchedulingResourceCapacity(capacity, unitID, binding) {
     return { ok: true };
 }
 function conflictDecision(snapshot, unit, nodeByID) {
-    const unitNode = nodeByID.get(unit.workNodeId), candidate = { executionUnitId: unit.id, missionId: snapshot.graph.missionId, workNodeId: unit.workNodeId, status: unitNode.status, scope: [...unit.scope], writeSet: [...unit.writeSet], readOnly: snapshot.unitTraits[unit.id]?.readOnly ?? false, createdAt: unitNode.createdAt }, peers = [];
+    const unitNode = nodeByID.get(unit.workNodeId), candidate = { executionUnitId: unit.id, missionId: snapshot.graph.missionId, workNodeId: unit.workNodeId, status: unitNode.status, scope: [...unit.scope], writeSet: [...unit.writeSet], readOnly: snapshot.unitTraits[unit.id]?.readOnly ?? false, admissionEligible: snapshot.unitTraits[unit.id]?.admissionEligible, createdAt: unitNode.createdAt }, peers = [];
     for (const other of snapshot.graph.executionUnits) {
         const otherNode = nodeByID.get(other.workNodeId);
         if (!otherNode)
             continue;
-        peers.push({ executionUnitId: other.id, missionId: snapshot.graph.missionId, workNodeId: other.workNodeId, status: otherNode.status, scope: [...other.scope], writeSet: [...other.writeSet], readOnly: snapshot.unitTraits[other.id]?.readOnly ?? false, createdAt: otherNode.createdAt });
+        peers.push({ executionUnitId: other.id, missionId: snapshot.graph.missionId, workNodeId: other.workNodeId, status: otherNode.status, scope: [...other.scope], writeSet: [...other.writeSet], readOnly: snapshot.unitTraits[other.id]?.readOnly ?? false, admissionEligible: snapshot.unitTraits[other.id]?.admissionEligible, createdAt: otherNode.createdAt });
     }
     for (const peer of snapshot.peerUnits ?? [])
         peers.push({ executionUnitId: peer.executionUnitId, missionId: peer.missionId, workNodeId: peer.workNodeId, status: peer.status, scope: [...peer.scope], writeSet: [...peer.writeSet], readOnly: peer.readOnly, createdAt: peer.createdAt });

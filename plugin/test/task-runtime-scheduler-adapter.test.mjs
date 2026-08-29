@@ -94,7 +94,7 @@ test('new dispatch admission ignores retained waiting results while exact correc
   const m=mission('adapter-waiting-starvation');m.execution.execution_mode='single';m.execution.topology={mode:'single-agent',parallelism:1,reason:['test']}
   const writerTask=createTask(m,{objective:'review docs',role:'technical-writer',category:'documentation',scope:['CHANGELOG.md','packages/cli/index.js']}),writer=createWorker(m,writerTask,'p/m')
   writerTask.created_at=10;writerTask.updated_at=10;writerTask.status='waiting';writerTask.result={status:'FIX_REQUIRED',summary:'reconcile bounded scope expansion',changed_files:['CHANGELOG.md'],evidence:[],open_issues:['diff-cleanliness'],needs_context:['reconcile']};writer.status='ready';writer.session_id='writer-session';writer.attempt=2
-  const reviewTask=createTask(m,{objective:'independent dependency review',role:'security-reviewer',category:'deep',scope:['packages/cli/package.json']}),reviewer=createWorker(m,reviewTask,'p/m')
+  const reviewTask=createTask(m,{objective:'independent dependency review',role:'security-reviewer',category:'deep',scope:['packages/cli']}),reviewer=createWorker(m,reviewTask,'p/m')
   reviewTask.created_at=20;reviewTask.updated_at=20;reviewTask.status='queued';reviewer.status='queued'
   const scheduler=createConcurrencyPolicySource(()=>({global:4,providers:{p:4},models:{'p/m':4}}))
   assert.equal(taskRuntimeAdmittedModel(m,reviewer,['p/m'],scheduler),'p/m','retained waiting result must not consume a new-dispatch admission slot')

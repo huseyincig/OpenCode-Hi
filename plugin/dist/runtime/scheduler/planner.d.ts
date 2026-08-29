@@ -7,6 +7,7 @@ export interface SchedulingConflictSurface {
     scope: string[];
     writeSet: string[];
     readOnly: boolean;
+    admissionEligible?: boolean;
     createdAt: number;
 }
 /** One pure mutable-surface policy shared by child scheduling and parent direct-write admission. */

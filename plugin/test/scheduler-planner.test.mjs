@@ -31,6 +31,16 @@ test('planner preserves parallelSafety mutable-surface behavior while allowing r
   plan=planScheduling(snapshot(m,{traits:{[unitID(a)]:{readOnly:true},[unitID(b)]:{readOnly:true}}}));assert.equal(decision(plan,unitID(b)).disposition,'RUNNABLE')
 })
 
+test('read-only review ignores a retained non-admissible writer but new writers remain serialized',()=>{
+  const m=mission('retained-writer-review'),writer=createTask(m,{objective:'repair',role:'coder',category:'standard',scope:['src/shared']}),review=createTask(m,{objective:'review',role:'security-reviewer',category:'deep',scope:['src/shared']});writer.status='waiting';writer.created_at=10;review.status='queued';review.created_at=20
+  const traits={[unitID(writer)]:{readOnly:false,admissionEligible:false},[unitID(review)]:{readOnly:true,admissionEligible:true}}
+  let plan=planScheduling(snapshot(m,{traits}));assert.equal(decision(plan,unitID(review)).disposition,'RUNNABLE','settled retained writer must not starve an independent read-only review')
+  const nextWriter=createTask(m,{objective:'new write',role:'coder',category:'standard',scope:['src/shared/file.ts']});nextWriter.status='queued';nextWriter.created_at=30
+  plan=planScheduling(snapshot(m,{traits:{...traits,[unitID(nextWriter)]:{readOnly:false,admissionEligible:true}}}))
+  assert.equal(decision(plan,unitID(nextWriter)).disposition,'DEFERRED_CONFLICT','unresolved retained writer must still serialize later mutation')
+  assert.equal(decision(plan,unitID(nextWriter)).reasons[0].code,'mutable-surface-conflict')
+})
+
 test('topology capacity is independent from provider/model resolution',()=>{
   const m=mission('topology'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['a']}),b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['b']}),c=createTask(m,{objective:'c',role:'coder',category:'standard',scope:['c']});a.status='running';b.status='running'
   let plan=planScheduling(snapshot(m,{global:10}));assert.equal(decision(plan,unitID(c)).disposition,'DEFERRED_CAPACITY');assert.equal(decision(plan,unitID(c)).reasons[0].code,'topology-capacity')
