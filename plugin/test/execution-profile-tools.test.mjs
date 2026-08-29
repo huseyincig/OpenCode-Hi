@@ -197,15 +197,15 @@ test('nonvisual implementation keeps mission technical verifier evidence when ve
   assert.equal(m.execution.ledger.some(e=>e.type==='task.evidence-owner-reconciled'&&e.payload?.policy==='distinct-verification-owner-wins'&&e.payload?.role==='coder'),false)
 })
 
-test('verification-only coder task loses repository mutation surface and tool guard fails closed',async()=>{
+test('verification-only coder admits exact projected build route but no broader repository mutation',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('verification-only-coder','implementation done; run exact verification only')
-  assess(store,'verification-only-coder',{likely_targets:['src/app.ts'],likely_verification:['targeted-tests']})
+  assess(store,'verification-only-coder',{likely_targets:['src/app.ts'],likely_verification:['build']})
   const implementation=m.execution.obligations.find(o=>o.id==='o-implementation'),verification=m.execution.obligations.find(o=>o.id==='o-verification');implementation.status='closed';implementation.closedAt=Date.now()
-  const out=await runtime.start(m,{objective:'run targeted verifier only',role:'coder',category:'quick',scope:['src/app.ts'],requiredEvidence:['targeted-tests'],obligationIds:[verification.id]})
+  const out=await runtime.start(m,{objective:'run exact build verifier only',role:'coder',category:'quick',scope:['src/app.ts'],requiredEvidence:['build'],obligationIds:[verification.id]})
   const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id),profile=task.execution_profile
-  assert.deepEqual(task.obligation_ids,[verification.id]);assert.deepEqual(task.requiredEvidence,['targeted-tests'])
+  assert.deepEqual(task.obligation_ids,[verification.id]);assert.deepEqual(task.requiredEvidence,['build'])
   assert.equal(profile.permission_profile.native.decisions.edit,'deny')
   for(const id of ['edit','write','apply_patch'])assert.ok(!profile.tools.includes(id),id)
   assert.equal(prompts[0].body.tools.edit,false);assert.equal(prompts[0].body.tools.write,false);assert.equal(prompts[0].body.tools.apply_patch,false)
@@ -213,7 +213,24 @@ test('verification-only coder task loses repository mutation surface and tool gu
   const bg=new BackgroundRegistry();bg.set(worker);const hook=createToolBeforeHook(store,bg,process.cwd(),process.cwd())
   await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'edit'},{args:{filePath:'src/app.ts'}}),/verification ownership guard/)
   await hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'node --test test/app.test.mjs'}})
+  await hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'npm run build'}})
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'npm run build && touch src/app.ts'}}),/verification ownership guard/)
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.verification-only-mutation-blocked'&&e.task_id===task.id))
+})
+
+
+test('read-only qa verification owner admits only its exact projected mutation-capable verifier',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('verification-only-qa','implementation done; independently build-verify')
+  assess(store,'verification-only-qa',{likely_targets:['src/app.ts'],likely_verification:['build']})
+  const implementation=m.execution.obligations.find(o=>o.id==='o-implementation'),verification=m.execution.obligations.find(o=>o.id==='o-verification');implementation.status='closed';implementation.closedAt=Date.now()
+  const out=await runtime.start(m,{objective:'run exact projected build verifier only',role:'qa-reviewer',category:'review',scope:['src/app.ts'],requiredEvidence:['build'],obligationIds:[verification.id]})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),worker=m.execution.workers.find(w=>w.id===out.worker_id);assert.ok(task&&worker)
+  const bg=new BackgroundRegistry();bg.set(worker);const hook=createToolBeforeHook(store,bg,process.cwd(),process.cwd())
+  await hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'npm run build'}})
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'npm run build && touch src/app.ts'}}),/read-only role guard/)
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'touch src/app.ts'}}),/read-only role guard/)
 })
 
 

@@ -10,7 +10,8 @@ import { assertChildMethodologyLoad, assertParentMethodologyLoad, requestedMetho
 import { evaluateShellCommand } from '../runtime/process/shell-policy.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { openHumanDecision } from '../runtime/human-decision/runtime.js';
-import { verificationKindAdmittedForMission } from '../runtime/verification/policy.js';
+import { verificationKindAdmittedForMission, verificationKindSatisfiesRequirement } from '../runtime/verification/policy.js';
+import { discoverVerificationRoutes } from '../runtime/verification/discovery.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { HI_PROCESS_EXECUTION_TOOL_IDS } from '../runtime/routing/execution-profile.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
@@ -38,6 +39,17 @@ function exactAuthorityRecovery(m, tool, args) {
     }
 }
 function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
+function admittedVerificationExecution(m, task, tool, args, projectRoot, workingDirectory) {
+    if (tool !== 'bash' || typeof args?.command !== 'string' || !isVerificationCommand(args.command))
+        return false;
+    if (!toolMayMutate(tool, args))
+        return true;
+    const root = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
+    if (!root || !task)
+        return false;
+    const command = String(args.command).trim(), targets = m.vcs.changed_files.length ? m.vcs.changed_files : (m.identity.intent.likelyTargets ?? []), required = task.requiredEvidence ?? [];
+    return discoverVerificationRoutes(root, targets).some(route => route.command.trim() === command && required.some((kind) => verificationKindSatisfiesRequirement(kind, route.evidenceKind)));
+}
 function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
     if (role !== 'technical-writer' && role !== 'test-engineer')
         return true;
@@ -81,11 +93,11 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             appendLedger(m, 'worker.process-support-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'process-resource-only-contract' } });
             throw new Error(`Hi process-support ownership guard: task ${child.task_id} owns only a runtime process resource and cannot mutate repository state through '${tool}'. Use read-only observations plus hi_process_* for the owned process; implementation mutation belongs to a separate obligation owner.`);
         }
-        if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args)) {
+        if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args) && !admittedVerificationExecution(m, childTask, tool, args, projectRoot, workingDirectory)) {
             appendLedger(m, 'worker.read-only-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'read-only-role-contract' } });
             throw new Error(`Hi read-only role guard: ${child.role} cannot perform mutating '${tool}' execution. Use read/browser observations only and return the structured WorkerResult directly in assistant text; do not create temporary result files.`);
         }
-        if (child && verificationOnlyChild && toolMayMutate(tool, args)) {
+        if (child && verificationOnlyChild && toolMayMutate(tool, args) && !admittedVerificationExecution(m, childTask, tool, args, projectRoot, workingDirectory)) {
             appendLedger(m, 'worker.verification-only-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'verification-obligation-has-no-mutation-authority' } });
             throw new Error(`Hi verification ownership guard: task ${child.task_id} owns verification only and cannot mutate repository state through '${tool}'. Run only an admitted non-mutating verifier or return the exact verifier gap; test-source mutation requires a separate test-authoring obligation.`);
         }
