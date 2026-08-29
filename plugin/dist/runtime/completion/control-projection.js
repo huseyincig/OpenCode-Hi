@@ -14,9 +14,14 @@ function missingVerification(m, projectRoot) {
     const out = [];
     for (const obligation of m.execution.obligations.filter(o => o.kind === 'verification')) {
         const envelope = verificationEnvelopeFor(m, obligation.id, projectRoot);
-        for (const check of envelope.checks)
-            if (check.result !== 'passed')
+        for (const check of envelope.checks) {
+            if (check.result !== 'passed') {
                 out.push({ obligation_id: obligation.id, kind: check.kind, result: check.result });
+                continue;
+            }
+            if (m.execution.verification_policy.requireFresh && check.evidence_refs.length && !check.evidence_refs.some(ref => { const evidence = m.execution.evidence.items.find(item => item.id === ref); return Boolean(evidence && !evidence.invalidated_at); }))
+                out.push({ obligation_id: obligation.id, kind: check.kind, result: 'stale' });
+        }
     }
     return out.filter((item, index, all) => all.findIndex(other => other.obligation_id === item.obligation_id && other.kind === item.kind && other.result === item.result) === index).slice(0, 12);
 }

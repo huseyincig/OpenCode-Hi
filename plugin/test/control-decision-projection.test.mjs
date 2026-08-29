@@ -7,7 +7,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { projectControlDecision } from '../dist/runtime/completion/control-projection.js'
 import { buildMissionRuntimeProjection } from '../dist/runtime/context/mission-runtime-projection.js'
 import { createTask,createWorker } from '../dist/runtime/worker/worker-runtime.js'
-import { observeToolAfter,addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
+import { observeToolAfter,addEvidence,markMutation } from '../dist/runtime/evidence/evidence-runtime.js'
 import { createHiToolSurface } from '../dist/runtime/application/hi-tool-surface.js'
 import { detectOpenCodeCapabilities } from '../dist/opencode/capabilities.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
@@ -182,6 +182,27 @@ test('hi_task_start cannot invent a generic technical verifier when canonical ro
     assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'no-admissible-repo-native-verifier');assert.equal(out.retry_same_start,false);assert.equal(starts,0)
     assert.match(out.instruction,/Do not invent a test file, verifier command, or generic verifier child/i)
     assert.ok(m.execution.ledger.some(e=>e.type==='verification.worker-admission-blocked'&&e.payload?.reason==='no-admissible-repo-native-verifier'))
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('stale passed verification keeps the exact required kind actionable and reprojects only its repo-native route',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-p6-stale-route-'))
+  try{
+    writeFileSync(join(root,'package.json'),JSON.stringify({private:true,scripts:{test:'node test.mjs',build:'node build.mjs'}}))
+    const {m}=localMission('phase6-stale-route');closeImplementation(m)
+    const verification=m.execution.obligations.find(o=>o.id==='o-verification');assert.ok(verification)
+    m.execution.verification_policy.requiredKinds=['targeted-tests','build'];verification.requiredEvidence=['targeted-tests','build']
+    addEvidence(m,{kind:'build',summary:'prior build passed',scope:['package.json'],source:'bash',trusted_source_class:'host-tool-observation',pass:true,outcome:'passed',obligation_ids:[verification.id]})
+    markMutation(m,['package.json'],'later-mutation')
+    addEvidence(m,{kind:'targeted-tests',summary:'tests rerun after mutation and passed',scope:['phase6.txt'],source:'bash',trusted_source_class:'host-tool-observation',pass:true,outcome:'passed',obligation_ids:[verification.id]})
+    const decision=projectControlDecision(m,root)
+    assert.equal(decision.action,'VERIFY');assert.equal(decision.completion_ready,false)
+    assert.deepEqual(decision.missing_evidence,[{obligation_id:'o-verification',kind:'build',result:'stale'}])
+    assert.equal(decision.verification_route_status,'available')
+    assert.deepEqual(decision.verification_routes,[{required_kind:'build',evidence_kind:'build',command:'npm run build',source:'package-script'}])
+    const runtime=buildMissionRuntimeProjection(m,undefined,root)
+    assert.match(runtime.next_action,/verify:build; route=npm run build/)
+    assert.doesNotMatch(runtime.next_action,/npm test/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
