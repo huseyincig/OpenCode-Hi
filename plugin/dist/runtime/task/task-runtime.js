@@ -48,6 +48,14 @@ class TaskQueueCapacityError extends Error {
     constructor() { super('Hi bounded dispatch queue is full'); this.name = 'TaskQueueCapacityError'; }
 }
 function resultContractFailure(summary, marker = 'worker-result-contract-invalid') { return { status: 'FIX_REQUIRED', summary, changed_files: [], evidence: [], open_issues: [marker], needs_context: ['worker-result-contract-retry: continue the same task/session and return the exact schema-bound WorkerResult; all evidence claims belong under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}] and no evidence kind may be a top-level key'] }; }
+function canonicalValue(value) { if (Array.isArray(value))
+    return value.map(canonicalValue); if (value && typeof value === 'object') {
+    const record = value, out = {};
+    for (const key of Object.keys(record).sort())
+        out[key] = canonicalValue(record[key]);
+    return out;
+} return value; }
+function canonicalValueEqual(a, b) { return JSON.stringify(canonicalValue(a)) === JSON.stringify(canonicalValue(b)); }
 function ownerForObligation(m, kind) {
     const caps = new Set(m.identity.intent.requiredCapabilities);
     if (kind === 'research')
@@ -334,15 +342,17 @@ export class TaskRuntime {
         let result;
         if (assistant.structured !== undefined) {
             if (isWorkerResultTransportContract(assistant.structured)) {
-                const rawCanonical = isWorkerResultContract(assistant.structured), normalized = normalizeWorkerResult(assistant.structured), rawFindings = Array.isArray(assistant.structured.findings) ? assistant.structured.findings : undefined, normalizedFindings = normalized.findings;
-                const findingProjectionLoss = rawFindings !== undefined && JSON.stringify(rawFindings) !== JSON.stringify(normalizedFindings ?? []);
+                const rawStructured = assistant.structured, rawCanonical = isWorkerResultContract(assistant.structured), rawFindingsPresent = Object.prototype.hasOwnProperty.call(rawStructured, 'findings'), rawFindings = Array.isArray(rawStructured.findings) ? rawStructured.findings : undefined, reviewerWorker = isHiReviewerRole(worker.role), normalizationInput = reviewerWorker || !rawFindingsPresent ? assistant.structured : { ...rawStructured, findings: undefined }, normalized = normalizeWorkerResult(normalizationInput), normalizedFindings = normalized.findings;
+                const findingProjectionLoss = reviewerWorker && rawFindings !== undefined && !canonicalValueEqual(rawFindings, normalizedFindings ?? []);
+                if (!reviewerWorker && rawFindingsPresent)
+                    appendLedger(m, 'review.finding-authority-ignored', { task_id: task.id, worker_id: worker.id, payload: { findings: (rawFindings ?? []).flatMap(item => item && typeof item === 'object' && 'id' in item ? [String(item.id ?? '')] : []).filter(Boolean).slice(0, 40), worker_role: worker.role, reason: 'structured-review-findings-require-canonical-reviewer-role-at-transport-admission' } });
                 if (findingProjectionLoss) {
                     result = resultContractFailure('OpenCode returned reviewer findings that could not be preserved exactly under the canonical ReviewFinding contract. Reviewer authority may not be normalized away or rewritten.', 'worker-result-contract-invalid:review-finding');
                     appendLedger(m, 'worker.structured-result-invalid', { task_id: task.id, worker_id: worker.id, payload: { reason: 'review-finding-canonical-projection-loss', attempt: worker.attempt, generation: m.continuation.generation } });
                 }
                 else if (isWorkerResultContract(normalized)) {
                     result = normalized;
-                    appendLedger(m, 'worker.structured-result-admitted', { task_id: task.id, worker_id: worker.id, payload: { transport: 'opencode-json-schema', normalized: !rawCanonical, attempt: worker.attempt, generation: m.continuation.generation } });
+                    appendLedger(m, 'worker.structured-result-admitted', { task_id: task.id, worker_id: worker.id, payload: { transport: 'opencode-json-schema', normalized: !rawCanonical || (!reviewerWorker && rawFindingsPresent), attempt: worker.attempt, generation: m.continuation.generation } });
                 }
                 else {
                     result = resultContractFailure('OpenCode returned a structured child payload that could not be normalized into the canonical WorkerResult contract.', 'worker-result-contract-invalid:structured-normalization');
