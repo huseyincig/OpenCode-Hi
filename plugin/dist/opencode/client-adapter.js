@@ -93,9 +93,12 @@ export async function sendPromptAsync(client, sessionID, text, agent, model, var
 }
 export async function listMessages(client, sessionID, limit = 20) {
     const edge = client;
-    if (typeof edge?.session?.messages === 'function')
-        return dataOf(await edge.session.messages({ path: { id: sessionID }, query: { limit } })) ?? [];
-    return [];
+    if (typeof edge?.session?.messages !== 'function')
+        return [];
+    const payload = dataOf(await edge.session.messages({ path: { id: sessionID }, query: { limit } }));
+    if (Array.isArray(payload))
+        return payload;
+    return Array.isArray(payload?.data) ? payload.data : [];
 }
 export async function sendSyntheticContinuation(client, sessionID, text, metadata, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS) {
     const edge = client, body = { parts: [{ type: 'text', text, synthetic: true, metadata }], noReply: false };

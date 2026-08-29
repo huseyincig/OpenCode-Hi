@@ -66,6 +66,21 @@ test('OpenCode assistant-result readback keeps settlement on the newest assistan
   assert.deepEqual(result.activity,{message_id:'msg-old',observed_at:20,output_tokens:2,reasoning_tokens:0,tool_calls:1,text_chars:22})
 })
 
+test('OpenCode assistant-result readback normalizes a nested SDK message envelope before newest-assistant selection',async()=>{
+  const structured={status:'DONE',summary:'current result',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  const messages=[
+    {info:{id:'msg-user',role:'user',time:{created:10}},parts:[{type:'text',text:'go'}]},
+    {info:{id:'msg-current',role:'assistant',providerID:'p',modelID:'m',variant:'fast',parentID:'msg-user',structured,time:{created:20,completed:30},tokens:{input:1,output:2,reasoning:0,cache:{read:0,write:0}},cost:0},parts:[]},
+  ]
+  const client={session:{messages:async()=>({data:{data:messages}})}}
+  const host=createHostPort({directory:'/repo',worktree:'/repo',project:{},client,experimental_workspace:{register(){}},$:()=>{}})
+  const result=await host.readAssistantResult('child-nested-envelope')
+  assert.deepEqual(result.structured,structured)
+  assert.equal(result.model?.message_id,'msg-current')
+  assert.equal(result.model?.parent_id,'msg-user')
+  assert.equal(result.incomplete_turn,undefined)
+})
+
 test('incomplete assistant turn projection rejects a completed newest message and marks an empty open successor',()=>{
   assert.equal(lastIncompleteAssistantTurn([{info:{id:'done',role:'assistant',time:{created:1,completed:2}},parts:[]}]),undefined)
   assert.deepEqual(lastIncompleteAssistantTurn([{info:{id:'open',role:'assistant',parentID:'user-1',time:{created:3},tokens:{output:0,reasoning:0}},parts:[]}]),{message_id:'open',parent_id:'user-1',created_at:3,empty:true})

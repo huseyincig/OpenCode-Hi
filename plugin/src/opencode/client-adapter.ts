@@ -47,8 +47,10 @@ export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,tex
 
 export async function listMessages(client:OpenCodeClient,sessionID:string,limit=20):Promise<any[]>{
   const edge=client as any
-  if(typeof edge?.session?.messages==='function') return dataOf(await edge.session.messages({path:{id:sessionID},query:{limit}})) ?? []
-  return []
+  if(typeof edge?.session?.messages!=='function')return[]
+  const payload=dataOf<any>(await edge.session.messages({path:{id:sessionID},query:{limit}}))
+  if(Array.isArray(payload))return payload
+  return Array.isArray(payload?.data)?payload.data:[]
 }
 
 export async function sendSyntheticContinuation(client:OpenCodeClient,sessionID:string,text:string,metadata:Record<string,unknown>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS):Promise<boolean>{
