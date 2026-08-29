@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isHumanDecisionContract } from '../dist/contracts/human-decision.js'
 import { classifyRuntimeHumanDecision,openHumanDecision } from '../dist/runtime/human-decision/runtime.js'
+import { markCapabilityUnavailable } from '../dist/runtime/readiness/capability-failure.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
 import { evaluateCompletion } from '../dist/runtime/completion/evaluator.js'
@@ -51,6 +52,18 @@ test('generic semantic follow-up resolves non-authority HumanDecision but never 
   openHumanDecision(a,{semantic_type:'authority_request',reason_code:'authority-approval-required',summary:'Exact action approval required',response_schema:{kind:'authority-protocol',protocol:'approve-exact-action'},authority_ref:'abc'})
   store2.beginFollowupSemanticAssessment(a.identity.session_id,'continue')
   assert.equal(a.authority.human_decision.status,'OPEN')
+})
+
+test('capability-unavailable follow-up supersedes only the exact decision blocker and allows a later real probe to re-mark it',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'human-capability-followup','small task'),marker='capability-unavailable:process-lifecycle',unrelated='capability-unavailable:browser-execution'
+  m.execution.blockers.push(marker,unrelated)
+  openHumanDecision(m,{semantic_type:'operational_action',reason_code:'capability-unavailable',summary:marker,response_schema:{kind:'external-action'}})
+  store.beginFollowupSemanticAssessment(m.identity.session_id,'use a static preview instead')
+  assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(m.identity.status,'active')
+  assert.equal(m.execution.blockers.includes(marker),false);assert.equal(m.execution.blockers.includes(unrelated),true)
+  assert.ok(m.execution.ledger.some(e=>e.type==='capability.blocker-superseded'&&e.payload?.marker===marker))
+  markCapabilityUnavailable(m,{capability:'process-lifecycle',reason:'fresh probe still cannot connect'})
+  assert.equal(m.execution.blockers.includes(marker),true,'a later mechanical probe can re-establish the unavailable capability')
 })
 
 test('exact authority approval resolves the matching HumanDecision without treating generic continuation as approval',()=>{

@@ -158,7 +158,11 @@ export class MissionStore {
     const m=this.get(sessionID);if(!m)throw new Error('No active Hi mission')
     if(!['active','waiting-user'].includes(m.identity.status))throw new Error('Hi follow-up semantic assessment requires an active/waiting mission')
     const text=userText.trim();if(!text)throw new Error('Empty follow-up cannot be assessed')
-    if(m.authority.human_decision?.status==='OPEN'&&m.authority.human_decision.semantic_type!=='authority_request')resolveHumanDecision(m,'user-followup-received')
+    if(m.authority.human_decision?.status==='OPEN'&&m.authority.human_decision.semantic_type!=='authority_request'){
+      const decision=m.authority.human_decision,exactCapabilityBlocker=decision.reason_code==='capability-unavailable'&&decision.summary.startsWith('capability-unavailable:')&&m.execution.blockers.includes(decision.summary)?decision.summary:undefined
+      resolveHumanDecision(m,'user-followup-received')
+      if(exactCapabilityBlocker){m.execution.blockers=m.execution.blockers.filter(item=>item!==exactCapabilityBlocker);appendLedger(m,'capability.blocker-superseded',{payload:{marker:exactCapabilityBlocker,decision_id:decision.decision_id,reason:'user-followup-received; capability support is not assumed and a later probe may re-mark the blocker'}})}
+    }
     if(m.authority.authority?.approved)m.authority.authority={...m.authority.authority,approved:undefined}
     if(m.authority.authority?.pending){m.authority.authority={...m.authority.authority,pending:undefined};if(m.authority.human_decision?.status==='OPEN'&&m.authority.human_decision.semantic_type==='authority_request')resolveHumanDecision(m,'authority-invalidated-by-semantic-followup')}
     m.continuation.generation+=1;m.identity.semantic_assessment={status:'pending',phase:'followup',revision:m.identity.semantic_assessment.revision+1,source:'host-primary',pending_text:text.slice(0,12000)};m.identity.status='active';m.continuation.continuation_active=false;m.continuation.active_action_id=undefined;m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined;m.continuation.pending_nudge=undefined;m.continuation.last_user_message_at=Date.now()

@@ -263,8 +263,14 @@ export class MissionStore {
         const text = userText.trim();
         if (!text)
             throw new Error('Empty follow-up cannot be assessed');
-        if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request')
+        if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request') {
+            const decision = m.authority.human_decision, exactCapabilityBlocker = decision.reason_code === 'capability-unavailable' && decision.summary.startsWith('capability-unavailable:') && m.execution.blockers.includes(decision.summary) ? decision.summary : undefined;
             resolveHumanDecision(m, 'user-followup-received');
+            if (exactCapabilityBlocker) {
+                m.execution.blockers = m.execution.blockers.filter(item => item !== exactCapabilityBlocker);
+                appendLedger(m, 'capability.blocker-superseded', { payload: { marker: exactCapabilityBlocker, decision_id: decision.decision_id, reason: 'user-followup-received; capability support is not assumed and a later probe may re-mark the blocker' } });
+            }
+        }
         if (m.authority.authority?.approved)
             m.authority.authority = { ...m.authority.authority, approved: undefined };
         if (m.authority.authority?.pending) {
