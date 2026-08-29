@@ -68,6 +68,8 @@ test('multi-stream visual cases cannot absorb nonvisual API or docs request unit
     {id:'vc_docs',subject:'CLI docs parity',required_browser_actions:['inspect'],source_units:['ru4']},
   ],nonvisual_request_units:['ru1','ru5'],capability_request_units:{implementation:['ru2','ru3'],documentation:['ru4'],'test-authoring':['ru5'],'visual-qa':['ru3','ru6'],'multi-stream-delegation':['ru1','ru2','ru3','ru4','ru5']}})
   assert.throws(()=>assertVerificationRequestTrace(text,assessment),/verification case vc_api source_units contains non-visual request unit ru2.*capability_request_units\.visual-qa/)
+  const missingVisualMap={...assessment,capability_request_units:{...assessment.capability_request_units}};delete missingVisualMap.capability_request_units['visual-qa']
+  assert.throws(()=>assertVerificationRequestTrace(text,missingVisualMap),/multi-stream visual-check requires capability_request_units\.visual-qa ownership/)
   const corrected={...assessment,verification_cases:[assessment.verification_cases[1]],nonvisual_request_units:['ru1','ru2','ru4','ru5','ru7']}
   assert.doesNotThrow(()=>assertVerificationRequestTrace(text,corrected))
 })

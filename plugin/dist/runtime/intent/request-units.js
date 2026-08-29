@@ -62,7 +62,9 @@ export function assertVerificationRequestTrace(text, assessment) {
     const unknownNonvisual = nonvisual.filter(id => !unitMap.has(id));
     if (unknownNonvisual.length)
         throw new Error(`nonvisual_request_units contain unknown id(s): ${unknownNonvisual.join(',')}; ${challenge()}`);
-    const visualRefs = new Set(), visualCapabilityRefs = new Set(assessment.capability_request_units?.['visual-qa'] ?? []), enforceVisualCapabilityTrace = assessment.scope === 'multi-stream' && visualCapabilityRefs.size > 0;
+    const visualRefs = new Set(), visualCapabilityRefs = new Set(assessment.capability_request_units?.['visual-qa'] ?? []), enforceVisualCapabilityTrace = assessment.scope === 'multi-stream' && assessment.message_kind === 'mission';
+    if (enforceVisualCapabilityTrace && !visualCapabilityRefs.size)
+        throw new Error(`multi-stream visual-check requires capability_request_units.visual-qa ownership for verification case source units; ${challenge()}`);
     for (const c of assessment.verification_cases) {
         const refs = c.source_units ?? [];
         if (!refs.length)
