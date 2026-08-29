@@ -22,5 +22,5 @@ export function isReviewFindingContract(v) {
         return false;
     return true;
 }
-export function reviewFindingNeedsCorrection(f) { return f.disposition === 'open' && (f.causality === 'introduced' || f.causality === 'worsened'); }
+export function reviewFindingNeedsCorrection(f) { return f.disposition === 'open' && f.blocking && (f.causality === 'introduced' || f.causality === 'worsened'); }
 export function reviewFindingMarker(f) { return `review-finding:${f.id}:${f.severity}:${f.causality}`; }

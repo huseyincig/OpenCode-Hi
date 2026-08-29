@@ -42,6 +42,75 @@ test('introduced open reviewer finding forces FIX_REQUIRED and opens evidence-ba
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+test('introduced non-blocking informational findings remain review notes without writer rework or failed verdict',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-info-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
+    const m=reviewMission('rf-info-note',root),{task,worker,review,verification}=reviewerTask(m)
+    const result=normalizeWorkerResult({status:'FIX_REQUIRED',summary:'review passed with informational notes',changed_files:[],evidence:[proof],findings:[finding({id:'rf-info-note',severity:'info',blocking:false,subject:'Optional edge case is not specified by the contract'})],open_issues:[],needs_context:[]})
+    runtime(root).applyResult(m,worker.id,result)
+    assert.equal(task.status,'completed')
+    assert.equal(task.result?.status,'DONE')
+    assert.equal(review.status,'closed')
+    assert.equal(verification.status,'closed')
+    assert.equal(m.execution.blockers.some(x=>x.includes('rf-info-note')),false)
+    assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-info-note'),false)
+    assert.ok(task.result?.findings?.some(x=>x.id==='rf-info-note'&&x.blocking===false))
+    assert.ok(m.execution.ledger.some(e=>e.type==='review.nonblocking-result-normalized'&&e.task_id===task.id))
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('introduced open non-blocking finding is preserved without forcing writer rework',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-nonblocking-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
+    const m=reviewMission('rf-nonblocking-done',root),{task,worker,review,verification}=reviewerTask(m)
+    const note=finding({id:'rf-info-note',severity:'info',blocking:false})
+    const result=normalizeWorkerResult({status:'DONE',summary:'review passed with a non-blocking observation',changed_files:[],evidence:[proof],findings:[note],open_issues:[],needs_context:[]})
+    runtime(root).applyResult(m,worker.id,result)
+    assert.equal(task.status,'completed')
+    assert.equal(task.result?.status,'DONE')
+    assert.equal(review.status,'closed')
+    assert.equal(verification.status,'closed')
+    assert.ok(task.result?.findings?.some(x=>x.id==='rf-info-note'&&x.blocking===false))
+    assert.equal(m.execution.blockers.some(x=>x.includes('rf-info-note')),false)
+    assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-info-note'),false)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('contradictory FIX_REQUIRED with only non-blocking findings and passing review verdict normalizes to DONE',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-nonblocking-fix-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
+    const m=reviewMission('rf-nonblocking-fix',root),{task,worker,review,verification}=reviewerTask(m)
+    const a=finding({id:'rf-info-one',severity:'info',blocking:false}),b=finding({id:'rf-low-two',severity:'low',blocking:false,subject:'Optional coverage hardening'})
+    const result=normalizeWorkerResult({status:'FIX_REQUIRED',summary:'review passed; only advisory findings remain',changed_files:[],evidence:[proof],findings:[a,b],open_issues:[`review-finding:${a.id}:${a.severity}:${a.causality}`,`review-finding:${b.id}:${b.severity}:${b.causality}`],needs_context:[]})
+    runtime(root).applyResult(m,worker.id,result)
+    assert.equal(task.status,'completed')
+    assert.equal(task.result?.status,'DONE')
+    assert.deepEqual(task.result?.open_issues,[])
+    assert.equal(review.status,'closed')
+    assert.equal(verification.status,'closed')
+    assert.equal(m.execution.obligations.some(o=>o.id.startsWith('o-review-rework-rf-info-')||o.id==='o-review-rework-rf-low-two'),false)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('FIX_REQUIRED with non-blocking finding plus unrelated unresolved issue remains fail-closed',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-nonblocking-unresolved-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
+    const m=reviewMission('rf-nonblocking-unresolved',root),{task,worker}=reviewerTask(m)
+    const note=finding({id:'rf-info-unresolved',severity:'info',blocking:false})
+    const result=normalizeWorkerResult({status:'FIX_REQUIRED',summary:'review has an unresolved control issue',changed_files:[],evidence:[proof],findings:[note],open_issues:[`review-finding:${note.id}:${note.severity}:${note.causality}`,'unrelated-review-control-gap'],needs_context:[]})
+    runtime(root).applyResult(m,worker.id,result)
+    assert.equal(task.status,'waiting')
+    assert.equal(task.result?.status,'FIX_REQUIRED')
+    assert.ok(task.result?.open_issues.includes('unrelated-review-control-gap'))
+    assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-info-unresolved'),false)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('pre-existing finding is preserved without becoming an unrelated mission blocker',()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-'))
   try{

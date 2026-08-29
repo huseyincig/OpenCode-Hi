@@ -38,5 +38,5 @@ export function isReviewFindingContract(v:unknown):v is ReviewFinding{
   return true
 }
 
-export function reviewFindingNeedsCorrection(f:ReviewFinding):boolean{return f.disposition==='open'&&(f.causality==='introduced'||f.causality==='worsened')}
+export function reviewFindingNeedsCorrection(f:ReviewFinding):boolean{return f.disposition==='open'&&f.blocking&&(f.causality==='introduced'||f.causality==='worsened')}
 export function reviewFindingMarker(f:ReviewFinding):string{return`review-finding:${f.id}:${f.severity}:${f.causality}`}
