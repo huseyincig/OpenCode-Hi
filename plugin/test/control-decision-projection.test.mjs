@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {mkdtempSync,writeFileSync,rmSync} from 'node:fs'
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
@@ -164,6 +164,23 @@ test('route projection reports no admissible verifier instead of inviting arbitr
     for(const action of ['read','hi_readiness','unclassified-bash','redundant-verifier-child'])assert.ok(decision.ineffective_actions.includes(action),action)
     const runtime=buildMissionRuntimeProjection(m,undefined,root)
     assert.match(runtime.next_action,/route=none; no-admissible-repo-native-verifier; report-gap-and-stop/)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('route projection exposes universal Git changed-surface sanity in a route-less worktree',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-p6-git-sanity-route-'))
+  try{
+    mkdirSync(join(root,'.git'))
+    writeFileSync(join(root,'opencode.json'),JSON.stringify({plugin:['opencode-hi@git+https://example.invalid/repo.git#deadbeef']}))
+    const {m}=localMission('phase6-git-sanity-route');closeImplementation(m)
+    m.identity.intent.likelyTargets=['opencode.json']
+    const decision=projectControlDecision(m,root)
+    assert.equal(decision.action,'VERIFY');assert.equal(decision.verification_route_status,'available')
+    assert.deepEqual(decision.verification_routes,[{required_kind:'changed-surface-sanity',evidence_kind:'changed-surface-sanity',command:'git diff --check',source:'git-sanity'}])
+    assert.equal(decision.ineffective_actions.includes('unclassified-bash'),false)
+    const runtime=buildMissionRuntimeProjection(m,undefined,root)
+    assert.match(runtime.next_action,/verify:changed-surface-sanity; route=git diff --check/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 

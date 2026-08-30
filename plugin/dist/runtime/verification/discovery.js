@@ -157,5 +157,10 @@ export function discoverVerificationRoutes(root, targets) {
             routes.push({ evidenceKind, command: packageScriptCommand(repoRoot, pkgRoot, script), source: 'package-script', packageRoot: norm(relative(repoRoot, pkgRoot)) || '.' });
         }
     }
+    // A Git worktree always has one deterministic, non-mutating changed-surface sanity route.
+    // Project-specific checks remain repo-declared; this fallback only makes the minimum
+    // verification policy executable when an operational/config-only sandbox has no package route.
+    if (existsSync(join(repoRoot, '.git')))
+        routes.push({ evidenceKind: 'changed-surface-sanity', command: 'git diff --check', source: 'git-sanity', packageRoot: '.' });
     return routes.filter((route, index, all) => all.findIndex(other => other.evidenceKind === route.evidenceKind && other.command === route.command) === index).slice(0, 12);
 }

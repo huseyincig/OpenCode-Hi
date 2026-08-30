@@ -38,7 +38,7 @@ export function targetedVerificationHint(root:string,targets:string[]):string|un
 export interface VerificationRouteProjection {
   evidenceKind:'targeted-tests'|'typecheck'|'lint'|'build'|'changed-surface-sanity'
   command:string
-  source:'targeted-test'|'package-script'
+  source:'targeted-test'|'package-script'|'git-sanity'
   packageRoot:string
 }
 
@@ -64,5 +64,9 @@ export function discoverVerificationRoutes(root:string,targets:string[]):Verific
   for(const target of [...new Set(targets.map(norm))].slice(0,12)){if(!target||target.startsWith('..'))continue;const abs=resolve(repoRoot,target);if(!within(repoRoot,abs))continue;const pkgRoot=nearestPackageRoot(repoRoot,target);if(existsSync(join(pkgRoot,'package.json')))roots.add(pkgRoot)}
   const scriptKinds={check:'changed-surface-sanity',typecheck:'typecheck',lint:'lint',build:'build'} as const
   for(const pkgRoot of roots){const pkg=json(join(pkgRoot,'package.json')),scripts=pkg?.scripts&&typeof pkg.scripts==='object'?pkg.scripts:{};for(const [script,evidenceKind] of Object.entries(scriptKinds) as Array<[keyof typeof scriptKinds,(typeof scriptKinds)[keyof typeof scriptKinds]]>){if(!usableScript(scripts?.[script]))continue;routes.push({evidenceKind,command:packageScriptCommand(repoRoot,pkgRoot,script),source:'package-script',packageRoot:norm(relative(repoRoot,pkgRoot))||'.'})}}
+  // A Git worktree always has one deterministic, non-mutating changed-surface sanity route.
+  // Project-specific checks remain repo-declared; this fallback only makes the minimum
+  // verification policy executable when an operational/config-only sandbox has no package route.
+  if(existsSync(join(repoRoot,'.git')))routes.push({evidenceKind:'changed-surface-sanity',command:'git diff --check',source:'git-sanity',packageRoot:'.'})
   return routes.filter((route,index,all)=>all.findIndex(other=>other.evidenceKind===route.evidenceKind&&other.command===route.command)===index).slice(0,12)
 }

@@ -10,7 +10,7 @@ export declare function targetedVerificationHint(root: string, targets: string[]
 export interface VerificationRouteProjection {
     evidenceKind: 'targeted-tests' | 'typecheck' | 'lint' | 'build' | 'changed-surface-sanity';
     command: string;
-    source: 'targeted-test' | 'package-script';
+    source: 'targeted-test' | 'package-script' | 'git-sanity';
     packageRoot: string;
 }
 /**
