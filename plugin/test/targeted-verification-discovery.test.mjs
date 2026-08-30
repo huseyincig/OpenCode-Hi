@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {mkdtempSync,mkdirSync,writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {discoverTargetedVerification,targetedVerificationHint} from '../dist/runtime/verification/discovery.js'
+import {discoverTargetedVerification,targetedVerificationHint,discoverVerificationRoutes} from '../dist/runtime/verification/discovery.js'
 import {assessPluginMission} from './helpers/semantic.mjs'
 
 function root(){return mkdtempSync(join(tmpdir(),'hi-target-'))}
@@ -17,4 +17,10 @@ test('task runtime injects deterministic targeted verification plan into child h
   const r=root();mkdirSync(join(r,'src','auth'),{recursive:true});writeFileSync(join(r,'package.json'),JSON.stringify({scripts:{test:'vitest run'}}));writeFileSync(join(r,'package-lock.json'),'{}');writeFileSync(join(r,'src/auth/token.ts'),'x');writeFileSync(join(r,'src/auth/token.test.ts'),'x')
   const prompted=[];const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:'child-target'}}),promptAsync:async req=>{prompted.push(req);return{data:{}}},abort:async()=>({data:{}})}}
   const hooks=await HiPlugin({directory:r,worktree:r,project:{},client});const config={};await hooks.config(config);await hooks['chat.message']({sessionID:'parent-target'},{message:{role:'user'},parts:[{type:'text',text:'opaque targeted task'}]});await assessPluginMission(hooks,'parent-target',{task_kind:'bug-fix',likely_targets:['src/auth/token.ts'],likely_verification:['targeted-tests']});await hooks.tool.hi_task_start.execute({objective:'token fix',role:'coder',category:'quick',scope:['src/auth/token.ts']},{sessionID:'parent-target'});assert.equal(prompted.length,1);const text=prompted[0].body.parts[0].text;assert.match(text,/TARGETED VERIFICATION DISCOVERY/);assert.match(text,/src\/auth\/token\.test\.ts/);assert.match(text,/npm test -- src\/auth\/token\.test\.ts/);await hooks.dispose?.()
+})
+
+
+test('declared package changed-surface check keeps precedence over generic Git fallback',()=>{
+  const r=root();mkdirSync(join(r,'.git'));writeFileSync(join(r,'package.json'),JSON.stringify({scripts:{check:'node check.mjs'}}))
+  assert.deepEqual(discoverVerificationRoutes(r,['package.json']),[{evidenceKind:'changed-surface-sanity',command:'npm run check',source:'package-script',packageRoot:'.'}])
 })
