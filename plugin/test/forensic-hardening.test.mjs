@@ -349,7 +349,10 @@ test('parent direct progress stays blocked when every observed mutation was reve
     writeFileSync(join(root,'src','a.ts'),'after\n');await hooks['tool.execute.before']({sessionID:'s-fully-reverted',tool:'write'},{args:{filePath:'src/a.ts'}})
     writeFileSync(join(root,'src','a.ts'),'before\n');await hooks['tool.execute.before']({sessionID:'s-fully-reverted',tool:'write'},{args:{filePath:'src/a.ts'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'nothing remains'},{sessionID:'s-fully-reverted'}))
-    assert.equal(result.status,'BLOCKED');assert.equal(result.reason,'no-current-owned-diff')
+    assert.equal(result.status,'BLOCKED');assert.equal(result.reason,'no-current-owned-diff');assert.equal(result.retry_same_call,false)
+    const fenced=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'nothing remains'},{sessionID:'s-fully-reverted'}));assert.equal(fenced.status,'STAGNATION_FENCED');assert.equal(fenced.reason,'repeated-implementation-direct-progress-no-gain');assert.equal(fenced.blocked_reason,'no-current-owned-diff');assert.equal(fenced.retry_same_call,false)
+    const afterFence=JSON.parse(await hooks.tool.hi_ledger.execute({limit:160},{sessionID:'s-fully-reverted'}));assert.equal(afterFence.stagnation_count,1);const rejectionEvents=afterFence.events.filter(e=>e.type==='implementation.direct-progress-rejected');assert.equal(rejectionEvents.length,2);assert.equal(new Set(rejectionEvents.map(e=>e.payload?.progress_signature)).size,1)
+    const third=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'nothing remains'},{sessionID:'s-fully-reverted'}));assert.equal(third.status,'STAGNATION_FENCED');const finalLedger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:180},{sessionID:'s-fully-reverted'}));assert.equal(finalLedger.stagnation_count,1);assert.equal(finalLedger.events.filter(e=>e.type==='implementation.direct-progress-rejected').length,2);assert.equal(finalLedger.obligations.find(o=>o.id==='o-implementation').status,'open')
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
@@ -464,8 +467,8 @@ test('path-unknown bash mutation cannot be used as direct implementation ownersh
     const hooks=await HiPlugin({directory:root,worktree:root,project:{vcs:'git'},client:client()});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-unknown'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}); await assessPluginMission(hooks,'s-unknown',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-unknown',tool:'bash'},{args:{command:'printf x > src/a.ts'}})
-    const result=String(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-unknown'}))
-    assert.match(result,/no current Git changed surface exists/)
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-unknown'}))
+    assert.equal(result.status,'BLOCKED');assert.equal(result.reason,'no-current-git-surface');assert.equal(result.retry_same_call,false)
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })

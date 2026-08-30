@@ -318,6 +318,9 @@ export function createHiToolSurface(input) {
                 return candidates.length > 1 ? JSON.stringify({ status: 'BLOCKED', reason: 'obligation-id-required', candidate_ids: candidateIDs }) : 'No open direct-progress obligation';
             if (o.kind === 'review' && m.execution.verification_policy.requireReview)
                 return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation';
+            const rejectImplementationNoGain = (reason, detail = {}) => { const progressSignature = store.signature(m), priorSame = m.execution.ledger.filter(event => event.type === 'implementation.direct-progress-rejected' && event.payload?.obligation === o.id && event.payload?.reason === reason && event.payload?.progress_signature === progressSignature).length; if (priorSame >= 2)
+                return JSON.stringify({ status: 'STAGNATION_FENCED', reason: 'repeated-implementation-direct-progress-no-gain', blocked_reason: reason, obligation_id: o.id, retry_same_call: false, progress_signature: progressSignature, control: projectControlDecision(m, missionRoot) }); appendLedger(m, 'implementation.direct-progress-rejected', { payload: { obligation: o.id, reason, progress_signature: progressSignature, repeat_count: priorSame + 1, ...detail } }); store.updateProgress(m, priorSame > 0); if (priorSame >= 1)
+                return JSON.stringify({ status: 'STAGNATION_FENCED', reason: 'repeated-implementation-direct-progress-no-gain', blocked_reason: reason, obligation_id: o.id, retry_same_call: false, progress_signature: progressSignature, control: projectControlDecision(m, missionRoot) }); return JSON.stringify({ status: 'BLOCKED', reason, obligation_id: o.id, retry_same_call: false, progress_signature: progressSignature, ...detail }); };
             let directFiles = [...m.vcs.changed_files], currentSource = 'historical-write-events';
             if (o.kind === 'implementation') {
                 if (!primaryRoleCanDirectImplementation(m.execution.primary_mode))
@@ -327,7 +330,7 @@ export function createHiToolSurface(input) {
                 if (!m.vcs.changed_files.length) {
                     const recovered = inspectCurrentGitChangedFiles(missionRoot);
                     if (recovered === undefined)
-                        return 'BLOCKED: mutation observed but changed-file surface is unknown; use file-aware native tools or wait for native file/diff evidence before recording direct progress';
+                        return rejectImplementationNoGain('mutation-surface-unknown', { instruction: 'Use file-aware native tools or wait for native file/diff evidence before recording direct progress' });
                     if (recovered.length) {
                         directFiles = [...new Set(recovered)];
                         m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...directFiles])];
@@ -335,7 +338,7 @@ export function createHiToolSurface(input) {
                         appendLedger(m, 'implementation.changed-surface-recovered', { payload: { source: 'current-git-status', files: directFiles.slice(0, 30) } });
                     }
                     else
-                        return 'BLOCKED: mutation observed but no current Git changed surface exists; reconcile the mutation before recording direct progress';
+                        return rejectImplementationNoGain('no-current-git-surface', { instruction: 'Reconcile the mutation before recording direct progress' });
                 }
                 let expansions = [];
                 if (rawArgs.scope_expansions) {
@@ -384,10 +387,8 @@ export function createHiToolSurface(input) {
                         }
                     }
                 }
-                if (!directFiles.length) {
-                    appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'no-current-owned-diff', source: currentSource, historical: m.vcs.changed_files.slice(0, 30) } });
-                    return JSON.stringify({ status: 'BLOCKED', reason: 'no-current-owned-diff', source: currentSource });
-                }
+                if (!directFiles.length)
+                    return rejectImplementationNoGain('no-current-owned-diff', { source: currentSource, historical: m.vcs.changed_files.slice(0, 30) });
                 if (currentSource !== 'historical-write-events')
                     appendLedger(m, 'implementation.current-diff-reconciled', { payload: { source: currentSource, files: directFiles.slice(0, 30) } });
                 const ownership = assessChangedFileOwnership(m.identity.intent.likelyTargets ?? [], directFiles, expansions, 'control-plane');
