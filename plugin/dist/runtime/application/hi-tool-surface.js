@@ -326,7 +326,7 @@ export function createHiToolSurface(input) {
                 if (!primaryRoleCanDirectImplementation(m.execution.primary_mode))
                     return `BLOCKED: primary role ${m.execution.primary_mode} lacks canonical repository write authority for direct implementation progress`;
                 if (!m.execution.evidence.last_mutation_at)
-                    return 'BLOCKED: no observed mutation for direct implementation progress';
+                    return rejectImplementationNoGain('no-observed-mutation', { recovery: { action: 'hi_task_start', role: 'coder', obligation_id: o.id, retry_same_call: false }, instruction: `Direct implementation progress only records an observed parent-owned mutation. Do not repeat this call. Start exactly one task-owned implementation attempt for ${o.id} (role=coder, obligation_ids=${o.id}); it must inspect current state and either perform the bounded missing mutation or return canonical DONE when the requested state is already satisfied.` });
                 if (!m.vcs.changed_files.length) {
                     const recovered = inspectCurrentGitChangedFiles(missionRoot);
                     if (recovered === undefined)

@@ -250,6 +250,26 @@ test('parent direct progress cannot close implementation from an unrelated chang
 })
 
 
+test('parent direct progress routes a no-mutation implementation to one task-owned recovery instead of inviting retry',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-no-mutation-recovery-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    const sid='s-no-mutation-recovery'
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Ensure the requested project setup is present and leave it unchanged when already satisfied.'}]})
+    await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'repo-wide',risk:'low',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation'],likely_targets:[],mutation_targets:[],likely_verification:[]})
+    const first=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'The requested setup is already present.',obligation_id:'o-implementation'},{sessionID:sid}))
+    assert.equal(first.status,'BLOCKED');assert.equal(first.reason,'no-observed-mutation');assert.equal(first.retry_same_call,false)
+    assert.deepEqual(first.recovery,{action:'hi_task_start',role:'coder',obligation_id:'o-implementation',retry_same_call:false})
+    assert.match(first.instruction,/exactly one task-owned implementation attempt/);assert.match(first.instruction,/canonical DONE when the requested state is already satisfied/)
+    const second=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'The requested setup is already present.',obligation_id:'o-implementation'},{sessionID:sid}))
+    assert.equal(second.status,'STAGNATION_FENCED');assert.equal(second.blocked_reason,'no-observed-mutation');assert.equal(second.retry_same_call,false)
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:sid}))
+    assert.equal(ledger.obligations.find(o=>o.id==='o-implementation').status,'open');assert.equal(ledger.events.filter(e=>e.type==='implementation.direct-progress-rejected'&&e.payload?.reason==='no-observed-mutation').length,2)
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
 test('parent direct progress closes multi-target implementation only after every user-grounded required target is covered',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-required-targets-'))
   try{
