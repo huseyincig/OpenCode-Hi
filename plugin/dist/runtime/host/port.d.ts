@@ -15,6 +15,7 @@ export interface HostEvent {
         reply: 'once' | 'always' | 'reject' | 'unknown';
         decision: 'allow' | 'deny' | 'unknown';
         patterns: string[];
+        command?: string;
     };
     error?: HostAssistantError;
     assistant?: HostAssistantResult;

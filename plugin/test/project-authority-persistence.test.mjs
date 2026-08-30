@@ -28,7 +28,7 @@ test('native always approval persists normal release-chain permission across pro
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 
-test('without persistent grant, risky external effects use native OpenCode ask instead of Hi chat approval',async()=>{
+test('native OpenCode permission ask/always never substitutes for exact Hi semantic authority',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
   try{
     const cfg={permission:{bash:{'*':'allow'}}}
@@ -39,9 +39,9 @@ test('without persistent grant, risky external effects use native OpenCode ask i
     assert.equal(cfg.permission.bash['yarn npm publish*'],'ask')
     assert.equal(cfg.permission.bash['kubectl delete *'],'ask')
     const store=new MissionStore(root),m=startAssessedMission(store,'s','push the release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
-    await createToolBeforeHook(store)({sessionID:'s',tool:'bash',args:{command:'git push origin main',cwd:root}},{args:{command:'git push origin main',cwd:root}})
-    assert.ok(m.authority.authority?.executing,'reaching tool-before means OpenCode native permission resolution already completed')
-    assert.equal(m.authority.authority?.pending,undefined,'Hi must not create a second text approval gate')
+    await assert.rejects(()=>createToolBeforeHook(store)({sessionID:'s',tool:'bash',args:{command:'git push origin main',cwd:root}},{args:{command:'git push origin main',cwd:root}}),/explicit approval required/)
+    assert.ok(m.authority.authority?.pending,'native ASK only controls host execution; Hi must still own exact semantic approval')
+    assert.equal(m.authority.authority?.executing,undefined)
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 

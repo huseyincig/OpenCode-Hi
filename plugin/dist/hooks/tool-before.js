@@ -1,6 +1,6 @@
 import { isVerificationCommand, normalizeProjectPath, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
-import { actionContract, beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
-import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
+import { actionContract, beginAuthorizedAction, claimAuthorizedAction, isAuthorized, privilegedAction, requireAuthority } from '../runtime/safety/authority.js';
+import { canonicalExternalCommand, externalActionType } from '../runtime/safety/command-classifier.js';
 import { hasProjectedPosixBackgroundExecution } from '../runtime/safety/execution-projection.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
 import { assertSafeGitMutation, invalidateStagingProof, invalidateGitTopologyProof, beginGitTopologyMutation, mutatesGitIndex, isGitTopologyMutation } from '../runtime/safety/staging-safety.js';
@@ -220,11 +220,16 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             assertReleaseChainPrecondition(m, args.command, projectRoot ?? args?.cwd);
             if (child)
                 throw new Error('Hi authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent Hi must own the exact authority contract.');
+            const actionType = externalActionType(args.command);
+            if (!actionType || !m.identity.intent.requestedExternalActions.includes(actionType))
+                throw new Error(`Hi authority boundary: external action ${actionType ?? 'unknown'} was not requested by the current Mission.`);
             const claim = claimAuthorizedAction(m, args.command, args?.cwd);
             if (claim === 'duplicate')
                 throw new Error('Hi idempotency guard: this exact privileged action is already in-flight or completed, or is awaiting authority.');
             if (claim === 'conflict')
                 throw new Error('Hi authority boundary: another exact privileged action already owns the pending/approved/executing authority slot. Resolve or invalidate it before starting a different external effect.');
+            if (!isAuthorized(m, args.command, args?.cwd))
+                requireAuthority(m, args.command, args?.cwd);
             beginAuthorizedAction(m, args.command, args?.cwd);
         }
         const operationID = String(input?.callID ?? input?.callId ?? '').trim();

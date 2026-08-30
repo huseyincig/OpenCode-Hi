@@ -30,28 +30,31 @@ export function beginAuthorizedAction(m, command, cwd) {
         throw new Error(`Hi authority boundary: unresolved privileged action ${a.executing.hash} already owns the execution slot.`);
     if (a?.pending)
         throw new Error(`Hi authority boundary: pending privileged action ${a.pending.hash} must resolve before execution can begin.`);
-    if (a?.approved && a.approved.hash !== c.hash)
-        throw new Error(`Hi authority boundary: approved privileged action ${a.approved.hash} conflicts with requested action ${c.hash}.`);
-    if ((a?.completed_hashes ?? []).includes(c.hash))
+    if (!a?.approved || a.approved.hash !== c.hash || !freshAuthorityTimestamp(a.approved.approved_at))
+        throw new Error(`Hi authority boundary: exact fresh Hi approval ${c.hash} must be present before privileged execution can begin.`);
+    if ((a.completed_hashes ?? []).includes(c.hash))
         throw new Error('Hi idempotency guard: this exact privileged action is already completed.');
     let o = authorityObligation(m, c.hash);
     if (!o) {
         const generic = m.execution.obligations.find(x => x.id === 'o-authority' && x.kind === 'authority' && x.status === 'open');
         if (generic) {
             generic.id = `o-authority-${c.hash.slice(0, 10)}`;
-            generic.summary = `External privileged action ${c.hash.slice(0, 10)} authorized by OpenCode permission policy and completed`;
+            generic.summary = `External privileged action ${c.hash.slice(0, 10)} explicitly authorized and completed`;
             o = generic;
         }
         else {
-            o = { id: `o-authority-${c.hash.slice(0, 10)}`, kind: 'authority', summary: `External privileged action ${c.hash.slice(0, 10)} authorized by OpenCode permission policy and completed`, status: 'open' };
+            o = { id: `o-authority-${c.hash.slice(0, 10)}`, kind: 'authority', summary: `External privileged action ${c.hash.slice(0, 10)} explicitly authorized and completed`, status: 'open' };
             m.execution.obligations.push(o);
         }
-        appendLedger(m, 'authority.bound-to-native-permission', { payload: { obligation: o.id, hash: c.hash } });
+        appendLedger(m, 'authority.bound-to-exact-approval', { payload: { obligation: o.id, hash: c.hash } });
     }
-    m.authority.authority = { ...(a ?? {}), pending: undefined, approved: undefined, executing: { hash: c.hash, action: durableAction(c.action), started_at: Date.now() } };
+    m.authority.authority = { ...a, pending: undefined, approved: undefined, executing: { hash: c.hash, action: durableAction(c.action), started_at: Date.now() } };
     m.identity.status = 'active';
-    appendLedger(m, 'authority.execution.started', { payload: { hash: c.hash, authority: 'opencode-native-permission' } });
+    appendLedger(m, 'authority.execution.started', { payload: { hash: c.hash, authority: 'hi-exact-approval' } });
 }
+export function withholdAuthorizedActionByNativePermission(m, command, detail) { const e = m.authority.authority?.executing; if (!e)
+    return false; const executingCommand = e.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]?.trim(); if (!executingCommand || executingCommand !== command.trim())
+    return false; m.authority.authority = { ...m.authority.authority, executing: undefined }; appendLedger(m, 'authority.execution.withheld-by-native-permission', { payload: { hash: e.hash, detail: detail?.slice(0, 240), retry: 'new-exact-action-contract-required' } }); openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'native-permission-denied', summary: 'OpenCode native permission denied the exact privileged action before execution. The action was not executed; any later retry requires a new exact Hi authority contract.', response_schema: { kind: 'external-action' } }); return true; }
 export function completeAuthorizedActionByHash(m, hash, outcome, detail, commandForRelease) { const executing = m.authority.authority?.executing; if (!executing || executing.hash !== hash)
     return false; if (outcome === 'unknown') {
     appendLedger(m, 'authority.execution.uncertain', { payload: { hash, detail: detail?.slice(0, 240), retry: 'forbidden-until-user-reconciliation' } });

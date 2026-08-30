@@ -35,7 +35,7 @@ test('empty or unstructured privileged output is UNKNOWN, never implicit success
   await assert.rejects(()=>before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}}),/already in-flight or completed/)
 })
 
-test('nonzero exit is deterministic failure but persistent/native authority may retry without a second Hi approval', async()=>{
+test('nonzero exit requires a fresh exact Hi approval before retry even when native permission persists', async()=>{
   const store=new MissionStore(); const m=startAssessedMission(store,'s','opaque push',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)
   authorize(m,'git push','/repo')
@@ -43,8 +43,11 @@ test('nonzero exit is deterministic failure but persistent/native authority may 
   await after({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{title:'push',output:'rejected',metadata:{exit:1}})
   assert.equal(m.authority.authority?.executing,undefined)
   assert.equal(m.identity.status,'waiting-user')
+  await assert.rejects(()=>before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}}),/explicit approval required/)
+  assert.ok(m.authority.authority?.pending,'native permission persistence must not become semantic retry authority')
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
-  assert.ok(m.authority.authority?.executing,'retry may proceed after host permission resolution; Hi must not add a second approval gate')
+  assert.ok(m.authority.authority?.executing,'fresh exact Hi approval may be consumed by the retry')
 })
 
 test('authority outcome uses OpenCode bash metadata.exit and treats no exit signal as unknown',()=>{

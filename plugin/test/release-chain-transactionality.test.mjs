@@ -6,28 +6,31 @@ import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { recordStagingInspection } from '../dist/runtime/safety/staging-safety.js'
 import {authorityProtocolResponse} from './helpers/authority.mjs'
+import {approvePendingAuthority,requireAuthority} from '../dist/runtime/safety/authority.js'
 
 
 const H='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+function authorize(m,cmd){try{requireAuthority(m,cmd)}catch{}assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)}
 async function verifyRemote(m,after){await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git rev-parse HEAD'}},{stdout:H+'\n',metadata:{exit:0}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git ls-remote origin refs/heads/main'}},{stdout:H+'\trefs/heads/main\n',metadata:{exit:0}})}
 
 function setup(){const store=new MissionStore('.'),sid=`s-${Math.random()}`,m=startAssessedMission(store,sid,'opaque release mission',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',required_capabilities:['verification'],requested_external_actions:['git-push','release-create'],likely_verification:[]});m.vcs.changed_files=['src/a.ts'];return{store,m,before:createToolBeforeHook(store),after:createToolAfterHook(store)}}
 
 test('failed push blocks release create even when persistent/native permission would allow it',async()=>{
- const {m,before,after}=setup();await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'rejected',metadata:{exit:1}})
+ const {m,before,after}=setup();authorize(m,'git push origin main');await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'rejected',metadata:{exit:1}})
  assert.equal(m.release.release_chain?.push?.outcome,'failure')
  await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh release create v1'}},{args:{command:'gh release create v1'}}),/release creation is blocked.*push-failed/i)
 })
 
 test('unknown push ACK blocks release until user reconciles and a current successful push is proven',async()=>{
- const {m,before,after}=setup();await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'',metadata:{}})
+ const {m,before,after}=setup();authorize(m,'git push origin main');await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'',metadata:{}})
  assert.equal(m.release.release_chain?.push?.outcome,'unknown')
  await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh release create v1'}},{args:{command:'gh release create v1'}}),/push-unknown/i)
 })
 
 test('successful push permits release, but a later local commit invalidates that push proof',async()=>{
- const {m,before,after}=setup();await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'ok',metadata:{exit:0}})
+ const {m,before,after}=setup();authorize(m,'git push origin main');await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'ok',metadata:{exit:0}})
  await verifyRemote(m,after)
+ authorize(m,'gh release create v1')
  await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh release create v1'}},{args:{command:'gh release create v1'}}))
  // complete the release attempt so the exact-action idempotency guard does not obscure the next assertion
  await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh release create v1'}},{stdout:'released',metadata:{exit:0}})
@@ -39,11 +42,12 @@ test('successful push permits release, but a later local commit invalidates that
 })
 
 test('user-confirmed success for an unknown push ACK satisfies the release-chain push prerequisite',async()=>{
- const {m,before,after}=setup();await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'',metadata:{}})
+ const {m,before,after}=setup();authorize(m,'git push origin main');await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'',metadata:{}})
  const { resolveUncertainAuthority }=await import('../dist/runtime/safety/authority.js')
  assert.equal(resolveUncertainAuthority(m,authorityProtocolResponse(m,'success')),true)
  assert.equal(m.release.release_chain?.push?.outcome,'success')
  await verifyRemote(m,after)
+ authorize(m,'gh release create v1')
  await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh release create v1'}},{args:{command:'gh release create v1'}}))
 })
 

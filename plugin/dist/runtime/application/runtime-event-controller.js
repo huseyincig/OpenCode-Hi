@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { authorityClassForPatterns } from '../safety/project-authority.js';
+import { withholdAuthorizedActionByNativePermission } from '../safety/authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js';
 import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
@@ -107,16 +108,18 @@ export class RuntimeEventController {
             return;
         }
         if (ev.kind === 'permission-asked' && nativePermissionID && mission)
-            pendingNativePermissions.set(nativePermissionKey(sid, nativePermissionID), ev.permission?.patterns ?? []);
+            pendingNativePermissions.set(nativePermissionKey(sid, nativePermissionID), { patterns: ev.permission?.patterns ?? [], command: ev.permission?.command });
         let repliedPermissionPatterns = [];
         if (ev.kind === 'permission-replied' && nativePermissionID && mission) {
-            const key = nativePermissionKey(sid, nativePermissionID), patterns = [...new Set([...(pendingNativePermissions.get(key) ?? []), ...(ev.permission?.patterns ?? [])])];
+            const key = nativePermissionKey(sid, nativePermissionID), pending = pendingNativePermissions.get(key), patterns = [...new Set([...(pending?.patterns ?? []), ...(ev.permission?.patterns ?? [])])];
             repliedPermissionPatterns = patterns;
+            if (!child && sid === mission.identity.session_id && ev.permission?.decision === 'deny' && pending?.command)
+                withholdAuthorizedActionByNativePermission(mission, pending.command, `native permission ${nativePermissionID} rejected`);
             if (ev.permission?.reply === 'always') {
                 const cls = authorityClassForPatterns(patterns);
                 if (cls) {
                     projectAuthority.grant(cls);
-                    await host.log('info', 'Hi project authority persisted from native always approval', { authority_class: cls, patterns });
+                    await host.log('info', 'Hi project permission persisted from native always approval', { permission_class: cls, patterns });
                 }
             }
             pendingNativePermissions.delete(key);

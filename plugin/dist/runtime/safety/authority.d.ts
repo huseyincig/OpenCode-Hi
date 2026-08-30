@@ -6,6 +6,7 @@ export declare function actionContract(command: string, cwd?: string): ExactAuth
 export declare function isAuthorized(m: MissionState, command: string, cwd?: string): boolean;
 export declare function claimAuthorizedAction(m: MissionState, command: string, cwd?: string): 'new' | 'duplicate' | 'conflict';
 export declare function beginAuthorizedAction(m: MissionState, command: string, cwd?: string): void;
+export declare function withholdAuthorizedActionByNativePermission(m: MissionState, command: string, detail?: string): boolean;
 export type AuthorityExecutionOutcome = 'success' | 'failure' | 'unknown';
 export declare function completeAuthorizedActionByHash(m: MissionState, hash: string, outcome: AuthorityExecutionOutcome, detail?: string, commandForRelease?: string): boolean;
 export declare function completeAuthorizedAction(m: MissionState, command: string, cwd: string | undefined, outcome: AuthorityExecutionOutcome, detail?: string): boolean;

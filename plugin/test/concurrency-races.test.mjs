@@ -10,6 +10,8 @@ import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {addEvidence,markMutation} from '../dist/runtime/evidence/evidence-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
+import {approvePendingAuthority,beginAuthorizedAction,requireAuthority} from '../dist/runtime/safety/authority.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const done=summary=>({status:'DONE',summary,changed_files:[],evidence:[],open_issues:[],needs_context:[]})
@@ -42,6 +44,23 @@ test('evidence/mutation race ordering is deterministic: later mutation invalidat
   const b=startAssessedMission(store,'race-evidence-b','evidence race b')
   await Promise.all([Promise.resolve().then(()=>markMutation(b,['b'],'concurrent-write')),Promise.resolve().then(()=>addEvidence(b,{kind:'targeted-tests',summary:'pass-after-write',scope:['b'],source:'test',outcome:'passed',pass:true}))])
   assert.equal(b.execution.evidence.fresh,true);assert.equal(b.execution.evidence.items.at(-1).invalidated_at,undefined)
+})
+
+test('parent native permission reject releases the exact pre-execution authority receipt without granting retry authority',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'race-parent-native-deny','push current branch',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']}),pending=new Map(),command='git push origin main'
+  try{requireAuthority(m,command,'/repo')}catch{}
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
+  beginAuthorizedAction(m,command,'/repo');assert.ok(m.authority.authority?.executing)
+  const services={store,background:{},persistence:{save:()=>{}},tasks:{resolveChildCallback:()=>undefined},teams:{expireMission:async()=>{},reconcileMission:async()=>{}},processRuntime:{},eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:{config:DEFAULT_HI_CONFIG},host:{refreshRuntimeInventory:async()=>{},log:async()=>{},client:{}},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:pending,projectRoot:'/repo'})
+  await controller.handle(normalizeOpenCodeEvent({type:'permission.asked',properties:{id:'perm-parent-deny',sessionID:m.identity.session_id,permission:'bash',patterns:[command],metadata:{command}}}))
+  await controller.handle(normalizeOpenCodeEvent({type:'permission.replied',properties:{requestID:'perm-parent-deny',sessionID:m.identity.session_id,reply:'reject'}}))
+  assert.equal(m.authority.authority?.executing,undefined,'native rejection proves the privileged command never began')
+  assert.equal(m.authority.authority?.approved,undefined,'consumed exact approval must not become retry authority')
+  assert.equal(m.authority.authority?.pending,undefined)
+  assert.equal(m.authority.human_decision?.status,'OPEN')
+  assert.equal(m.authority.human_decision?.reason_code,'native-permission-denied')
+  assert.ok(m.execution.ledger.some(e=>e.type==='authority.execution.withheld-by-native-permission'))
 })
 
 test('permission reply-before-ask reorder cannot create a phantom pending permission',async()=>{

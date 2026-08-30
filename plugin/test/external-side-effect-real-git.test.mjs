@@ -8,10 +8,11 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
-import { resolveUncertainAuthority } from '../dist/runtime/safety/authority.js'
+import { approvePendingAuthority,requireAuthority,resolveUncertainAuthority } from '../dist/runtime/safety/authority.js'
 import {authorityProtocolResponse} from './helpers/authority.mjs'
 
 function git(cwd,...args){return execFileSync('git',args,{cwd,encoding:'utf8'}).trim()}
+function authorize(m,command,cwd){try{requireAuthority(m,command,cwd)}catch{}assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)}
 
 test('real bare-remote push with lost ACK is not blindly retried and is reconciled by remote proof', async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-real-remote-'))
@@ -25,6 +26,7 @@ test('real bare-remote push with lost ACK is not blindly retried and is reconcil
   const store=new MissionStore(root), m=startAssessedMission(store,'real-remote-session','push release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store,undefined,work), after=createToolAfterHook(store,undefined,undefined,work)
   const cmd='git push origin main'
+  authorize(m,cmd,work)
   await before({sessionID:m.identity.session_id,tool:'bash',args:{command:cmd,cwd:work}},{args:{command:cmd,cwd:work}})
 
   // The side effect really happens on a Git remote, but the host ACK is intentionally lost.

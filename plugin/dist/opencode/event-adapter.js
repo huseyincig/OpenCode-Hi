@@ -38,5 +38,5 @@ export function normalizeOpenCodeEvent(event) { const rawType = String(event?.ty
     const info = base.properties?.info, one = info ? [{ info, parts: [] }] : [];
     if (info?.role === 'assistant')
         base.assistant = { text: '', structured: lastAssistantStructured(one), model: lastAssistantModel(one), usage: lastAssistantUsage(one), error: lastAssistantError(one) };
-} const id = permissionEventID(base), reply = permissionReply(base), decision = permissionDecision(base), patterns = permissionPatterns(base); if (id || patterns.length || base.kind === 'permission-asked' || base.kind === 'permission-replied')
-    base.permission = { id, reply, decision, patterns }; return base; }
+} const id = permissionEventID(base), reply = permissionReply(base), decision = permissionDecision(base), patterns = permissionPatterns(base), command = typeof base.properties?.metadata?.command === 'string' ? base.properties.metadata.command : typeof base.properties?.request?.metadata?.command === 'string' ? base.properties.request.metadata.command : undefined; if (id || patterns.length || base.kind === 'permission-asked' || base.kind === 'permission-replied')
+    base.permission = { id, reply, decision, patterns, command }; return base; }

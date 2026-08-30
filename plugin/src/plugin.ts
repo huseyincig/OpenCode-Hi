@@ -38,7 +38,7 @@ export const HiPlugin:Plugin=async(ctx)=>{
   const browserHealth={available:false,reason:'not-probed-during-initialization; browser execution is health-checked lazily on task/doctor demand'};services.tasks.rehydrateQueued(services.store.all())
   setTimeout(()=>{void Promise.all([ownedCapabilities.observe('process-lifecycle'),ownedCapabilities.observe('workspace-isolation-binding')]).catch(()=>{})},0)
   services.persistence.save(services.store.all())
-  const pendingNativePermissions=new Map<string,string[]>()
+  const pendingNativePermissions=new Map<string,{patterns:string[];command?:string}>()
   const eventController=new RuntimeEventController({state,host,services,projectAuthority,pendingNativePermissions,projectRoot})
   const {toolSurface}=createHiToolSurface({state,store:services.store,tasks:services.tasks,processRuntime:services.processRuntime,workspaceRuntime:services.workspaceRuntime,browserExecutor:services.browserExecutor,previewManager:services.previewManager,projectRoot,workingDirectory:ctx.directory,capabilities:host.capabilities,native:host.nativeSession,getModels:host.getModels,refreshModels:host.refreshRuntimeInventory,refreshOwnedHostCapability:ownedCapabilities.observe,scopedStores:services.scopedStores,getBrowserBootstrapStatus:services.getBrowserBootstrapStatus,getBrowserToolReceipt:services.getBrowserToolReceipt})
   void host.log('info','OpenCode-Hi plugin initialized',{directory:ctx.directory,models:host.getModels().length,restored:services.store.all().length,uncleanShutdown:services.persistence.lastLoadReport.uncleanShutdown===true,capabilities:host.capabilities,browser:browserHealth})

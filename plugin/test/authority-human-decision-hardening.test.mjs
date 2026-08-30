@@ -4,13 +4,16 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
-import {AUTHORITY_APPROVAL_TTL_MS,beginAuthorizedAction,claimAuthorizedAction,requireAuthority} from '../dist/runtime/safety/authority.js'
+import {AUTHORITY_APPROVAL_TTL_MS,approvePendingAuthority,beginAuthorizedAction,claimAuthorizedAction,requireAuthority} from '../dist/runtime/safety/authority.js'
 import {ProjectAuthorityStore,applyProjectAuthorityPermissions} from '../dist/runtime/safety/project-authority.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 
 function mission(id){return new MissionStore().start(id,'authority hardening probe')}
 
 test('different exact action cannot overwrite an unresolved executing authority slot',()=>{
   const m=mission('m13-executing')
+  assert.throws(()=>requireAuthority(m,'git push origin main','/repo'),/approval required/i)
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
   beginAuthorizedAction(m,'git push origin main','/repo')
   const first=m.authority.authority.executing.hash
   assert.equal(claimAuthorizedAction(m,'gh release create v1.0.0','/repo'),'conflict')

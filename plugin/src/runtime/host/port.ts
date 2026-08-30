@@ -15,7 +15,7 @@ export interface HostEvent{
   properties:Record<string,any>
   filePaths:string[]
   status:string
-  permission?:{id?:string;reply:'once'|'always'|'reject'|'unknown';decision:'allow'|'deny'|'unknown';patterns:string[]}
+  permission?:{id?:string;reply:'once'|'always'|'reject'|'unknown';decision:'allow'|'deny'|'unknown';patterns:string[];command?:string}
   error?:HostAssistantError
   assistant?:HostAssistantResult
 }
