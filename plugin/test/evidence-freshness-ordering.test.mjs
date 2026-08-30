@@ -26,14 +26,27 @@ test('worker-reported verification remains non-canonical when changed_files is l
 })
 
 
-test('corrective worker methodology claim cannot satisfy a canonical methodology exit by itself',()=>{
+test('unbound corrective worker methodology claim cannot satisfy a canonical methodology exit by itself',()=>{
   const s=new MissionStore(); const m=s.start('parent','fix bug and test it')
   const t=createTask(m,{objective:'fix',role:'coder',category:'standard',scope:['src/a.ts'],dependencies:[],requiredEvidence:['targeted-tests']})
   t.status='waiting';t.result={status:'FIX_REQUIRED',summary:'decision proof missing',changed_files:['src/a.ts'],evidence:[],open_issues:['methodology-exit-unsatisfied:decision-evidence'],needs_context:['decision-evidence']}
-  const w=createWorker(m,t,'host-default',[],['hi-implementation-planning'],[]);w.loaded_methodologies=['hi-implementation-planning'];w.status='busy';w.started_at=Date.now()-10;w.session_id='worker-session';w.native_state_hash='b'.repeat(64);w.native_diff_baseline={'src/a.ts':'same'};w.native_diff_final={'src/a.ts':'same'}
+  const w=createWorker(m,t,'host-default',[],['hi-implementation-planning'],[]);w.loaded_methodologies=['hi-implementation-planning'];w.status='busy';w.started_at=Date.now()-10;w.session_id='worker-session';w.native_diff_baseline={'src/a.ts':'same'};w.native_diff_final={'src/a.ts':'same'}
   runtime().applyResult(m,w.id,{status:'DONE',summary:'decision proof supplied',changed_files:['src/a.ts'],evidence:[{kind:'decision-evidence',summary:'minimal change chosen from the failing assertion',pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(t.status,'waiting');assert.equal(t.result.status,'FIX_REQUIRED')
   assert.match(t.result.summary,/methodology exit contract is not satisfied/i);assert.ok(t.result.open_issues.some(x=>x.includes('methodology-exit-unsatisfied')))
-  assert.equal(m.execution.evidence.items.some(e=>e.kind==='decision-evidence'),false,'Worker methodology claim must not become canonical evidence')
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.evidence-claim-recorded'&&e.worker_id===w.id))
+  assert.equal(m.execution.evidence.items.some(e=>e.kind==='decision-evidence'),false,'Unbound worker methodology claim must not become canonical evidence')
+  assert.ok(m.execution.ledger.some(e=>e.type==='decision.evidence-unbound'&&e.worker_id===w.id))
+})
+
+test('exact-session decision claim is admitted as semantic decision evidence without trusting worker verification claims',()=>{
+  const s=new MissionStore(); const m=s.start('parent','coordinate an implementation decision')
+  const t=createTask(m,{objective:'coordinate',role:'coder',category:'standard',scope:['src/a.ts'],dependencies:[],requiredEvidence:[]})
+  t.status='waiting';t.result={status:'FIX_REQUIRED',summary:'decision proof missing',changed_files:[],evidence:[],open_issues:['methodology-exit-unsatisfied:decision-evidence'],needs_context:['decision-evidence']}
+  const w=createWorker(m,t,'host-default',[],['hi-implementation-planning'],[]);w.loaded_methodologies=['hi-implementation-planning'];w.status='busy';w.started_at=Date.now()-10;w.session_id='worker-session';w.native_state_hash='c'.repeat(64);w.native_diff_baseline={};w.native_diff_final={}
+  runtime().applyResult(m,w.id,{status:'DONE',summary:'decision recorded',changed_files:[],evidence:[{kind:'decision-evidence',summary:'ordered the dependent change before acceptance verification',scope:['src/a.ts'],pass:true,outcome:'passed'},{kind:'build',summary:'worker says build passed',pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  const decision=m.execution.evidence.items.find(e=>e.kind==='decision-evidence')
+  assert.ok(decision);assert.equal(decision.trusted_source_class,'runtime-observation');assert.equal(decision.source_session_id,w.session_id);assert.equal(decision.source_state_hash,w.native_state_hash);assert.equal(decision.producer_attempt?.worker_id,w.id)
+  assert.equal(m.execution.evidence.items.some(e=>e.kind==='build'),false,'Generic technical verification claims must remain non-canonical')
+  assert.equal(t.result?.status,'DONE');assert.ok(!t.result?.open_issues.some(x=>x.includes('methodology-exit-unsatisfied')))
+  assert.ok(m.execution.ledger.some(e=>e.type==='decision.evidence-admitted'&&e.worker_id===w.id))
 })

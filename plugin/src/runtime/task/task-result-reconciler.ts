@@ -252,6 +252,13 @@ export class TaskResultReconciler{
         addEvidence(m,{kind:e.kind,summary:e.summary,scope,source:`reviewer:${worker.id}`,trusted_source_class:'reviewer-observation',source_session_id:worker.session_id,source_state_hash:stateHash,scope_state_hash:scopeStateHash,task_id:task.id,obligation_ids:task.obligation_ids,evidence_refs:refs.length?refs:undefined,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:cleanlinessMarker?(m.execution.evidence.last_mutation_at??Date.now()):undefined})
         continue
       }
+      if(e.kind==='decision-evidence'&&worker.role!=='repository-explorer'&&evidenceVerdictPassed(e.pass,e.outcome)){
+        const stateHash=worker.native_state_hash
+        if(!worker.session_id||!stateHash||!/^[a-f0-9]{64}$/i.test(stateHash)){appendLedger(m,'decision.evidence-unbound',{task_id:task.id,worker_id:worker.id,payload:{reason:'decision-observation-requires-exact-session-state',session_id:worker.session_id}});continue}
+        addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope?.length?e.scope:task.scope,source:`runtime:worker-decision:${worker.id}`,trusted_source_class:'runtime-observation',source_session_id:worker.session_id,source_state_hash:stateHash,task_id:task.id,obligation_ids:task.obligation_ids,evidence_refs:refs.length?refs:undefined,producer_attempt,pass:true,outcome:'passed',reason:e.reason??'structured decision claim observed from the exact task worker session/state/attempt; semantic decision provenance only'})
+        appendLedger(m,'decision.evidence-admitted',{task_id:task.id,worker_id:worker.id,payload:{source_session_id:worker.session_id,source_state_hash:stateHash,attempt:worker.attempt,scope:(e.scope?.length?e.scope:task.scope).slice(0,40),policy:'exact-worker-session-state-attempt-semantic-decision-provenance'}})
+        continue
+      }
       if(browserProofKinds.has(e.kind)&&evidenceVerdictPassed(e.pass,e.outcome)){
         const support=refs.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))
         const valid=refs.length>0&&support.length===refs.length&&support.every(item=>item.trusted_source_class==='browser-observation'&&item.kind==='browser-evidence'&&!item.invalidated_at&&item.outcome!=='failed'&&item.pass!==false&&item.task_id===task.id&&evidenceClaimApplicability(m,item).applicable)&&browserTargetApplicable(support)
