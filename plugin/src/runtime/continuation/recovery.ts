@@ -7,6 +7,20 @@ export interface RecoveryPlan{
   prompt:string
 }
 
+export interface TaskRecoveryDirective{level:1|2|3;action:'same-worker-resume'|'model-escalation'}
+
+/** Project one canonical recovery decision onto the only task-local recovery executor.
+ * Parent-owned recovery actions intentionally return undefined and continue through the parent session. */
+export function taskRecoveryDirective(reasonCode:string,reason:string):TaskRecoveryDirective|undefined{
+  if(reasonCode!=='stagnation-recovery')return undefined
+  const match=/^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(reason)
+  if(!match)return undefined
+  const level=Number(match[1]),action=match[2]
+  if(action==='same-worker-resume'&&(level===1||level===2))return{level,action}
+  if(action==='model-escalation'&&level===3)return{level:3,action}
+  return undefined
+}
+
 function planForLevel(level:0|1|2|3|4|5|6):RecoveryPlan{
   if(level===0)return{level:0,action:'continue',prompt:'Continue the next open obligation from current state.'}
   if(level===1)return{level:1,action:'same-worker-resume',prompt:'Resume the latest reusable worker session with a narrowly scoped corrective instruction.'}

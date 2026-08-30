@@ -1,4 +1,19 @@
 import { recoveryModelHazard, recoveryStrategyEligibility } from './recovery-governor.js';
+/** Project one canonical recovery decision onto the only task-local recovery executor.
+ * Parent-owned recovery actions intentionally return undefined and continue through the parent session. */
+export function taskRecoveryDirective(reasonCode, reason) {
+    if (reasonCode !== 'stagnation-recovery')
+        return undefined;
+    const match = /^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(reason);
+    if (!match)
+        return undefined;
+    const level = Number(match[1]), action = match[2];
+    if (action === 'same-worker-resume' && (level === 1 || level === 2))
+        return { level, action };
+    if (action === 'model-escalation' && level === 3)
+        return { level: 3, action };
+    return undefined;
+}
 function planForLevel(level) {
     if (level === 0)
         return { level: 0, action: 'continue', prompt: 'Continue the next open obligation from current state.' };

@@ -5,6 +5,7 @@ import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evi
 import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js';
 import { dispatchContinuation } from '../continuation/dispatcher.js';
+import { taskRecoveryDirective } from '../continuation/recovery.js';
 import { classifyRuntimeHumanDecision, openHumanDecision } from '../human-decision/runtime.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { evaluateIdle, shouldCountStagnation } from '../continuation/evaluator.js';
@@ -36,6 +37,9 @@ export class RuntimeEventController {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
         const { store, persistence, tasks, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
         const refreshRuntimeInventory = async (reason) => { await host.refreshRuntimeInventory(reason); await host.log('debug', 'Hi refreshed OpenCode-owned runtime model inventory', { reason, models: host.getModels().length, persisted_inferred_role_models: false }); };
+        const executeTaskRecovery = async (m, reasonCode, reason) => { const directive = taskRecoveryDirective(reasonCode, reason); if (!directive)
+            return false; if (!await tasks.recoverStagnation(m, directive.level, directive.action))
+            return false; store.updateProgress(m); return true; };
         const settleCanonicalParentWake = async (m, source) => { const decision = evaluateIdle(m, Date.now(), projectRoot); appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, source, stagnation_count: m.continuation.stagnation_count } }); if (decision.decision === 'STOP') {
             const completion = evaluateCompletion(m, projectRoot);
             if (completion.complete)
@@ -47,13 +51,8 @@ export class RuntimeEventController {
                 openHumanDecision(m, { ...human, reason_code: decision.reason_code, summary: decision.reason });
             }
             return;
-        } if (decision.decision === 'RECOVER' && decision.reason_code === 'stagnation-recovery') {
-            const match = /^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(decision.reason), level = match ? Number(match[1]) : 0, action = match?.[2];
-            if (level && (action === 'same-worker-resume' || action === 'model-escalation') && await tasks.recoverStagnation(m, level, action)) {
-                store.updateProgress(m);
-                return;
-            }
-        } if (decision.prompt && ['CONTINUE', 'RECONCILE', 'VERIFY', 'RECOVER'].includes(decision.decision))
+        } if (decision.decision === 'RECOVER' && await executeTaskRecovery(m, decision.reason_code, decision.reason))
+            return; if (decision.prompt && ['CONTINUE', 'RECONCILE', 'VERIFY', 'RECOVER'].includes(decision.decision))
             await dispatchContinuation(host, m, decision.prompt, decision.reason); };
         if (ev.kind === 'installation-updated') {
             await refreshRuntimeInventory('installation-updated');
@@ -402,14 +401,9 @@ export class RuntimeEventController {
             persistence.save(store.all());
             return;
         }
-        if (decision.decision === 'RECOVER' && decision.reason_code === 'stagnation-recovery') {
-            const match = /^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(decision.reason);
-            const level = match ? Number(match[1]) : 0, action = match?.[2];
-            if (level && (action === 'same-worker-resume' || action === 'model-escalation') && await tasks.recoverStagnation(m, level, action)) {
-                store.updateProgress(m);
-                persistence.save(store.all());
-                return;
-            }
+        if (decision.decision === 'RECOVER' && await executeTaskRecovery(m, decision.reason_code, decision.reason)) {
+            persistence.save(store.all());
+            return;
         }
         if (decision.prompt && ['CONTINUE', 'RECONCILE', 'VERIFY', 'RECOVER'].includes(decision.decision))
             await dispatchContinuation(host, m, decision.prompt, decision.reason);

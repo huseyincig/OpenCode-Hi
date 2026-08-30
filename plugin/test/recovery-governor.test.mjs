@@ -5,7 +5,7 @@ import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {RuntimePersistence} from '../dist/runtime/state/persistence.js'
-import {recoveryPlan} from '../dist/runtime/continuation/recovery.js'
+import {recoveryPlan,taskRecoveryDirective} from '../dist/runtime/continuation/recovery.js'
 import {recordRecoveryStrategy,recoveryModelHazard,recoverySemanticSignature,recoveryStrategyEligibility} from '../dist/runtime/continuation/recovery-governor.js'
 import {dispatchContinuation} from '../dist/runtime/continuation/dispatcher.js'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
@@ -19,6 +19,16 @@ function mission(id='recovery-governor'){
   store.updateProgress(m,false)
   return{store,m}
 }
+
+test('canonical recovery decision has one typed task-execution projection',()=>{
+  assert.deepEqual(taskRecoveryDirective('stagnation-recovery','stagnation-level-1:same-worker-resume'),{level:1,action:'same-worker-resume'})
+  assert.deepEqual(taskRecoveryDirective('stagnation-recovery','stagnation-level-2:same-worker-resume'),{level:2,action:'same-worker-resume'})
+  assert.deepEqual(taskRecoveryDirective('stagnation-recovery','stagnation-level-3:model-escalation'),{level:3,action:'model-escalation'})
+  assert.equal(taskRecoveryDirective('stagnation-recovery','stagnation-level-3:narrow-task'),undefined,'parent-owned strategy must stay on parent continuation path')
+  assert.equal(taskRecoveryDirective('stagnation-recovery','stagnation-level-5:fresh-worker'),undefined,'fresh-worker semantics must not silently become a task-local resume')
+  assert.equal(taskRecoveryDirective('open-obligation','stagnation-level-1:same-worker-resume'),undefined)
+  assert.equal(taskRecoveryDirective('stagnation-recovery','malformed'),undefined)
+})
 
 test('same recovery strategy cannot replay on unchanged semantic state and deterministically advances rung',()=>{
   const {m}=mission('rg-repeat');m.continuation.stagnation_count=1
