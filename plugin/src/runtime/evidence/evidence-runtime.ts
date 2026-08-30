@@ -25,7 +25,7 @@ const TEST_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:
 const TYPECHECK_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?(?:typecheck|type-check|check:types?)(?:\\b|:))|(?:npx\\s+)?tsc\\b|(?:python(?:3)?\\s+-m\\s+)?(?:mypy|pyright)\\b)`, 'i')
 const LINT_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?lint(?:\\b|:))|(?:npx\\s+)?eslint\\b|(?:python(?:3)?\\s+-m\\s+)?ruff(?:\\s+check)?\\b)`, 'i')
 const BUILD_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?build(?:\\b|:))|cargo\\s+check\\b|go\\s+build\\b|dotnet\\s+build\\b|mvn(?:w)?\\s+(?:[^;&|]*\\s)?(?:package|verify)\\b|(?:gradle|\\.\/gradlew)\\s+(?:[^;&|]*\\s)?build\\b)`, 'i')
-const CHECK_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}${PACKAGE}\\s+(?:(?:run\\s+)?check(?:\\b|:))`, 'i')
+const CHECK_INVOCATION=new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?check(?:\\b|:))|git\\s+status\\b|git\\s+diff\\s+--check\\b)`, 'i')
 export function verificationCommandKind(command:string):MissionEvidenceKind|undefined{if(TEST_INVOCATION.test(command))return'targeted-tests';if(TYPECHECK_INVOCATION.test(command))return'typecheck';if(LINT_INVOCATION.test(command))return'lint';if(BUILD_INVOCATION.test(command))return'build';if(CHECK_INVOCATION.test(command))return'changed-surface-sanity';return undefined}
 export function isVerificationCommand(command:string):boolean{return verificationCommandKind(command)!==undefined}
 export function shellMayMutate(command:string):boolean{return SHELL_MUTATION_COMMAND.test(command)||SHELL_REDIRECTION.test(command)||(SHELL_INLINE_INTERPRETER.test(command)&&!isVerificationCommand(command))}

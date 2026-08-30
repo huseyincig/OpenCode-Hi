@@ -252,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "ab4b8bae60ebaf772c92afe281f97c464a3d1049519b2abc96c53538d1be3378",
+      "owner_sha256": "299122fb4b8baccf0ba5083684da0647c6fff43bc82ed51d347364f926904265",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",

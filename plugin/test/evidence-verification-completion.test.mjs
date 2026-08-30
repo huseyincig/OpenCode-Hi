@@ -7,7 +7,7 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {verificationSatisfied} from '../dist/runtime/verification/policy.js'
 import {evaluateCompletion} from '../dist/runtime/completion/evaluator.js'
-import {addEvidence} from '../dist/runtime/evidence/evidence-runtime.js'
+import {addEvidence,verificationCommandKind} from '../dist/runtime/evidence/evidence-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
@@ -50,4 +50,11 @@ test('mutation invalidates previously passed verification before completion',()=
   m.execution.evidence.last_mutation_at=evidence.observed_at+1;evidence.invalidated_at=evidence.observed_at+1;m.execution.evidence.fresh=false
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['fresh-evidence']})
   assert.equal(evaluateCompletion(m).complete,false)
+})
+
+
+test('git status and git diff --check are canonical changed-surface-sanity verification routes',()=>{
+  assert.equal(verificationCommandKind('git status'),'changed-surface-sanity')
+  assert.equal(verificationCommandKind('cd /tmp/project && git status --short'),'changed-surface-sanity')
+  assert.equal(verificationCommandKind('git diff --check'),'changed-surface-sanity')
 })

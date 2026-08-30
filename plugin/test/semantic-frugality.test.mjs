@@ -251,3 +251,25 @@ test('explicit user lint remains authoritative even when repository has no lint 
     assert.equal(mission.execution.ledger.find(e=>e.type==='semantic.assessed')?.payload?.technical_verification_ceiling_applied,true)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('repo-wide route-less operational sandbox drops unsupported model-inferred code verifiers but keeps minimum Git sanity',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-operational-sandbox-verifier-'))
+  try{
+    writeFileSync(join(root,'opencode.json'),'{}')
+    const store=new MissionStore(root),mission=store.start('operational-sandbox','Install the plugin from Git, run setup/config/doctor, verify registration, routing, inventory and restart state.')
+    store.applyInitialSemanticAssessment('operational-sandbox',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'repo-wide',risk:'medium',likely_targets:['opencode.json'],likely_verification:['typecheck','lint','build','changed-surface-sanity'],user_verification:[],verification_ceiling:false}))
+    assert.deepEqual(mission.identity.intent.likelyVerification,[])
+    assert.deepEqual(mission.execution.verification_policy.requiredKinds,['changed-surface-sanity'])
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('repo-wide route-less operational sandbox preserves an explicit user verifier',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-operational-explicit-verifier-'))
+  try{
+    writeFileSync(join(root,'opencode.json'),'{}')
+    const store=new MissionStore(root),mission=store.start('operational-explicit','Install the plugin and run npm run lint when done.')
+    store.applyInitialSemanticAssessment('operational-explicit',parseSemanticIntentAssessment({...assessment,task_kind:'implementation',scope:'repo-wide',risk:'medium',likely_targets:['opencode.json'],likely_verification:['typecheck','lint','build'],user_verification:[],verification_ceiling:false}))
+    assert.deepEqual(mission.identity.intent.likelyVerification,['lint'])
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

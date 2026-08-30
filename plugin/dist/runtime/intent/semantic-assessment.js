@@ -58,18 +58,20 @@ export function resolveAdaptiveVerificationAssessment(assessment, userText, repo
     const boundedExplicit = explicitUserVerification.length > 0 && assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness';
     if (boundedExplicit)
         return { assessment: { ...assessment, likely_verification: [...explicitUserVerification], user_verification: [...explicitUserVerification], verification_ceiling: true }, explicitUserVerification, ceilingApplied: true, policy: 'explicit-user-verifier' };
+    const repoKinds = new Set((repo?.likelyVerification ?? []).flatMap(kind => { const normalized = kind.toLowerCase().trim(); if (['test', 'pytest', 'go test', 'cargo test'].includes(normalized))
+        return ['targeted-tests']; if (normalized === 'check')
+        return ['changed-surface-sanity']; if (['typecheck', 'lint', 'build'].includes(normalized))
+        return [normalized]; return []; }));
+    const technicalKinds = new Set(['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity']), explicitStructured = new Set([...(assessment.user_verification ?? []), ...explicitUserVerification]);
     const boundedCapabilitySurface = ['local', 'multi-file'].includes(assessment.scope) && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && repo !== undefined;
-    if (boundedCapabilitySurface) {
-        const repoKinds = new Set(repo.likelyVerification.flatMap(kind => { const normalized = kind.toLowerCase().trim(); if (['test', 'pytest', 'go test', 'cargo test'].includes(normalized))
-            return ['targeted-tests']; if (normalized === 'check')
-            return ['changed-surface-sanity']; if (['typecheck', 'lint', 'build'].includes(normalized))
-            return [normalized]; return []; }));
-        if (repoKinds.size) {
-            const technicalKinds = new Set(['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity']);
-            const explicitStructured = new Set(assessment.user_verification ?? []);
-            const filtered = assessment.likely_verification.filter(kind => explicitStructured.has(kind) || !technicalKinds.has(kind) || repoKinds.has(kind));
-            assessment = { ...assessment, likely_verification: [...new Set(filtered)] };
-        }
+    if (boundedCapabilitySurface && repoKinds.size) {
+        const filtered = assessment.likely_verification.filter(kind => explicitStructured.has(kind) || !technicalKinds.has(kind) || repoKinds.has(kind));
+        assessment = { ...assessment, likely_verification: [...new Set(filtered)] };
+    }
+    const repoWideRouteLessSurface = assessment.scope === 'repo-wide' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && repo !== undefined && repo.ecosystems.length === 0 && repoKinds.size === 0;
+    if (repoWideRouteLessSurface) {
+        const filtered = assessment.likely_verification.filter(kind => explicitStructured.has(kind) || !technicalKinds.has(kind));
+        assessment = { ...assessment, likely_verification: [...new Set(filtered)] };
     }
     const boundedVisualCapabilitySurface = ['local', 'multi-file'].includes(assessment.scope) && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && assessment.required_capabilities.includes('visual-qa') && assessment.likely_verification.includes('visual-check') && repo !== undefined && repo.markers.includes('.opencode/');
     if (boundedVisualCapabilitySurface) {
