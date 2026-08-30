@@ -88,7 +88,7 @@ export function isWorkerContract(v:unknown):v is WorkerContract{
   if(v.native_diff_baseline!==undefined&&!stringRecord(v.native_diff_baseline))return false
   if(v.native_diff_final!==undefined&&!stringRecord(v.native_diff_final))return false
   if(v.fallback_history!==undefined&&(!Array.isArray(v.fallback_history)||!v.fallback_history.every(fallback)))return false
-  if(v.usage_observations!==undefined&&(!Array.isArray(v.usage_observations)||v.usage_observations.length>32||!v.usage_observations.every(isExecutionUsageObservation)))return false
+  if(v.usage_observations!==undefined&&(!Array.isArray(v.usage_observations)||!v.usage_observations.every(isExecutionUsageObservation)))return false
   if(v.pending_native_permission_denial!==undefined&&!permissionDenial(v.pending_native_permission_denial))return false
   if(v.pending_host_assistant_result!==undefined&&!pendingAssistantResult(v.pending_host_assistant_result))return false
   if(v.projected_model_variant!==undefined&&v.projected_model===undefined)return false

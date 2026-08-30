@@ -8,7 +8,7 @@ export function bindWorkerUsageObservation(m, worker, usage, at = Date.now()) {
     if ((worker.usage_observations ?? []).some(item => item.observation_id === observation_id))
         return worker.usage_observations.find(item => item.observation_id === observation_id);
     const observation = { ...usage, observation_id, worker_id: worker.id, execution_unit_id, attempt_ordinal: worker.attempt, generation, source_session_id, observed_at: usage.observed_at ?? at };
-    worker.usage_observations = [...(worker.usage_observations ?? []), observation].slice(-32);
+    worker.usage_observations = [...(worker.usage_observations ?? []), observation];
     appendLedger(m, 'worker.usage-observed', { task_id: worker.task_id, worker_id: worker.id, payload: { observation_id, attempt: worker.attempt, generation, token_source: observation.token_source, coverage: observation.coverage, steps: observation.step_count, tokens: observation.tokens, monetary: observation.monetary, model_identity: observation.model_identity } });
     return observation;
 }

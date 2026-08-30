@@ -54,7 +54,7 @@ export function isWorkerContract(v) {
         return false;
     if (v.fallback_history !== undefined && (!Array.isArray(v.fallback_history) || !v.fallback_history.every(fallback)))
         return false;
-    if (v.usage_observations !== undefined && (!Array.isArray(v.usage_observations) || v.usage_observations.length > 32 || !v.usage_observations.every(isExecutionUsageObservation)))
+    if (v.usage_observations !== undefined && (!Array.isArray(v.usage_observations) || !v.usage_observations.every(isExecutionUsageObservation)))
         return false;
     if (v.pending_native_permission_denial !== undefined && !permissionDenial(v.pending_native_permission_denial))
         return false;

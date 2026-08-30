@@ -36,3 +36,17 @@ test('worker usage observation is exact-attempt bound deduplicated and contract-
   assert.deepEqual(workerExactTokenUsage(worker),{input:10,output:3,reasoning:1,cache_read:2,cache_write:0});assert.equal(workerDerivedOpenCodeCost(worker),.01)
   beginWorkerAttempt(task,worker,200);const next=bindWorkerUsageObservation(m,worker,{...host,message_id:'m2',observed_at:210});assert.notEqual(next.observation_id,one.observation_id);assert.equal(worker.usage_observations.length,2)
 })
+
+test('canonical usage observation stream remains append-only beyond the former 32-observation window',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'usage-append-only','implement',{task_kind:'implementation',likely_verification:[]})
+  const task=createTask(m,{objective:'x',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/m');worker.session_id='child';beginWorkerAttempt(task,worker,100);worker.status='busy'
+  for(let i=0;i<40;i++)bindWorkerUsageObservation(m,worker,{message_id:`msg-${i}`,model_identity:'p/m',observed_at:110+i,token_source:'opencode-step-finish',coverage:'assistant-step-total',confidence:'exact',step_count:1,tokens:{input:i+1,output:1,reasoning:0,cache_read:0,cache_write:0}})
+  assert.equal(worker.usage_observations.length,40)
+  assert.equal(worker.usage_observations[0].message_id,'msg-0')
+  assert.equal(worker.usage_observations.at(-1).message_id,'msg-39')
+  assert.equal(isWorkerContract(worker),true)
+  assert.deepEqual(workerExactTokenUsage(worker),{input:820,output:40,reasoning:0,cache_read:0,cache_write:0})
+  const duplicate=bindWorkerUsageObservation(m,worker,{message_id:'msg-0',model_identity:'p/m',observed_at:999,token_source:'opencode-step-finish',coverage:'assistant-step-total',confidence:'exact',step_count:1,tokens:{input:999,output:999,reasoning:0,cache_read:0,cache_write:0}})
+  assert.equal(duplicate.observation_id,worker.usage_observations[0].observation_id)
+  assert.equal(worker.usage_observations.length,40,'deterministic dedup remains idempotent without truncation')
+})

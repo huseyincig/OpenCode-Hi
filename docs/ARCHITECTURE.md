@@ -137,6 +137,12 @@ user/semantic request
 
 Generic “yes”, continuation, a Methodology, a browser click, or a host permission grant cannot create reusable future Authority.
 
+## Execution resources and canonical observations
+
+Hi uses specialized semantic custody contracts for child sessions, processes, isolated workspaces and browser sessions instead of a generic resource manager. Each contract binds exact Mission/Task/Worker/Attempt ownership to the relevant OpenCode/native identity and performs resource-specific restart/adoption/quarantine/cleanup. A stale or ambiguous native resource cannot be guessed into ownership, and cancellation/replacement cannot bypass proven terminal/quiescent/cleanup state. Browser native sessions are intentionally process-local; after host loss, durable Task/Attempt/Evidence provenance survives but a vanished browser process is not fictitiously adopted.
+
+Execution/model usage has one normalized durable observation source: `Worker.usage_observations`. Accepted `ExecutionUsageObservation` records are deterministic-ID deduplicated and append-only across the Worker lifetime; metrics, budget and causal-attribution projections derive from that stream rather than maintaining another telemetry truth store or querying native history ad hoc. Latest Worker effective-model fields are current execution-state projection, while usage observation model identity is historical provenance. Activity events remain liveness signals. None of these observations become Evidence, routing, completion, Authority or configuration truth automatically. If future storage compaction is required, the canonical observation schema must expose truncation/coverage/drop/checkpoint semantics so partial history can never masquerade as complete history.
+
 ## Authority, native permission and consequential effects
 
 Hi Mission Authority and OpenCode native permission are deliberately different owners. Mission Authority answers whether the current Mission/user authorizes one exact external effect; OpenCode permission answers whether the host may execute the command. A privileged parent action must be part of the Mission external-action contract, hold one fresh exact Hi approval bound to command/cwd hash, and consume that approval at the Authority state owner. ProcessRuntime uses the same semantic gate. OpenCode native `once` / `always` remains an independent host gate; persistent native `always` projections are permission convenience only and never satisfy `isAuthorized`. Child workers never inherit parent privileged external-effect authority.
