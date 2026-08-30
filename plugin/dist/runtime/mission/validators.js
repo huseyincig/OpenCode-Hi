@@ -8,7 +8,8 @@ import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY
 import { semanticTaskCapabilityConsistencyError, SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js';
 import { isProcessContract } from '../../contracts/process.js';
 import { isIsolationDecisionContract, isWorkspaceLeaseContract } from '../../contracts/workspace.js';
-import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
+import { isSchedulerLifecycleState, validateWorkGraph } from '../../contracts/orchestration-core.js';
+import { projectMissionToWorkGraph } from '../execution/work-graph-projection.js';
 import { isProgressDelta, isSemanticProgressSnapshot } from '../progress/semantic-progress.js';
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
@@ -118,12 +119,14 @@ export function validateTaskDAG(identity, execution) {
     const missionID = String(identity.mission_id ?? ''), taskIDs = tasks.map(t => String(t.id ?? '')), workerIDs = workers.map(w => String(w.id ?? ''));
     if (new Set(taskIDs).size !== taskIDs.length || new Set(workerIDs).size !== workerIDs.length)
         return false;
-    const knownTasks = new Set(taskIDs), knownWorkers = new Set(workerIDs);
+    const knownTasks = new Set(taskIDs), knownWorkers = new Set(workerIDs), obligationIDs = new Set((Array.isArray(execution.obligations) ? execution.obligations : []).map((o) => String(o.id ?? '')));
     for (const task of tasks) {
         if (task.mission_id !== missionID)
             return false;
-        const id = String(task.id), dependencies = task.dependencies;
+        const id = String(task.id), dependencies = task.dependencies, ownedObligations = task.obligation_ids;
         if (!Array.isArray(dependencies) || dependencies.some(dep => typeof dep !== 'string' || dep === id || !knownTasks.has(dep)))
+            return false;
+        if (!Array.isArray(ownedObligations) || new Set(ownedObligations).size !== ownedObligations.length || ownedObligations.some(obligation => typeof obligation !== 'string' || !obligationIDs.has(obligation)))
             return false;
         if (task.worker_id !== undefined) {
             if (typeof task.worker_id !== 'string' || !knownWorkers.has(task.worker_id))
@@ -304,5 +307,11 @@ export function validateMissionEnvelope(value) {
     const { identity, execution, continuation, context, vcs, authority, release, methodology } = value;
     if (!validateMissionIdentityState(identity) || !validateMissionExecutionState(identity, execution, methodology) || !validateContinuationState(continuation) || !validateContextState(context) || !validateVcsSafetyState(vcs) || !validateAuthorityState(authority) || !validateReleaseState(release) || !validateMethodologyState(methodology))
         return false;
-    return isRecord(identity) && isRecord(execution) && validateTaskDAG(identity, execution);
+    if (!isRecord(identity) || !isRecord(execution) || !validateTaskDAG(identity, execution))
+        return false;
+    // MissionState is the durable semantic owner. WorkGraph is a deterministic
+    // host-neutral projection/API over that state, so durable admission must
+    // also satisfy the graph identity/dependency/attempt invariants without
+    // persisting a second mutable graph truth.
+    return validateWorkGraph(projectMissionToWorkGraph(value, Number(identity.updated_at))).ok;
 }

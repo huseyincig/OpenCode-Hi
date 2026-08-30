@@ -191,7 +191,7 @@
         },
         {
           "file": "plugin/test/context-survival-hardening.test.mjs",
-          "contains": "oversized relevant context is replaced by native summary instead of being appended to it"
+          "contains": "oversized relevant context fails closed to bounded projection when native summary lacks explicit model ownership"
         }
       ],
       "evidence": []

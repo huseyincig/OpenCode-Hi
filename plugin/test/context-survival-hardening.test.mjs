@@ -33,7 +33,7 @@ test('compaction survival keeps blockers, next action and stop contract under ve
   assert.match(text,/t-89:FIX_REQUIRED/)
 })
 
-test('oversized relevant context is replaced by native summary instead of being appended to it',async()=>{
+test('oversized relevant context fails closed to bounded projection when native summary lacks explicit model ownership',async()=>{
   const prompts=[]
   const client={session:{
     create:async()=>({data:{id:'child-context'}}),
@@ -48,8 +48,9 @@ test('oversized relevant context is replaced by native summary instead of being 
   assert.equal(prompts.length,1)
   const text=prompts[0].body.parts[0].text
   assert.ok(text.length<=DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
-  assert.match(text,/native-session-summary:BOUNDED_NATIVE_SUMMARY/)
+  assert.doesNotMatch(text,/native-session-summary:/)
   assert.doesNotMatch(text,/FULL_TRANSCRIPT_MARKER/)
+  assert.equal(client.session.summarize!==undefined,true,'host method presence is not enough to authorize model-backed summarization')
 })
 
 test('handoff remains within total budget when native summarization is unavailable',async()=>{

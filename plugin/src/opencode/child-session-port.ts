@@ -8,7 +8,7 @@ export function createOpenCodeChildSessionPort(client:OpenCodeClient,lifecycle:O
   return{
     capabilities:{
       create:native.has('session-create'),prompt:native.has('prompt-async')||native.has('prompt-sync'),abort:Boolean(lifecycle.serverUrl)||native.has('abort'),status:Boolean(lifecycle.serverUrl)||native.has('status'),
-      diff:native.has('diff'),summarize:native.has('summarize'),fork:native.has('fork'),structuredOutput:native.has('prompt-async')||native.has('prompt-sync'),
+      diff:native.has('diff'),summarize:false,fork:native.has('fork'),structuredOutput:native.has('prompt-async')||native.has('prompt-sync'),
     },
     async create(request){
       const {parentSessionID,title,role,model,variant,workspace,forkFromSession}=request
@@ -19,6 +19,6 @@ export function createOpenCodeChildSessionPort(client:OpenCodeClient,lifecycle:O
     abort:(sessionID)=>abortSession(client,sessionID,lifecycle),
     status:(sessionID)=>readSessionRuntimeStatus(client,sessionID,lifecycle),
     diff:(sessionID)=>native.diff(sessionID),
-    summarize:(sessionID)=>native.summarize(sessionID),
+    summarize:async()=>{throw new Error('OpenCode native session summarize requires explicit provider/model identity; use bounded Hi context projection when no model owner is selected')},
   }
 }

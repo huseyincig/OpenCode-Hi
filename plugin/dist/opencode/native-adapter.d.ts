@@ -17,8 +17,8 @@ export declare class NativeOpenCodeAdapter {
     children(sessionID: string): Promise<any[]>;
     todo(sessionID: string): Promise<any[]>;
     diff(sessionID: string): Promise<any>;
-    fork(sessionID: string, title?: string): Promise<any>;
-    summarize(sessionID: string): Promise<any>;
+    fork(sessionID: string, messageID?: string): Promise<any>;
+    summarize(sessionID: string, model?: string): Promise<any>;
     revert(sessionID: string, messageID?: string): Promise<any>;
     unrevert(sessionID: string): Promise<any>;
     prompt(sessionID: string, text: string, agent?: string, model?: string, variant?: string): Promise<void>;

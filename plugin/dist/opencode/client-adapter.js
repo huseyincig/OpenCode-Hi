@@ -136,7 +136,7 @@ export function sessionRuntimeStatusFromStatus(value, sessionID) {
     if (!statusMap || typeof statusMap !== 'object' || Array.isArray(statusMap))
         return 'unknown';
     const status = statusMap[sessionID];
-    // Exact OpenCode 1.18.19 removes idle sessions from the status map; absence is canonical idle.
+    // Current OpenCode status-map contract omits idle sessions; absence is canonical idle.
     if (status === undefined)
         return 'idle';
     if (!status || typeof status !== 'object')

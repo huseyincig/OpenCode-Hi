@@ -72,7 +72,7 @@ Current host capability truth is generated from exact receipts rather than hand-
 
 Hi adds deterministic semantics around native AI execution:
 
-- one canonical Mission/Task/Worker ownership model;
+- one canonical durable Mission/Task/Obligation/Worker ownership model, with deterministic WorkGraph/ExecutionUnit/Attempt projection and native OpenCode sessions attached only as execution bindings;
 - adaptive direct, delegated and bounded multi-agent execution;
 - independent Role, model, Methodology and topology decisions;
 - exact Authority and monotonic host Permission boundaries;

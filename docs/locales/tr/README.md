@@ -20,7 +20,7 @@ Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'le
 
 OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler:
 
-- tek canonical Mission/Task/Worker ownership modeli;
+- tek canonical kalıcı Mission/Task/Obligation/Worker sahiplik modeli; WorkGraph/ExecutionUnit/Attempt deterministik projeksiyondur ve OpenCode session kimliği yalnızca native yürütme bağlantısıdır;
 - direct, delegated ve bounded multi-agent execution;
 - Role, model, Methodology ve topology'nin birbirinden bağımsız seçimi;
 - exact Authority ve monotonic host Permission sınırları;

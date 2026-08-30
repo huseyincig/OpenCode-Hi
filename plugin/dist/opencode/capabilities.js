@@ -13,7 +13,8 @@ export function detectOpenCodeCapabilities(client, owned = {}) {
     const sessionTodo = n.has('todo');
     const sessionDiff = n.has('diff');
     const sessionFork = n.has('fork');
-    const sessionSummarize = n.has('summarize');
+    // Method presence alone is insufficient: current summarize requires explicit provider/model identity.
+    const sessionSummarize = false;
     const sessionRevert = n.has('revert');
     const sessionUnrevert = n.has('unrevert');
     const degraded = [];

@@ -1,26 +1,16 @@
 import { isHiReadOnlyChildRole } from '../roles/catalog.js';
-function norm(x) { return x.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); }
-function sameSurface(a, b) { const x = norm(a), y = norm(b); if (!x || !y)
-    return false; if (x === y)
-    return true; return x.startsWith(`${y}/`) || y.startsWith(`${x}/`); }
-function overlap(a, b) { const out = []; for (const x of a)
-    for (const y of b)
-        if (sameSurface(x, y)) {
-            out.push(norm(x) === norm(y) ? norm(x) : `${norm(x)}~${norm(y)}`);
-            break;
-        } return [...new Set(out)]; }
-export function parallelSafety(existing, candidate) { const reasons = []; const candidateRead = isHiReadOnlyChildRole(candidate.role ?? ''); for (const task of existing.filter(t => ['created', 'queued', 'running', 'waiting'].includes(t.status))) {
-    const directDependency = candidate.dependencies.includes(task.id), same = overlap(task.scope, candidate.scope), taskRead = isHiReadOnlyChildRole(task.role);
-    if (directDependency) {
-        reasons.push(`dependency:${task.id}`);
-        continue;
-    }
-    if (!candidateRead && !taskRead && (!candidate.scope.length || !task.scope.length)) {
-        reasons.push(`unknown-mutable-surface:${task.id}`);
-        continue;
-    }
-    if (same.length && !(candidateRead && taskRead))
-        reasons.push(`write-scope-overlap:${task.id}:${same.join(',')}`);
-    if (!candidateRead && !taskRead && task.scope.some(x => /migration|schema|lockfile|package-lock|pnpm-lock|yarn.lock/i.test(x)) && candidate.scope.some(y => task.scope.some(x => sameSurface(x, y))))
-        reasons.push(`shared-mutable-surface:${task.id}`);
-} return { safe: reasons.length === 0, reasons }; }
+import { evaluateSchedulingSurfaceConflicts } from './planner.js';
+/**
+ * Compatibility projection for older benchmark/test consumers.
+ * Canonical mutable-surface policy lives in planner.evaluateSchedulingSurfaceConflicts;
+ * this helper must never grow independent scheduling semantics again.
+ */
+export function parallelSafety(existing, candidate) {
+    const active = existing.filter(task => ['created', 'queued', 'running', 'waiting'].includes(task.status));
+    const dependencyBlockers = active.filter(task => candidate.dependencies.includes(task.id)).map(task => `dependency:${task.id}`);
+    const candidateSurface = { executionUnitId: 'compat:candidate', missionId: 'compat', workNodeId: 'compat:candidate', status: 'created', scope: [...candidate.scope], writeSet: [], readOnly: isHiReadOnlyChildRole(candidate.role ?? ''), createdAt: Number.MAX_SAFE_INTEGER };
+    const peers = active.filter(task => !candidate.dependencies.includes(task.id)).map(task => ({ executionUnitId: `eu:${task.id}`, missionId: 'compat', workNodeId: task.id, status: task.status, scope: [...task.scope], writeSet: [], readOnly: isHiReadOnlyChildRole(task.role), createdAt: task.created_at }));
+    const conflict = evaluateSchedulingSurfaceConflicts(candidateSurface, peers);
+    const reasons = [...dependencyBlockers, ...conflict.reasons.map(item => item.code === 'mutable-surface-conflict' ? `write-scope-overlap:${item.detail ?? ''}` : `${item.code}${item.detail ? `:${item.detail}` : ''}`)];
+    return { safe: reasons.length === 0, reasons };
+}

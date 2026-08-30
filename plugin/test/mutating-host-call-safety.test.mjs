@@ -8,6 +8,14 @@ test('native host operations explicitly classify read-only versus mutating effec
   for(const name of ['status','children','todo','diff','provider-inventory','version'])assert.equal(nativeOperationEffect(name),'read-only',name)
 })
 
+test('native session status follows the current map endpoint shape and normalizes missing entries to idle',async()=>{
+  const calls=[]
+  const adapter=new NativeOpenCodeAdapter({session:{status:async arg=>{calls.push(arg);return{data:{busy:{type:'busy'},retrying:{type:'retry',attempt:1,message:'later',next:1}}}}}})
+  assert.deepEqual(await adapter.status('busy'),{type:'busy'})
+  assert.deepEqual(await adapter.status('missing'),{type:'idle'})
+  assert.deepEqual(calls,[{},{}])
+})
+
 test('mutating host operations are dispatched once and never replayed through another current endpoint after ambiguity',async()=>{
   let first=0,sync=0
   const promptClient={session:{
@@ -31,7 +39,7 @@ test('mutating host operations are dispatched once and never replayed through an
 
   let summaries=0
   const nativeSummary=new NativeOpenCodeAdapter({session:{summarize:async()=>{summaries++;throw new Error('ambiguous after dispatch')}}})
-  await assert.rejects(()=>nativeSummary.summarize('child-1'),/ambiguous after dispatch/)
+  await assert.rejects(()=>nativeSummary.summarize('child-1','provider/model'),/ambiguous after dispatch/)
   assert.equal(summaries,1)
 })
 
@@ -114,4 +122,23 @@ test('worker prompt forwards native json-schema format exactly once without host
   const format={type:'json_schema',schema:{type:'object',required:['status'],properties:{status:{type:'string'}}},retryCount:0}
   await sendPromptAsync(client,'child-structured','return result','coder','p/m',undefined,{bash:false},50,'msg_000000000001bbbbbbbbbbbbbb',format)
   assert.equal(calls.length,1);assert.deepEqual(calls[0].body.format,format);assert.equal(calls[0].body.format.retryCount,0)
+})
+
+test('native fork/revert/summarize use current semantic bodies and fail closed on missing required identity',async()=>{
+  const forkCalls=[],revertCalls=[],summaryCalls=[]
+  const adapter=new NativeOpenCodeAdapter({session:{
+    fork:async arg=>{forkCalls.push(arg);return{data:{id:'forked'}}},
+    revert:async arg=>{revertCalls.push(arg);return{data:{id:'reverted'}}},
+    summarize:async arg=>{summaryCalls.push(arg);return{data:true}},
+  }})
+  await adapter.fork('s1','msg-1')
+  assert.deepEqual(forkCalls,[{path:{id:'s1'},body:{messageID:'msg-1'}}])
+  await assert.rejects(()=>adapter.revert('s1'),/requires messageID/)
+  assert.equal(revertCalls.length,0)
+  await adapter.revert('s1','msg-2')
+  assert.deepEqual(revertCalls,[{path:{id:'s1'},body:{messageID:'msg-2'}}])
+  await assert.rejects(()=>adapter.summarize('s1'),/explicit provider\/model identity/)
+  assert.equal(summaryCalls.length,0)
+  await adapter.summarize('s1','provider/model')
+  assert.deepEqual(summaryCalls,[{path:{id:'s1'},body:{providerID:'provider',modelID:'model'}}])
 })

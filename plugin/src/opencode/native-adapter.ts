@@ -47,13 +47,16 @@ export class NativeOpenCodeAdapter {
       case 'structured-log':return Boolean(fn(this.client?.app,'log'))
     }
   }
-  async status(sessionID:string):Promise<any>{const call=fn(this.client?.session,'status');return call?dataOf(await call({path:{id:sessionID}})):undefined}
+  async status(sessionID:string):Promise<any>{
+    const call=fn(this.client?.session,'status');if(!call)return undefined
+    const value=dataOf<any>(await call({}));return value&&typeof value==='object'&&!Array.isArray(value)?value[sessionID]??{type:'idle'}:undefined
+  }
   async children(sessionID:string):Promise<any[]>{const call=fn(this.client?.session,'children');const value=call?dataOf<any>(await call({path:{id:sessionID}})):[];return Array.isArray(value)?value:(Array.isArray(value?.children)?value.children:[])}
   async todo(sessionID:string):Promise<any[]>{const call=fn(this.client?.session,'todo');const value=call?dataOf<any>(await call({path:{id:sessionID}})):[];return Array.isArray(value)?value:(Array.isArray(value?.todos)?value.todos:[])}
   async diff(sessionID:string):Promise<any>{const call=fn(this.client?.session,'diff');return call?dataOf(await call({path:{id:sessionID}})):undefined}
-  async fork(sessionID:string,title?:string):Promise<any>{const call=fn(this.client?.session,'fork');if(!call)throw new Error('OpenCode session.fork unavailable');return dataOf(await call({path:{id:sessionID},body:title?{title}:{}}))}
-  async summarize(sessionID:string):Promise<any>{const call=fn(this.client?.session,'summarize');if(!call)throw new Error('OpenCode session.summarize unavailable');return dataOf(await call({path:{id:sessionID}}))}
-  async revert(sessionID:string,messageID?:string):Promise<any>{const call=fn(this.client?.session,'revert');if(!call)throw new Error('OpenCode session.revert unavailable');return dataOf(await call({path:{id:sessionID},body:messageID?{messageID}:{}}))}
+  async fork(sessionID:string,messageID?:string):Promise<any>{const call=fn(this.client?.session,'fork');if(!call)throw new Error('OpenCode session.fork unavailable');return dataOf(await call({path:{id:sessionID},body:messageID?{messageID}:{}}))}
+  async summarize(sessionID:string,model?:string):Promise<any>{const call=fn(this.client?.session,'summarize');if(!call)throw new Error('OpenCode session.summarize unavailable');const identity=modelIdentity(model);if(!identity)throw new Error('OpenCode session.summarize requires an explicit provider/model identity');return dataOf(await call({path:{id:sessionID},body:{providerID:identity.providerID,modelID:identity.modelID}}))}
+  async revert(sessionID:string,messageID?:string):Promise<any>{const call=fn(this.client?.session,'revert');if(!call)throw new Error('OpenCode session.revert unavailable');if(!messageID)throw new Error('OpenCode session.revert requires messageID');return dataOf(await call({path:{id:sessionID},body:{messageID}}))}
   async unrevert(sessionID:string):Promise<any>{const call=fn(this.client?.session,'unrevert');if(!call)throw new Error('OpenCode session.unrevert unavailable');return dataOf(await call({path:{id:sessionID}}))}
   async prompt(sessionID:string,text:string,agent?:string,model?:string,variant?:string):Promise<void>{
     const body:any={parts:[{type:'text',text}]};if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant
