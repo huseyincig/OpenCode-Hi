@@ -1,8 +1,0 @@
-{
-  "schema": 1,
-  "id": "01-road-fighter",
-  "status": "READY",
-  "prompt": "PROMPT.md",
-  "fixture": null,
-  "run_root": "../../runtime/01-road-fighter"
-}

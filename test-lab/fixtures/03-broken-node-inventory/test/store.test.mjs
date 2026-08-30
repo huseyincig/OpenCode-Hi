@@ -1,3 +1,0 @@
-import test from 'node:test'; import assert from 'node:assert/strict'; import {mkdtemp,writeFile} from 'node:fs/promises'; import os from 'node:os'; import path from 'node:path'; import {Store} from '../src/store.js'
-test('rejects duplicate sku and negative stock',async()=>{const d=await mkdtemp(path.join(os.tmpdir(),'inv-'));const p=path.join(d,'d.json');await writeFile(p,'[]');const s=new Store(p);await s.add({sku:'A',stock:1});await assert.rejects(()=>s.add({sku:'A',stock:2}));await assert.rejects(()=>s.updateStock('A',-1))})
-test('malformed persisted JSON fails closed',async()=>{const d=await mkdtemp(path.join(os.tmpdir(),'inv-'));const p=path.join(d,'d.json');await writeFile(p,'{broken');const s=new Store(p);await assert.rejects(()=>s.all())})

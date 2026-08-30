@@ -1,8 +1,0 @@
-{
-  "schema": 1,
-  "id": "03-broken-node-inventory",
-  "status": "READY",
-  "prompt": "PROMPT.md",
-  "fixture": "../../fixtures/03-broken-node-inventory",
-  "run_root": "../../runtime/03-broken-node-inventory"
-}
