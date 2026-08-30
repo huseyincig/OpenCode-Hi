@@ -4,6 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { createSystemTransformHook } from '../dist/hooks/system-transform.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
+import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 
 function makeWorker(mission, selectedMethodologies = []) {
   return {
@@ -73,7 +74,7 @@ test('system-transform is no-op for inactive missions', async () => {
 
 test('system-transform emits one terminal stop projection for a completed parent mission',async()=>{
   const store=new MissionStore();const m=startAssessedMission(store,'s-complete','fix one bug',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
-  for(const o of m.execution.obligations){o.status='closed';o.closedAt=Date.now()}store.complete('s-complete')
+  m.vcs.changed_files=['src/a.ts'];addEvidence(m,{kind:'targeted-tests',summary:'canonical completion proof',scope:['src/a.ts'],source:'test',obligation_ids:['o-verification'],pass:true,outcome:'passed'});for(const o of m.execution.obligations){o.status='closed';o.closedAt=Date.now()}assert.equal(store.complete('s-complete'),true)
   const hook=createSystemTransformHook(store),output={system:[]};await hook({sessionID:'s-complete'},output);await hook({sessionID:'s-complete'},output)
   assert.deepEqual(output.system,['Hi MISSION COMPLETE: required evidence and obligations are closed. Stop; do not invoke more tools.'])
 })

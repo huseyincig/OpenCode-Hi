@@ -6,6 +6,7 @@ import {join} from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { parseSemanticIntentAssessment, technicalVerificationKinds } from '../dist/runtime/intent/semantic-assessment.js'
 import { assessChangedFileOwnership } from '../dist/runtime/task/diff-ownership.js'
+import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { renderSemanticAssessmentGate } from '../dist/runtime/intent/semantic-assessment-gate.js'
 import { buildMissionRuntimeProjection } from '../dist/runtime/context/mission-runtime-projection.js'
@@ -50,7 +51,7 @@ test('parent EVIDENCE path also blocks an unrequired broader verifier',async()=>
 
 test('completed parent blocks a redundant verifier before native bash',async()=>{
   const store=new MissionStore(process.cwd()),mission=store.start('phase2-terminal-verifier','fix src/a.ts')
-  store.applyInitialSemanticAssessment('phase2-terminal-verifier',parseSemanticIntentAssessment({...assessment,likely_targets:['src/a.ts']}));for(const o of mission.execution.obligations){o.status='closed';o.closedAt=Date.now()}store.complete('phase2-terminal-verifier')
+  store.applyInitialSemanticAssessment('phase2-terminal-verifier',parseSemanticIntentAssessment({...assessment,likely_targets:['src/a.ts']}));mission.vcs.changed_files=['src/a.ts'];addEvidence(mission,{kind:'targeted-tests',summary:'canonical terminal verifier proof',scope:['src/a.ts'],source:'test',obligation_ids:['o-verification'],pass:true,outcome:'passed'});for(const o of mission.execution.obligations){o.status='closed';o.closedAt=Date.now()}assert.equal(store.complete('phase2-terminal-verifier'),true)
   const before=createToolBeforeHook(store,undefined,process.cwd())
   await assert.rejects(()=>before({sessionID:'phase2-terminal-verifier',tool:'bash'},{args:{command:'bun typecheck'}}),/mission already completed.*additional verifier 'typecheck' is not admitted/i)
 })

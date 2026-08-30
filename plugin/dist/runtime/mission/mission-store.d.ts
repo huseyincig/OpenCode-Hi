@@ -17,10 +17,9 @@ export declare class MissionStore {
     stop(sessionID: string, reason?: string): void;
     noteUserMessage(sessionID: string): void;
     resume(sessionID: string, reason?: string): void;
-    complete(sessionID: string): void;
+    complete(sessionID: string): boolean;
     all(): MissionState[];
     private syncProgressBaseline;
     updateProgress(m: MissionState, countStagnation?: boolean): boolean;
-    closeObligation(m: MissionState, id: string): void;
     signature(m: MissionState): string;
 }

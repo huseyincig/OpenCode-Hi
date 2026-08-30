@@ -151,6 +151,7 @@ Evidence is typed, source/scoped and freshness-aware. `VerificationEnvelope` der
 The persisted `execution.evidence.fresh` boolean is compatibility/projection cache only: current freshness authority is derived from non-invalidated passed `EvidenceItem` records, Mission validation requires the cache to equal that derivation, and verification/status/runtime projections never allow the cache to substitute for canonical Evidence. `BrowserObservation` remains an ephemeral typed executor result that is bridged into pending Mission Evidence; source-read observations enter the same Evidence owner directly. `VerificationEnvelope`, methodology exits and completion are derived consumers rather than additional evidence stores.
 
 STOP is permitted only after obligations, required evidence, reviews, Methodology exits, Authority state, pending Tasks/Workers/processes/workspaces and user-stop state reconcile deterministically. Idle events and “DONE” text are not completion.
+Terminal admission enforces the same trust boundary at the durable Mission state owner: `MissionStore.complete()` re-runs canonical `evaluateCompletion` and rejects/ledgers an incomplete transition instead of acting as an unconditional status setter. There is no generic MissionStore obligation-closure API that can bypass verification/review predicates; trust-owned obligation settlement stays on the canonical Evidence/Review/Verification paths.
 
 ## Process execution
 

@@ -8,6 +8,7 @@ import { primaryRoleCanDirectImplementation } from '../dist/runtime/roles/catalo
 import { addEvidence, markMutation, normalizeProjectPath } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied, verificationEnvelopeFor } from '../dist/runtime/verification/policy.js'
 import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
+import { evaluateCompletion } from '../dist/runtime/completion/evaluator.js'
 import { actionContract, isAuthorized } from '../dist/runtime/safety/authority.js'
 import { resolveHostCapability } from '../dist/runtime/host/capability-manifest.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
@@ -80,6 +81,15 @@ test('absent host capability is UNSUPPORTED, never optimistic support',()=>{
   assert.equal(resolveHostCapability({host:'mock',capabilities:{}},'workspace_isolation'),'UNSUPPORTED')
 })
 
+
+test('MissionStore terminal transition rejects manually closed trust obligations without canonical proof',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'q2-store-completion-guard','verify',{likely_verification:['targeted-tests']})
+  for(const obligation of m.execution.obligations){obligation.status='closed';obligation.closedAt=Date.now()}
+  assert.equal(evaluateCompletion(m).complete,false)
+  assert.equal(store.complete(m.identity.session_id),false)
+  assert.equal(m.identity.status,'active')
+  assert.ok(m.execution.ledger.some(e=>e.type==='mission.completion-rejected'))
+})
 
 test('completion cannot pass without required evidence',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'q2-completion','verify',{likely_verification:['targeted-tests']})

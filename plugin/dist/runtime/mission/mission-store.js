@@ -16,6 +16,7 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js';
+import { evaluateCompletion } from '../completion/evaluator.js';
 import { semanticRequestUnits } from '../intent/request-units.js';
 function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = [], verificationCases = [], requestUnits = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}), ...(requestUnits.length ? { requestUnits: requestUnits.map(unit => ({ ...unit })) } : {}), ...(verificationCases.length ? { verificationCases: verificationCases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })) } : {}) }; }
 const OUTPUT_CAPABILITY_OBLIGATIONS = { implementation: { kind: 'implementation', id: 'o-implementation', summary: 'Requested change completed' }, documentation: { kind: 'documentation', id: 'o-documentation', summary: 'Requested documentation change completed' }, 'test-authoring': { kind: 'test-authoring', id: 'o-test-authoring', summary: 'Requested test-source change completed' } };
@@ -569,15 +570,16 @@ export class MissionStore {
         m.authority.authority = { ...m.authority.authority, approved: undefined }; const wasInterrupted = m.continuation.user_interrupted || m.identity.status === 'stopped'; m.continuation.generation += 1; m.continuation.user_interrupted = false; m.continuation.interrupted_reason = undefined; m.continuation.resumed_at = Date.now(); m.continuation.resume_count = (m.continuation.resume_count ?? 0) + (wasInterrupted ? 1 : 0); m.continuation.continuation_active = false; m.continuation.active_action_id = undefined; m.continuation.continuation_lock_until = undefined; m.continuation.suppress_until = undefined; m.continuation.pending_nudge = undefined; if (['stopped', 'waiting-user'].includes(m.identity.status))
         m.identity.status = 'active'; appendLedger(m, 'mission.resumed', { payload: { reason, resume_count: m.continuation.resume_count, generation: m.continuation.generation } }); syncMissionGates(m); }
     complete(sessionID) { const m = this.get(sessionID); if (!m || m.identity.status === 'completed' || m.identity.status === 'stopped' || m.continuation.user_interrupted)
-        return; if (m.authority.human_decision?.status === 'OPEN')
-        resolveHumanDecision(m, 'mission-completed'); m.identity.status = 'completed'; syncMissionGates(m); appendLedger(m, 'mission.completed'); }
+        return false; const adjudication = evaluateCompletion(m, this.#root); if (!adjudication.complete) {
+        appendLedger(m, 'mission.completion-rejected', { payload: { reasons: adjudication.reasons.slice(0, 16), next: adjudication.next } });
+        return false;
+    } if (m.authority.human_decision?.status === 'OPEN')
+        resolveHumanDecision(m, 'mission-completed'); m.identity.status = 'completed'; syncMissionGates(m, this.#root); appendLedger(m, 'mission.completed'); return true; }
     all() { return [...this.#bySession.values()]; }
     syncProgressBaseline(m) { const snapshot = semanticProgressSnapshot(m); m.continuation.semantic_progress_snapshot = snapshot; m.continuation.last_progress_signature = snapshot.state_hash; m.continuation.last_progress_delta = semanticProgressDelta(undefined, snapshot); }
     updateProgress(m, countStagnation = false) { syncMissionGates(m); const previous = m.continuation.semantic_progress_snapshot, next = semanticProgressSnapshot(m), delta = semanticProgressDelta(previous, next), progressed = previous ? semanticProgressMade(delta) : next.state_hash !== m.continuation.last_progress_signature; if (progressed)
         m.continuation.stagnation_count = 0;
     else if (countStagnation)
         m.continuation.stagnation_count += 1; m.continuation.semantic_progress_snapshot = next; m.continuation.last_progress_delta = delta; m.continuation.last_progress_signature = next.state_hash; m.identity.updated_at = Date.now(); return progressed; }
-    closeObligation(m, id) { const o = m.execution.obligations.find(x => x.id === id); if (!o)
-        return; o.status = 'closed'; o.closedAt = Date.now(); reconcileSatisfiedTaskArtifacts(m, 'mission-store-obligation-closed'); syncMissionGates(m); appendLedger(m, 'obligation.closed', { payload: { obligation: id } }); }
     signature(m) { return semanticProgressSnapshot(m).state_hash; }
 }
