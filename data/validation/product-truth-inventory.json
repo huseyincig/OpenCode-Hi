@@ -137,6 +137,28 @@
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
+      "area": "collaboration",
+      "canonical_owner": "Collaboration derived projection",
+      "owner_path": "plugin/src/runtime/collaboration/runtime.ts",
+      "owner_sha256": "3c7da8b045e8a7221628b8e43aa2a59ed3f8efae9a472d2e0a17f4f86c04a244",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/scheduler/project-peer-view.ts",
+        "plugin/src/contracts/human-decision.ts",
+        "plugin/src/contracts/authority.ts",
+        "plugin/src/runtime/context/artifact-store.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "later-collaboration-consumers"
+      ],
+      "proof_paths": [
+        "plugin/test/collaboration-runtime.test.mjs",
+        "plugin/test/scheduler-planner.test.mjs",
+        "plugin/test/human-decision-contract.test.mjs",
+        "plugin/test/human-decision-transport.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
