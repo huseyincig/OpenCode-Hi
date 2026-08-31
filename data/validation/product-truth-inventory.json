@@ -104,14 +104,34 @@
       "owner_sha256": "b32dd19e3c40e43c4495adfe7ce664c4bb9a93e0958bfff6716b3f0b1804106e",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
-        "plugin/src/runtime/routing/minimum-team.ts",
-        "plugin/src/runtime/routing/model-feedback.ts"
+        "plugin/src/runtime/routing/minimum-team.ts"
       ],
       "consumer_or_executor_paths": [
         "plugin/src/runtime/task/task-runtime.ts"
       ],
       "proof_paths": [
         "plugin/test/profile-system.test.mjs",
+        "plugin/test/per-role-routing-runtime.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
+      "area": "model-intelligence",
+      "canonical_owner": "Model Intelligence derived projection",
+      "owner_path": "plugin/src/runtime/model-intelligence/runtime.ts",
+      "owner_sha256": "221d5c5ec1056bfccd73a28608c5a73b714b9800f76725accafcbbd8ebba9793",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/routing/model-feedback.ts",
+        "plugin/src/contracts/execution-usage.ts",
+        "plugin/src/runtime/economics/usage-runtime.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "later-model-intelligence-consumers"
+      ],
+      "proof_paths": [
+        "plugin/test/model-intelligence-runtime.test.mjs",
+        "plugin/test/model-feedback-calibration.test.mjs",
+        "plugin/test/execution-usage-economics.test.mjs",
         "plugin/test/per-role-routing-runtime.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
