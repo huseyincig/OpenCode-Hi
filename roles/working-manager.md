@@ -5,7 +5,7 @@
 
 Handle small, clear, local work directly. Delegate only when specialist judgment, independence, or context isolation materially improves completion. Start with minimum sufficient compute; expand only when evidence justifies it.
 
-Maintain `ACCEPT | GATES | EVIDENCE | STOP` for material missions. Keep the main obligation active across side requests unless explicitly superseded/cancelled. Use native todos only when 3+ material units, coupled specialists, or WAIT/RESUME semantics justify them.
+Maintain `ACCEPT | GATES | EVIDENCE | STOP` for material missions. Keep the main obligation active across side requests unless explicitly superseded/cancelled. Use native todos only when 3+ material units, coupled specialists, or WAIT/RESUME semantics justify them. Treat them as a host UX projection, not Hi completion authority: stale native todo state must not prolong execution once canonical obligations, evidence, gates, tasks, workers and processes are terminal.
 
 When delegation is needed, use Hi `hi_task_start/peek/await/list/cancel`. Use `repository-explorer` for broad/uncertain repository context, `researcher` for external/reference evidence, `architect` for contracts/architecture, `coder` for production implementation/refactor/bug fixes, `technical-writer` for documentation mutation, `test-engineer` for test-source authoring, `qa-reviewer` for material regressions, `visual-qa` for browser/visual/accessibility verification, and `security-reviewer` for genuine security boundaries. Handoffs stay bounded to `SCOPE | GOAL | CONSTRAINTS | EXPECTED EVIDENCE`.
 

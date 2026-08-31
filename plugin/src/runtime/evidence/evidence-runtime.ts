@@ -6,7 +6,7 @@ import type { MissionEvidenceKind } from '../../contracts/evidence.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import { evidenceVerdictConsistent,evidenceVerdictPassValue,resolvedEvidenceOutcome } from '../../contracts/evidence-kinds.js'
-import { verificationSatisfied } from '../verification/policy.js'
+import { verificationKindSatisfiesRequirement,verificationSatisfied } from '../verification/policy.js'
 import { hasFreshPassedEvidence } from './freshness.js'
 import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js'
 function id():string{return`ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
@@ -60,7 +60,7 @@ export function reconcileEvidenceOwnedVerificationObligations(mission:MissionSta
   return closed
 }
 export function observeToolBefore(mission:MissionState,tool:string,args:any,projectRoot?:string):void{if(WRITE_TOOLS.has(tool)){const files=[args?.filePath,args?.path,args?.file].filter((x):x is string=>typeof x==='string').map(x=>normalizeProjectPath(x,projectRoot)).filter(Boolean);markMutation(mission,files,tool);return}const command=typeof args?.command==='string'?args.command:'';if(tool==='bash'&&shellMayMutate(command))markMutation(mission,[],'bash-mutation')}
-export interface ToolEvidenceOwner { source:string; trusted_source_class:EvidenceSourceClass; source_session_id:string; task_id:string; obligation_ids:string[]; scope:string[]; producer_attempt:EvidenceProducerAttempt }
+export interface ToolEvidenceOwner { source:string; trusted_source_class:EvidenceSourceClass; source_session_id:string; task_id:string; obligation_ids:string[]; required_evidence?:string[]; scope:string[]; producer_attempt:EvidenceProducerAttempt }
 export function observeToolAfter(mission:MissionState,tool:string,args:any,output:any,projectRoot?:string,owner?:ToolEvidenceOwner):void{
   if(WRITE_TOOLS.has(tool))return
   const command=typeof args?.command==='string'?args.command:''
@@ -80,7 +80,7 @@ export function observeToolAfter(mission:MissionState,tool:string,args:any,outpu
   if(tool==='bash'){
     const kind=verificationCommandKind(command)
     if(kind){
-      const text=typeof output==='string'?output:JSON.stringify(output??''),out=outcomeOf(output,text),obligation_ids=owner?.obligation_ids??mission.execution.obligations.filter(o=>o.kind==='verification'&&o.status==='open').map(o=>o.id)
+      const text=typeof output==='string'?output:JSON.stringify(output??''),out=outcomeOf(output,text),explicitOwnerIDs=owner?.obligation_ids??[],ownerAdmitsKind=owner?Boolean(owner.required_evidence?.some(required=>verificationKindSatisfiesRequirement(required,kind))):false,inferredOwnerIDs=ownerAdmitsKind?mission.execution.obligations.filter(o=>o.kind==='verification'&&o.status==='open').filter(o=>{const required=(o.requiredEvidence?.length?o.requiredEvidence:mission.execution.verification_policy.requiredKinds);return required.some(item=>verificationKindSatisfiesRequirement(item,kind))}).map(o=>o.id):[],obligation_ids=owner?[...new Set([...explicitOwnerIDs,...inferredOwnerIDs])]:mission.execution.obligations.filter(o=>o.kind==='verification'&&o.status==='open').map(o=>o.id)
       const stateHash=createHash('sha256').update(JSON.stringify({command,exit:numericExit(output),output:text})).digest('hex')
       addEvidence(mission,{kind,summary:command.slice(0,180),scope:owner?.scope??mission.vcs.changed_files,source:owner?.source??'bash',trusted_source_class:owner?.trusted_source_class??'host-tool-observation',source_session_id:owner?.source_session_id,source_state_hash:stateHash,task_id:owner?.task_id,obligation_ids,producer_attempt:owner?.producer_attempt,pass:out.outcome==='passed'?true:out.outcome==='failed'?false:undefined,outcome:out.outcome,reason:out.reason})
       reconcileEvidenceOwnedVerificationObligations(mission,projectRoot,{owner:'verification-evidence'})

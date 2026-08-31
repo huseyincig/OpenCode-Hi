@@ -2,6 +2,10 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — native todo completion ownership
+- Keep OpenCode native todos as a host UX/progress projection rather than a second Hi completion authority. Once canonical Mission obligations, fresh verification/review evidence, gates, Tasks/Workers and owned processes are terminal, stale native todo rows can no longer keep an otherwise complete Mission active or trigger continuation spirals.
+- Updated Manager/Working-Manager guidance and added a completion regression proving stale native todo state cannot override canonical `MissionStore/evaluateCompletion` truth.
+
 ### Fixed — grounded TDD authority projection
 - Stop model-derived TDD signals **and model-supplied `test-authoring` capabilities/request-unit mappings** from granting test-source write authority before user-text reconciliation. Hi now retains or derives `test-authoring` only when the user explicitly requests test mutation/test-first work; generic test execution, existing failing-test context, or explicit test-preservation instructions cannot create a test-authoring obligation or mutation target.
 - Added regressions proving generic test/verify, contradictory TDD signals, and direct model `test-authoring` predictions create neither TDD methodology nor durable test-authoring capability/obligation, while explicit user requests to add/write tests still retain canonical ownership.

@@ -18,6 +18,23 @@ const ASSESSMENT={material:true,message_kind:'mission',task_kind:'review',scope:
 function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.18'}}
 function taskRuntime(root){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
+test('stale native todos cannot become a second completion authority after canonical work is terminal',async()=>{
+  const {MissionStore}=await import('../dist/runtime/mission/mission-store.js')
+  const {addEvidence}=await import('../dist/runtime/evidence/evidence-runtime.js')
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-native-todo-completion-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.js'),'export const a = 1\n')
+    const store=new MissionStore(root),m=store.start('native-todo-terminal','Change src/a.js and run the targeted test')
+    store.applyInitialSemanticAssessment('native-todo-terminal',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/a.js'],mutation_targets:['src/a.js'],intent_signals:[],suppressed_intent_signals:[]})
+    m.vcs.changed_files=['src/a.js'];for(const o of m.execution.obligations)o.status='closed'
+    const verify=m.execution.obligations.find(o=>o.kind==='verification');addEvidence(m,{kind:'targeted-tests',summary:'focused verifier passed',scope:['src/a.js'],source:'bash',obligation_ids:verify?[verify.id]:[],pass:true,outcome:'passed'})
+    m.execution.native_todos_incomplete=4
+    const completion=evaluateCompletion(m,root)
+    assert.equal(completion.complete,true,JSON.stringify(completion))
+    assert.ok(!completion.reasons.some(r=>r.startsWith('native-todos-incomplete:')),'native host UX state must not override canonical Hi completion')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('completion-ready mission skips redundant task start before TaskRuntime dispatch',async()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-completion-review-'))
   try{

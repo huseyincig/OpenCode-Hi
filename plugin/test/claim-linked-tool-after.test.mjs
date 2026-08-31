@@ -22,3 +22,15 @@ test('tool-after cannot close parent verification from worker evidence owned onl
   const parentEvidence=m.execution.evidence.items.findLast(e=>e.source==='bash'&&e.kind==='targeted-tests');assert.ok(parentEvidence?.obligation_ids?.includes(verification.id))
   assert.ok(m.execution.ledger.some(e=>e.type==='obligation.closed'&&e.payload?.obligation===verification.id))
 })
+
+test('child host-observed verifier closes matching verification when task declares that evidence contract',async()=>{
+  const {BackgroundRegistry}=await import('../dist/runtime/background/registry.js')
+  const store=new MissionStore(),m=startAssessedMission(store,'m11-child-host-verifier','change src/a.ts and verify',{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation);assert.ok(verification)
+  const task=createTask(m,{objective:'implement and run targeted tests',role:'coder',category:'quick',scope:['src/a.ts'],obligationIds:[implementation.id],requiredEvidence:['targeted-tests']}),worker=createWorker(m,task,'opencode-go/muse-spark-1.2-contributor');worker.session_id='child-m11-host-verifier';worker.native_state_hash='b'.repeat(64);worker.attempt=1;worker.generation_at_spawn=m.continuation.generation
+  const bg=new BackgroundRegistry();bg.set(worker)
+  const after=createToolAfterHook(store,bg)
+  await after({sessionID:worker.session_id,tool:'bash',args:{command:'node --test test/a.test.js'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
+  assert.equal(verification.status,'closed');assert.equal(verificationSatisfied(m,verification.id).ok,true)
+  const evidence=m.execution.evidence.items.findLast(e=>e.source===`bash:child:${worker.id}`&&e.kind==='targeted-tests');assert.ok(evidence);assert.ok(evidence.obligation_ids?.includes(verification.id));assert.equal(evidence.trusted_source_class,'host-tool-observation')
+})

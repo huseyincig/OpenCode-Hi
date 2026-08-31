@@ -22,6 +22,7 @@ export interface ToolEvidenceOwner {
     source_session_id: string;
     task_id: string;
     obligation_ids: string[];
+    required_evidence?: string[];
     scope: string[];
     producer_attempt: EvidenceProducerAttempt;
 }

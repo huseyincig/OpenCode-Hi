@@ -3,7 +3,7 @@ import { relative, resolve, sep } from 'node:path';
 import { appendLedger } from '../ledger/ledger.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { evidenceVerdictConsistent, evidenceVerdictPassValue, resolvedEvidenceOutcome } from '../../contracts/evidence-kinds.js';
-import { verificationSatisfied } from '../verification/policy.js';
+import { verificationKindSatisfiesRequirement, verificationSatisfied } from '../verification/policy.js';
 import { hasFreshPassedEvidence } from './freshness.js';
 import { reconcileSatisfiedTaskArtifacts } from '../task/task-ownership.js';
 function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
@@ -124,7 +124,7 @@ export function observeToolAfter(mission, tool, args, output, projectRoot, owner
     if (tool === 'bash') {
         const kind = verificationCommandKind(command);
         if (kind) {
-            const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text), obligation_ids = owner?.obligation_ids ?? mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
+            const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text), explicitOwnerIDs = owner?.obligation_ids ?? [], ownerAdmitsKind = owner ? Boolean(owner.required_evidence?.some(required => verificationKindSatisfiesRequirement(required, kind))) : false, inferredOwnerIDs = ownerAdmitsKind ? mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').filter(o => { const required = (o.requiredEvidence?.length ? o.requiredEvidence : mission.execution.verification_policy.requiredKinds); return required.some(item => verificationKindSatisfiesRequirement(item, kind)); }).map(o => o.id) : [], obligation_ids = owner ? [...new Set([...explicitOwnerIDs, ...inferredOwnerIDs])] : mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
             const stateHash = createHash('sha256').update(JSON.stringify({ command, exit: numericExit(output), output: text })).digest('hex');
             addEvidence(mission, { kind, summary: command.slice(0, 180), scope: owner?.scope ?? mission.vcs.changed_files, source: owner?.source ?? 'bash', trusted_source_class: owner?.trusted_source_class ?? 'host-tool-observation', source_session_id: owner?.source_session_id, source_state_hash: stateHash, task_id: owner?.task_id, obligation_ids, producer_attempt: owner?.producer_attempt, pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
             reconcileEvidenceOwnedVerificationObligations(mission, projectRoot, { owner: 'verification-evidence' });
