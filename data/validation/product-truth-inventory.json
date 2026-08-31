@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "34e39108eac2dc2a0d82710002649f63489902426f599aafb93ab2a62dada9b4",
+      "owner_sha256": "7897feca4bc0201dc1272c1923e16009351e54c02b1bb71894e21f5079ace3e0",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -231,19 +231,25 @@
     },
     {
       "area": "project-intelligence",
-      "canonical_owner": "ProjectMethodologyLearningStore",
-      "owner_path": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "5bc80cbdc56829e0d253d786614ba86a150bd096c831412f7a6ec8cec15cb6dd",
+      "canonical_owner": "ProjectIntelligenceRuntime",
+      "owner_path": "plugin/src/runtime/project-intelligence/runtime.ts",
+      "owner_sha256": "18c45c62665a5eef1694ec0fd03730519584ccfcdddfb195afb365ae6245f4d4",
       "producer_or_contract_paths": [
+        "plugin/src/runtime/project-intelligence/methodology-learning.ts",
+        "plugin/src/runtime/project-intelligence/task-outcome-memory.ts",
         "plugin/src/runtime/project-intelligence/methodology-candidate.ts",
         "plugin/src/contracts/storage-ownership.ts"
       ],
       "consumer_or_executor_paths": [
+        "plugin/src/runtime/application/runtime-scoped-stores.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
         "plugin/src/runtime/task/task-result-reconciler.ts",
         "plugin/src/runtime/methodology/catalog.ts"
       ],
       "proof_paths": [
+        "plugin/test/project-intelligence-runtime.test.mjs",
         "plugin/test/project-methodology-admission-contract.test.mjs",
+        "plugin/test/task-outcome-memory.test.mjs",
         "plugin/test/storage-ownership-contract.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"

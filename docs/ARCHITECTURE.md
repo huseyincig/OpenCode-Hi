@@ -118,7 +118,7 @@ A role cannot smuggle model identity, a Methodology cannot grant Authority, and 
 
 Provider-bound context is projected from current Mission state through `MissionRuntimeProjection`, bounded with explicit context budgets and privacy redaction. Duplicate provider tool outputs may be pruned only when their deterministic state/input/output signature proves equivalence; canonical Mission/session truth is not destructively rewritten.
 
-Durable reusable content uses `ContextArtifactStore` with source hashes, freshness and explicit consumer bindings. Project-scoped learning is intentionally narrower: `ProjectMethodologyLearningStore` records evidence-bound reusable HOW candidates and may activate methodology-authoring review only after independent observations; it is not a general repository knowledge/retrieval database and never becomes Evidence or Authority.
+Durable reusable content uses `ContextArtifactStore` with source hashes, freshness and explicit consumer bindings. Project Intelligence is composed by `ProjectIntelligenceRuntime`, which exposes narrow derived data-class owners without creating a generic project-memory database: `ProjectMethodologyLearningStore` records evidence-bound reusable HOW candidates, while `ProjectTaskOutcomeMemoryStore` retains bounded source-state-bound task outcome hints. Those stores keep separate storage ownership and never become Mission, Evidence, Context, Authority, completion, or routing truth.
 
 Semantic Context is behind `SemanticContextAdapter`. The current explicit implementation is TypeScript/TSX only. Context artifacts and semantic summaries remain non-Evidence until separately admitted by verification policy.
 

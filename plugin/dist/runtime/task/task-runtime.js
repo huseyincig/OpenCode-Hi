@@ -254,7 +254,7 @@ export class TaskRuntime {
         this.getProjectMissions = getProjectMissions;
         this.processCustody = processCustody;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
-        this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
+        this.#methodologyLearning = this.#scopedStores.projectIntelligence?.methodologyLearning ?? new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
         this.#dispatcher = new QueuedWorkerDispatcher(childHost, this.#child, registry, scheduler, projectRoot, this.#scopedStores, getConfig, getModels, getHostConfig, (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID) => this.cleanupWorkspaceForTask(m, taskID), (m, task, worker, error) => this.blockDependencyOutcome(m, task, worker, error), events, previewManager, (m) => this.projectPeerView(m));
         this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, getHostConfig, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores, (m) => this.projectPeerView(m));
