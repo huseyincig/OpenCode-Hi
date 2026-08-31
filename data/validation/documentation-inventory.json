@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "5c0b6ad1179685722b679151454d0b979df78f424548de9e6e1008db81a9dfd5",
+      "sha256": "c2f2d4e6a01479cd12629c646b798e9a4bd6626c568b646b08dbc31511fb034b",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "bbec11f414a051ed9b2925e3e36380d94bdfd4a96b6d5dcc8249d75f24eae308",
+      "sha256": "66579331047318c756a0ad2d5dd5f99ed0049f9585c4f2adfab5b812b20f5845",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "d35d43b1357a1376b3eb96a6ed313861e807509758369d258440f5601d383fa4",
+      "sha256": "68944f0b5061fcf0b85d3a842df6346e5e2d256286238cacaa4f42bfed464027",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

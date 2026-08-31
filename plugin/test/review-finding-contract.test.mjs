@@ -16,8 +16,10 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function runtime(root=process.cwd()){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 function reviewMission(id,root=process.cwd()){const store=new MissionStore(root);const m=store.start(id,'review src/a.ts');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['review','independent-review'],requested_external_actions:[],likely_verification:['review-evidence'],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]});m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true};return m}
+function remediationMission(id,root=process.cwd()){const store=new MissionStore(root);const m=store.start(id,'fix src/a.ts and independently review it');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','independent-review'],requested_external_actions:[],likely_verification:['review-evidence'],likely_targets:['src/a.ts'],mutation_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]});m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true};return m}
 function reviewerTask(m,role='qa-reviewer'){const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(review);assert.ok(verification);verification.requiredEvidence=['review-evidence'];const task=createTask(m,{objective:'review src/a.ts',role,category:'standard',scope:['src/a.ts'],requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]});const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='c'.repeat(64);return{task,worker,review,verification}}
 const proof={kind:'review-evidence',summary:'reviewed src/a.ts',scope:['src/a.ts'],pass:true,outcome:'passed'}
+const failedProof={kind:'review-evidence',summary:'reviewed src/a.ts and found a blocking defect',scope:['src/a.ts'],pass:false,outcome:'failed',reason:'blocking defect found'}
 function finding(overrides={}){return{id:'rf-null-guard',reviewer_role:'qa-reviewer',subject:'Null guard can be bypassed on the changed path',severity:'high',causality:'introduced',scope:['src/a.ts'],evidence_refs:['review-evidence'],confidence:'high',disposition:'open',blocking:true,...overrides}}
 
 test('ReviewFinding requires technical identity, closed enums and evidence for blocking semantics',()=>{
@@ -31,7 +33,7 @@ test('introduced open reviewer finding forces FIX_REQUIRED and opens evidence-ba
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-actionable-'))
   try{
     mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
-    const m=reviewMission('rf-actionable',root),{task,worker,review}=reviewerTask(m)
+    const m=remediationMission('rf-actionable',root),{task,worker,review}=reviewerTask(m)
     const result=normalizeWorkerResult({status:'DONE',summary:'review completed with finding',changed_files:[],evidence:[proof],findings:[finding()],open_issues:[],needs_context:[]})
     runtime(root).applyResult(m,worker.id,result)
     assert.equal(task.status,'waiting')
@@ -39,6 +41,26 @@ test('introduced open reviewer finding forces FIX_REQUIRED and opens evidence-ba
     assert.equal(review.status,'open')
     assert.ok(m.execution.blockers.some(x=>x.startsWith('review-finding:rf-null-guard:high:introduced')))
     const rework=m.execution.obligations.find(o=>o.id==='o-review-rework-rf-null-guard');assert.ok(rework);assert.equal(rework.kind,'implementation');assert.equal(rework.status,'open');assert.deepEqual(rework.requiredTargets,['src/a.ts'])
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('read-only review completes by reporting blocking findings without creating remediation authority',()=>{
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-finding-report-only-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const a=1\n')
+    const m=reviewMission('rf-report-only',root),{task,worker,review,verification}=reviewerTask(m,'security-reviewer')
+    const critical=finding({id:'rf-report-only-critical',reviewer_role:'security-reviewer',severity:'critical',subject:'Evidence-backed command injection exists on the reviewed path'})
+    const result=normalizeWorkerResult({status:'FIX_REQUIRED',summary:'review found a critical issue',changed_files:[],evidence:[failedProof],findings:[critical],open_issues:['review-finding:rf-report-only-critical:critical:introduced'],needs_context:[]})
+    runtime(root).applyResult(m,worker.id,result)
+    assert.equal(task.status,'completed');assert.equal(task.result?.status,'DONE');assert.deepEqual(task.result?.open_issues,[])
+    assert.equal(review.status,'closed');assert.equal(verification.status,'closed')
+    assert.ok(task.result?.findings?.some(x=>x.id==='rf-report-only-critical'&&x.blocking===true))
+    assert.ok(task.result?.evidence.some(x=>x.kind==='review-evidence'&&x.outcome==='failed'&&x.pass===false),'reviewed-subject failure verdict must remain preserved in the task result')
+    assert.ok(m.execution.evidence.items.some(x=>x.kind==='review-evidence'&&x.trusted_source_class==='reviewer-observation'&&x.outcome==='passed'&&x.pass===true),'canonical review execution evidence should prove the bounded read-only review completed')
+    assert.ok(m.execution.ledger.some(e=>e.type==='review.report-only-execution-evidence-admitted'))
+    assert.equal(m.execution.obligations.some(o=>o.id==='o-review-rework-rf-report-only-critical'),false)
+    assert.equal(m.execution.blockers.some(x=>x.includes('rf-report-only-critical')),false)
+    assert.ok(m.execution.ledger.some(e=>e.type==='review.report-only-result-normalized'))
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 

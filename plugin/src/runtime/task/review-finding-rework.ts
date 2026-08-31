@@ -20,6 +20,10 @@ function currentAttemptFindingEvidenceAdmitted(m:MissionState,task:MissionTask,w
  * corrective repository ownership to a canonical writer before fresh re-verification.
  */
 export function materializeReviewFindingRework(m:MissionState,task:MissionTask,worker:WorkerState,findings:ReviewFinding[]):string[]{
+  if(m.identity.intent.taskKind==='review'){
+    appendLedger(m,'review.finding-report-only',{task_id:task.id,worker_id:worker.id,payload:{findings:findings.filter(f=>f.reviewer_role===worker.role&&reviewFindingNeedsCorrection(f)).map(f=>f.id),policy:'task_kind=review is read-only findings/reporting and cannot create remediation authority'}})
+    return[]
+  }
   const opened:string[]=[]
   for(const finding of findings){
     if(finding.reviewer_role!==worker.role||!reviewFindingNeedsCorrection(finding))continue

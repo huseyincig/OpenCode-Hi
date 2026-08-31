@@ -286,7 +286,8 @@ export class TaskResultReconciler {
             appendLedger(m, 'methodology.load-missing', { task_id: task.id, worker_id: worker.id, payload: { selected: worker.selected_methodologies, loaded: worker.loaded_methodologies ?? [], missing: missingMethodologyLoads } });
         }
         const reviewerOwnsReview = task.obligation_ids.some(id => m.execution.obligations.some(o => o.id === id && o.kind === 'review' && o.status === 'open')), reviewVerdictRequired = isHiReviewerRole(worker.role) && (reviewerOwnsReview || task.requiredEvidence.includes('review-evidence'));
-        if (effectiveResult.status === 'DONE' && reviewVerdictRequired && !effectiveResult.evidence.some(e => e.kind === 'review-evidence' && evidenceVerdictPassed(e.pass, e.outcome))) {
+        const reportOnlyReviewFindingVerdict = m.identity.intent.taskKind === 'review' && Boolean(effectiveResult.findings?.some(f => f.reviewer_role === worker.role && reviewFindingNeedsCorrection(f))) && effectiveResult.evidence.some(e => e.kind === 'review-evidence' && (e.outcome === 'failed' || e.pass === false));
+        if (effectiveResult.status === 'DONE' && reviewVerdictRequired && !reportOnlyReviewFindingVerdict && !effectiveResult.evidence.some(e => e.kind === 'review-evidence' && evidenceVerdictPassed(e.pass, e.outcome))) {
             const marker = `review-verdict-required:${task.id}`;
             effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', summary: effectiveResult.summary || 'Reviewer result is missing an explicit passing review verdict.', open_issues: [...new Set([...effectiveResult.open_issues, marker])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-verdict: return review-evidence with outcome="passed" only after the bounded review passes; otherwise return FIX_REQUIRED with the blocking finding. DONE prose or verdict-less review evidence is not approval.'])] };
             appendLedger(m, 'review.verdict-unresolved', { task_id: task.id, worker_id: worker.id, payload: { reason: 'explicit-passing-review-verdict-required', review_evidence: effectiveResult.evidence.filter(e => e.kind === 'review-evidence').map(e => ({ pass: e.pass, outcome: e.outcome })).slice(0, 8) } });
@@ -316,25 +317,34 @@ export class TaskResultReconciler {
                 const invalidRole = findings.filter(f => f.reviewer_role !== worker.role);
                 const sameRoleOpen = findings.filter(f => f.reviewer_role === worker.role && f.disposition === 'open');
                 const actionable = findings.filter(f => f.reviewer_role === worker.role && reviewFindingNeedsCorrection(f));
+                const reportOnlyReview = m.identity.intent.taskKind === 'review';
                 const unresolvedCausality = findings.filter(f => f.reviewer_role === worker.role && f.disposition === 'open' && f.blocking && f.causality === 'unknown');
                 const roleMarkers = invalidRole.map(f => `review-finding-role-mismatch:${f.id}:${worker.role}->${f.reviewer_role}`);
                 const actionableMarkers = actionable.map(reviewFindingMarker);
                 const causalityMarkers = unresolvedCausality.map(f => `review-finding-causality-unresolved:${f.id}`);
                 const nonBlockingMarkers = new Set(sameRoleOpen.filter(f => !f.blocking).map(reviewFindingMarker));
                 const passingReviewEvidence = effectiveResult.evidence.some(e => e.kind === 'review-evidence' && evidenceVerdictPassed(e.pass, e.outcome));
+                const failedReviewEvidence = effectiveResult.evidence.some(e => e.kind === 'review-evidence' && (e.outcome === 'failed' || e.pass === false));
+                const reportOnlyReviewCompletionEvidence = passingReviewEvidence || (reportOnlyReview && actionable.length > 0 && failedReviewEvidence);
                 const onlyNonBlockingOpenFindings = sameRoleOpen.length > 0 && sameRoleOpen.every(f => !f.blocking);
                 const onlyNonBlockingFindingIssues = effectiveResult.open_issues.every(issue => nonBlockingMarkers.has(issue));
+                const reportOnlyFindingMarkers = new Set([...actionableMarkers, ...nonBlockingMarkers]);
+                const onlyReportOnlyFindingIssues = effectiveResult.open_issues.every(issue => reportOnlyFindingMarkers.has(issue));
                 if (roleMarkers.length) {
                     effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...roleMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-role-reconcile: structured findings must be emitted by the actual canonical reviewer role'])] };
                     appendLedger(m, 'review.finding-role-rejected', { task_id: task.id, worker_id: worker.id, payload: { findings: invalidRole.map(f => f.id), worker_role: worker.role } });
                 }
-                if (actionableMarkers.length) {
+                if (actionableMarkers.length && !reportOnlyReview) {
                     effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...actionableMarkers])] };
                     appendLedger(m, 'review.finding-actionable', { task_id: task.id, worker_id: worker.id, payload: { findings: actionable.map(f => ({ id: f.id, severity: f.severity, causality: f.causality, blocking: f.blocking, scope: f.scope.slice(0, 20) })) } });
                 }
                 if (causalityMarkers.length) {
                     effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...causalityMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-causality-reconcile: blocking findings with unknown causality cannot become mission blockers until introduced/worsened/pre-existing ownership is established'])] };
                     appendLedger(m, 'review.finding-causality-unresolved', { task_id: task.id, worker_id: worker.id, payload: { findings: unresolvedCausality.map(f => f.id) } });
+                }
+                if (reportOnlyReview && actionable.length > 0 && !roleMarkers.length && !causalityMarkers.length && reportOnlyReviewCompletionEvidence && effectiveResult.needs_context.length === 0 && onlyReportOnlyFindingIssues) {
+                    effectiveResult = { ...effectiveResult, status: 'DONE', open_issues: effectiveResult.open_issues.filter(issue => !reportOnlyFindingMarkers.has(issue)) };
+                    appendLedger(m, 'review.report-only-result-normalized', { task_id: task.id, worker_id: worker.id, payload: { findings: sameRoleOpen.map(f => ({ id: f.id, severity: f.severity, causality: f.causality, blocking: f.blocking })), policy: 'task_kind=review completes by reporting evidence-backed findings without creating remediation authority' } });
                 }
                 if (effectiveResult.status === 'FIX_REQUIRED' && !roleMarkers.length && !actionableMarkers.length && !causalityMarkers.length && passingReviewEvidence && onlyNonBlockingOpenFindings && effectiveResult.needs_context.length === 0 && onlyNonBlockingFindingIssues) {
                     effectiveResult = { ...effectiveResult, status: 'DONE', open_issues: effectiveResult.open_issues.filter(issue => !nonBlockingMarkers.has(issue)) };
@@ -435,7 +445,10 @@ export class TaskResultReconciler {
                 }
                 if (!claimedScopeStateHash && claimedScope.length)
                     appendLedger(m, 'review.evidence-scope-normalized', { task_id: task.id, worker_id: worker.id, payload: { claimed_scope: claimedScope.slice(0, 40), canonical_scope: scope.slice(0, 40), reason: 'review claim scope is semantic/non-filesystem; repository freshness is bound to canonical task scope' } });
-                addEvidence(m, { kind: e.kind, summary: e.summary, scope, source: `reviewer:${worker.id}`, trusted_source_class: 'reviewer-observation', source_session_id: worker.session_id, source_state_hash: stateHash, scope_state_hash: scopeStateHash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs.length ? refs : undefined, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: cleanlinessMarker ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
+                const reportOnlyFailedFindingEvidence = reportOnlyReviewFindingVerdict && effectiveResult.status === 'DONE' && (e.outcome === 'failed' || e.pass === false);
+                if (reportOnlyFailedFindingEvidence)
+                    appendLedger(m, 'review.report-only-execution-evidence-admitted', { task_id: task.id, worker_id: worker.id, payload: { claimed_outcome: e.outcome, claimed_pass: e.pass, finding_ids: (effectiveResult.findings ?? []).filter(f => f.reviewer_role === worker.role && reviewFindingNeedsCorrection(f)).map(f => f.id), policy: 'canonical PASS means the bounded read-only review execution completed; the reviewed-subject failure remains preserved in the WorkerResult finding/verdict' } });
+                addEvidence(m, { kind: e.kind, summary: e.summary, scope, source: `reviewer:${worker.id}`, trusted_source_class: 'reviewer-observation', source_session_id: worker.session_id, source_state_hash: stateHash, scope_state_hash: scopeStateHash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs.length ? refs : undefined, producer_attempt, pass: reportOnlyFailedFindingEvidence ? true : e.pass, outcome: reportOnlyFailedFindingEvidence ? 'passed' : e.outcome, reason: reportOnlyFailedFindingEvidence ? `report-only-review-execution-complete: reviewed subject failed; blocking finding/verdict remains preserved in task result. ${e.reason ?? ''}`.trim() : e.reason, invalidated_at: cleanlinessMarker ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
                 continue;
             }
             if (e.kind === 'decision-evidence' && worker.role !== 'repository-explorer' && evidenceVerdictPassed(e.pass, e.outcome)) {

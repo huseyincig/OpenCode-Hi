@@ -82,6 +82,15 @@ test('semantic gate does not invent independent review for deterministic low-ris
   assert.match(gate,/independent-review=explicit\/risk/)
 })
 
+
+test('semantic gate exposes model-facing primitive types and request-unit container shapes',()=>{
+  const store=new MissionStore(process.cwd())
+  const mission=store.start('phase11-semantic-shape','Fix README.md typo and verify the changed line')
+  const gate=renderSemanticAssessmentGate(mission)
+  assert.match(gate,/material=true\|false/)
+  assert.match(gate,/capability_request_units=\{\}/)
+})
+
 test('follow-up semantic gate distinguishes resume from amendment to avoid duplicate continuation work',()=>{
   const store=new MissionStore(process.cwd())
   const mission=startAssessedMission(store,'semantic-resume-gate')
