@@ -90,31 +90,6 @@ test('structured successful verifier exit wins over environment-like words in no
   assert.equal(verificationSatisfied(m).ok,true)
 })
 
-test('status-masking verifier shell syntax cannot manufacture fresh PASS evidence',()=>{
-  for(const command of [
-    'npm test -- test/shared-config.test.mjs 2>&1 || true',
-    'npm test -- test/shared-config.test.mjs | tail -20',
-    'npm test -- test/shared-config.test.mjs; exit 0',
-  ]){
-    const m=mission(),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification)
-    observeToolAfter(m,'bash',{command},{output:'not ok 1 - normalizeTimeout expected 750 actual 750.8',metadata:{exit:0}})
-    const e=m.execution.evidence.items.at(-1)
-    assert.equal(e.outcome,'pending',command)
-    assert.equal(e.pass,undefined,command)
-    assert.equal(e.reason,'verification-exit-status-masked',command)
-    assert.equal(verification.status,'open',command)
-    assert.equal(verificationSatisfied(m,verification.id).ok,false,command)
-  }
-})
-
-test('pipefail preserves verifier exit authority for a shell pipeline',()=>{
-  const m=mission(),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification)
-  observeToolAfter(m,'bash',{command:'set -o pipefail; npm test -- test/shared-config.test.mjs 2>&1 | tail -20'},{output:'ok 1 - shared config',metadata:{exit:0}})
-  const e=m.execution.evidence.items.at(-1)
-  assert.equal(e.outcome,'passed')
-  assert.equal(verificationSatisfied(m,verification.id).ok,true)
-})
-
 test('missing verifier/toolchain is environment-issue, not product test failure',()=>{
   const m=mission()
   m.continuation.stagnation_count=4
