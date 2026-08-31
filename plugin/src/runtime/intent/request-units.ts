@@ -1,4 +1,3 @@
-import type { VerificationCase } from '../../contracts/verification-case.js'
 import { technicalTargets,type SemanticCapability,type SemanticIntentAssessment } from './semantic-assessment.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
@@ -59,5 +58,3 @@ export function assertCapabilityRequestTrace(text:string,assessment:SemanticInte
   const covered=new Set(entries.flatMap(([,ids])=>ids)),missing=units.map(unit=>unit.id).filter(id=>!covered.has(id))
   if(missing.length)throw new Error(`capability request trace incomplete; unclassified unit(s): ${missing.join(',')}; ${challenge()}`)
 }
-
-export function cloneVerificationCases(cases:VerificationCase[]):VerificationCase[]{return cases.map(c=>({...c,required_browser_actions:[...c.required_browser_actions],...(c.source_units?.length?{source_units:[...c.source_units]}:{})}))}

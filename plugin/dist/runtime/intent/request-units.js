@@ -115,4 +115,3 @@ export function assertCapabilityRequestTrace(text, assessment) {
     if (missing.length)
         throw new Error(`capability request trace incomplete; unclassified unit(s): ${missing.join(',')}; ${challenge()}`);
 }
-export function cloneVerificationCases(cases) { return cases.map(c => ({ ...c, required_browser_actions: [...c.required_browser_actions], ...(c.source_units?.length ? { source_units: [...c.source_units] } : {}) })); }

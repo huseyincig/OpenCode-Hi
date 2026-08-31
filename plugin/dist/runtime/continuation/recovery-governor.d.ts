@@ -29,7 +29,6 @@ export interface RecoveryModelHazard {
     attempts: number;
     recovery_candidates: string[];
 }
-export declare function recoveryResultFailureSignature(m: MissionState): string | undefined;
 /** Recovery identity deliberately ignores activity-only churn such as worker status/attempt counters. */
 export declare function recoverySemanticSignature(m: MissionState): string;
 export declare function recoveryModelHazard(m: MissionState): RecoveryModelHazard;

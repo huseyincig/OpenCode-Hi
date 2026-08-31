@@ -7,6 +7,9 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {mkdtempSync,mkdirSync,rmSync,writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 function baseClient(created=[],prompts=[]){
   let n=0
@@ -76,23 +79,27 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
 })
 
 test('role-specific children respect model capacity and second worker remains queued until slot releases',async()=>{
-  const created=[],prompts=[],client=baseClient(created,prompts)
-  const cfg=resolveHiConfig({routing:{roleModels:{'repository-explorer':['p/shared'],architect:['p/shared']}}})
-  const models=[{id:'p/shared',provider:'p',writeCapable:true,tags:['balanced']}]
-  const scheduler=createConcurrencyPolicySource(()=>({global:3,providers:{p:3},models:{'p/shared':1}}))
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
-  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque parallel inspection',{task_kind:'review',required_capabilities:['repository-analysis']});m.execution.execution_mode='parallel'
-  const a=await runtime.start(m,{objective:'inspect alpha',role:'repository-explorer',category:'standard',scope:['src/runtime/task/task-runtime.ts']})
-  assert.equal(a.readiness,'READY');assert.equal(m.execution.scheduler.reservations.length,1)
-  const b=await runtime.start(m,{objective:'inspect beta',role:'architect',category:'standard',scope:['src/b.ts']})
-  assert.equal(b.readiness,'WAIT')
-  assert.equal(runtime.queueDepth(),1)
-  assert.equal(created.length,1)
-  runtime.applyResult(m,a.worker_id,{status:'DONE',summary:'alpha done',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
-  await new Promise(r=>setTimeout(r,20))
-  assert.equal(created.length,2)
-  const wb=m.execution.workers.find(w=>w.id===b.worker_id)
-  assert.equal(wb.status,'busy')
-  assert.equal(wb.model,'p/shared')
-  assert.equal(m.execution.scheduler.reservations.length,1)
+  const root=mkdtempSync(join(tmpdir(),'hi-model-capacity-'))
+  mkdirSync(join(root,'src/runtime/task'),{recursive:true});writeFileSync(join(root,'src/runtime/task/task-runtime.ts'),'export const fixture=1\n');writeFileSync(join(root,'src/b.ts'),'export const fixtureB=1\n')
+  try{
+    const created=[],prompts=[],client=baseClient(created,prompts)
+    const cfg=resolveHiConfig({routing:{roleModels:{'repository-explorer':['p/shared'],architect:['p/shared']}}})
+    const models=[{id:'p/shared',provider:'p',writeCapable:true,tags:['balanced']}]
+    const scheduler=createConcurrencyPolicySource(()=>({global:3,providers:{p:3},models:{'p/shared':1}}))
+    const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,root,root,()=>cfg,()=>models,()=>({}))
+    const store=new MissionStore(root),m=startAssessedMission(store,'s','opaque parallel inspection',{task_kind:'review',required_capabilities:['repository-analysis']});m.execution.execution_mode='parallel'
+    const a=await runtime.start(m,{objective:'inspect alpha',role:'repository-explorer',category:'standard',scope:['src/runtime/task/task-runtime.ts']})
+    assert.equal(a.readiness,'READY');assert.equal(m.execution.scheduler.reservations.length,1)
+    const b=await runtime.start(m,{objective:'inspect beta',role:'architect',category:'standard',scope:['src/b.ts']})
+    assert.equal(b.readiness,'WAIT')
+    assert.equal(runtime.queueDepth(),1)
+    assert.equal(created.length,1)
+    runtime.applyResult(m,a.worker_id,{status:'DONE',summary:'alpha done',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+    await new Promise(r=>setTimeout(r,20))
+    assert.equal(created.length,2)
+    const wb=m.execution.workers.find(w=>w.id===b.worker_id)
+    assert.equal(wb.status,'busy')
+    assert.equal(wb.model,'p/shared')
+    assert.equal(m.execution.scheduler.reservations.length,1)
+  } finally { rmSync(root,{recursive:true,force:true}) }
 })

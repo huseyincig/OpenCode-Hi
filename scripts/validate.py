@@ -24,6 +24,16 @@ OBLIGATION_TYPES = {
     'research', 'documentation', 'test-authoring',
 }
 CONFIG_CLASSES = {'runtime', 'diagnostic', 'schema-marker'}
+PRODUCT_TRUTH_AREAS = {
+    'mission', 'task-runtime', 'worker', 'roles-permissions', 'methodologies-skills',
+    'routing-models', 'model-intelligence', 'collaboration', 'autonomous-mission-ux',
+    'configuration', 'authority', 'external-actions-release', 'human-decisions',
+    'context', 'semantic-context', 'project-intelligence', 'evidence-verification',
+    'completion-continuation', 'process', 'workspace-isolation', 'browser',
+    'host-port', 'persistence-storage', 'install-lifecycle', 'privacy', 'scheduler',
+    'observability-economics', 'ecosystem', 'behavioral-evaluation',
+    'super-product-integration', 'telemetry',
+}
 
 
 def err(message: str) -> None:
@@ -156,8 +166,10 @@ def validate_documentation_and_product_truth(version: str) -> None:
         err('product truth inventory drift')
     areas = product_truth.get('areas') or []
     area_ids = [row.get('area') for row in areas if isinstance(row, dict)]
-    if len(area_ids) != 24 or len(area_ids) != len(set(area_ids)):
-        err('product truth inventory area coverage/uniqueness drift')
+    if set(area_ids) != PRODUCT_TRUTH_AREAS or len(area_ids) != len(PRODUCT_TRUTH_AREAS):
+        missing = sorted(PRODUCT_TRUTH_AREAS - set(area_ids))
+        extra = sorted(set(area_ids) - PRODUCT_TRUTH_AREAS)
+        err(f'product truth inventory area coverage/uniqueness drift: missing={missing} extra={extra}')
     for row in areas:
         if not isinstance(row, dict):
             err('product truth inventory row must be object')

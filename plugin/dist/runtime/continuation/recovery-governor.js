@@ -22,7 +22,6 @@ function currentResultFailureSignature(m, worker) {
     const classes = [...new Set([...(result.open_issues ?? []), ...(result.needs_context ?? [])].map(x => failureClass(String(x))).filter(Boolean))].sort();
     return fnv(JSON.stringify({ status: result.status, classes }));
 }
-export function recoveryResultFailureSignature(m) { return currentResultFailureSignature(m); }
 /** Recovery identity deliberately ignores activity-only churn such as worker status/attempt counters. */
 export function recoverySemanticSignature(m) {
     const s = m.continuation.semantic_progress_snapshot;
