@@ -523,6 +523,33 @@
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
+      "area": "ecosystem",
+      "canonical_owner": "Ecosystem derived integration composition",
+      "owner_path": "plugin/src/runtime/ecosystem/runtime.ts",
+      "owner_sha256": "a4b84d0803aa8ffe8558c52d2c6479aac9d1528e512b212af368a2cdcf1960a1",
+      "producer_or_contract_paths": [
+        "plugin/src/contracts/host-capability.ts",
+        "plugin/src/runtime/routing/execution-profile.ts",
+        "plugin/src/runtime/tools/provisioning.ts",
+        "plugin/src/contracts/authority.ts",
+        "plugin/src/contracts/external-action.ts",
+        "plugin/src/runtime/context/artifact-store.ts",
+        "plugin/src/runtime/evidence/evidence-runtime.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/application/runtime-services.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/ecosystem-runtime.test.mjs",
+        "plugin/test/host-capability-contract.test.mjs",
+        "plugin/test/mcp-capability-exposure.test.mjs",
+        "plugin/test/operational-tool-provisioning.test.mjs",
+        "plugin/test/authority-side-effect-idempotency.test.mjs",
+        "plugin/test/external-side-effect-real-git.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
       "area": "telemetry",
       "canonical_owner": "Mission-derived ledger metrics",
       "owner_path": "plugin/src/runtime/ledger/ledger.ts",

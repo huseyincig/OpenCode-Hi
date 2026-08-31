@@ -22,6 +22,7 @@ import {ProcessRuntime} from '../process/runtime.js'
 import {WorkspaceRuntime} from '../workspace/runtime.js'
 import {ChatHumanDecisionTransport} from '../human-decision/transport.js'
 import {LocalPreviewManager} from '../browser/local-preview.js'
+import {ecosystemIntegrationView} from '../ecosystem/runtime.js'
 
 export interface RuntimeServicePorts{
   nativeContext:NativeProjectContext
@@ -62,10 +63,11 @@ export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRo
   }
   const getBrowserBootstrapStatus=()=>browserBootstrapStatus?{...browserBootstrapStatus}:undefined
   const getBrowserToolReceipt=()=>browserToolReceipt?structuredClone(browserToolReceipt):operationalTools.last('browser-execution')
+  const getEcosystemView=(selectedMcpServers:readonly string[]=[])=>ecosystemIntegrationView({hostCapabilities:ports.hostCapabilities,hostConfig:getHostConfig(),selectedMcpServers,operationalToolReceipts:[getBrowserToolReceipt()]})
   const workspaceRuntime=new WorkspaceRuntime(ports.workspace,projectRoot)
   const previewManager=new LocalPreviewManager(ports.nativeContext.directory??projectRoot)
   const processRuntime=new ProcessRuntime(ports.process,projectRoot,getHostConfig)
   const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable,ports.readAssistantResult,previewManager,()=>store.all(),processRuntime)
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
-  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,getBrowserToolReceipt,operationalTools,previewManager,scopedStores}
+  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,getBrowserToolReceipt,getEcosystemView,operationalTools,previewManager,scopedStores}
 }

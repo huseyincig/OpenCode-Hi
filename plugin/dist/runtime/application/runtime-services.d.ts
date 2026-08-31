@@ -104,6 +104,7 @@ export declare function createRuntimeServices(input: {
         reason?: string;
     } | undefined;
     getBrowserToolReceipt: () => OperationalToolProvisioningReceipt | undefined;
+    getEcosystemView: (selectedMcpServers?: readonly string[]) => import("../ecosystem/runtime.js").EcosystemIntegrationView;
     operationalTools: OperationalToolProvisioner;
     previewManager: LocalPreviewManager;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
