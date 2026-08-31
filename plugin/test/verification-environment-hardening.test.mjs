@@ -3,6 +3,9 @@ import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { observeToolAfter, addEvidence, markMutation, isVerificationCommand } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied, latestBlockingVerificationEvidence } from '../dist/runtime/verification/policy.js'
+import {syncMissionGates} from '../dist/runtime/gates/gates.js'
+import {createTask,createWorker,beginWorkerAttempt} from '../dist/runtime/worker/worker-runtime.js'
+import {evidenceProducerAttemptForWorker} from '../dist/runtime/evidence/applicability.js'
 import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 
@@ -38,6 +41,24 @@ test('mutation reopens a closed verification claim and fresh verifier evidence c
   assert.equal(verification.status,'open');assert.ok(first.invalidated_at);assert.ok(m.execution.ledger.some(e=>e.type==='obligation.reopened'&&e.payload?.obligation===verification.id))
   observeToolAfter(m,'bash',{command:'node --test test/a.test.js'},{stdout:'pass',metadata:{exit:0}})
   const fresh=m.execution.evidence.items.at(-1);assert.equal(fresh.kind,'targeted-tests');assert.ok(fresh.obligation_ids?.includes(verification.id));assert.equal(fresh.invalidated_at,undefined);assert.equal(verification.status,'closed');assert.equal(verificationSatisfied(m,verification.id).ok,true)
+})
+
+test('attempt rollover reopens a closed verification claim and fresh subsequent verifier evidence can close it again',()=>{
+  const m=mission(),verification=m.execution.obligations.find(o=>o.kind==='verification'),implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(verification);assert.ok(implementation)
+  const task=createTask(m,{objective:'implement bounded retry logic',role:'coder',category:'standard',scope:['src/a.ts'],obligationIds:[implementation.id],requiredEvidence:['targeted-tests']}),worker=createWorker(m,task,'host-default');worker.session_id='attempt-bound-child';worker.native_state_hash='a'.repeat(64);beginWorkerAttempt(task,worker,100)
+  const producer=evidenceProducerAttemptForWorker(m,worker)
+  addEvidence(m,{kind:'targeted-tests',summary:'attempt one host tests passed',scope:['src/a.ts'],source:`bash:child:${worker.id}`,trusted_source_class:'host-tool-observation',source_session_id:worker.session_id,source_state_hash:'b'.repeat(64),task_id:task.id,obligation_ids:[verification.id],producer_attempt:producer,pass:true,outcome:'passed',observed_at:110})
+  verification.status='closed';verification.closedAt=110
+  assert.equal(verificationSatisfied(m,verification.id).ok,true)
+  beginWorkerAttempt(task,worker,200)
+  assert.equal(verificationSatisfied(m,verification.id).ok,false,'prior attempt evidence must not prove the current attempt')
+  syncMissionGates(m)
+  assert.equal(verification.status,'open','closed status must reconcile to current claim truth')
+  assert.equal(verification.closedAt,undefined)
+  assert.ok(m.execution.ledger.some(e=>e.type==='obligation.reopened'&&e.payload?.obligation===verification.id&&e.payload?.reason==='closed-verification-claim-no-longer-satisfied'))
+  observeToolAfter(m,'bash',{command:'npm test'},{stdout:'pass',metadata:{exit:0}})
+  assert.equal(verification.status,'closed','fresh verifier can claim-link after the obligation is reopened')
+  assert.equal(verificationSatisfied(m,verification.id).ok,true)
 })
 
 test('fresh verification wins when invalidated and replacement evidence share the same timestamp',()=>{

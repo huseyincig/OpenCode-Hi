@@ -2,6 +2,14 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — verification claim/status reconciliation
+- Reconcile closed verification obligations against current claim applicability before projecting gates. If source freshness, attempt identity, restart provenance, or another evidence condition makes the formerly closing proof inadmissible, the verification obligation reopens with a durable reason instead of remaining CLOSED behind an OPEN verification gate.
+- Added the Stage 3 regression where attempt-1 host test evidence closes verification, a same-worker corrective attempt makes that receipt stale by exact attempt fencing, and a subsequent fresh verifier can bind to the reopened obligation and close it again.
+
+### Fixed — temporary rollback ownership deadlock
+- Prevent the read-only primary `manager` from registering command-mode temporary mutations whose rollback it cannot legally execute. Such requests now fail before durable mutation/gate state is created; native session revert remains available when supported, and command-capable `working-manager` retains exact command rollback ownership.
+- Added regression coverage for the exact self-deadlock exposed by the Stage 3 autonomous journey: rejected manager command rollback leaves no rollback gate, while working-manager command rollback still blocks readiness until deterministic rollback.
+
 ### Fixed — native todo completion ownership
 - Keep OpenCode native todos as a host UX/progress projection rather than a second Hi completion authority. Once canonical Mission obligations, fresh verification/review evidence, gates, Tasks/Workers and owned processes are terminal, stale native todo rows can no longer keep an otherwise complete Mission active or trigger continuation spirals.
 - Updated Manager/Working-Manager guidance and added a completion regression proving stale native todo state cannot override canonical `MissionStore/evaluateCompletion` truth.

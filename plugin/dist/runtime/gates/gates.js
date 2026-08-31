@@ -1,4 +1,5 @@
-import { verificationClaimsSatisfied, reviewClaimsSatisfied } from '../verification/policy.js';
+import { verificationClaimsSatisfied, verificationSatisfied, reviewClaimsSatisfied } from '../verification/policy.js';
+import { appendLedger } from '../ledger/ledger.js';
 import { explorationClearanceFreshness } from '../execution/exploration-clearance.js';
 function upsert(m, id, kind, summary, status, reason) { const now = Date.now(); const existing = m.execution.gates.find(g => g.id === id); if (existing) {
     existing.kind = kind;
@@ -15,7 +16,16 @@ export function syncMissionGates(m, projectRoot, claims) {
     upsert(m, 'gate-semantic-assessment', 'precondition', 'Natural-language intent must be normalized into the host-agnostic Hi semantic contract before execution', semanticPending ? 'blocked' : 'closed', semanticPending ? 'semantic-assessment-pending' : undefined);
     const authorityOpen = m.execution.obligations.some(o => o.kind === 'authority' && o.status !== 'closed') || Boolean(m.authority.authority?.pending || m.authority.authority?.executing);
     upsert(m, 'gate-authority', 'user-authority', 'Privileged external effect requires exact authority and confirmed completion', authorityOpen ? (m.authority.authority?.approved ? 'ready' : 'blocked') : 'closed', authorityOpen ? 'authority-open' : undefined);
-    const verificationObligations = m.execution.obligations.filter(o => o.kind === 'verification'), verifyOpen = verificationObligations.some(o => o.status !== 'closed'), verify = claims?.verification ?? verificationClaimsSatisfied(m, projectRoot);
+    const verificationObligations = m.execution.obligations.filter(o => o.kind === 'verification');
+    for (const obligation of verificationObligations.filter(o => o.status === 'closed')) {
+        const current = verificationSatisfied(m, obligation.id, projectRoot);
+        if (current.ok)
+            continue;
+        obligation.status = 'open';
+        obligation.closedAt = undefined;
+        appendLedger(m, 'obligation.reopened', { payload: { obligation: obligation.id, owner: 'gate-claim-reconciliation', reason: 'closed-verification-claim-no-longer-satisfied', missing: current.missing.slice(0, 12) } });
+    }
+    const verifyOpen = verificationObligations.some(o => o.status !== 'closed'), verify = claims?.verification ?? verificationClaimsSatisfied(m, projectRoot);
     upsert(m, 'gate-verification', 'verification', 'Required verification evidence must be fresh and policy-complete', verificationObligations.length ? (verify.ok ? (verifyOpen ? 'ready' : 'closed') : 'open') : 'closed', verificationObligations.length && !verify.ok ? verify.missing.join(',') : undefined);
     const implementationOpen = m.execution.obligations.some(o => o.kind === 'implementation' && o.status === 'open'), analysisOpen = m.execution.obligations.some(o => o.kind === 'analysis' && o.status === 'open'), ambiguity = m.identity.intent.ambiguity !== 'none' && analysisOpen && implementationOpen;
     upsert(m, 'gate-contract-ambiguity', 'precondition', 'Unresolved repository ambiguity must be cleared by current source evidence before implementation', ambiguity ? 'blocked' : 'closed', ambiguity ? `${m.identity.intent.ambiguity}-repository-ambiguity` : undefined);

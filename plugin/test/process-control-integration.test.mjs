@@ -296,6 +296,23 @@ test('child process spawn reobserves stale UNSUPPORTED PTY recovery and clears t
   assert.equal(probes,1);assert.equal(out.process_id,'proc_recovered');assert.equal(calls.length,1);assert.ok(!m.execution.blockers.includes('capability-unavailable:process-lifecycle'))
 })
 
+test('read-only manager cannot register unreachable command rollback while working-manager retains exact command rollback ownership',async()=>{
+  const processRuntime={list:()=>[],stopMission:async()=>0}
+  const managerStore=new MissionStore(),manager=assessed(managerStore,'manager-command-rollback');manager.execution.primary_mode='manager'
+  const managerSurface=createHiToolSurface({state:state(),store:managerStore,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()}).toolSurface
+  const blocked=JSON.parse(await managerSurface.hi_temporary_mutation_register.execute({kind:'implementation',description:'temporary implementation',rollback_command:'git restore -- src/a.js'},{sessionID:manager.identity.session_id}))
+  assert.equal(blocked.status,'BLOCKED');assert.equal(blocked.reason,'command-rollback-unavailable-for-read-only-primary');assert.equal(blocked.primary_mode,'manager');assert.equal(blocked.retry_same_call,false)
+  assert.equal(manager.vcs.temporary_mutations.length,0,'rejected command rollback must not create durable mutation state')
+  const {evaluatePreconditions}=await import('../dist/runtime/readiness/preconditions.js');assert.ok(!evaluatePreconditions(manager).items.some(x=>x.id==='gate-temporary-rollback'&&x.status==='blocked'),'rejected command rollback must not open rollback gate')
+  assert.ok(manager.execution.ledger.some(e=>e.type==='temporary-mutation.registration-blocked'&&e.payload?.reason==='read-only-primary-command-rollback-unavailable'))
+
+  const workingStore=new MissionStore(),working=assessed(workingStore,'working-command-rollback');working.execution.primary_mode='working-manager'
+  const workingSurface=createHiToolSurface({state:state(),store:workingStore,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()}).toolSurface
+  const registered=JSON.parse(await workingSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',rollback_command:'git restore -- src/a.js'},{sessionID:working.identity.session_id}))
+  assert.equal(registered.rollback_mode,'command');assert.equal(registered.status,'active');assert.equal(working.vcs.temporary_mutations.length,1)
+  assert.ok(evaluatePreconditions(working).items.some(x=>x.id==='gate-temporary-rollback'&&x.status==='blocked'),'command-capable owner keeps normal rollback gate semantics')
+})
+
 test('native-revert registration missing session-revert capability is terminal and deduped',async()=>{
   const store=new MissionStore(),m=assessed(store,'no-session-revert'),processRuntime={list:()=>[],stopMission:async()=>0}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
