@@ -44,6 +44,55 @@ export interface ObservabilityEconomicsView {
         };
     };
     budget: ReturnType<typeof executionBudgetView>;
+    product_summary: {
+        exact_token_total: number;
+        exact_context_tokens: number;
+        cache: {
+            read: number;
+            write: number;
+            share_of_exact_context: number | null;
+            claim_boundary: 'observed-token-volume-not-cache-savings';
+        };
+        money: {
+            provider_billed_exact_usd: number | null;
+            opencode_derived_usd: number | null;
+            display_basis: 'provider-billed-exact' | 'opencode-calculated-derived' | 'unavailable';
+            hard_budget_enforced: false;
+        };
+        repeat_compute: {
+            exact_tokens: number;
+            exact_context_tokens: number;
+            share_of_exact_tokens: number | null;
+            top_causes: Array<{
+                cause: string;
+                exact_tokens: number;
+                derived_opencode_cost_usd: number;
+                provider_billed_cost_usd: number;
+            }>;
+        };
+        budgets: {
+            hard: {
+                within: number;
+                exhausted: number;
+                unavailable: number;
+            };
+            observed_only: number;
+            unavailable_measurements: number;
+            note: string;
+        };
+        by_model_role: Array<{
+            model: string;
+            role: string;
+            workers: number;
+            attempts: number;
+            exact_tokens: number;
+            cache_read: number;
+            cache_write: number;
+            derived_opencode_cost_usd: number;
+            provider_billed_exact_usd: number;
+        }>;
+        coverage_note: string;
+    };
     workers: Array<{
         worker_id: string;
         task_id: string;

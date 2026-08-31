@@ -162,7 +162,7 @@
       "area": "autonomous-mission-ux",
       "canonical_owner": "Autonomous Mission UX projection",
       "owner_path": "plugin/src/runtime/ux/autonomous-mission.ts",
-      "owner_sha256": "7460f4e6987188d1740b6f7673ffb4d50e94c831c22eef1be4237c31f549cde9",
+      "owner_sha256": "38adeb990dfa0e9d3e8a6efc51928be68d1de8d62d639b6690d21ab929ed8379",
       "producer_or_contract_paths": [
         "plugin/src/runtime/context/mission-runtime-projection.ts",
         "plugin/src/runtime/completion/control-projection.ts",
@@ -503,7 +503,7 @@
       "area": "observability-economics",
       "canonical_owner": "Observability/Economics derived operator projection",
       "owner_path": "plugin/src/runtime/observability/runtime.ts",
-      "owner_sha256": "ac0edddfbf01dceba3684de2053a2b22ad134df71034c26692302493b1efe961",
+      "owner_sha256": "a8c772841f9f327578130b43e026d878ec0cff985480f7aaa54846db274f1b47",
       "producer_or_contract_paths": [
         "plugin/src/runtime/economics/usage-runtime.ts",
         "plugin/src/runtime/economics/budget-view.ts",
@@ -526,7 +526,7 @@
       "area": "ecosystem",
       "canonical_owner": "Ecosystem derived integration composition",
       "owner_path": "plugin/src/runtime/ecosystem/runtime.ts",
-      "owner_sha256": "a4b84d0803aa8ffe8558c52d2c6479aac9d1528e512b212af368a2cdcf1960a1",
+      "owner_sha256": "f96344fe1b1bc63691696a8e3616bbf8107b961bfd1f823d6124bc8f1f520bca",
       "producer_or_contract_paths": [
         "plugin/src/contracts/host-capability.ts",
         "plugin/src/runtime/routing/execution-profile.ts",

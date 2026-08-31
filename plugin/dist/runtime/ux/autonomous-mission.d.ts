@@ -23,3 +23,9 @@ export interface AutonomousMissionUxView {
 }
 /** Bounded user-facing mission projection. It owns no lifecycle or UI cache state. */
 export declare function autonomousMissionUxView(mission: MissionState, projectRoot?: string): AutonomousMissionUxView;
+/**
+ * Default human-facing status. The first line intentionally preserves the
+ * compact compatibility surface while the following lines reuse canonical
+ * derived projections instead of inventing another status owner/store.
+ */
+export declare function formatAutonomousMissionStatus(mission: MissionState, projectRoot?: string): string;

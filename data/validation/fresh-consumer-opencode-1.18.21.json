@@ -3,8 +3,8 @@
   "kind": "FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE",
   "status": "PASS",
   "source": {
-    "commit": "f975481bc88415f013d106f63a1f91cea184c96f",
-    "tree": "5d5b486903fbd55267852b717f94c4202a084ee7"
+    "commit": "03d4d2c20f9d5d91aff105ab55dfa7860cc24494",
+    "tree": "12e523494e2f1f741f38ce426c9eb9e15661b3cb"
   },
   "host": {
     "opencode": "1.18.21",
@@ -15,13 +15,13 @@
     "registry_observation": {
       "opencode_ai_latest": "1.18.25",
       "sdk_latest": "1.18.25",
-      "observed_at": "2026-08-31T12:05:30.105365+00:00"
+      "observed_at": "2026-08-31T14:03:15.549509+00:00"
     }
   },
   "package": {
     "release": "0.2.4",
     "tarball_name": "opencode-hi-0.2.4.tgz",
-    "tarball_sha256": "ce0aea966b868dbea0202c1a439884bdfedd9ed525a56d23953414f4e4fade30",
+    "tarball_sha256": "94ecd434572ae91f06f4bf5dbc7b589e1eaa2e10e91028b8af77e85614a711cf",
     "installed_from_tarball": true,
     "resolved_entrypoint": "file://<acceptance>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
   },

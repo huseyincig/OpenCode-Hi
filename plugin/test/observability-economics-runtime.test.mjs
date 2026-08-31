@@ -8,7 +8,7 @@ import {observabilityEconomicsView} from '../dist/runtime/observability/runtime.
 import {startAssessedMission} from './helpers/semantic.mjs'
 
 function fixture(){const m=startAssessedMission(new MissionStore(),'obs','implement',{task_kind:'implementation',likely_verification:[]}),task=createTask(m,{objective:'x',role:'coder',category:'standard'}),w=createWorker(m,task,'p/m');w.session_id='child';w.status='busy';return{m,task,w}}
-const usage=(id,coverage='assistant-step-total')=>({message_id:id,model_identity:'p/m',token_source:coverage==='assistant-step-total'?'opencode-step-finish':'opencode-assistant-message',coverage,confidence:'exact',step_count:1,tokens:{input:10,output:2,reasoning:1,cache_read:3,cache_write:0},monetary:{usd:.02,source:'opencode-calculated',confidence:'derived'}})
+const usage=(id,coverage='assistant-step-total',money={usd:.02,source:'opencode-calculated',confidence:'derived'})=>({message_id:id,model_identity:'p/m',token_source:coverage==='assistant-step-total'?'opencode-step-finish':'opencode-assistant-message',coverage,confidence:'exact',step_count:1,tokens:{input:10,output:2,reasoning:1,cache_read:3,cache_write:0},monetary:money})
 
 test('observability economics view is bounded derived state with explicit authority boundaries',()=>{
   const {m,task,w}=fixture();beginWorkerAttempt(task,w,100);bindWorkerUsageObservation(m,w,usage('a'),110);beginWorkerAttempt(task,w,200);appendLedger(m,'worker.resumed',{task_id:task.id,worker_id:w.id});bindWorkerUsageObservation(m,w,usage('b','assistant-message-reported'),210)
@@ -20,10 +20,30 @@ test('observability economics view is bounded derived state with explicit author
   assert.equal(view.workers.length,1);assert.equal('usage_observations' in view.workers[0],false);assert.equal('ledger' in view,false)
 })
 
+test('product economics summary makes exact, derived and budget semantics legible without inventing enforcement',()=>{
+  const {m,task,w}=fixture();beginWorkerAttempt(task,w,100);bindWorkerUsageObservation(m,w,usage('a'),110);beginWorkerAttempt(task,w,200);appendLedger(m,'worker.resumed',{task_id:task.id,worker_id:w.id});bindWorkerUsageObservation(m,w,usage('b'),210)
+  const view=observabilityEconomicsView(m,300),summary=view.product_summary
+  assert.equal(summary.exact_token_total,32)
+  assert.equal(summary.exact_context_tokens,26)
+  assert.deepEqual(summary.cache,{read:6,write:0,share_of_exact_context:0.230769,claim_boundary:'observed-token-volume-not-cache-savings'})
+  assert.equal(summary.money.display_basis,'opencode-calculated-derived');assert.equal(summary.money.provider_billed_exact_usd,null);assert.equal(summary.money.opencode_derived_usd,.04);assert.equal(summary.money.hard_budget_enforced,false)
+  assert.ok(summary.repeat_compute.exact_tokens>0);assert.ok(summary.repeat_compute.top_causes.some(x=>x.cause!=='initial-attempt'))
+  assert.equal(summary.by_model_role.length,1);assert.equal(summary.by_model_role[0].role,'coder');assert.equal(summary.by_model_role[0].model,'p/m');assert.equal(summary.by_model_role[0].exact_tokens,32)
+  assert.ok(summary.budgets.observed_only>0);assert.match(summary.budgets.note,/derived or partial money is never promoted to a hard budget/)
+})
+
+test('exact provider-billed money wins display provenance without converting money into a hard budget',()=>{
+  const {m,task,w}=fixture();beginWorkerAttempt(task,w,100);bindWorkerUsageObservation(m,w,usage('bill','assistant-step-total',{usd:.031,source:'provider-billed',confidence:'exact'}),110)
+  const summary=observabilityEconomicsView(m,200).product_summary
+  assert.equal(summary.money.provider_billed_exact_usd,.031);assert.equal(summary.money.opencode_derived_usd,null);assert.equal(summary.money.display_basis,'provider-billed-exact');assert.equal(summary.money.hard_budget_enforced,false)
+  assert.equal(summary.by_model_role[0].provider_billed_exact_usd,.031)
+})
+
 test('partial-only observations never become exact complete totals or exact economics',()=>{
   const {m,task,w}=fixture();beginWorkerAttempt(task,w,100);bindWorkerUsageObservation(m,w,usage('p','assistant-message-reported'),110)
   const view=observabilityEconomicsView(m,200)
   assert.equal(view.usage.coverage,'partial-only');assert.deepEqual(view.usage.exact_complete_tokens,{input:0,output:0,reasoning:0,cache_read:0,cache_write:0});assert.equal(view.usage.partial_observations,1)
+  assert.equal(view.product_summary.exact_token_total,0);assert.equal(view.product_summary.cache.share_of_exact_context,null);assert.match(view.product_summary.coverage_note,/Only partial assistant usage/)
 })
 
 test('operator worker projection is bounded without truncating canonical worker state',()=>{
@@ -31,4 +51,5 @@ test('operator worker projection is bounded without truncating canonical worker 
   for(let i=0;i<40;i++){const t=createTask(m,{objective:String(i),role:'coder',category:'standard'}),w=createWorker(m,t,'p/m');w.status='completed'}
   const view=observabilityEconomicsView(m)
   assert.equal(m.execution.workers.length,40);assert.equal(view.workers.length,32);assert.equal(view.workers[0].worker_id,m.execution.workers[8].id)
+  assert.equal(view.product_summary.by_model_role.length,1);assert.equal(view.product_summary.by_model_role[0].workers,40)
 })

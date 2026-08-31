@@ -20,6 +20,25 @@ export interface EcosystemOperationalToolView {
     observed_at: number;
 }
 export interface EcosystemIntegrationView {
+    compatibility_summary: {
+        capabilities: {
+            supported: number;
+            degraded: number;
+            unsupported: number;
+        };
+        mcp: {
+            configured: number;
+            selected: number;
+        };
+        operational_tools: {
+            observed: number;
+            healthy: number;
+            unhealthy: number;
+        };
+        attention: string[];
+        status: 'READY' | 'ATTENTION';
+        claim_boundary: 'readiness-derived-from-current-projection-only';
+    };
     native_host: {
         source: 'HostCapabilityContract/opencode-live';
         capabilities: EcosystemCapabilityView[];

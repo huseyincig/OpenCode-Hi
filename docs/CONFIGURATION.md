@@ -141,7 +141,7 @@ Only fields recognized by the current project-routing loader affect runtime beha
 
 ## 2.1 Project fields vs host-only fields
 
-The 29-option canonical `HiConfig` inventory contains both host-supplied and project-supplied surfaces. On the accepted OpenCode `1.18.x` project path, put user project settings in `.opencode/hi/policy/routing.json`; do **not** assume arbitrary top-level `hi` keys in `opencode.json` survive OpenCode schema normalization.
+The 25-option canonical `HiConfig` inventory contains both host-supplied and project-supplied surfaces. On the accepted OpenCode `1.18.x` project path, put user project settings in `.opencode/hi/policy/routing.json`; do **not** assume arbitrary top-level `hi` keys in `opencode.json` survive OpenCode schema normalization.
 
 Project `routing.json` recognizes:
 

@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "1175ce1f83f4e60280e224f4fb1d9b8f89f65147d37453b76b142a3abd28eb27",
+      "sha256": "1306f38fea7909f6df7cbb72066f422a1d29da5cc81bed1f7af68c84c5c5906d",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "443ffbccf0f17c0ad7769b9526f48b93a6d03c8d7a58e569945da02c41e5c74f",
+      "sha256": "46232d9c01d492b91c74169c4fa8d4a06f9858487200cb35d6fa3f45a36e1945",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "8914fdae2619da072988500c53e2052f2e2b562a054994a1b779c47a0861711a",
+      "sha256": "5736b11400df84df8ba912ec90e1087d1d40ef150e778f836cf6c0e412952ad4",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
