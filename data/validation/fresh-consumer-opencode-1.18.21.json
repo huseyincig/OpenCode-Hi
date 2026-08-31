@@ -3,8 +3,8 @@
   "kind": "FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE",
   "status": "PASS",
   "source": {
-    "commit": "03d4d2c20f9d5d91aff105ab55dfa7860cc24494",
-    "tree": "12e523494e2f1f741f38ce426c9eb9e15661b3cb"
+    "commit": "0344a13ee71c580bcfd31637df29ebf15ef970a0",
+    "tree": "c653672439790d436d19fa152caf489e8c0058f9"
   },
   "host": {
     "opencode": "1.18.21",
@@ -15,7 +15,7 @@
     "registry_observation": {
       "opencode_ai_latest": "1.18.25",
       "sdk_latest": "1.18.25",
-      "observed_at": "2026-08-31T14:03:15.549509+00:00"
+      "observed_at": "2026-08-31T14:13:29.952708+00:00"
     }
   },
   "package": {
