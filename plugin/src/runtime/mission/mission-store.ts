@@ -53,11 +53,23 @@ function explicitTestMutationForbidden(text:string):boolean{
   const normalized=text.toLowerCase().replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim()
   if(!normalized)return false
   return[
-    /\b(?:do not|don't|must not)\s+(?:modify|edit|change|write|add|create|update|touch)\s+(?:the\s+)?(?:tests?|test files?)\b/,
-    /\b(?:tests?|test files?)\s+(?:must|should)\s+(?:remain|stay)\s+unchanged\b/,
+    /\b(?:do not|don't|must not|never)\s+(?:modify|edit|change|write|add|create|update|touch)\s+(?:the\s+)?(?:tests?|test files?|[^.\s]+\.(?:test|spec)\.[^\s]+)\b/,
+    /\b(?:tests?|test files?)\s+(?:must|should)\s+(?:remain|stay)\s+(?:unchanged|unmodified|untouched)\b/,
     /\bwithout\s+(?:modifying|editing|changing|writing|adding|creating|updating|touching)\s+(?:the\s+)?(?:tests?|test files?)\b/,
   ].some(pattern=>pattern.test(normalized))
 }
+function explicitTestAuthoringRequested(text:string):boolean{
+  const normalized=text.toLowerCase().replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim()
+  if(!normalized||explicitTestMutationForbidden(normalized))return false
+  if(explicitTestFirstRequested(normalized))return true
+  return[
+    /\b(?:write|add|create|author|implement|update|modify|edit|change|fix)\s+(?:(?!\b(?:and|then|run|execute|verify)\b)[a-z0-9_.\/-]+\s+){0,5}tests?\b/,
+    /\b(?:write|add|create|author|update|modify|edit|change|fix)\s+(?:the\s+)?test files?\b/,
+    /\b(?:add|write|create)\s+(?:a\s+)?regression\s+(?:case|test)\b/,
+    /(?:test(?:i|leri)?|test dosyas(?:ı|ını|ınızdaki))\s+(?:yaz|ekle|oluştur|güncelle|değiştir)/i,
+  ].some(pattern=>pattern.test(normalized))
+}
+function testLikePath(path:string):boolean{return /(^|\/)(?:test|tests|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path)}
 function projectContainedExistingTarget(root:string,target:string):boolean{
   try{const project=realpathSync(root),candidate=realpathSync(resolve(root,target)),rel=relative(project,candidate);return rel===''||(!isAbsolute(rel)&&rel!=='..'&&!rel.startsWith(`..${sep}`))}
   catch{return false}
@@ -94,9 +106,16 @@ function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment,
   return{active:assessment.intent_signals.filter(signal=>!suppressed.has(signal)),suppressed:[...suppressed],runtimeSuppressed:[...new Set(runtimeSuppressed)]}
 }
 function groundedIntentAuthority(assessment:SemanticIntentAssessment,userText:string):{assessment:SemanticIntentAssessment;signals:ReturnType<typeof reconciledIntentMethodologySignals>}{
-  const signals=reconciledIntentMethodologySignals(assessment,userText)
-  const requiredCapabilities=signals.active.includes('intent.tdd')&&!assessment.required_capabilities.includes('test-authoring')?[...assessment.required_capabilities,'test-authoring' as const]:assessment.required_capabilities
-  const grounded=requiredCapabilities===assessment.required_capabilities?assessment:{...assessment,required_capabilities:requiredCapabilities}
+  const signals=reconciledIntentMethodologySignals(assessment,userText),testAuthoringRequested=explicitTestAuthoringRequested(userText)
+  let requiredCapabilities:SemanticCapability[]=assessment.required_capabilities.filter(cap=>cap!=='test-authoring')
+  if(testAuthoringRequested||signals.active.includes('intent.tdd'))requiredCapabilities=[...requiredCapabilities,'test-authoring']
+  const capabilityRequestUnits={...(assessment.capability_request_units??{})}
+  if(!testAuthoringRequested&&!signals.active.includes('intent.tdd'))delete capabilityRequestUnits['test-authoring']
+  const mutationTargets=assessment.mutation_targets?.filter(path=>testAuthoringRequested||!testLikePath(path))
+  const changed=requiredCapabilities.length!==assessment.required_capabilities.length||requiredCapabilities.some((cap,index)=>cap!==assessment.required_capabilities[index])||Object.keys(capabilityRequestUnits).length!==Object.keys(assessment.capability_request_units??{}).length||mutationTargets?.length!==assessment.mutation_targets?.length
+  let grounded:SemanticIntentAssessment=changed?{...assessment,required_capabilities:requiredCapabilities,capability_request_units:capabilityRequestUnits,...(assessment.mutation_targets===undefined?{}:{mutation_targets:mutationTargets??[]})}:assessment
+  const materialTargets=grounded.mutation_targets??grounded.likely_targets,materialWithoutVerifierTests=grounded.likely_verification.includes('targeted-tests')&&!testAuthoringRequested?materialTargets.filter(path=>!testLikePath(path)):materialTargets
+  if(grounded.scope==='multi-file'&&grounded.ambiguity==='none'&&grounded.dependency_class==='sequential'&&materialWithoutVerifierTests.length===1&&grounded.likely_verification.length>0)grounded={...grounded,scope:'local',dependency_class:'independent'}
   assertSemanticTaskCapabilityConsistency(grounded.task_kind,grounded.required_capabilities,grounded.scope,grounded.mutation_targets??[])
   return{assessment:grounded,signals}
 }

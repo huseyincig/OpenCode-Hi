@@ -132,8 +132,9 @@ test('technical-writer and test-engineer mutation guards reject production-sourc
     {sid:'docs-write-guard',cap:'documentation',role:'technical-writer',scope:['README.md'],allowed:'README.md',denied:'src/app.ts'},
     {sid:'tests-write-guard',cap:'test-authoring',role:'test-engineer',scope:['tests/app.test.ts'],allowed:'tests/app.test.ts',denied:'src/app.ts'},
   ]){
-    const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,spec.sid,'specialist mutation',{task_kind:'implementation',scope:'local',risk:'medium',required_capabilities:[spec.cap],likely_verification:[],likely_targets:spec.scope})
-    const out=await x.rt.start(m,{objective:'specialist mutation',scope:spec.scope})
+    const userText=spec.cap==='test-authoring'?'Write the test in tests/app.test.ts; do not change production source.':'Update the documentation in README.md; do not change production source.'
+    const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,spec.sid,userText,{task_kind:'implementation',scope:'local',risk:'medium',required_capabilities:[spec.cap],likely_verification:[],likely_targets:spec.scope})
+    const out=await x.rt.start(m,{objective:userText,scope:spec.scope})
     const worker=m.execution.workers.find(w=>w.task_id===out.task_id);assert.equal(worker.role,spec.role)
     const hook=createToolBeforeHook(store,x.registry,process.cwd(),process.cwd())
     await hook({sessionID:worker.session_id,tool:'edit'},{args:{filePath:spec.allowed}})

@@ -22,6 +22,31 @@ test('explicit do-not-modify-tests authority suppresses a contradictory model-de
   assert.ok(payload.runtime_suppressed_intent_signals.includes('intent.tdd'))
 })
 
+test('model-supplied test-authoring cannot override explicit no-test-mutation user authority',()=>{
+  const store=new MissionStore(),m=store.start('m15-model-cap-forbidden','Fix src/a.ts. Do not modify test/a.test.ts. Run npm test and report completion only after it passes.')
+  store.applyInitialSemanticAssessment('m15-model-cap-forbidden',{...R2_ASSESSMENT,required_capabilities:['implementation','verification','test-authoring'],likely_targets:['src/a.ts','test/a.test.ts'],mutation_targets:['src/a.ts','test/a.test.ts'],intent_signals:[]})
+  assert.equal(m.identity.intent.requiredCapabilities.includes('test-authoring'),false,'model capability cannot create test-write authority against explicit user preservation')
+  assert.equal(m.execution.obligations.some(o=>o.kind==='test-authoring'),false,'no test-authoring obligation may survive explicit no-test-mutation authority')
+  assert.deepEqual(m.identity.intent.mutationTargets,['src/a.ts'],'model-proposed test mutation target must be stripped while production mutation remains')
+  assert.deepEqual(m.identity.intent.likelyTargets,['src/a.ts','test/a.test.ts'],'existing test target remains available as verification/context input')
+  assert.deepEqual(m.execution.verification_policy.requiredKinds,['targeted-tests'])
+})
+
+test('generic existing-test execution does not authorize model-supplied test-authoring',()=>{
+  const store=new MissionStore(),m=store.start('m15-run-only','Fix src/a.ts and run npm test. The existing regression test currently fails.')
+  store.applyInitialSemanticAssessment('m15-run-only',{...R2_ASSESSMENT,required_capabilities:['implementation','verification','test-authoring'],intent_signals:[]})
+  assert.equal(m.identity.intent.requiredCapabilities.includes('test-authoring'),false)
+  assert.equal(m.execution.obligations.some(o=>o.kind==='test-authoring'),false)
+  assert.deepEqual(m.execution.verification_policy.requiredKinds,['targeted-tests'])
+})
+
+test('ungrounded test-authoring request-unit mapping is removed with the model capability',()=>{
+  const store=new MissionStore(),m=store.start('m15-ru-strip','Fix src/a.ts and run the existing tests; do not modify tests.')
+  store.applyInitialSemanticAssessment('m15-ru-strip',{...R2_ASSESSMENT,scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','verification','test-authoring'],capability_request_units:{'test-authoring':['ru1']},intent_signals:[]})
+  assert.equal(m.identity.intent.requiredCapabilities.includes('test-authoring'),false)
+  assert.equal(m.execution.obligations.some(o=>o.kind==='test-authoring'),false)
+})
+
 test('explicit TDD request is preserved when the user did not forbid test mutation',()=>{
   const store=new MissionStore(),m=store.start('m15-real-tdd','Use TDD. Add a failing regression test first, then implement the parser fix and run the targeted tests.')
   store.applyInitialSemanticAssessment('m15-real-tdd',TDD_ASSESSMENT)
@@ -62,7 +87,7 @@ test('explicit unchanged-test wording suppresses TDD without suppressing verific
 test('follow-up false TDD signal cannot grant test-authoring authority',()=>{
   const store=new MissionStore(),m=store.start('m15-followup-false-tdd','Fix src/a.ts without changing tests, then run npm test.')
   store.applyInitialSemanticAssessment('m15-followup-false-tdd',{...R2_ASSESSMENT,intent_signals:[]})
-  applyStructuredFollowup(store,'m15-followup-false-tdd','Run the existing tests to verify the fix; do not modify tests.',{message_kind:'verification',required_capabilities:['implementation','verification'],intent_signals:['intent.tdd']})
+  applyStructuredFollowup(store,'m15-followup-false-tdd','Run the existing tests to verify the fix; do not modify tests.',{message_kind:'verification',required_capabilities:['implementation','verification','test-authoring'],intent_signals:['intent.tdd']})
   assert.equal(m.identity.intent.requiredCapabilities.includes('test-authoring'),false,'follow-up false-TDD signal cannot grant durable test-authoring authority')
   assert.equal(m.execution.obligations.some(o=>o.kind==='test-authoring'),false,'follow-up false-TDD signal cannot create test-authoring work')
   const payload=lastSemanticLedger(m,'semantic.followup-assessed')?.payload??{}

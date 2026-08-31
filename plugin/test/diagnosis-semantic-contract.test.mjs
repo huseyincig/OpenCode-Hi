@@ -136,7 +136,7 @@ test('release-readiness is read-only while requests to make the repository relea
   m.identity.intent.requiredCapabilities.push('test-authoring');assert.equal(validateMissionEnvelope(m),false,'durable release-readiness/write contradiction must fail closed')
 
   const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='release-readiness-fix-admission'
-  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Make this workspace release-ready: fix package version/dependency drift, repair the failing test implementation, update docs if behavior changes, then verify locally. Do not publish.'}]})
+  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Make this workspace release-ready: fix package version/dependency drift, update the failing regression test, update docs if behavior changes, then verify locally. Do not publish.'}]})
   const invalid=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...readiness,required_capabilities:['repository-analysis','verification','test-authoring','documentation']})},{sessionID:sid}))
   assert.equal(invalid.status,'INVALID_ASSESSMENT');assert.match(invalid.error,/release-readiness.*read-only.*write capability/)
   const corrected=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...readiness,task_kind:'bug-fix',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification','test-authoring','documentation','independent-review']})},{sessionID:sid}))
