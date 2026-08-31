@@ -45,4 +45,21 @@ export function openCodeHostCapabilityContracts(o, owned = {}) {
         observedOwned('workspace-isolation-binding', owned.workspaceIsolation === true, 'experimental.workspace create/list/remove + v2 session.create workspace/workspaceID routing', 'WorkspaceRuntime + OpenCodeWorkspaceAdapter + ChildExecutionCoordinator', 'data/validation/compatibility-matrix-0.1.0.json', ['OpenCode child role edit/write permission; isolation never widens external_directory authority'], true)
     ];
 }
+const DISCOVERY_SOURCE_PRIORITY = { RUNTIME_TRUTH: 4, EXPLICIT_HOST_CAPABILITY: 3, SAFE_FEATURE_PROBE: 2, VERSION_METADATA: 1 };
+/**
+ * Resolve duplicate observations for the same semantic host capability without
+ * using host generation/version as product authority. Higher-quality runtime
+ * evidence wins deterministically; version metadata is bounded last-resort
+ * evidence only. This is a projection, not a capability truth store.
+ */
+export function negotiateHostCapabilityContracts(candidates) {
+    const selected = new Map();
+    for (const candidate of candidates) {
+        const current = selected.get(candidate.contract.id);
+        if (!current || DISCOVERY_SOURCE_PRIORITY[candidate.source] > DISCOVERY_SOURCE_PRIORITY[current.source])
+            selected.set(candidate.contract.id, candidate);
+    }
+    return [...selected.values()].map(({ contract, source }) => ({ ...contract, discovery_source: source })).sort((a, b) => a.id.localeCompare(b.id));
+}
+export function runtimeTruthCapabilities(contracts) { return negotiateHostCapabilityContracts(contracts.map(contract => ({ contract, source: 'RUNTIME_TRUTH' }))); }
 export function hostCapabilityByID(items, id) { return items.find(x => x.id === id); }

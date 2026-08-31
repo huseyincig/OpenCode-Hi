@@ -167,6 +167,25 @@ guard('HI022','NAMING_NAMESPACE_DRIFT',()=>{
   assert(violations.length===0,violations.map(v=>`${v.path}:${v.brand}:${v.where}`).join('; '))
 })
 
+
+// HI023 — concrete OpenCode SDK/API/plugin-generation details are edge-only.
+guard('HI023','HOST_SDK_CORE_LEAKAGE',()=>{
+  const roots=[
+    'plugin/src/runtime/mission','plugin/src/runtime/task','plugin/src/runtime/scheduler',
+    'plugin/src/runtime/evidence','plugin/src/runtime/safety','plugin/src/runtime/continuation',
+    'plugin/src/runtime/routing','plugin/src/runtime/project-intelligence',
+  ]
+  const files=[]
+  const walk=rel=>{for(const entry of readdirSync(join(ROOT,rel),{withFileTypes:true})){const child=`${rel}/${entry.name}`;if(entry.isDirectory())walk(child);else if(entry.isFile()&&entry.name.endsWith('.ts'))files.push(child)}}
+  for(const rel of roots)if(existsSync(join(ROOT,rel)))walk(rel)
+  for(const rel of files){
+    const text=source(rel)
+    assert(!/@opencode-ai\//.test(text),`${rel}: concrete @opencode-ai SDK/plugin import leaked into canonical core`)
+    assert(!/from\s+['"][^'"]*\/opencode(?:\/|['"])/.test(text),`${rel}: OpenCode adapter import leaked into canonical core`)
+    assert(!/import\s+type\s+\{[^}]*PluginInput[^}]*\}/s.test(text),`${rel}: plugin lifecycle PluginInput leaked into canonical core`)
+  }
+})
+
 for(const r of results.sort((a,b)=>a.id.localeCompare(b.id)))console.log(`${r.id} ${r.status} ${r.name} — ${r.detail}`)
 const failures=results.filter(r=>r.status==='FAIL')
 if(failures.length){console.error(`ARCHITECTURE LINT FAIL (${failures.length})`);process.exit(1)}

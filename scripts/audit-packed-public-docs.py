@@ -41,6 +41,10 @@ def main()->int:
   with tarfile.open(tgz,'r:gz') as tf:
    members={m.name:m for m in tf.getmembers() if m.isfile()}
    packed={name.removeprefix('package/'):name for name in members if name.startswith('package/')}
+   for rel in packed:
+    name=PurePosixPath(rel).name
+    if '.bak.' in name or name.endswith(('.tmp','.swp','.orig','.rej')):
+     errors.append('PACKAGED_BACKUP_OR_TEMP: '+rel)
    for rel in required:
     if rel not in packed: errors.append('missing public document in npm package: '+rel)
    readme_member=members.get('package/README.md')

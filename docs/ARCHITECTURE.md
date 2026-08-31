@@ -263,3 +263,26 @@ Provider-facing projections are redacted at the privacy boundary. Credentials an
 ### Satisfied child ownership vs attempt history
 
 Task/WorkerResult history and canonical Mission obligation authority are intentionally distinct. When a settled child has a non-empty owned obligation set and every owned obligation has already been closed by canonical reconciliation, its unresolved attempt result remains durable history but no longer blocks scheduling, continuation, completion, or task-bound methodology progression. This projection never suppresses a starting/busy host execution. Explicit task dependency dataflow remains stricter and still requires a real `completed + DONE` dependency result with accepted attempt identity.
+
+
+## Host Generation Adapter Boundary
+
+Concrete OpenCode API/SDK/plugin generations live behind semantic host ports and `HostCapabilityContract`. Runtime negotiation is capability-driven; current/V1, V2 and future generations may use different host primitives while Mission/Task/Worker/Scheduler/Evidence/Authority/Recovery/Continuation/Routing ownership remains unchanged. `HI023 HOST_SDK_CORE_LEAKAGE` makes concrete SDK/adapter imports in canonical core a fatal architecture violation.
+
+### Adding a new host/API generation
+
+The normal case is **zero canonical-core edits**. The repeatable authoring contract is:
+
+1. inventory semantic capabilities rather than copying host method names;
+2. implement the existing host-neutral ports only at the edge;
+3. map observations with `RUNTIME_TRUTH > EXPLICIT_HOST_CAPABILITY > SAFE_FEATURE_PROBE > VERSION_METADATA`;
+4. classify every optional capability as `SUPPORTED`, explicit `DEGRADED` with named fallback/loss, or `UNSUPPORTED`;
+5. normalize session lifecycle, cancellation, events and transport errors without moving Mission ownership to host session identity;
+6. normalize provider/model and usage shapes without fabricating exact data;
+7. preserve Permission ≠ Authority and host observation ≠ Evidence/completion invariants;
+8. run adapter-independent semantic parity and breaking-change simulations;
+9. add an evidence-bounded compatibility-matrix row rather than inferring support from semver;
+10. run native acceptance plus build/regression/architecture/docs/package gates;
+11. mechanically verify canonical core diff = **0** for a host-only change.
+
+If step 11 fails, first treat it as evidence that the adapter/capability boundary is incomplete. A canonical-core edit is exceptional and requires a demonstrated **new product semantic**, not a renamed endpoint, generated type, lifecycle hook, event shape or transport difference. The synthetic future-host certification deliberately changes IDs, child methods, lifecycle/event names and usage shapes while preserving a zero-core-mutation proof.

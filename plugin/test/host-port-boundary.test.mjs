@@ -42,7 +42,7 @@ test('raw host event normalization occurs at OpenCode hook boundary, not semanti
 })
 
 test('runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters',()=>{
-  const services=source('runtime/application/runtime-services.ts'),plugin=source('plugin.ts')
+  const services=source('runtime/application/runtime-services.ts'),plugin=source('plugin.ts'),runtime=source('runtime/application/plugin-runtime.ts')
   assert.match(services,/export interface RuntimeServicePorts/)
   assert.match(services,/childSession:ChildSessionPort/)
   assert.match(services,/process:ProcessExecutor/)
@@ -50,7 +50,8 @@ test('runtime composition accepts injected host-semantic executors instead of co
   assert.doesNotMatch(services,/OpenCodePtyAdapter|OpenCodeWorkspaceAdapter|PlaywrightBrowserAdapter|OpenCodePluginContext/)
   assert.match(plugin,/new OpenCodePtyAdapter/)
   assert.match(plugin,/new OpenCodeWorkspaceAdapter/)
-  assert.match(plugin,/new PlaywrightBrowserAdapter/)
+  assert.match(runtime,/new PlaywrightBrowserAdapter/)
+  assert.doesNotMatch(runtime,/OpenCodePtyAdapter|OpenCodeWorkspaceAdapter|OpenCodePluginContext/)
 })
 
 test('alternate host continuation port preserves Mission continuation semantics without OpenCode shapes',async()=>{

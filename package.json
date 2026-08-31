@@ -8,6 +8,10 @@
     ".": {
       "types": "./plugin/dist/plugin.d.ts",
       "import": "./plugin/dist/plugin.js"
+    },
+    "./server": {
+      "types": "./plugin/dist/opencode/v2/server.d.ts",
+      "import": "./plugin/dist/opencode/v2/server.js"
     }
   },
   "files": [

@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "c0f4b45da415ab95d3cfcc3146de015d94a70f800dd9463724f01e6fb8493520",
+      "sha256": "443ffbccf0f17c0ad7769b9526f48b93a6d03c8d7a58e569945da02c41e5c74f",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "364ca8017cf1f2863c5c505d744996a3c467bf015674c7b91d26afd4235c4afb",
+      "sha256": "517d2f3afe3db291120c9bb5af5f5ea06468d8e30eb8838f916c910b96c803c7",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",

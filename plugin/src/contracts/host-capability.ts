@@ -1,5 +1,6 @@
 export type HostCapabilityStatus = 'SUPPORTED'|'DEGRADED'|'UNSUPPORTED'
 export type HostCapabilityVerificationLevel = 'DECLARED'|'OBSERVED'|'CONTROLLED_ACCEPTANCE'|'REAL_HOST_ACCEPTANCE'
+export type HostCapabilityDiscoverySource = 'RUNTIME_TRUTH'|'EXPLICIT_HOST_CAPABILITY'|'SAFE_FEATURE_PROBE'|'VERSION_METADATA'
 
 export interface OpenCodeCapabilityObservation {
   childSessions:boolean
@@ -25,6 +26,7 @@ export interface HostCapabilityContract {
   host_id:'opencode'
   status:HostCapabilityStatus
   verification_level:HostCapabilityVerificationLevel
+  discovery_source?:HostCapabilityDiscoverySource
   native_primitive?:string
   adapter_entrypoint?:string
   fallback?:string
@@ -75,5 +77,25 @@ export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation,
     observedOwned('workspace-isolation-binding',owned.workspaceIsolation===true,'experimental.workspace create/list/remove + v2 session.create workspace/workspaceID routing','WorkspaceRuntime + OpenCodeWorkspaceAdapter + ChildExecutionCoordinator','data/validation/compatibility-matrix-0.1.0.json',['OpenCode child role edit/write permission; isolation never widens external_directory authority'],true)
   ]
 }
+
+
+const DISCOVERY_SOURCE_PRIORITY:Record<HostCapabilityDiscoverySource,number>={RUNTIME_TRUTH:4,EXPLICIT_HOST_CAPABILITY:3,SAFE_FEATURE_PROBE:2,VERSION_METADATA:1}
+export interface HostCapabilityCandidate{contract:HostCapabilityContract;source:HostCapabilityDiscoverySource}
+
+/**
+ * Resolve duplicate observations for the same semantic host capability without
+ * using host generation/version as product authority. Higher-quality runtime
+ * evidence wins deterministically; version metadata is bounded last-resort
+ * evidence only. This is a projection, not a capability truth store.
+ */
+export function negotiateHostCapabilityContracts(candidates:readonly HostCapabilityCandidate[]):HostCapabilityContract[]{
+  const selected=new Map<string,HostCapabilityCandidate>()
+  for(const candidate of candidates){
+    const current=selected.get(candidate.contract.id)
+    if(!current||DISCOVERY_SOURCE_PRIORITY[candidate.source]>DISCOVERY_SOURCE_PRIORITY[current.source])selected.set(candidate.contract.id,candidate)
+  }
+  return[...selected.values()].map(({contract,source})=>({...contract,discovery_source:source})).sort((a,b)=>a.id.localeCompare(b.id))
+}
+export function runtimeTruthCapabilities(contracts:readonly HostCapabilityContract[]):HostCapabilityContract[]{return negotiateHostCapabilityContracts(contracts.map(contract=>({contract,source:'RUNTIME_TRUTH'})))}
 
 export function hostCapabilityByID(items:readonly HostCapabilityContract[],id:string):HostCapabilityContract|undefined{return items.find(x=>x.id===id)}

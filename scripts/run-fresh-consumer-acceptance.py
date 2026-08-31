@@ -7,6 +7,11 @@ import importlib.util
 ROOT=Path(__file__).resolve().parents[1]
 _inv_spec=importlib.util.spec_from_file_location('hi_runtime_tool_inventory',ROOT/'scripts/hi-runtime-tool-inventory.py');_inv=importlib.util.module_from_spec(_inv_spec);_inv_spec.loader.exec_module(_inv);expected_hi_runtime_tools=_inv.expected_hi_runtime_tools
 PACKAGE=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
+ROLE_CATALOG=json.loads((ROOT/'data/hi-roles.json').read_text(encoding='utf-8'))
+CODER_ROLE=next((role for role in ROLE_CATALOG.get('roles',[]) if role.get('id')=='coder'),None)
+if not isinstance(CODER_ROLE,dict):raise RuntimeError('canonical coder RoleContract missing')
+EXPECTED_CODER_DESCRIPTION=str(CODER_ROLE.get('purpose') or '').strip()
+EXPECTED_CODER_MODE='subagent' if CODER_ROLE.get('role_class')=='child' else 'primary'
 TARGET=str((PACKAGE.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip()
 if not TARGET or TARGET!=str((PACKAGE.get('peerDependencies') or {}).get('@opencode-ai/plugin') or '').strip():
     raise RuntimeError('Exact OpenCode certification target must equal root @opencode-ai/sdk and @opencode-ai/plugin pins')
@@ -91,7 +96,7 @@ def main()->int:
     'node_setup_no_application_root_node_project':setup_clean,
     'consumer_resolution':bool(resolved) and resolved.startswith('file://'+packed_entry_root+'/') and resolved!='file://'+source_entrypoint,
     'server_tool_ids':hi_ids==expected_hi_ids,
-    'agent_projection':isinstance(coder,dict) and coder.get('name')=='coder' and coder.get('mode')=='subagent' and coder.get('description')=='Implements scoped changes and produces test and behavior evidence',
+    'agent_projection':isinstance(coder,dict) and coder.get('name')=='coder' and coder.get('mode')==EXPECTED_CODER_MODE and coder.get('description')==EXPECTED_CODER_DESCRIPTION,
     'session_create':isinstance(session_data,dict) and not session_data.get('error') and bool(session_data.get('id')),
     'no_source_tree_in_server_log':source_entrypoint not in log_text,
     'exact_host_version':opencode_version==TARGET,

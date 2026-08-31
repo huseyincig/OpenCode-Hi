@@ -4,7 +4,7 @@ import {existsSync,mkdtempSync,rmSync} from 'node:fs'
 import {join,dirname,resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {tmpdir} from 'node:os'
-import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contracts/host-capability.js'
+import {openCodeHostCapabilityContracts,hostCapabilityByID,negotiateHostCapabilityContracts} from '../dist/contracts/host-capability.js'
 import {detectOpenCodeCapabilities} from '../dist/opencode/capabilities.js'
 import {runDoctor} from '../dist/doctor/checks.js'
 import {HiPlugin} from '../dist/plugin.js'
@@ -101,4 +101,38 @@ test('doctor reports only live-observed owned capabilities and never self-promot
     assert.match(browser?.detail??'',/runtime-health-required=true/)
     assert.match(browser?.detail??'',/runtime-available=true/)
   }finally{rmSync(d,{recursive:true,force:true})}
+})
+
+
+test('capability negotiation prefers runtime truth over advertised/probe/version metadata without version routing',()=>{
+  const base={id:'session-status',host_id:'opencode',verification_level:'OBSERVED',semantic_loss:[],required_permissions:[],acceptance_ref:'x',forbidden_fake_behavior:'x'}
+  const out=negotiateHostCapabilityContracts([
+    {source:'VERSION_METADATA',contract:{...base,status:'SUPPORTED',native_primitive:'version-implied'}},
+    {source:'SAFE_FEATURE_PROBE',contract:{...base,status:'SUPPORTED',native_primitive:'probe'}},
+    {source:'EXPLICIT_HOST_CAPABILITY',contract:{...base,status:'SUPPORTED',native_primitive:'advertised'}},
+    {source:'RUNTIME_TRUTH',contract:{...base,status:'DEGRADED',fallback:'event-state',semantic_loss:['native status failed at runtime']}}
+  ])
+  assert.equal(out.length,1)
+  assert.equal(out[0].status,'DEGRADED')
+  assert.equal(out[0].discovery_source,'RUNTIME_TRUTH')
+  assert.equal(out[0].fallback,'event-state')
+})
+
+test('current runtime capability detector labels method/health observations as runtime truth',()=>{
+  const c=detectOpenCodeCapabilities({session:{create:async()=>({}),promptAsync:async()=>({}),abort:async()=>({})}})
+  assert.ok(c.contracts.length>0)
+  assert.ok(c.contracts.every(x=>x.discovery_source==='RUNTIME_TRUTH'))
+})
+
+
+test('degraded capability contracts always name fallback and semantic loss; unsupported never impersonates full support',()=>{
+  const none={childSessions:false,asyncPrompt:false,syncPrompt:false,abort:false,providerInventory:false,appLog:false,sessionStatus:false,childSessionList:false,sessionTodo:false,sessionDiff:false,sessionFork:false,sessionSummarize:false,sessionRevert:false,sessionUnrevert:false}
+  for(const item of openCodeHostCapabilityContracts(none)){
+    if(item.status==='DEGRADED'){
+      assert.equal(typeof item.fallback,'string',item.id)
+      assert.ok(item.fallback.length>0,item.id)
+      assert.ok(item.semantic_loss.length>0,item.id)
+    }
+    if(item.status==='UNSUPPORTED')assert.notEqual(item.status,'SUPPORTED')
+  }
 })

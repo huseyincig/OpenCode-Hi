@@ -1,12 +1,10 @@
 {
   "schema": 1,
-  "kind": "PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE",
-  "program": "PROMPT_B",
-  "section": 26,
+  "kind": "FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE",
   "status": "PASS",
   "source": {
-    "commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
-    "tree": "9e2ed34642840c4712bdbc1aa2e917dc9f783d10"
+    "commit": "f975481bc88415f013d106f63a1f91cea184c96f",
+    "tree": "5d5b486903fbd55267852b717f94c4202a084ee7"
   },
   "host": {
     "opencode": "1.18.21",
@@ -15,15 +13,15 @@
     "binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.21/opencode",
     "binary_sha256": "9fed41e7a1a81fad7f549bd1a540cf5a60370a97ed7010c3b1b1658d04eaaf9e",
     "registry_observation": {
-      "opencode_ai_latest": "1.18.21",
-      "sdk_latest": "1.18.21",
-      "observed_at": "2026-08-22T19:25:20.932494+00:00"
+      "opencode_ai_latest": "1.18.25",
+      "sdk_latest": "1.18.25",
+      "observed_at": "2026-08-31T12:05:30.105365+00:00"
     }
   },
   "package": {
     "release": "0.2.4",
     "tarball_name": "opencode-hi-0.2.4.tgz",
-    "tarball_sha256": "940295713488720dca9802fd484b84bd65923a032abe27bdfb252dd7cfc671fe",
+    "tarball_sha256": "ce0aea966b868dbea0202c1a439884bdfedd9ed525a56d23953414f4e4fade30",
     "installed_from_tarball": true,
     "resolved_entrypoint": "file://<acceptance>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
   },
@@ -34,7 +32,7 @@
     "node_setup_rc": 0
   },
   "material_runtime": {
-    "hi_tool_count": 34,
+    "hi_tool_count": 37,
     "hi_tools": [
       "hi_browser_click",
       "hi_browser_close",
@@ -45,6 +43,7 @@
       "hi_browser_preview_open",
       "hi_browser_screenshot",
       "hi_browser_type",
+      "hi_browser_viewport",
       "hi_browser_wait",
       "hi_context_artifact_add",
       "hi_context_artifacts",
@@ -62,7 +61,9 @@
       "hi_process_write",
       "hi_readiness",
       "hi_role_models",
+      "hi_settings",
       "hi_status",
+      "hi_super_product",
       "hi_task_await",
       "hi_task_cancel",
       "hi_task_list",
@@ -71,7 +72,7 @@
       "hi_temporary_mutation_register",
       "hi_temporary_mutation_revert"
     ],
-    "expected_hi_tool_count": 34,
+    "expected_hi_tool_count": 37,
     "expected_hi_tools": [
       "hi_browser_click",
       "hi_browser_close",
@@ -82,6 +83,7 @@
       "hi_browser_preview_open",
       "hi_browser_screenshot",
       "hi_browser_type",
+      "hi_browser_viewport",
       "hi_browser_wait",
       "hi_context_artifact_add",
       "hi_context_artifacts",
@@ -99,7 +101,9 @@
       "hi_process_write",
       "hi_readiness",
       "hi_role_models",
+      "hi_settings",
       "hi_status",
+      "hi_super_product",
       "hi_task_await",
       "hi_task_cancel",
       "hi_task_list",
@@ -108,12 +112,12 @@
       "hi_temporary_mutation_register",
       "hi_temporary_mutation_revert"
     ],
-    "agent_endpoint_count": 15,
+    "agent_endpoint_count": 18,
     "coder_agent_observed": true,
     "coder_projection": {
       "name": "coder",
       "mode": "subagent",
-      "description": "Implements scoped changes and produces test and behavior evidence",
+      "description": "Implements scoped production changes, refactors, and bug fixes",
       "native": false,
       "hidden": null
     },

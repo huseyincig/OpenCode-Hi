@@ -510,8 +510,9 @@ def test_dead_browser_cli_executor_is_absent_from_living_surface():
     assert not (ROOT/'plugin/test/b2-browser-executor.test.mjs').exists()
     services=(ROOT/'plugin/src/runtime/application/runtime-services.ts').read_text(encoding='utf-8')
     plugin=(ROOT/'plugin/src/plugin.ts').read_text(encoding='utf-8')
+    runtime=(ROOT/'plugin/src/runtime/application/plugin-runtime.ts').read_text(encoding='utf-8')
     assert 'PlaywrightBrowserAdapter' not in services and 'BrowserCliAdapter' not in services
-    assert 'createBrowser:' in services and 'new PlaywrightBrowserAdapter' in plugin
+    assert 'createBrowser:' in services and 'createHiRuntime' in plugin and 'new PlaywrightBrowserAdapter' in runtime
     for rel in ['plugin/src','plugin/test']:
         for path in (ROOT/rel).rglob('*'):
             if path.is_file() and path.suffix in {'.ts','.mjs'}:

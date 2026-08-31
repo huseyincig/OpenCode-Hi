@@ -22,9 +22,12 @@ test('plugin adapter exposes the four composition seams and state-free event con
   assert.match(controller,/constructor\(private readonly deps:/,'controller may retain injected collaborators only')
 })
 
-test('plugin.ts is a composition root rather than a second runtime owner',()=>{
+test('host entrypoints delegate application composition to the generation-neutral runtime seam',()=>{
   const source=readFileSync(resolve(root,'plugin/src/plugin.ts'),'utf8')
-  assert.ok(source.split('\n').length<=50,`plugin.ts remains too concentrated: ${source.split('\n').length} lines`)
-  for(const seam of ['createHostPort','createRuntimeServices','createHiToolSurface','createOpenCodeHooks','RuntimeEventController'])assert.ok(source.includes(seam),`missing composition seam ${seam}`)
+  const runtime=readFileSync(resolve(root,'plugin/src/runtime/application/plugin-runtime.ts'),'utf8')
+  assert.ok(source.split('\n').length<=45,`plugin.ts remains too concentrated: ${source.split('\n').length} lines`)
+  for(const seam of ['createHostPort','createOpenCodeHooks','createHiRuntime'])assert.ok(source.includes(seam),`missing V1 edge seam ${seam}`)
+  for(const seam of ['createRuntimeServices','createHiToolSurface','RuntimeEventController'])assert.ok(runtime.includes(seam),`generation-neutral runtime missing composition seam ${seam}`)
   assert.doesNotMatch(source,/new MissionStore|new TaskRuntime|new TeamRuntime|normalizeOpenCodeEvent|nativeTool as tool/)
+  assert.doesNotMatch(runtime,/@opencode-ai\//,'generation-neutral application composition must not import OpenCode package types')
 })
