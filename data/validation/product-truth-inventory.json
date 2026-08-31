@@ -550,6 +550,30 @@
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
+      "area": "behavioral-evaluation",
+      "canonical_owner": "Behavioral Evaluation Platform derived composition",
+      "owner_path": "plugin/src/runtime/evaluation/platform.ts",
+      "owner_sha256": "eaaccb3665fcedf5bde5413b5f0caaf8d399350dea7515bd49b37cb850af5757",
+      "producer_or_contract_paths": [
+        "plugin/src/contracts/comparative-benchmark.ts",
+        "plugin/src/contracts/comparative-benchmark-certification.ts",
+        "plugin/src/contracts/eval-uncertainty.ts",
+        "plugin/src/runtime/telemetry/benchmarks.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "later-evaluation-operator-ci-consumers"
+      ],
+      "proof_paths": [
+        "plugin/test/behavioral-evaluation-platform.test.mjs",
+        "plugin/test/comparative-benchmark-receipt.test.mjs",
+        "plugin/test/comparative-benchmark-certification.test.mjs",
+        "plugin/test/eval-uncertainty.test.mjs",
+        "plugin/test/hi-benchmarks.test.mjs",
+        "plugin/test/verification-envelope-contract.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
       "area": "telemetry",
       "canonical_owner": "Mission-derived ledger metrics",
       "owner_path": "plugin/src/runtime/ledger/ledger.ts",

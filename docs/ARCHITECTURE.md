@@ -247,6 +247,8 @@ Context is consumer-bound and budgeted. Durable context artifacts and semantic T
 
 Comparative benchmark uncertainty is advisory-only. Current sample wall-time dispersion is summarized with sample standard deviation and a 95% t-interval. Optional multi-judge agreement is computed only from an explicit fixed-width binary judge matrix using Fleiss kappa, and evidence-family diversity only from explicit family labels. Neither judge agreement nor evidence diversity can override exact receipt validation, deterministic checks, outcome stability, environment identity, or the certification verdict; missing metadata remains `NOT_PROVIDED`/`INSUFFICIENT` rather than inferred from prose or paths.
 
+`behavioralEvaluationPlatform()` productizes those evaluation pieces as one non-persistent composition rather than a second production state owner. Exact `ComparativeBenchmarkReceipt` inputs remain caller-owned immutable episode facts; `ComparativeBenchmarkCertificationSeries` reduces them to receipt/outcome/environment hashes, stability, attribution and advisory uncertainty. The platform also exposes the existing deterministic runtime/scheduler/recovery simulations with their explicit simulation-only claim boundaries. Environment/authority blockers remain distinct from product regressions, judge scores cannot change deterministic certification verdicts, and the platform has no production Evidence, routing, completion, Authority or model-preference persistence capability.
+
 ## Storage and filesystem ownership
 
 OpenCode workspace isolation is bound through the `OpenCodeWorkspaceAdapter`; it verifies exact repository/worktree identity while the generic Workspace runtime owns Hi lease and recovery semantics.
