@@ -39,7 +39,17 @@ function numericExit(output) { for (const v of [output?.metadata?.exit, output?.
         return Number(v);
 } return undefined; }
 const ENVIRONMENT_FAILURE = /(command not found|not recognized as an internal|no module named|cannot find module|module not found|missing dependency|enoent|spawn .* (?:not found|failed)|executable .* not found|permission denied|eacces|network.*unreachable|temporary failure in name resolution|connection refused|connection reset|socket hang|timed?\s*out|timeout|unable to resolve host|could not resolve host|certificate (?:verify|verification)|tls handshake)/i;
-function outcomeOf(output, text) { const exit = numericExit(output); if (exit === 0)
+function verificationExitMayBeMasked(command) {
+    const text = command.trim();
+    if (/\|\|/.test(text))
+        return true;
+    if (/;\s*(?:true|:|exit\s+0)\s*$/.test(text))
+        return true;
+    const hasPipeline = /(^|[^|])\|([^|]|$)/.test(text), hasPipefail = /(?:set\s+-o\s+pipefail|set\s+-[^;\n]*o\s+pipefail)/i.test(text);
+    return hasPipeline && !hasPipefail;
+}
+function outcomeOf(output, text, command = '') { if (verificationExitMayBeMasked(command))
+    return { outcome: 'pending', reason: 'verification-exit-status-masked' }; const exit = numericExit(output); if (exit === 0)
     return { outcome: 'passed' }; if (ENVIRONMENT_FAILURE.test(text))
     return { outcome: 'environment-issue', reason: 'verification-environment-unavailable' }; if (exit !== undefined)
     return { outcome: 'failed', reason: `verification-exit-${exit}` }; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))
@@ -125,7 +135,7 @@ export function observeToolAfter(mission, tool, args, output, projectRoot, owner
     if (tool === 'bash') {
         const kind = verificationCommandKind(command);
         if (kind) {
-            const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text), explicitOwnerIDs = owner?.obligation_ids ?? [], ownerAdmitsKind = owner ? Boolean(owner.required_evidence?.some(required => verificationKindSatisfiesRequirement(required, kind))) : false, inferredOwnerIDs = ownerAdmitsKind ? mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').filter(o => { const required = (o.requiredEvidence?.length ? o.requiredEvidence : mission.execution.verification_policy.requiredKinds); return required.some(item => verificationKindSatisfiesRequirement(item, kind)); }).map(o => o.id) : [], obligation_ids = owner ? [...new Set([...explicitOwnerIDs, ...inferredOwnerIDs])] : mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
+            const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text, command), explicitOwnerIDs = owner?.obligation_ids ?? [], ownerAdmitsKind = owner ? Boolean(owner.required_evidence?.some(required => verificationKindSatisfiesRequirement(required, kind))) : false, inferredOwnerIDs = ownerAdmitsKind ? mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').filter(o => { const required = (o.requiredEvidence?.length ? o.requiredEvidence : mission.execution.verification_policy.requiredKinds); return required.some(item => verificationKindSatisfiesRequirement(item, kind)); }).map(o => o.id) : [], obligation_ids = owner ? [...new Set([...explicitOwnerIDs, ...inferredOwnerIDs])] : mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
             const stateHash = createHash('sha256').update(JSON.stringify({ command, exit: numericExit(output), output: text })).digest('hex');
             addEvidence(mission, { kind, summary: command.slice(0, 180), scope: owner?.scope ?? mission.vcs.changed_files, source: owner?.source ?? 'bash', trusted_source_class: owner?.trusted_source_class ?? 'host-tool-observation', source_session_id: owner?.source_session_id, source_state_hash: stateHash, task_id: owner?.task_id, obligation_ids, producer_attempt: owner?.producer_attempt, pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
             reconcileEvidenceOwnedVerificationObligations(mission, projectRoot, { owner: 'verification-evidence' });
