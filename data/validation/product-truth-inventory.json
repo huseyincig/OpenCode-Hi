@@ -159,6 +159,27 @@
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
+      "area": "autonomous-mission-ux",
+      "canonical_owner": "Autonomous Mission UX projection",
+      "owner_path": "plugin/src/runtime/ux/autonomous-mission.ts",
+      "owner_sha256": "7460f4e6987188d1740b6f7673ffb4d50e94c831c22eef1be4237c31f549cde9",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/context/mission-runtime-projection.ts",
+        "plugin/src/runtime/completion/control-projection.ts",
+        "plugin/src/contracts/human-decision.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "user-facing-mission-surfaces"
+      ],
+      "proof_paths": [
+        "plugin/test/autonomous-mission-ux.test.mjs",
+        "plugin/test/mission-runtime-projection.test.mjs",
+        "plugin/test/control-decision-projection.test.mjs",
+        "plugin/test/persistence-restart-adversarial.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
