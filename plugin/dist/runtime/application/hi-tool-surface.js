@@ -1,6 +1,7 @@
 import { runDoctor, formatDoctor } from '../../doctor/checks.js';
 import { compactLedgerReport } from '../ledger/report.js';
 import { aggregateMissionMetrics } from '../ledger/metrics.js';
+import { observabilityEconomicsView } from '../observability/runtime.js';
 import { formatUserMissionStatus } from '../ledger/status.js';
 import { evaluatePreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
 import { clearCapabilityUnavailable, firstCapabilityBlocker, markCapabilityUnavailable } from '../readiness/capability-failure.js';
@@ -222,7 +223,7 @@ export function createHiToolSurface(input) {
                 return JSON.stringify(roleModelChange(rawArgs, 'set', available, rows));
             return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-action', allowed_actions: ['show', 'setup', 'apply', 'set-model-pool', 'clear-model-pool', 'set-mode', 'set-role-model', 'clear-role-model', 'reset-models', 'set-limits', 'reset'] });
         } });
-    const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
+    const metricsTool = tool({ description: 'Show bounded Hi observability/economics derived from canonical Mission ledger and Worker usage observations. Active sessions receive a mission-scoped operator projection; outside a mission the aggregate compatibility view is returned. Partial telemetry remains partial and neither view has routing/completion authority.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return JSON.stringify(m ? observabilityEconomicsView(m) : aggregateMissionMetrics(store.all())); } });
     const ledgerTool = tool({ description: 'Show a bounded Hi execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active Hi mission'; } });
     const readinessTool = tool({ description: 'Show machine-readable Hi mission readiness/preconditions and gates.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(evaluatePreconditions(m, projectRoot)) : 'No active Hi mission'; } });
     const intentAssessTool = tool({ description: 'Submit the host-primary semantic interpretation of the current user message to the host-agnostic Hi Core intent contract. Natural-language semantics belong here, not in language-specific runtime regexes.', args: { revision: tool.schema.number(), assessment_json: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)

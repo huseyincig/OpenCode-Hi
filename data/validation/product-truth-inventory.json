@@ -500,6 +500,29 @@
       "canonical_doc": "docs/VERIFICATION.md"
     },
     {
+      "area": "observability-economics",
+      "canonical_owner": "Observability/Economics derived operator projection",
+      "owner_path": "plugin/src/runtime/observability/runtime.ts",
+      "owner_sha256": "ac0edddfbf01dceba3684de2053a2b22ad134df71034c26692302493b1efe961",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/economics/usage-runtime.ts",
+        "plugin/src/runtime/economics/budget-view.ts",
+        "plugin/src/runtime/economics/causal-attribution.ts",
+        "plugin/src/runtime/ledger/metrics.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/application/hi-tool-surface.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/observability-economics-runtime.test.mjs",
+        "plugin/test/execution-usage-economics.test.mjs",
+        "plugin/test/execution-budget-view.test.mjs",
+        "plugin/test/causal-compute-attribution.test.mjs",
+        "plugin/test/ledger-status-metrics.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
       "area": "telemetry",
       "canonical_owner": "Mission-derived ledger metrics",
       "owner_path": "plugin/src/runtime/ledger/ledger.ts",
