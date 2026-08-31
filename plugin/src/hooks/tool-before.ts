@@ -23,7 +23,7 @@ import { recordToolOperationProgress } from '../runtime/liveness/assessment.js'
 import { isResourceOnlyProcessSupportTask } from '../runtime/worker/worker-runtime.js'
 const NON_MATERIAL_CONTROL_TOOLS=new Set(['hi_intent_assess','hi_status','hi_ledger','hi_readiness','hi_settings','hi_role_models'])
 const SETTINGS_CONTROL_TARGETS=new Set(['hi_settings','hi_role_models'])
-const NON_ACTIVE_INSPECTION_TOOLS=new Set(['read','glob','grep','list','lsp','todoread','hi_status','hi_metrics','hi_ledger','hi_readiness','hi_settings','hi_role_models','hi_intent_assess','hi_context_artifacts','hi_task_await','hi_task_peek','hi_task_list','hi_process_read','hi_process_wait','hi_process_kill','hi_process_cleanup','hi_process_list'])
+const NON_ACTIVE_INSPECTION_TOOLS=new Set(['read','glob','grep','list','lsp','todoread','hi_status','hi_metrics','hi_super_product','hi_ledger','hi_readiness','hi_settings','hi_role_models','hi_intent_assess','hi_context_artifacts','hi_task_await','hi_task_peek','hi_task_list','hi_process_read','hi_process_wait','hi_process_kill','hi_process_cleanup','hi_process_list'])
 const NON_ACTIVE_RECOVERY_TOOLS=new Set(['hi_temporary_mutation_revert'])
 function assessedExplicitSettingsRequest(m:any):boolean{
   const targets=(m.identity.intent.likelyTargets??[]).map((value:string)=>String(value).trim().split('(')[0])

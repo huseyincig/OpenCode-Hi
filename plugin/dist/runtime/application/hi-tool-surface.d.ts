@@ -1,3 +1,4 @@
+import type { EcosystemIntegrationView } from '../ecosystem/runtime.js';
 import { type HiConfig, type ConfigResolutionReport } from '../../config/schema.js';
 import type { OperationalToolProvisioningReceipt } from '../../contracts/operational-tool.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
@@ -43,6 +44,7 @@ export declare function createHiToolSurface(input: {
         reason?: string;
     } | undefined;
     getBrowserToolReceipt?: () => OperationalToolProvisioningReceipt | undefined;
+    getEcosystemView?: (selectedMcpServers?: readonly string[]) => EcosystemIntegrationView;
 }): {
     toolSurface: Record<string, unknown>;
 };

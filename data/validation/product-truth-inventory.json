@@ -574,6 +574,36 @@
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
+      "area": "super-product-integration",
+      "canonical_owner": "Campaign-C Super Product derived integration",
+      "owner_path": "plugin/src/runtime/integration/super-product.ts",
+      "owner_sha256": "8488f7013b9a0fd60e4b8e5bc214dd61e906042c536c914edc065fc3738f6edf",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/project-intelligence/runtime.ts",
+        "plugin/src/runtime/model-intelligence/runtime.ts",
+        "plugin/src/runtime/collaboration/runtime.ts",
+        "plugin/src/runtime/ux/autonomous-mission.ts",
+        "plugin/src/runtime/observability/runtime.ts",
+        "plugin/src/runtime/ecosystem/runtime.ts",
+        "plugin/src/runtime/evaluation/platform.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/application/hi-tool-surface.ts",
+        "plugin/src/plugin.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/super-product-integration.test.mjs",
+        "plugin/test/project-intelligence-runtime.test.mjs",
+        "plugin/test/model-intelligence-runtime.test.mjs",
+        "plugin/test/collaboration-runtime.test.mjs",
+        "plugin/test/autonomous-mission-ux.test.mjs",
+        "plugin/test/observability-economics-runtime.test.mjs",
+        "plugin/test/ecosystem-runtime.test.mjs",
+        "plugin/test/behavioral-evaluation-platform.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
       "area": "telemetry",
       "canonical_owner": "Mission-derived ledger metrics",
       "owner_path": "plugin/src/runtime/ledger/ledger.ts",
