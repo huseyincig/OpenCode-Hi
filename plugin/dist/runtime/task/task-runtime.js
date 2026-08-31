@@ -1108,7 +1108,7 @@ export class TaskRuntime {
                 paused++;
                 continue;
             }
-            if (['starting', 'busy'].includes(worker.status)) {
+            if (['starting', 'busy'].includes(worker.status) || worker.restart_reconcile_pending) {
                 const stopped = await this.abortNativeSession(m, worker.session_id, 'semantic-quarantine', worker.id, task.id);
                 if (!stopped) {
                     const marker = `semantic-abort-unavailable:${task.id}:${worker.id}`;
@@ -1118,6 +1118,7 @@ export class TaskRuntime {
                 }
                 await this.cleanupBrowserForTask(m, task.id, worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
+                worker.restart_reconcile_pending = false;
             }
             worker.status = 'ready';
             task.status = task.result ? 'waiting' : 'waiting';
@@ -1174,13 +1175,13 @@ export class TaskRuntime {
                 appendLedger(m, 'worker.semantic-resume-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error) } });
                 continue;
             }
+            worker.generation_at_spawn = m.continuation.generation;
+            worker.parent_mission_id = m.identity.mission_id;
             const model = worker.model, resumeAdmission = this.reserveExistingSessionAttempt(m, worker, model);
             if (!resumeAdmission.ok) {
                 appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: resumeAdmission.reason } });
                 continue;
             }
-            worker.generation_at_spawn = m.continuation.generation;
-            worker.parent_mission_id = m.identity.mission_id;
             worker.status = 'busy';
             worker.semantic_pause_revision = undefined;
             worker.started_at = Date.now();

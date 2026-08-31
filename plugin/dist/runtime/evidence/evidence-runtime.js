@@ -39,9 +39,10 @@ function numericExit(output) { for (const v of [output?.metadata?.exit, output?.
         return Number(v);
 } return undefined; }
 const ENVIRONMENT_FAILURE = /(command not found|not recognized as an internal|no module named|cannot find module|module not found|missing dependency|enoent|spawn .* (?:not found|failed)|executable .* not found|permission denied|eacces|network.*unreachable|temporary failure in name resolution|connection refused|connection reset|socket hang|timed?\s*out|timeout|unable to resolve host|could not resolve host|certificate (?:verify|verification)|tls handshake)/i;
-function outcomeOf(output, text) { const exit = numericExit(output); if (ENVIRONMENT_FAILURE.test(text))
+function outcomeOf(output, text) { const exit = numericExit(output); if (exit === 0)
+    return { outcome: 'passed' }; if (ENVIRONMENT_FAILURE.test(text))
     return { outcome: 'environment-issue', reason: 'verification-environment-unavailable' }; if (exit !== undefined)
-    return { outcome: exit === 0 ? 'passed' : 'failed', reason: exit === 0 ? undefined : `verification-exit-${exit}` }; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))
+    return { outcome: 'failed', reason: `verification-exit-${exit}` }; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))
     return { outcome: 'failed', reason: 'verification-reported-failure' }; return { outcome: 'pending', reason: 'verification-exit-unknown' }; }
 function absolutePath(value) { return value.startsWith('/') || /^[A-Za-z]:[\\/]/.test(value); }
 function evidencePath(value) { return value.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); }

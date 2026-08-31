@@ -80,6 +80,16 @@ test('structured nonzero verifier exit is FAILED even when stdout looks benign',
   assert.equal(verificationSatisfied(m).ok,false)
 })
 
+test('structured successful verifier exit wins over environment-like words in normal test output',()=>{
+  const m=mission()
+  observeToolAfter(m,'bash',{command:'npm test'},{output:'✔ normalizes retry and timeout settings while preserving user bytes',metadata:{exit:0}})
+  const e=m.execution.evidence.items.at(-1)
+  assert.equal(e.outcome,'passed')
+  assert.equal(e.pass,true)
+  assert.equal(e.reason,undefined)
+  assert.equal(verificationSatisfied(m).ok,true)
+})
+
 test('missing verifier/toolchain is environment-issue, not product test failure',()=>{
   const m=mission()
   m.continuation.stagnation_count=4

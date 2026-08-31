@@ -195,3 +195,23 @@ test('restart reconciliation reports scheduler-only terminal fencing as durable 
   const before=m.execution.scheduler.revision,count=await runtime.reconcileRestoredChildren(m)
   assert.equal(count,1);assert.ok(m.execution.scheduler.revision>before);assert.equal(m.execution.scheduler.reservations[0].phase,'SETTLING');assert.equal(m.execution.workers[0].restart_reconcile_pending,true)
 })
+
+
+test('semantic follow-up after unclean restart quarantines the exact restored child then resumes the same task/session in the new generation',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m);const old=m.execution.workers[0],task=m.execution.tasks[0],priorGeneration=m.continuation.generation
+  const {runtime,calls}=restartHarness(m,{status:'busy'})
+  restored.beginFollowupSemanticAssessment('parent-1','Continue the interrupted task from canonical state')
+  assert.equal(m.continuation.generation,priorGeneration+1)
+  assert.equal(await runtime.pauseForSemanticAssessment(m),1)
+  assert.equal(calls.aborts.length,1,'restart-pending child is potentially in flight and must be quarantined before semantic rebase')
+  assert.equal(m.execution.scheduler.reservations.length,0)
+  m.identity.semantic_assessment={...m.identity.semantic_assessment,status:'assessed',assessed_at:Date.now()}
+  const resumed=await runtime.resumeAfterSemanticAssessment(m,'non-material')
+  assert.equal(resumed,1)
+  assert.equal(old.id,m.execution.workers[0].id);assert.equal(task.id,m.execution.tasks[0].id);assert.equal(old.session_id,'child-old')
+  assert.equal(old.generation_at_spawn,m.continuation.generation)
+  assert.equal(old.restart_reconcile_pending,false);assert.equal(old.status,'busy');assert.equal(task.status,'running');assert.equal(old.attempt,2)
+  assert.equal(calls.prompts.length,1)
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].attempt.generation,m.continuation.generation)
+})
