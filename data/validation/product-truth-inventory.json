@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "df957320e386022461bebdec2dae6d21939a0966cd747f283cc2d2720c647702",
+      "owner_sha256": "ff5c001dfaf17d478b82a513045389e5a5c5c184dbcf933642068c96a4a730cf",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "7897feca4bc0201dc1272c1923e16009351e54c02b1bb71894e21f5079ace3e0",
+      "owner_sha256": "069d99a8af66bb2c268c22256e6401a3589b9ac9b852b92b9f4faeb8066e3c5c",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -321,7 +321,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "299122fb4b8baccf0ba5083684da0647c6fff43bc82ed51d347364f926904265",
+      "owner_sha256": "9f19431f114f5b3181e402ad7286902d301d1f014cb263f6d1133b0669b78c15",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",
@@ -341,7 +341,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "b0ea598dc9d37ddb519696603862f64ffc33f9e536cbb4440b88c9394dfb30b5",
+      "owner_sha256": "efff5832844740f11e2203ab102b0b994c9e4aaf1cd39151609cd84abac7dc00",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
