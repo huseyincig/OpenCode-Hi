@@ -64,3 +64,21 @@ test('explicit later-user-turn continuation blocks completion and preserves exac
   assert.equal(m.identity.mission_id,before)
   assert.equal(m.continuation.awaiting_user_followup,false)
 })
+
+
+test('resume follow-up preserves continuation_required and blocks premature Mission completion',()=>{
+  const store=new MissionStore(),m=store.start('m08-resume-continuation','Do step one, then keep this Mission open for the next user turn.')
+  store.applyInitialSemanticAssessment(m.identity.session_id,assessment('mission',true))
+  for(const obligation of m.execution.obligations){obligation.status='closed';obligation.closedAt=Date.now()}
+  const missionID=m.identity.mission_id
+  store.beginFollowupSemanticAssessment(m.identity.session_id,'Resume the interrupted step one and still keep the remaining step open.')
+  store.applyFollowupSemanticAssessment(m.identity.session_id,assessment('resume',true))
+  assert.equal(m.identity.mission_id,missionID)
+  assert.equal(m.continuation.awaiting_user_followup,true)
+  const completion=evaluateCompletion(m),idle=evaluateIdle(m)
+  assert.equal(completion.complete,false)
+  assert.ok(completion.reasons.includes('user-followup-required'))
+  assert.equal(idle.decision,'WAIT')
+  store.beginFollowupSemanticAssessment(m.identity.session_id,'Now complete the remaining step.')
+  assert.equal(m.identity.mission_id,missionID)
+})

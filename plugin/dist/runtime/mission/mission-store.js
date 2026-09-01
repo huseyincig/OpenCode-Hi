@@ -368,8 +368,11 @@ export class MissionStore {
             m.continuation.user_interrupted = false;
             m.continuation.interrupted_reason = undefined;
             m.continuation.resumed_at = now;
+            m.continuation.awaiting_user_followup = assessment.continuation_required;
             m.identity.status = 'active';
             appendLedger(m, 'mission.resumed', { payload: { reason: 'semantic-user-resume', generation: m.continuation.generation } });
+            if (assessment.continuation_required)
+                appendLedger(m, 'continuation.user-followup-required', { payload: { revision: m.identity.semantic_assessment.revision, source: 'semantic-resume' } });
             syncMissionGates(m);
             m.identity.updated_at = now;
             this.syncProgressBaseline(m);

@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "ff5c001dfaf17d478b82a513045389e5a5c5c184dbcf933642068c96a4a730cf",
+      "owner_sha256": "c9db2032ae3b4b9c6f80aa8ddfd8d09d2f87e1140c0e61eff42f273f2aa5e0c5",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -341,7 +341,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "efff5832844740f11e2203ab102b0b994c9e4aaf1cd39151609cd84abac7dc00",
+      "owner_sha256": "feadd5ebdd1e850afcf7bef7962cca05de07e1917370ea49894907a4499af6a8",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
