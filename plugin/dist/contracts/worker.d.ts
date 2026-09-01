@@ -61,6 +61,7 @@ export interface WorkerContract {
     runtime_recovery_attempt?: number;
     last_runtime_failure_kind?: string;
     runtime_fallback_exhausted?: boolean;
+    text_transport_fallback_models?: string[];
     model_selection_reason?: string[];
     fallback_history?: Array<{
         from?: string;

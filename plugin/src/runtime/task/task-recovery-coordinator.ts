@@ -142,6 +142,21 @@ export class TaskRecoveryCoordinator{
     const task=m.execution.tasks.find(t=>t.id===worker.task_id),failure=classifyWorkerFailure(error)
     worker.last_runtime_failure_kind=failure.kind;worker.runtime_fallback_exhausted=false
     appendLedger(m,'worker.failure.classified',{task_id:task?.id,worker_id:worker.id,payload:{kind:failure.kind,stagnation:failure.stagnation,retryable:failure.retryable,reason:failure.reason}})
+    if(failure.kind==='provider-transport'&&failure.reason==='opencode-required-tool-choice-compatibility-fallback-eligible'&&worker.session_id&&task){
+      const model=worker.model??'host-default',alreadyTried=(worker.text_transport_fallback_models??[]).includes(model)
+      if(!alreadyTried){
+        worker.text_transport_fallback_models=[...new Set([...(worker.text_transport_fallback_models??[]),model])]
+        worker.runtime_recovery_pending=true;worker.runtime_recovery_attempt=(worker.runtime_recovery_attempt??0)+1;worker.status='busy';task.status='running';this.registry.set(worker)
+        const prompt=clipText([`Hi structured-output transport compatibility recovery for existing task ${task.id}.`,`OpenCode's native json_schema transport was rejected because this model/provider does not support tool_choice=required.`,`Continue the SAME task, worker, session, model, and Mission. Do not create replacement work or restart planning.`,`OBJECTIVE: ${task.objective}`,`SCOPE: ${task.scope.join(', ')||'bounded by objective'}`,`CURRENT USER CONSTRAINTS: ${(task.constraints??[]).join(' | ')||'none'}.`,...taskSpecificResultContractInstructions(task,worker.role),'Return the canonical WorkerResult as JSON in ordinary assistant text. Do not wrap it in markdown and do not add prose before or after the JSON. Hi will parse and validate it fail-closed.'].join('\n'),DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
+        try{
+          beginWorkerAttempt(task,worker);this.child.recordModelProjection(worker,worker.model,worker.model_variant);await this.child.sendProviderPrompt(worker.session_id,prompt,worker.role,worker.model==='host-default'?undefined:worker.model,worker.model_variant,taskPromptToolOverrides(task.execution_profile?.tools??[],this.getHostConfig(),task.execution_profile?.mcp_servers??[]),worker.attempt_prompt_message_id,'text')
+          appendLedger(m,'worker.output-transport-fallback',{task_id:task.id,worker_id:worker.id,payload:{model,session_id:worker.session_id,from:'opencode-json-schema',to:'text-compatibility',reason:failure.reason,attempt:worker.attempt}})
+          return'RECOVERED'
+        }catch(transportError){
+          worker.runtime_recovery_pending=false;this.registry.set(worker);appendLedger(m,'worker.output-transport-fallback.failed',{task_id:task.id,worker_id:worker.id,payload:{model,session_id:worker.session_id,error:String(transportError),reason:failure.reason}})
+        }
+      }else appendLedger(m,'worker.output-transport-fallback.exhausted',{task_id:task.id,worker_id:worker.id,payload:{model,session_id:worker.session_id,reason:failure.reason}})
+    }
     // OpenCode owns transient provider retry/backoff and context compaction. Hi may only
     // start an alternate-model child after a host-terminal, retryable provider failure.
     // Explicit user/host model authority remains fail-closed; ephemeral automatic routing may

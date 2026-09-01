@@ -44,6 +44,7 @@ export interface WorkerContract {
   runtime_recovery_attempt?:number
   last_runtime_failure_kind?:string
   runtime_fallback_exhausted?:boolean
+  text_transport_fallback_models?:string[]
   model_selection_reason?:string[]
   fallback_history?:Array<{from?:string;to:string;variant?:string;reason:string;phase:'dispatch'|'runtime';at:number}>
   effective_model?:string
@@ -60,7 +61,7 @@ export interface WorkerContract {
 
 const STATUS=new Set<string>(WORKER_STATUSES)
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
-const WORKER_KEYS=new Set(['id','task_id','role','category','session_id','parent_session_id','parent_mission_id','forked_from_session_id','requested_model','requested_model_variant','model','model_variant','projected_model','projected_model_variant','fallbacks','recovery_candidates','selected_methodologies','loaded_methodologies','methodologies','fingerprint','status','attempt','generation_at_spawn','started_at','updated_at','completed_at','last_result_digest','last_result_at','attempt_prompt_message_id','write_set','native_state_hash','native_diff_baseline','native_diff_final','restart_reconcile_pending','runtime_recovery_pending','runtime_recovery_attempt','last_runtime_failure_kind','runtime_fallback_exhausted','model_selection_reason','fallback_history','effective_model','effective_model_variant','effective_model_verified','effective_model_variant_verified','effective_model_source','effective_model_observed_at','semantic_pause_revision','usage_observations','pending_native_permission_denial','pending_host_assistant_result'])
+const WORKER_KEYS=new Set(['id','task_id','role','category','session_id','parent_session_id','parent_mission_id','forked_from_session_id','requested_model','requested_model_variant','model','model_variant','projected_model','projected_model_variant','fallbacks','recovery_candidates','selected_methodologies','loaded_methodologies','methodologies','fingerprint','status','attempt','generation_at_spawn','started_at','updated_at','completed_at','last_result_digest','last_result_at','attempt_prompt_message_id','write_set','native_state_hash','native_diff_baseline','native_diff_final','restart_reconcile_pending','runtime_recovery_pending','runtime_recovery_attempt','last_runtime_failure_kind','runtime_fallback_exhausted','text_transport_fallback_models','model_selection_reason','fallback_history','effective_model','effective_model_variant','effective_model_verified','effective_model_variant_verified','effective_model_source','effective_model_observed_at','semantic_pause_revision','usage_observations','pending_native_permission_denial','pending_host_assistant_result'])
 function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
 function strings(v:unknown):v is string[]{return Array.isArray(v)&&v.every(x=>typeof x==='string')}
 function finite(v:unknown):v is number{return typeof v==='number'&&Number.isFinite(v)}
@@ -84,6 +85,7 @@ export function isWorkerContract(v:unknown):v is WorkerContract{
   for(const k of ['restart_reconcile_pending','runtime_recovery_pending','runtime_fallback_exhausted','effective_model_verified','effective_model_variant_verified'])if(v[k]!==undefined&&typeof v[k]!=='boolean')return false
   if(v.attempt_prompt_message_id!==undefined&&(typeof v.attempt_prompt_message_id!=='string'||!/^msg_[0-9a-f]{26}$/i.test(v.attempt_prompt_message_id)))return false
   if(v.write_set!==undefined&&!strings(v.write_set))return false
+  if(v.text_transport_fallback_models!==undefined&&!strings(v.text_transport_fallback_models))return false
   if(v.model_selection_reason!==undefined&&!strings(v.model_selection_reason))return false
   if(v.native_diff_baseline!==undefined&&!stringRecord(v.native_diff_baseline))return false
   if(v.native_diff_final!==undefined&&!stringRecord(v.native_diff_final))return false

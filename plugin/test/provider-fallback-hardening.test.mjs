@@ -77,57 +77,59 @@ test('automatic selection uses bounded recovery-only candidate after native prov
   assert.match(worker.fallback_history.at(-1).reason,/bounded automatic recovery candidate/);assert.equal(m.execution.blockers.some(x=>x.startsWith('provider-failure:')),false)
 })
 
-test('native required-tool-choice compatibility APIError uses one bounded automatic recovery candidate',async()=>{
+test('native required-tool-choice compatibility APIError retries the same worker once with text transport before model rotation',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
   const {runtime,m,calls}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['visual capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
   m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/recovery':'high'}
-  const error={name:'APIError',message:'Upstream request failed: [invalid_request_error] only `\"auto\"` is supported for `tool_choice`. `\"none\"`, `\"required\"`, and named function choices are not currently supported',isRetryable:false,statusCode:400}
+  const error={name:'APIError',message:'Upstream request failed: [invalid_request_error] only `\\"auto\\"` is supported for `tool_choice`. `\\"none\\"`, `\\"required\\"`, and named function choices are not currently supported',isRetryable:false,statusCode:400}
   const settled=await runtime.settleHostIdleRuntimeError(m,worker,error)
-  assert.equal(settled.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/recovery');assert.equal(worker.session_id,'recovery-1');assert.equal(calls.length,1)
-  assert.match(worker.fallback_history.at(-1).reason,/bounded automatic recovery candidate/);assert.match(worker.fallback_history.at(-1).reason,/failure=provider-transport/)
+  assert.equal(settled.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/primary');assert.equal(worker.session_id,'child1');assert.equal(calls.length,1)
+  assert.equal(calls[0].body.format,undefined);assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'primary'});assert.match(JSON.stringify(calls[0]),/ordinary assistant text/)
+  assert.deepEqual(worker.text_transport_fallback_models,['p/primary']);assert.deepEqual(worker.fallback_history??[],[])
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.output-transport-fallback'&&e.payload?.from==='opencode-json-schema'&&e.payload?.to==='text-compatibility'))
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.failure.classified'&&e.payload?.reason==='opencode-required-tool-choice-compatibility-fallback-eligible'))
 })
 
-test('successive required-tool-choice compatibility failures advance through recovery-only candidates without bouncing',async()=>{
+test('repeated required-tool-choice failure after text compatibility retry advances once through recovery-only candidates',async()=>{
+  const models=[{id:'p/deepseek',provider:'p',writeCapable:true,tags:['coding','balanced']},{id:'p/mimo',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/deepseek','p/mimo'];worker.model_selection_reason=['visual capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
+  m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/deepseek':'high','p/mimo':'medium'}
+  const error={name:'APIError',message:'only `\\"auto\\"` is supported for `tool_choice`; `\\"required\\"` and named function choices are not currently supported',isRetryable:false,statusCode:400}
+  const first=await runtime.settleHostIdleRuntimeError(m,worker,error)
+  assert.equal(first.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/primary');assert.equal(worker.session_id,'child1');assert.equal(calls[0].body.format,undefined)
+  worker.runtime_recovery_pending=false
+  const second=await runtime.settleHostIdleRuntimeError(m,worker,error)
+  assert.equal(second.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/deepseek');assert.equal(worker.session_id,'recovery-1');assert.equal(calls[1].body.format.type,'json_schema')
+  worker.runtime_recovery_pending=false
+  const third=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'Thinking mode does not support this tool_choice',isRetryable:false,statusCode:400})
+  assert.equal(third.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/deepseek');assert.equal(worker.session_id,'recovery-1');assert.equal(calls[2].body.format,undefined)
+  assert.deepEqual(worker.text_transport_fallback_models,['p/primary','p/deepseek']);assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/deepseek'])
+})
+
+test('provider-policy 404 still advances to authorized recovery candidate after compatibility retry',async()=>{
   const models=[{id:'p/deepseek',provider:'p',writeCapable:true,tags:['coding','balanced']},{id:'p/mimo',provider:'p',writeCapable:true,tags:['coding','balanced']}]
   const {runtime,m,calls}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/deepseek','p/mimo'];worker.model_selection_reason=['visual capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
   m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/deepseek':'high'}
-  const first=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'only `\"auto\"` is supported for `tool_choice`; `\"required\"` and named function choices are not currently supported',isRetryable:false,statusCode:400})
-  assert.equal(first.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/deepseek');assert.equal(worker.session_id,'recovery-1')
-  worker.runtime_recovery_pending=false
-  const second=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'Thinking mode does not support this tool_choice',isRetryable:false,statusCode:400})
-  assert.equal(second.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/mimo');assert.equal(worker.session_id,'recovery-2')
-  assert.deepEqual(calls.map(x=>x.body.model.modelID),['deepseek','mimo'])
-  assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/deepseek','p/mimo'])
-  assert.equal(m.execution.blockers.some(x=>x.startsWith('provider-failure:')),false)
+  const first=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'only `\\"auto\\"` is supported for `tool_choice`; `\\"required\\"` and named function choices are not currently supported',isRetryable:false,statusCode:400})
+  assert.equal(first.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/primary');assert.equal(calls[0].body.format,undefined);worker.runtime_recovery_pending=false
+  const second=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:"Upstream request failed: [404] No allowed providers are available for the selected model. Providers serving xiaomi/mimo-v2.5-20260422: gmicloud, deepinfra, xiaomi, but your request's provider.only preference permits only: tencent.",isRetryable:false,statusCode:404})
+  assert.equal(second.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/deepseek');assert.equal(worker.session_id,'recovery-1');assert.equal(calls[1].body.format.type,'json_schema')
+  assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/deepseek']);assert.ok(m.execution.ledger.some(e=>e.type==='worker.failure.classified'&&e.payload?.reason==='opencode-selected-model-provider-unavailable-fallback-eligible'))
 })
 
-test('selected-model provider-policy 404 advances to the next authorized recovery candidate',async()=>{
-  const models=[{id:'p/deepseek',provider:'p',writeCapable:true,tags:['coding','balanced']},{id:'p/mimo',provider:'p',writeCapable:true,tags:['coding','balanced']},{id:'p/qwen',provider:'p',writeCapable:true,tags:['coding','balanced']}]
-  const {runtime,m,calls}=setup(async()=>{},true,models)
-  const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/deepseek','p/mimo','p/qwen'];worker.model_selection_reason=['visual capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
-  m.execution.tasks[0].execution_profile.fallback_models=[];m.execution.tasks[0].execution_profile.fallback_variants={'p/deepseek':'high'}
-  const first=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'only `\"auto\"` is supported for `tool_choice`; `\"required\"` and named function choices are not currently supported',isRetryable:false,statusCode:400})
-  assert.equal(first.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/deepseek');worker.runtime_recovery_pending=false
-  const second=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:'Thinking mode does not support this tool_choice',isRetryable:false,statusCode:400})
-  assert.equal(second.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/mimo');worker.runtime_recovery_pending=false
-  const third=await runtime.settleHostIdleRuntimeError(m,worker,{name:'APIError',message:"Upstream request failed: [404] No allowed providers are available for the selected model. Providers serving xiaomi/mimo-v2.5-20260422: gmicloud, deepinfra, xiaomi, but your request's provider.only preference permits only: tencent.",isRetryable:false,statusCode:404})
-  assert.equal(third.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/qwen');assert.equal(worker.session_id,'recovery-3')
-  assert.deepEqual(calls.map(x=>x.body.model.modelID),['deepseek','mimo','qwen'])
-  assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/deepseek','p/mimo','p/qwen'])
-  assert.equal(m.execution.blockers.some(x=>x.startsWith('provider-failure:')),false)
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.failure.classified'&&e.payload?.reason==='opencode-selected-model-provider-unavailable-fallback-eligible'))
-})
-
-test('explicit task model does not gain automatic authority from required-tool-choice compatibility failure',async()=>{
+test('explicit task model may use same-model text compatibility retry but never gains automatic model authority',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
   const {runtime,m,calls}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0];worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['ephemeral automatic selection'];worker.requested_model='p/primary'
-  const error={name:'APIError',message:'only `\"auto\"` is supported for `tool_choice`; `\"required\"` and named function choices are not currently supported',isRetryable:false,statusCode:400}
-  const settled=await runtime.settleHostIdleRuntimeError(m,worker,error)
-  assert.equal(settled.wakeResult,'BLOCKED');assert.equal(calls.length,0);assert.equal(worker.model,'p/primary');assert.ok(m.execution.blockers.some(x=>x.startsWith('provider-failure:provider-transport:')))
+  const error={name:'APIError',message:'only `\\"auto\\"` is supported for `tool_choice`; `\\"required\\"` and named function choices are not currently supported',isRetryable:false,statusCode:400}
+  const first=await runtime.settleHostIdleRuntimeError(m,worker,error)
+  assert.equal(first.wakeResult,'RUNTIME_FALLBACK');assert.equal(worker.model,'p/primary');assert.equal(worker.session_id,'child1');assert.equal(calls.length,1);assert.equal(calls[0].body.format,undefined)
+  worker.runtime_recovery_pending=false
+  const second=await runtime.settleHostIdleRuntimeError(m,worker,error)
+  assert.equal(second.wakeResult,'BLOCKED');assert.equal(calls.length,1);assert.equal(worker.model,'p/primary');assert.ok(m.execution.blockers.some(x=>x.startsWith('provider-failure:provider-transport:')))
 })
 
 test('explicit task model never gains automatic recovery authority from recovery_candidates',async()=>{

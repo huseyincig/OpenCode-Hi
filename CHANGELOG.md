@@ -2,6 +2,11 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — child structured-output provider compatibility
+- Preserve OpenCode native `json_schema` WorkerResult transport as the preferred child path, but when the host proves the exact `tool_choice=required` incompatibility for a routed model/provider, retry that same Task/Worker/session/model once with ordinary text transport instead of immediately replacing the worker or widening model authority.
+- Keep the fallback fail-closed: text output still passes through Hi’s canonical WorkerResult parser/normalizer, the one-shot compatibility attempt is durable per model, repeated incompatibility falls through to the existing bounded authorized model-recovery chain, and explicit model authority is never expanded.
+- Added regression coverage for same-session/model preservation, one-shot transport fallback, explicit-model authority, and continued provider-policy/model-fallback behavior.
+
 ### Fixed — verification claim/status reconciliation
 - Reconcile closed verification obligations against current claim applicability before projecting gates. If source freshness, attempt identity, restart provenance, or another evidence condition makes the formerly closing proof inadmissible, the verification obligation reopens with a durable reason instead of remaining CLOSED behind an OPEN verification gate.
 - Added the Stage 3 regression where attempt-1 host test evidence closes verification, a same-worker corrective attempt makes that receipt stale by exact attempt fencing, and a subsequent fresh verifier can bind to the reopened obligation and close it again.

@@ -54,7 +54,7 @@ export class ChildExecutionCoordinator {
         ;
         throw new Error(`Host child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`);
     } return created; }
-    async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID) { const safe = redactProviderContext(text), format = this.host.capabilities.structuredOutput === true ? workerResultOutputFormat() : undefined; return this.host.prompt(sessionID, safe.providerText, role, model, variant, tools, messageID, format); }
+    async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID, transport = 'structured') { const safe = redactProviderContext(text), format = transport === 'structured' && this.host.capabilities.structuredOutput === true ? workerResultOutputFormat() : undefined; return this.host.prompt(sessionID, safe.providerText, role, model, variant, tools, messageID, format); }
     async status(sessionID) { return this.host.status(sessionID); }
     recordModelProjection(worker, model, variant) { worker.projected_model = model ?? 'host-default'; worker.projected_model_variant = variant; worker.updated_at = Date.now(); }
     async abortNativeSession(m, sessionID, reason, workerID, taskID) { try {
