@@ -1178,6 +1178,12 @@ export class TaskRuntime {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || !worker.session_id)
                 continue;
+            if (task.result && messageKind === 'resume') {
+                worker.semantic_pause_revision = undefined;
+                this.registry.set(worker);
+                appendLedger(m, 'worker.semantic-result-awaits-parent-reconcile', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, result_status: task.result.status, session_id: worker.session_id, policy: 'resume-terminal-result-owner-requires-explicit-parent-reconcile' } });
+                continue;
+            }
             try {
                 this.workspaceBinding(m, task.id);
             }

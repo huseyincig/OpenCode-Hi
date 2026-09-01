@@ -68,6 +68,21 @@ test('structured constraint follow-up rebases a busy worker onto a fresh session
   assert.ok(task.constraints.includes('任意の制約テキスト'))
 })
 
+test('semantic follow-up does not auto-retry a ready child that already returned a terminal result',async()=>{
+  const store=new MissionStore(),m=initial(store,'terminal-result-parent-reconcile')
+  const task=createTask(m,{objective:'bounded analysis',role:'repository-explorer',category:'standard',scope:['src/auth.ts'],obligationIds:[m.execution.obligations.find(o=>o.kind==='analysis')?.id].filter(Boolean)})
+  const worker=createWorker(m,task,'p/code');worker.session_id='child-existing';worker.status='ready';task.status='blocked';task.result={status:'NEEDS_CONTEXT',summary:'bounded read-only result requires parent reconciliation',changed_files:[],evidence:[],open_issues:['downstream implementation owner required'],needs_context:['parent must decide the next owner']}
+  const background=new BackgroundRegistry();background.set(worker)
+  const calls={prompts:0};const client={session:{promptAsync:async()=>{calls.prompts++}}}
+  const runtime=new TaskRuntime(opencodeChildPort(client),background,createConcurrencyPolicySource(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))
+  await callHook(createChatMessageHook(store),'terminal-result-parent-reconcile','opaque follow-up')
+  const revision=m.identity.semantic_assessment.revision;worker.semantic_pause_revision=revision
+  store.applyFollowupSemanticAssessment('terminal-result-parent-reconcile',{material:true,message_kind:'resume',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  const resumed=await runtime.resumeAfterSemanticAssessment(m,'resume')
+  assert.equal(resumed,0);assert.equal(calls.prompts,0);assert.equal(worker.status,'ready');assert.equal(task.status,'blocked');assert.equal(worker.session_id,'child-existing');assert.equal(task.result.status,'NEEDS_CONTEXT');assert.equal(worker.semantic_pause_revision,undefined)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.semantic-result-awaits-parent-reconcile'&&e.task_id===task.id&&e.worker_id===worker.id))
+})
+
 test('parent system contract exposes semantic gate while pending and structured constraint after assessment',async()=>{
   const store=new MissionStore(),background=new BackgroundRegistry();const m=initial(store,'direct-constraint',{task_kind:'implementation',likely_verification:[]})
   await callHook(createChatMessageHook(store),'direct-constraint','opaque constraint')
