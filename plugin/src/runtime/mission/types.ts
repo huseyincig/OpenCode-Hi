@@ -57,7 +57,7 @@ export interface MissionExecutionState {
 export interface MissionContinuationState {
   generation:number; iteration:number; continuation_budget:number; continuation_active:boolean; suppress_until?:number;
   last_progress_signature:string; stagnation_count:number; semantic_progress_snapshot?:SemanticProgressSnapshot; last_progress_delta?:ProgressDelta; recovery_history?:RecoveryStrategyRecord[]; continuation_reason?:string; continuation_lock_until?:number; last_continuation_at?:number; last_action_id?:string; active_action_id?:string; continuation_failure_count?:number; last_continuation_failure_at?:number; pending_nudge?:RuntimeNudge;
-  user_interrupted:boolean; interrupted_at?:number; interrupted_reason?:string; resumed_at?:number; resume_count?:number; last_user_message_at?:number
+  user_interrupted:boolean; awaiting_user_followup?:boolean; interrupted_at?:number; interrupted_reason?:string; resumed_at?:number; resume_count?:number; last_user_message_at?:number
 }
 export interface MissionContextState { context_artifacts:ContextArtifact[] }
 export interface MissionVcsSafetyState {

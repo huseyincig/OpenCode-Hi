@@ -23,6 +23,8 @@ export interface SemanticIntentAssessment {
     risk: Risk;
     ambiguity: 'none' | 'resolvable' | 'contract-critical';
     dependency_class: 'independent' | 'sequential' | 'external-gated' | 'unknown' | 'independent-multi';
+    /** True only when the user explicitly requires this Mission to remain open for a later user turn. */
+    continuation_required: boolean;
     required_capabilities: SemanticCapability[];
     requested_external_actions: SemanticExternalAction[];
     likely_verification: SemanticVerificationKind[];

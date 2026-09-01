@@ -261,6 +261,7 @@ export interface MissionContinuationState {
     last_continuation_failure_at?: number;
     pending_nudge?: RuntimeNudge;
     user_interrupted: boolean;
+    awaiting_user_followup?: boolean;
     interrupted_at?: number;
     interrupted_reason?: string;
     resumed_at?: number;

@@ -14,6 +14,8 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
         return { decision: 'STOP', reason: 'user-stop', reason_code: 'user-stop' };
     if (m.identity.status !== 'active')
         return { decision: 'WAIT', reason: `mission-${m.identity.status}`, reason_code: 'mission-inactive' };
+    if (m.continuation.awaiting_user_followup)
+        return { decision: 'WAIT', reason: 'waiting-user-continuation', reason_code: 'waiting-user-continuation' };
     if (m.continuation.continuation_active)
         return { decision: 'WAIT', reason: 'continuation-reentrant', reason_code: 'continuation-reentrant' };
     if ((m.continuation.suppress_until ?? 0) > now)

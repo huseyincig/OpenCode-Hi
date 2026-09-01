@@ -38,6 +38,8 @@ export interface SemanticIntentAssessment{
   risk:Risk
   ambiguity:'none'|'resolvable'|'contract-critical'
   dependency_class:'independent'|'sequential'|'external-gated'|'unknown'|'independent-multi'
+  /** True only when the user explicitly requires this Mission to remain open for a later user turn. */
+  continuation_required:boolean
   required_capabilities:SemanticCapability[]
   requested_external_actions:SemanticExternalAction[]
   likely_verification:SemanticVerificationKind[]
@@ -158,7 +160,7 @@ function intentSignalList(value:unknown):HiMethodologySignalName[]{
 export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessment{
   const x=typeof raw==='string'?JSON.parse(raw):raw
   if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('semantic assessment must be a JSON object')
-  const v=x as Record<string,unknown>,allowedKeys=new Set(['material','message_kind','task_kind','scope','risk','ambiguity','dependency_class','required_capabilities','requested_external_actions','likely_verification','user_verification','verification_ceiling','verification_cases','nonvisual_request_units','capability_request_units','likely_targets','mutation_targets','intent_signals','suppressed_intent_signals','constraint_atoms']),unknownKeys=Object.keys(v).filter(key=>!allowedKeys.has(key))
+  const v=x as Record<string,unknown>,allowedKeys=new Set(['material','message_kind','task_kind','scope','risk','ambiguity','dependency_class','continuation_required','required_capabilities','requested_external_actions','likely_verification','user_verification','verification_ceiling','verification_cases','nonvisual_request_units','capability_request_units','likely_targets','mutation_targets','intent_signals','suppressed_intent_signals','constraint_atoms']),unknownKeys=Object.keys(v).filter(key=>!allowedKeys.has(key))
   if(unknownKeys.length){const hint=unknownKeys.includes('visual_request_units')?'; use top-level verification_cases[] and nonvisual_request_units as RU id strings':'';throw new Error(`unsupported semantic assessment key(s): ${unknownKeys.join(', ')}${hint}`)}
   const taskKinds=['implementation','bug-fix','diagnosis','review','performance','release-readiness'] as const
   const scopes=['local','multi-file','repo-wide','external','multi-stream'] as const
@@ -167,6 +169,8 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const dependencies=['independent','sequential','external-gated','unknown','independent-multi'] as const
   const take=<T extends readonly string[]>(name:string,allowed:T):T[number]=>{const value=String(v[name]??'');if(!(allowed as readonly string[]).includes(value))throw new Error(`${name} must be one of ${allowed.join(', ')}`);return value as T[number]}
   if(typeof v.material!=='boolean')throw new Error('material must be boolean')
+  if(v.continuation_required!==undefined&&typeof v.continuation_required!=='boolean')throw new Error('continuation_required must be boolean')
+  const continuationRequired=v.continuation_required===true
   const messageKinds=['mission','amendment','constraint','verification','stop','resume','non-material'] as const
   const messageKind=take('message_kind',messageKinds)
   if(messageKind==='non-material'&&v.material!==false)throw new Error('non-material message must set material=false')
@@ -187,7 +191,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const taskKind=take('task_kind',taskKinds),scope=take('scope',scopes)
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
-    task_kind:taskKind,scope,risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
+    task_kind:taskKind,scope,risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),continuation_required:continuationRequired,
     required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,verification_cases:Array.isArray(v.verification_cases)?v.verification_cases.slice(0,16).map((item,index)=>semanticVerificationCase(item,index)):[],nonvisual_request_units:requestUnitIdList(v.nonvisual_request_units),capability_request_units:capabilityRequestUnits,likely_targets:semanticTargets(v.likely_targets,20),...(v.mutation_targets===undefined?{}:{mutation_targets:semanticTargets(v.mutation_targets,20)}),
     intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],

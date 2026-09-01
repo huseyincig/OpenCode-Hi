@@ -219,6 +219,9 @@ export class MissionStore {
         m.identity.intent = assessedIntent(m.identity.intent, effectiveAssessment);
         m.identity.risk = m.identity.intent.risk;
         m.identity.objective = m.identity.intent.objective;
+        m.continuation.awaiting_user_followup = effectiveAssessment.continuation_required;
+        if (effectiveAssessment.continuation_required)
+            appendLedger(m, 'continuation.user-followup-required', { payload: { revision: m.identity.semantic_assessment.revision, source: 'semantic-assessment' } });
         const requiredMaterialTargets = userRequiredMaterialTargets(m.identity.semantic_assessment.pending_text, effectiveAssessment);
         const obligations = [], bugFixAnalysisRequired = m.identity.intent.taskKind === 'bug-fix' && (m.identity.intent.scope !== 'local' || m.identity.intent.ambiguity !== 'none' || reconciledSignals.active.includes('intent.debugging'));
         if (bugFixAnalysisRequired || m.identity.intent.taskKind === 'performance' || m.identity.intent.taskKind === 'diagnosis')
@@ -312,6 +315,7 @@ export class MissionStore {
                 resolveHumanDecision(m, 'authority-invalidated-by-semantic-followup');
         }
         m.continuation.generation += 1;
+        m.continuation.awaiting_user_followup = false;
         m.identity.semantic_assessment = { status: 'pending', phase: 'followup', revision: m.identity.semantic_assessment.revision + 1, source: 'host-primary', pending_text: text.slice(0, 12000) };
         m.identity.status = 'active';
         m.continuation.continuation_active = false;
@@ -372,6 +376,9 @@ export class MissionStore {
             return m;
         }
         const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), boundedAssessment = repositoryBoundAssessment(this.#root, text, verificationResolution.assessment), groundedAuthority = groundedIntentAuthority(boundedAssessment, text), effectiveAssessment = groundedAuthority.assessment, reconciledSignals = groundedAuthority.signals, kind = effectiveAssessment.message_kind;
+        m.continuation.awaiting_user_followup = effectiveAssessment.continuation_required;
+        if (effectiveAssessment.continuation_required)
+            appendLedger(m, 'continuation.user-followup-required', { payload: { revision: m.identity.semantic_assessment.revision, source: 'semantic-followup' } });
         if (kind === 'constraint') {
             m.execution.constraints ??= [];
             m.execution.constraint_atoms ??= [];

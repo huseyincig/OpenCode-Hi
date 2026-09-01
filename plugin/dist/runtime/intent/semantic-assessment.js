@@ -195,7 +195,7 @@ export function parseSemanticIntentAssessment(raw) {
     const x = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (!x || typeof x !== 'object' || Array.isArray(x))
         throw new Error('semantic assessment must be a JSON object');
-    const v = x, allowedKeys = new Set(['material', 'message_kind', 'task_kind', 'scope', 'risk', 'ambiguity', 'dependency_class', 'required_capabilities', 'requested_external_actions', 'likely_verification', 'user_verification', 'verification_ceiling', 'verification_cases', 'nonvisual_request_units', 'capability_request_units', 'likely_targets', 'mutation_targets', 'intent_signals', 'suppressed_intent_signals', 'constraint_atoms']), unknownKeys = Object.keys(v).filter(key => !allowedKeys.has(key));
+    const v = x, allowedKeys = new Set(['material', 'message_kind', 'task_kind', 'scope', 'risk', 'ambiguity', 'dependency_class', 'continuation_required', 'required_capabilities', 'requested_external_actions', 'likely_verification', 'user_verification', 'verification_ceiling', 'verification_cases', 'nonvisual_request_units', 'capability_request_units', 'likely_targets', 'mutation_targets', 'intent_signals', 'suppressed_intent_signals', 'constraint_atoms']), unknownKeys = Object.keys(v).filter(key => !allowedKeys.has(key));
     if (unknownKeys.length) {
         const hint = unknownKeys.includes('visual_request_units') ? '; use top-level verification_cases[] and nonvisual_request_units as RU id strings' : '';
         throw new Error(`unsupported semantic assessment key(s): ${unknownKeys.join(', ')}${hint}`);
@@ -209,6 +209,9 @@ export function parseSemanticIntentAssessment(raw) {
         throw new Error(`${name} must be one of ${allowed.join(', ')}`); return value; };
     if (typeof v.material !== 'boolean')
         throw new Error('material must be boolean');
+    if (v.continuation_required !== undefined && typeof v.continuation_required !== 'boolean')
+        throw new Error('continuation_required must be boolean');
+    const continuationRequired = v.continuation_required === true;
     const messageKinds = ['mission', 'amendment', 'constraint', 'verification', 'stop', 'resume', 'non-material'];
     const messageKind = take('message_kind', messageKinds);
     if (messageKind === 'non-material' && v.material !== false)
@@ -240,7 +243,7 @@ export function parseSemanticIntentAssessment(raw) {
     const taskKind = take('task_kind', taskKinds), scope = take('scope', scopes);
     const assessment = {
         material: v.material, message_kind: messageKind,
-        task_kind: taskKind, scope, risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
+        task_kind: taskKind, scope, risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies), continuation_required: continuationRequired,
         required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, verification_cases: Array.isArray(v.verification_cases) ? v.verification_cases.slice(0, 16).map((item, index) => semanticVerificationCase(item, index)) : [], nonvisual_request_units: requestUnitIdList(v.nonvisual_request_units), capability_request_units: capabilityRequestUnits, likely_targets: semanticTargets(v.likely_targets, 20), ...(v.mutation_targets === undefined ? {} : { mutation_targets: semanticTargets(v.mutation_targets, 20) }),
         intent_signals: semanticSignals, suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))
