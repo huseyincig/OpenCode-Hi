@@ -159,6 +159,20 @@ test('distinct visual verification owner keeps mission visual evidence off analy
   const explorerHandoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.match(explorerHandoff,/Task evidence contract: none/i);assert.doesNotMatch(explorerHandoff,/Verification contract: visual-check/i)
 })
 
+test('repository explorer does not inherit mission targeted-tests as task-owned evidence',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:1,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),m=store.start('explorer-verification-boundary','inspect then repair source and verify it')
+  assess(store,'explorer-verification-boundary',{task_kind:'bug-fix',scope:'multi-file',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:[EXISTING_REPO_SCOPE],likely_verification:['targeted-tests']})
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(analysis&&verification);assert.deepEqual(verification.requiredEvidence,['targeted-tests'])
+  const explorer=await runtime.start(m,{objective:'settle bounded source provenance',role:'repository-explorer',scope:[EXISTING_REPO_SCOPE],obligationIds:[analysis.id]})
+  const task=m.execution.tasks.find(t=>t.id===explorer.task_id);assert.ok(task)
+  assert.deepEqual(task.requiredEvidence,[],'mission verification stays parent/downstream-owned unless explicitly assigned to explorer')
+  assert.deepEqual(task.obligation_ids,[analysis.id])
+  const handoff=String(prompts[0]?.body?.parts?.[0]?.text??'');assert.match(handoff,/Task evidence contract: none/i);assert.match(handoff,/EXPLORATION CLEARANCE RESULT CONTRACT/i);assert.doesNotMatch(handoff,/Verification contract: targeted-tests/i)
+})
+
+
 test('model task evidence cannot widen beyond canonical mission verification admission',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
