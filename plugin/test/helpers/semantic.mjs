@@ -6,6 +6,7 @@ export const DEFAULT_ASSESSMENT={
   risk:'medium',
   ambiguity:'none',
   dependency_class:'independent',
+  continuation_required:false,
   required_capabilities:['implementation'],
   requested_external_actions:[],
   likely_verification:[],
@@ -49,7 +50,7 @@ export function applyStructuredFollowup(store,sessionID,text='opaque follow-up',
 
 export async function assessPluginMission(hooks,sessionID,overrides={}){
   const assessment={...DEFAULT_ASSESSMENT,...overrides};if(assessment.likely_verification?.includes('visual-check')&&!assessment.verification_cases?.length)assessment.verification_cases=[{id:'vc_visual-smoke',subject:'bounded visual smoke',required_browser_actions:['inspect'],source_units:['ru1']}]
-  const raw=await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify(assessment)},{sessionID})
+  const raw=await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({continuation_required:false,...assessment})},{sessionID})
   const result=JSON.parse(String(raw))
   if(result.status==="INVALID_ASSESSMENT")throw new Error(result.error)
   return result

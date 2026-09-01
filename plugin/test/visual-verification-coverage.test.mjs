@@ -5,7 +5,7 @@ import {semanticRequestUnits,assertCapabilityRequestTrace,assertVerificationRequ
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {renderSemanticAssessmentGate} from '../dist/runtime/intent/semantic-assessment-gate.js'
 
-const base={material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],user_verification:[],verification_ceiling:false,verification_cases:[],nonvisual_request_units:[],likely_targets:['index.html'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]}
+const base={material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',continuation_required:false,required_capabilities:['implementation','visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],user_verification:[],verification_ceiling:false,verification_cases:[],nonvisual_request_units:[],likely_targets:['index.html'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]}
 const tracedCase=(patch={})=>({id:'vc_reload',subject:'theme survives reload',required_browser_actions:['navigate','inspect'],source_units:['ru1'],...patch})
 
 test('visual semantic contract requires bounded explicit verification cases',()=>{

@@ -9,7 +9,7 @@ import {validateMissionEnvelope} from '../dist/runtime/mission/validators.js'
 import {HiPlugin} from '../dist/plugin.js'
 import {assessPluginMission} from './helpers/semantic.mjs'
 
-const diagnosis={material:true,message_kind:'mission',task_kind:'diagnosis',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['repository-analysis','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['packages/core/src/ripgrep.ts','diagnosis.json'],intent_signals:[],suppressed_intent_signals:[]}
+const diagnosis={material:true,message_kind:'mission',task_kind:'diagnosis',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',continuation_required:false,required_capabilities:['repository-analysis','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['packages/core/src/ripgrep.ts','diagnosis.json'],intent_signals:[],suppressed_intent_signals:[]}
 
 function client(){return {app:{log:async()=>{}},provider:{list:async()=>({data:{connected:[],all:[]}})},session:{status:async()=>({data:{}}),children:async()=>({data:[]}),diff:async()=>({data:[]}),todo:async()=>({data:[]}),revert:async()=>({data:{}}),unrevert:async()=>({data:{}})}}}
 
@@ -83,6 +83,18 @@ test('MissionStore and durable envelope reject diagnosis plus implementation cap
   const validStore=new MissionStore(),valid=validStore.start('diag-envelope','diagnose only');validStore.applyInitialSemanticAssessment('diag-envelope',diagnosis)
   valid.identity.intent.requiredCapabilities.push('implementation')
   assert.equal(validateMissionEnvelope(valid),false,'durable restore must fail closed on contradictory diagnosis/write state')
+})
+
+test('plugin semantic admission rejects omitted continuation_required and keeps the same revision pending',async()=>{
+  const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='continuation-required-admission'
+  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Do step one now and keep this same Mission open for my next turn.'}]})
+  const {continuation_required,...omitted}=diagnosis
+  const invalid=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify(omitted)},{sessionID:sid}))
+  assert.equal(invalid.status,'INVALID_ASSESSMENT');assert.match(invalid.error,/continuation_required must be an explicit boolean/)
+  const corrected=JSON.parse(await hooks.tool.hi_intent_assess.execute({revision:1,assessment_json:JSON.stringify({...diagnosis,continuation_required:true})},{sessionID:sid}))
+  assert.equal(corrected.status,'ASSESSED')
+  const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:80},{sessionID:sid}));assert.equal(ledger.status,'active');assert.ok(ledger.events.some(e=>e.type==='continuation.user-followup-required'))
+  await hooks.dispose?.()
 })
 
 test('plugin semantic admission keeps the same revision pending after contradictory diagnosis and accepts corrected bug-fix',async()=>{

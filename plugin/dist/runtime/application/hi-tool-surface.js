@@ -234,7 +234,10 @@ export function createHiToolSurface(input) {
             return 'No active Hi mission'; if (m.identity.semantic_assessment.status !== 'pending')
             return JSON.stringify({ status: 'ALREADY_ASSESSED', revision: m.identity.semantic_assessment.revision }); if (Number(a.revision) !== m.identity.semantic_assessment.revision)
             return JSON.stringify({ status: 'STALE_ASSESSMENT', expected_revision: m.identity.semantic_assessment.revision }); try {
-            const assessment = parseSemanticIntentAssessment(String(a.assessment_json)), phase = m.identity.semantic_assessment.phase, pendingText = m.identity.semantic_assessment.pending_text;
+            const rawAssessment = JSON.parse(String(a.assessment_json));
+            if (!rawAssessment || typeof rawAssessment !== 'object' || Array.isArray(rawAssessment) || !Object.prototype.hasOwnProperty.call(rawAssessment, 'continuation_required') || typeof rawAssessment.continuation_required !== 'boolean')
+                throw new Error('continuation_required must be an explicit boolean at hi_intent_assess admission');
+            const assessment = parseSemanticIntentAssessment(rawAssessment), phase = m.identity.semantic_assessment.phase, pendingText = m.identity.semantic_assessment.pending_text;
             assertVerificationRequestTrace(pendingText, assessment);
             assertCapabilityRequestTrace(pendingText, assessment);
             const next = phase === 'initial' ? store.applyInitialSemanticAssessment(c.sessionID, assessment) : store.applyFollowupSemanticAssessment(c.sessionID, assessment);

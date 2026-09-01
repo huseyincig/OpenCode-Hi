@@ -10,7 +10,7 @@ import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {renderSemanticAssessmentGate} from '../dist/runtime/intent/semantic-assessment-gate.js'
 import {HI_CONTROL_TOOL_IDS,HI_PROCESS_EXECUTION_TOOL_IDS,promptToolOverrides} from '../dist/runtime/routing/execution-profile.js'
 
-const INITIAL={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
+const INITIAL={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',continuation_required:false,required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
 function assessed(store,id='parent') {const m=store.start(id,'opaque');store.applyInitialSemanticAssessment(id,INITIAL);return m}
 function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.20'}}
 function scoped(){return{contextArtifacts:{}}}
