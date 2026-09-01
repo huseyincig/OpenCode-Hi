@@ -296,7 +296,7 @@
       "area": "project-intelligence",
       "canonical_owner": "ProjectIntelligenceRuntime",
       "owner_path": "plugin/src/runtime/project-intelligence/runtime.ts",
-      "owner_sha256": "18c45c62665a5eef1694ec0fd03730519584ccfcdddfb195afb365ae6245f4d4",
+      "owner_sha256": "87f754c1aba612c2bc4cccfaba1148323b3e00e0bfd9adadbd3c6fec23fe60c9",
       "producer_or_contract_paths": [
         "plugin/src/runtime/project-intelligence/methodology-learning.ts",
         "plugin/src/runtime/project-intelligence/task-outcome-memory.ts",

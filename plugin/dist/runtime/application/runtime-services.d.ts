@@ -9,6 +9,7 @@ import type { WorkspaceExecutor } from '../workspace/executor.js';
 import type { BrowserExecutor, BrowserExecutionContext } from '../browser/executor.js';
 import { OperationalToolProvisioner } from '../tools/provisioning.js';
 import type { OperationalToolProvisioningReceipt } from '../../contracts/operational-tool.js';
+import type { ProjectMemoryProvider } from '../../contracts/project-memory.js';
 import { MissionStore } from '../mission/mission-store.js';
 import { BackgroundRegistry } from '../background/registry.js';
 import { RuntimePersistence } from '../state/persistence.js';
@@ -48,6 +49,7 @@ export declare function createRuntimeServices(input: {
     getConfig: () => HiConfig;
     getModels: () => AvailableModel[];
     getHostConfig: () => Record<string, unknown>;
+    projectMemoryProvider?: ProjectMemoryProvider;
 }): {
     store: MissionStore;
     background: BackgroundRegistry;

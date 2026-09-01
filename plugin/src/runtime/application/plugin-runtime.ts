@@ -10,6 +10,7 @@ import type { HostPort, ChildSessionPort } from '../host/port.js'
 import type { ProcessExecutor } from '../process/executor.js'
 import type { WorkspaceExecutor } from '../workspace/executor.js'
 import type { NativeProjectContext } from '../intent/repo-context.js'
+import type {ProjectMemoryProvider} from '../../contracts/project-memory.js'
 
 export interface RuntimeInstanceLease { release():void }
 export interface OwnedCapabilityObserver {
@@ -28,15 +29,16 @@ export interface HiRuntimeBootstrapInput {
   workspaceExecutor:WorkspaceExecutor
   ownedCapabilities:OwnedCapabilityObserver
   instanceLease:RuntimeInstanceLease
+  projectMemoryProvider?:ProjectMemoryProvider
 }
 
 /** Host-generation-neutral application composition. Concrete OpenCode lifecycle/API shapes are supplied by edge adapters. */
 export async function createHiRuntime(input:HiRuntimeBootstrapInput){
-  const {packageRoot,packagedSkillsDir,projectRoot,workingDirectory,nativeContext,host,childSession,processExecutor,workspaceExecutor,ownedCapabilities,instanceLease}=input
+  const {packageRoot,packagedSkillsDir,projectRoot,workingDirectory,nativeContext,host,childSession,processExecutor,workspaceExecutor,ownedCapabilities,instanceLease,projectMemoryProvider}=input
   const state:PluginRuntimeState={config:DEFAULT_HI_CONFIG,hostConfig:{}}
   const projectAuthority=new ProjectAuthorityStore(projectRoot)
   const browserBootstrap=new PlaywrightBrowserBootstrap({package_root:packageRoot,project_root:projectRoot})
-  const services=createRuntimeServices({ports:{nativeContext,childSession,readAssistantResult:host.readAssistantResult,hostCapabilities:host.capabilities.contracts,process:processExecutor,workspace:workspaceExecutor,createBrowser:persist=>new PlaywrightBrowserAdapter({persist_screenshot:persist,browser_cache_paths:[browserBootstrap.cachePath]}),bootstrapBrowser:()=>browserBootstrap.ensure(),browserTool:{implementationId:'playwright-chromium',version:browserBootstrap.version,cachePath:browserBootstrap.cachePath,discover:()=>discoverPlaywrightChromium(undefined,[browserBootstrap.cachePath])},onBrowserAvailability:ownedCapabilities.setBrowserAvailable},projectRoot,packageRoot,getConfig:()=>state.config,getModels:host.getModels,getHostConfig:()=>state.hostConfig})
+  const services=createRuntimeServices({ports:{nativeContext,childSession,readAssistantResult:host.readAssistantResult,hostCapabilities:host.capabilities.contracts,process:processExecutor,workspace:workspaceExecutor,createBrowser:persist=>new PlaywrightBrowserAdapter({persist_screenshot:persist,browser_cache_paths:[browserBootstrap.cachePath]}),bootstrapBrowser:()=>browserBootstrap.ensure(),browserTool:{implementationId:'playwright-chromium',version:browserBootstrap.version,cachePath:browserBootstrap.cachePath,discover:()=>discoverPlaywrightChromium(undefined,[browserBootstrap.cachePath])},onBrowserAvailability:ownedCapabilities.setBrowserAvailable},projectRoot,packageRoot,getConfig:()=>state.config,getModels:host.getModels,getHostConfig:()=>state.hostConfig,projectMemoryProvider})
   await services.workspaceRuntime.reconcileRestored(services.store.all())
   await services.processRuntime.reconcileRestored(services.store.all())
   const browserHealth={available:false,reason:'not-probed-during-initialization; browser execution is health-checked lazily on task/doctor demand'}

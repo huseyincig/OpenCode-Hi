@@ -5,6 +5,7 @@ import type { HostPort, ChildSessionPort } from '../host/port.js';
 import type { ProcessExecutor } from '../process/executor.js';
 import type { WorkspaceExecutor } from '../workspace/executor.js';
 import type { NativeProjectContext } from '../intent/repo-context.js';
+import type { ProjectMemoryProvider } from '../../contracts/project-memory.js';
 export interface RuntimeInstanceLease {
     release(): void;
 }
@@ -27,6 +28,7 @@ export interface HiRuntimeBootstrapInput {
     workspaceExecutor: WorkspaceExecutor;
     ownedCapabilities: OwnedCapabilityObserver;
     instanceLease: RuntimeInstanceLease;
+    projectMemoryProvider?: ProjectMemoryProvider;
 }
 /** Host-generation-neutral application composition. Concrete OpenCode lifecycle/API shapes are supplied by edge adapters. */
 export declare function createHiRuntime(input: HiRuntimeBootstrapInput): Promise<{

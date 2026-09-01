@@ -1,6 +1,7 @@
 import { ContextArtifactStore } from '../context/artifact-store.js'
 import { ProjectTaskOutcomeMemoryStore } from '../project-intelligence/task-outcome-memory.js'
 import { ProjectIntelligenceRuntime } from '../project-intelligence/runtime.js'
+import type {ProjectMemoryProvider} from '../../contracts/project-memory.js'
 
 export interface RuntimeScopedStores {
   contextArtifacts:ContextArtifactStore
@@ -8,8 +9,8 @@ export interface RuntimeScopedStores {
   taskOutcomeMemory:ProjectTaskOutcomeMemoryStore
 }
 
-export function createRuntimeScopedStores(projectRoot:string,_hiRoot?:string):RuntimeScopedStores{
-  const projectIntelligence=new ProjectIntelligenceRuntime(projectRoot)
+export function createRuntimeScopedStores(projectRoot:string,_hiRoot?:string,projectMemoryProvider?:ProjectMemoryProvider):RuntimeScopedStores{
+  const projectIntelligence=new ProjectIntelligenceRuntime(projectRoot,projectMemoryProvider)
   return {
     contextArtifacts:new ContextArtifactStore(projectRoot),
     projectIntelligence,

@@ -14,11 +14,11 @@ import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
 import { LocalPreviewManager } from '../browser/local-preview.js';
 import { ecosystemIntegrationView } from '../ecosystem/runtime.js';
 export function createRuntimeServices(input) {
-    const { ports, projectRoot, packageRoot, getConfig, getModels, getHostConfig } = input;
+    const { ports, projectRoot, packageRoot, getConfig, getModels, getHostConfig, projectMemoryProvider } = input;
     const store = new MissionStore(projectRoot, ports.nativeContext, () => getConfig().primaryMode, () => ({ mode: getConfig().execution.topology, maxAgents: getConfig().execution.maxAgents, parallelism: getConfig().execution.parallelism }));
     const background = new BackgroundRegistry();
     const humanDecisionTransport = new ChatHumanDecisionTransport();
-    const scopedStores = createRuntimeScopedStores(projectRoot, packageRoot);
+    const scopedStores = createRuntimeScopedStores(projectRoot, packageRoot, projectMemoryProvider);
     const persistence = new RuntimePersistence(projectRoot);
     const restored = persistence.load();
     if (persistence.lastLoadReport.error)

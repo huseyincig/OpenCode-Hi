@@ -12,6 +12,8 @@ import { createHiRuntime } from './runtime/application/plugin-runtime.js'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+export type {ProjectMemoryProvider,ProjectMemoryProviderRecord,ProjectMemoryProjection,ProjectMemoryRecallRequest} from './contracts/project-memory.js'
+
 export const HiPlugin:Plugin=async(ctx)=>{
   const packageRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
   const packagedSkillsDir=resolve(packageRoot,'skills')

@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "46232d9c01d492b91c74169c4fa8d4a06f9858487200cb35d6fa3f45a36e1945",
+      "sha256": "a3597998a710142bfec7779c8b0975dd5d20d4b75f0590f21dcb23ff2c39f928",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",

@@ -9,6 +9,7 @@ import type {WorkspaceExecutor} from '../workspace/executor.js'
 import type {BrowserExecutor,BrowserExecutionContext} from '../browser/executor.js'
 import {OperationalToolProvisioner} from '../tools/provisioning.js'
 import type {OperationalToolProvisioningReceipt} from '../../contracts/operational-tool.js'
+import type {ProjectMemoryProvider} from '../../contracts/project-memory.js'
 import {relative} from 'node:path'
 import {rmSync} from 'node:fs'
 import {MissionStore} from '../mission/mission-store.js'
@@ -37,12 +38,12 @@ export interface RuntimeServicePorts{
   onBrowserAvailability?:(available:boolean)=>void
 }
 
-export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>}){
-  const {ports,projectRoot,packageRoot,getConfig,getModels,getHostConfig}=input
+export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>;projectMemoryProvider?:ProjectMemoryProvider}){
+  const {ports,projectRoot,packageRoot,getConfig,getModels,getHostConfig,projectMemoryProvider}=input
   const store=new MissionStore(projectRoot,ports.nativeContext,()=>getConfig().primaryMode,()=>({mode:getConfig().execution.topology,maxAgents:getConfig().execution.maxAgents,parallelism:getConfig().execution.parallelism}))
   const background=new BackgroundRegistry()
   const humanDecisionTransport=new ChatHumanDecisionTransport()
-  const scopedStores=createRuntimeScopedStores(projectRoot,packageRoot)
+  const scopedStores=createRuntimeScopedStores(projectRoot,packageRoot,projectMemoryProvider)
   const persistence=new RuntimePersistence(projectRoot)
   const restored=persistence.load()
   if(persistence.lastLoadReport.error)throw new Error(`OpenCode-Hi runtime state is invalid and was not discarded: ${persistence.lastLoadReport.error}. Reconcile or remove the invalid runtime-state file explicitly before restarting Hi.`)
