@@ -40,8 +40,6 @@ export function assessExplorationClearance(projectRoot, m, task, worker, result)
         return { ...base, admitted: false, reason: 'context-gap-not-explicitly-resolved' };
     if (result.needs_context.length)
         return { ...base, admitted: false, reason: 'open-context-remains' };
-    if (result.open_issues.length)
-        return { ...base, admitted: false, reason: 'open-issue-remains' };
     const sourceClaims = passed(result, 'source-provenance-evidence');
     if (!sourceClaims.length)
         return { ...base, admitted: false, reason: 'source-provenance-claim-missing' };

@@ -8,7 +8,6 @@ export type ExplorationClearanceReason=
   |'result-not-done'
   |'context-gap-not-explicitly-resolved'
   |'open-context-remains'
-  |'open-issue-remains'
   |'source-provenance-claim-missing'
   |'source-provenance-scope-unbounded'
   |'source-read-receipt-missing'
@@ -69,7 +68,6 @@ export function assessExplorationClearance(projectRoot:string,m:MissionState,tas
   if(result.status!=='DONE')return{...base,admitted:false,reason:'result-not-done'}
   if(result.context_gap!=='none')return{...base,admitted:false,reason:'context-gap-not-explicitly-resolved'}
   if(result.needs_context.length)return{...base,admitted:false,reason:'open-context-remains'}
-  if(result.open_issues.length)return{...base,admitted:false,reason:'open-issue-remains'}
   const sourceClaims=passed(result,'source-provenance-evidence')
   if(!sourceClaims.length)return{...base,admitted:false,reason:'source-provenance-claim-missing'}
   const sourceRaw=sourceClaims.flatMap(item=>item.scope??[]),source_scope=bounded(sourceRaw),rawBounded=sourceRaw.map(item=>normalizeBoundedProjectPath(item))

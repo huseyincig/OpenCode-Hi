@@ -1,5 +1,5 @@
 import type { MissionState, MissionTask, WorkerResult, WorkerState } from '../mission/types.js';
-export type ExplorationClearanceReason = 'not-applicable' | 'result-not-done' | 'context-gap-not-explicitly-resolved' | 'open-context-remains' | 'open-issue-remains' | 'source-provenance-claim-missing' | 'source-provenance-scope-unbounded' | 'source-read-receipt-missing' | 'source-provenance-outside-task-scope' | 'source-state-unavailable' | 'decision-claim-missing' | 'decision-claim-scope-unbound' | 'admitted';
+export type ExplorationClearanceReason = 'not-applicable' | 'result-not-done' | 'context-gap-not-explicitly-resolved' | 'open-context-remains' | 'source-provenance-claim-missing' | 'source-provenance-scope-unbounded' | 'source-read-receipt-missing' | 'source-provenance-outside-task-scope' | 'source-state-unavailable' | 'decision-claim-missing' | 'decision-claim-scope-unbound' | 'admitted';
 export interface ExplorationClearanceAssessment {
     applicable: boolean;
     admitted: boolean;

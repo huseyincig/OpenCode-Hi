@@ -37,6 +37,22 @@ test('resolvable ambiguity clears only from current bounded source provenance an
   const r=root();try{const m=mission(r),{task,worker,analysis}=explorer(m);runtime(r).applyResult(m,worker.id,result({evidence:[sourceClaimWithReceipt(r,m,task,worker)]}));assert.equal(task.result.status,'DONE');assert.equal(m.identity.intent.ambiguity,'none');assert.equal(analysis.status,'closed');const e=m.execution.evidence.items.find(x=>String(x.source??'').startsWith('exploration-clearance:resolvable:'));assert.ok(e);assert.equal(e.trusted_source_class,'runtime-observation');assert.equal(e.kind,'source-provenance-evidence');assert.match(e.scope_state_hash,/^[a-f0-9]{64}$/);assert.equal(explorationClearanceFreshness(r,m).current,true)}finally{rmSync(r,{recursive:true,force:true})}
 })
 
+test('downstream implementation issue notes do not veto otherwise complete repository exploration clearance',()=>{
+  const r=root();try{
+    const m=mission(r,'downstream-issue-note'),{task,worker,analysis}=explorer(m),source=sourceClaimWithReceipt(r,m,task,worker)
+    runtime(r).applyResult(m,worker.id,result({
+      summary:'Repository source is fully mapped; implementation remains writer-owned.',
+      evidence:[source],
+      open_issues:['normalizeName implementation remains for a write-capable worker','slug verification remains downstream']
+    }))
+    assert.equal(task.result.status,'DONE')
+    assert.deepEqual(task.result.open_issues,['normalizeName implementation remains for a write-capable worker','slug verification remains downstream'])
+    assert.equal(m.identity.intent.ambiguity,'none')
+    assert.equal(analysis.status,'closed')
+    assert.equal(explorationClearanceFreshness(r,m).current,true)
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
 test('contract-critical ambiguity requires a scoped decision claim in addition to current source provenance',()=>{
   const r=root();try{const m=mission(r,'critical-missing','contract-critical'),{task,worker}=explorer(m);runtime(r).applyResult(m,worker.id,result({evidence:[sourceClaimWithReceipt(r,m,task,worker)]}));assert.equal(task.result.status,'FIX_REQUIRED');assert.equal(m.identity.intent.ambiguity,'contract-critical');assert.ok(task.result.open_issues.some(x=>x.includes('decision-claim-missing')))}finally{rmSync(r,{recursive:true,force:true})}
 })
