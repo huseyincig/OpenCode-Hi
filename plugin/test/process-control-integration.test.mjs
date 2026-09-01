@@ -313,11 +313,22 @@ test('read-only manager cannot register unreachable command rollback while worki
   assert.ok(evaluatePreconditions(working).items.some(x=>x.id==='gate-temporary-rollback'&&x.status==='blocked'),'command-capable owner keeps normal rollback gate semantics')
 })
 
+test('native-revert registration fails closed before opening rollback gate when exact message identity is absent',async()=>{
+  const store=new MissionStore(),m=assessed(store,'native-revert-exact-message'),processRuntime={list:()=>[],stopMission:async()=>0}
+  const capabilities=detectOpenCodeCapabilities({}, {sessionRevert:true})
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{revert:async()=>{}},getModels:()=>[],scopedStores:scoped()})
+  const blocked=JSON.parse(await toolSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',native_revert:true},{sessionID:m.identity.session_id}))
+  assert.equal(blocked.status,'BLOCKED');assert.equal(blocked.reason,'native-revert-requires-exact-message-id');assert.equal(blocked.retry_same_call,false)
+  assert.equal(m.vcs.temporary_mutations.length,0,'rejected native revert must not create durable mutation state')
+  const {evaluatePreconditions}=await import('../dist/runtime/readiness/preconditions.js');assert.ok(!evaluatePreconditions(m).items.some(x=>x.id==='gate-temporary-rollback'&&x.status==='blocked'),'rejected native revert must not open rollback gate')
+  assert.ok(m.execution.ledger.some(e=>e.type==='temporary-mutation.registration-blocked'&&e.payload?.reason==='native-revert-requires-exact-message-id'))
+})
+
 test('native-revert registration missing session-revert capability is terminal and deduped',async()=>{
   const store=new MissionStore(),m=assessed(store,'no-session-revert'),processRuntime={list:()=>[],stopMission:async()=>0}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
-  const first=JSON.parse(await toolSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',native_revert:true},{sessionID:m.identity.session_id}))
-  const second=JSON.parse(await toolSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',native_revert:true},{sessionID:m.identity.session_id}))
+  const first=JSON.parse(await toolSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',native_revert:true,message_id:'msg_exact'},{sessionID:m.identity.session_id}))
+  const second=JSON.parse(await toolSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',native_revert:true,message_id:'msg_exact'},{sessionID:m.identity.session_id}))
   assert.equal(first.status,'USER_ACTION_REQUIRED');assert.equal(first.blocker,'capability-unavailable:session-revert');assert.deepEqual(second,first)
   assert.equal(m.execution.blockers.filter(x=>x==='capability-unavailable:session-revert').length,1);assert.equal(m.execution.ledger.filter(e=>e.type==='capability.unavailable'&&e.payload?.capability==='session-revert').length,1)
   const decision=(await import('../dist/runtime/continuation/evaluator.js')).evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable')

@@ -2,15 +2,19 @@ import { payloadHash } from '../safety/idempotency.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { redactDurableText } from '../privacy/boundary.js';
 export function registerTemporaryMutation(m, input) {
-    const mode = input.rollback_mode ?? 'command', rollbackCommand = mode === 'native-revert' ? `native-revert:${input.session_id ?? m.identity.session_id}:${input.message_id ?? ''}` : String(input.rollback_command ?? '').trim();
+    const mode = input.rollback_mode ?? 'command', nativeSession = mode === 'native-revert' ? String(input.session_id ?? m.identity.session_id).trim() : '', nativeMessage = mode === 'native-revert' ? String(input.message_id ?? '').trim() : '', rollbackCommand = mode === 'native-revert' ? `native-revert:${nativeSession}:${nativeMessage}` : String(input.rollback_command ?? '').trim();
     if (mode === 'command' && !rollbackCommand)
         throw new Error('rollback_command is required for command rollback');
+    if (mode === 'native-revert' && !nativeSession)
+        throw new Error('native-revert requires exact session_id');
+    if (mode === 'native-revert' && !nativeMessage)
+        throw new Error('native-revert requires exact message_id');
     if (mode === 'command' && redactDurableText(rollbackCommand) !== rollbackCommand)
         throw new Error('rollback_command must not contain credentials or secret values; use a credential-free rollback or native revert');
-    const item = { id: `tm_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind: input.kind, description: redactDurableText(input.description), rollback_command: rollbackCommand, rollback_hash: payloadHash(rollbackCommand), rollback_mode: mode, session_id: input.session_id, message_id: input.message_id, status: 'active', created_at: Date.now() };
+    const item = { id: `tm_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind: input.kind, description: redactDurableText(input.description), rollback_command: rollbackCommand, rollback_hash: payloadHash(rollbackCommand), rollback_mode: mode, session_id: mode === 'native-revert' ? nativeSession : input.session_id, message_id: mode === 'native-revert' ? nativeMessage : input.message_id, status: 'active', created_at: Date.now() };
     m.vcs.temporary_mutations ??= [];
     m.vcs.temporary_mutations.push(item);
-    appendLedger(m, 'temporary-mutation.registered', { payload: { id: item.id, kind: item.kind, rollback_hash: item.rollback_hash, rollback_mode: mode, session_id: item.session_id } });
+    appendLedger(m, 'temporary-mutation.registered', { payload: { id: item.id, kind: item.kind, rollback_hash: item.rollback_hash, rollback_mode: mode, session_id: item.session_id, message_id: item.message_id } });
     return item;
 }
 export function matchRollback(m, command) { const h = payloadHash(command.trim()); return (m.vcs.temporary_mutations ?? []).find(x => (x.status === 'active' || x.status === 'failed') && (x.rollback_mode ?? 'command') === 'command' && x.rollback_hash === h); }
