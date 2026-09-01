@@ -15,6 +15,7 @@ export declare function createTask(m: MissionState, input: {
     constraints?: string[];
     dependencies?: string[];
     requiredEvidence?: string[];
+    requiredEvidenceOrigin?: MissionTask['requiredEvidenceOrigin'];
     obligationIds?: string[];
     contextReferences?: ContextReferenceDraft[];
     verificationCases?: import('../../contracts/verification-case.js').VerificationCase[];

@@ -9,7 +9,7 @@ export const TASK_EXTERNAL_ACTIONS = EXTERNAL_ACTION_TYPES;
 const STATUS = new Set(TASK_STATUSES);
 const EXTERNAL = new Set(TASK_EXTERNAL_ACTIONS);
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
-const TASK_KEYS = new Set(['id', 'mission_id', 'objective', 'status', 'role', 'category', 'scope', 'constraints', 'dependencies', 'requiredEvidence', 'verification_cases', 'obligation_ids', 'context_artifacts', 'execution_profile', 'gate_ids', 'worker_id', 'result', 'diff_cleanliness', 'external_action_requirements', 'created_at', 'updated_at']);
+const TASK_KEYS = new Set(['id', 'mission_id', 'objective', 'status', 'role', 'category', 'scope', 'constraints', 'dependencies', 'requiredEvidence', 'requiredEvidenceOrigin', 'verification_cases', 'obligation_ids', 'context_artifacts', 'execution_profile', 'gate_ids', 'worker_id', 'result', 'diff_cleanliness', 'external_action_requirements', 'created_at', 'updated_at']);
 const PROFILE_KEYS = new Set(['role', 'category', 'task', 'tools', 'mcp_servers', 'process_lifecycle', 'browser_backend', 'browser_allowed_origins', 'browser_required_origins', 'model', 'model_variant', 'fallback_models', 'fallback_variants', 'fallback_reasons', 'methodologies', 'permission_profile', 'verification_policy', 'max_context_chars', 'max_handoff_chars', 'max_result_chars', 'max_artifacts', 'expected_turns', 'context_overhead']);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function strings(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
@@ -45,7 +45,7 @@ function validProfile(v) {
 export function isTaskContract(v) {
     if (!record(v) || !Object.keys(v).every(k => TASK_KEYS.has(k)) || typeof v.id !== 'string' || typeof v.mission_id !== 'string' || typeof v.objective !== 'string' || typeof v.status !== 'string' || !STATUS.has(v.status) || typeof v.role !== 'string' || typeof v.category !== 'string' || !CATEGORIES.has(v.category))
         return false;
-    if (!strings(v.scope) || !strings(v.constraints) || !strings(v.dependencies) || !taskEvidence(v.requiredEvidence) || (v.verification_cases !== undefined && !verificationCases(v.verification_cases)) || !strings(v.obligation_ids) || !Array.isArray(v.context_artifacts) || !v.context_artifacts.every(isContextReferenceContract) || !strings(v.gate_ids) || !Array.isArray(v.external_action_requirements) || !v.external_action_requirements.every(x => typeof x === 'string' && EXTERNAL.has(x)))
+    if (!strings(v.scope) || !strings(v.constraints) || !strings(v.dependencies) || !taskEvidence(v.requiredEvidence) || (v.requiredEvidenceOrigin !== undefined && !['explicit', 'role-default', 'obligation-derived', 'reconciled'].includes(String(v.requiredEvidenceOrigin))) || (v.verification_cases !== undefined && !verificationCases(v.verification_cases)) || !strings(v.obligation_ids) || !Array.isArray(v.context_artifacts) || !v.context_artifacts.every(isContextReferenceContract) || !strings(v.gate_ids) || !Array.isArray(v.external_action_requirements) || !v.external_action_requirements.every(x => typeof x === 'string' && EXTERNAL.has(x)))
         return false;
     if (v.execution_profile !== undefined && !validProfile(v.execution_profile))
         return false;

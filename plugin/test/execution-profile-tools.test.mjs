@@ -108,6 +108,37 @@ test('repository explorer corrective resume stays read-only without reviewer fin
   assert.doesNotMatch(resume,/ReviewFinding|finding ids MUST use rf-|finding evidence_refs/i)
 })
 
+test('exact repository explorer resume migrates legacy implicit mission verification evidence without replacing task identity',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),`${process.cwd()}/..`,()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),sid='explorer-legacy-evidence-resume',m=store.start(sid,'diagnose then fix parser')
+  assess(store,sid,{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:[EXISTING_REPO_SCOPE],likely_verification:['targeted-tests']})
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+  const first=await runtime.start(m,{objective:'inspect current repository source',role:'repository-explorer',scope:[EXISTING_REPO_SCOPE],obligationIds:[analysis.id]})
+  const task=m.execution.tasks.find(t=>t.id===first.task_id),worker=m.execution.workers.find(w=>w.id===first.worker_id);assert.ok(task);assert.ok(worker);assert.deepEqual(task.requiredEvidence,[])
+  task.requiredEvidence=['targeted-tests'];task.execution_profile.task.required_evidence=['targeted-tests'];delete task.requiredEvidenceOrigin
+  runtime.applyResult(m,worker.id,{status:'NEEDS_CONTEXT',summary:'legacy explorer thinks downstream test execution is missing context',changed_files:[],evidence:[],open_issues:[],needs_context:['implementation worker must run targeted tests']})
+  const resumed=await runtime.resume(m,task.id)
+  assert.equal(resumed.task_id,task.id);assert.equal(resumed.worker_id,worker.id);assert.equal(resumed.session_id,first.session_id);assert.equal(created.length,1)
+  assert.deepEqual(task.requiredEvidence,[]);assert.deepEqual(task.execution_profile.task.required_evidence,[]);assert.equal(task.requiredEvidenceOrigin,'role-default')
+  const prompt=String(prompts[1]?.body?.parts?.[0]?.text??'');assert.match(prompt,/TASK REQUIRED EVIDENCE: none/)
+  assert.ok(m.execution.ledger.some(e=>e.type==='task.resume.evidence-owner-migrated'&&e.task_id===task.id))
+})
+
+test('explicit repository explorer evidence remains authoritative across exact resume',async()=>{
+  const created=[],prompts=[],c=client(created,prompts)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),`${process.cwd()}/..`,()=>resolveHiConfig({}),()=>[],()=>host)
+  const store=new MissionStore(process.cwd()),sid='explorer-explicit-evidence-resume',m=store.start(sid,'diagnose parser with an explicit test request')
+  assess(store,sid,{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',required_capabilities:['repository-analysis','implementation','verification'],likely_targets:[EXISTING_REPO_SCOPE],likely_verification:['targeted-tests']})
+  const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis)
+  const first=await runtime.start(m,{objective:'inspect source and run the explicitly requested targeted check',role:'repository-explorer',scope:[EXISTING_REPO_SCOPE],obligationIds:[analysis.id],requiredEvidence:['targeted-tests']})
+  const task=m.execution.tasks.find(t=>t.id===first.task_id),worker=m.execution.workers.find(w=>w.id===first.worker_id);assert.ok(task);assert.ok(worker);assert.deepEqual(task.requiredEvidence,['targeted-tests']);assert.equal(task.requiredEvidenceOrigin,'explicit')
+  runtime.applyResult(m,worker.id,{status:'NEEDS_CONTEXT',summary:'one bounded retry is required',changed_files:[],evidence:[],open_issues:[],needs_context:['rerun explicit check']})
+  await runtime.resume(m,task.id)
+  assert.deepEqual(task.requiredEvidence,['targeted-tests']);assert.equal(task.requiredEvidenceOrigin,'explicit')
+  const prompt=String(prompts[1]?.body?.parts?.[0]?.text??'');assert.match(prompt,/TASK REQUIRED EVIDENCE: targeted-tests/)
+})
+
 test('repository explorer with no mission ambiguity gets no clearance result contract',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)

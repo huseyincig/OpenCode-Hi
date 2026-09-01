@@ -15,6 +15,7 @@ export interface TaskContract {
     constraints: string[];
     dependencies: string[];
     requiredEvidence: string[];
+    requiredEvidenceOrigin?: 'explicit' | 'role-default' | 'obligation-derived' | 'reconciled';
     verification_cases?: VerificationCase[];
     obligation_ids: string[];
     context_artifacts: unknown[];
