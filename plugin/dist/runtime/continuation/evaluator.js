@@ -76,6 +76,9 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
         setRuntimeNudge(m, instruction, 'contract-ambiguity-repo-first');
         return { decision: 'CONTINUE', reason: 'contract-ambiguity-repo-first', reason_code: 'contract-ambiguity-repo-first', prompt: continuationPrompt(m, instruction) };
     }
+    const semanticAdmission = pre.items.find(x => x.id === 'gate-semantic-assessment' && x.status === 'blocked');
+    if (semanticAdmission)
+        return { decision: 'WAIT', reason: semanticAdmission.reason, reason_code: 'semantic-assessment-pending' };
     const hard = pre.items.find(x => x.status === 'blocked');
     if (hard)
         return { decision: 'USER_ACTION_REQUIRED', reason: `precondition:${hard.id}:${hard.reason}`, reason_code: 'precondition-blocked' };

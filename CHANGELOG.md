@@ -2,6 +2,11 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — semantic assessment admission deadlock
+- Keep the provisional `gate-semantic-assessment` model-resolvable inside the current assistant turn instead of escalating its expected blocked state into a synthetic `HumanDecision` / `waiting-user` mission.
+- Narrowly reconcile only the exact legacy `precondition-blocked` decision produced by `gate-semantic-assessment:semantic-assessment-pending` after a successful non-deferred initial assessment, including on runtime restore, while preserving all genuine authority, permission, verification, and unrelated user-action decisions.
+- Added regressions for internal WAIT admission, exact live healing, and persisted-state healing without widening HumanDecision authority.
+
 ### Fixed — child structured-output provider compatibility
 - Preserve OpenCode native `json_schema` WorkerResult transport as the preferred child path, but when the host proves the exact `tool_choice=required` incompatibility for a routed model/provider, retry that same Task/Worker/session/model once with ordinary text transport instead of immediately replacing the worker or widening model authority.
 - Keep the fallback fail-closed: text output still passes through Hi’s canonical WorkerResult parser/normalizer, the one-shot compatibility attempt is durable per model, repeated incompatibility falls through to the existing bounded authorized model-recovery chain, and explicit model authority is never expanded.

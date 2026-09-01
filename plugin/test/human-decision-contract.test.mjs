@@ -116,3 +116,31 @@ test('operational HumanDecision response never creates or approves Authority sta
   store.beginFollowupSemanticAssessment(m.identity.session_id,'done')
   assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(m.authority.authority,undefined)
 })
+
+
+test('semantic assessment admission is internally waitable and never escalates to HumanDecision',()=>{
+  const store=new MissionStore(),m=store.start('semantic-admission-wait','fix a local bug')
+  const decision=evaluateIdle(m)
+  assert.equal(decision.decision,'WAIT');assert.equal(decision.reason_code,'semantic-assessment-pending')
+  assert.equal(m.authority.human_decision,undefined);assert.equal(m.identity.status,'active')
+})
+
+test('successful semantic assessment heals only the exact synthetic semantic-admission HumanDecision',()=>{
+  const store=new MissionStore(),m=store.start('semantic-admission-heal','fix a local bug')
+  openHumanDecision(m,{semantic_type:'operational_action',reason_code:'precondition-blocked',summary:'precondition:gate-semantic-assessment:semantic-assessment-pending',response_schema:{kind:'external-action'}})
+  assert.equal(m.identity.status,'waiting-user')
+  store.applyInitialSemanticAssessment(m.identity.session_id,{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',continuation_required:false,required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['changed-surface-sanity'],verification_cases:[],nonvisual_request_units:[],capability_request_units:{},likely_targets:['src/a.ts'],mutation_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.equal(m.identity.status,'active');assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(m.authority.human_decision.resolution,'internal-semantic-assessment-completed')
+  assert.ok(m.execution.ledger.some(e=>e.type==='semantic.admission-human-decision-reconciled'))
+})
+
+test('restore heals persisted exact semantic-admission deadlock without clearing unrelated human decisions',()=>{
+  const source=new MissionStore(),m=startAssessedMission(source,'semantic-admission-restore','fix a local bug',{continuation_required:false})
+  openHumanDecision(m,{semantic_type:'operational_action',reason_code:'precondition-blocked',summary:'precondition:gate-semantic-assessment:semantic-assessment-pending',response_schema:{kind:'external-action'}})
+  const restored=new MissionStore();restored.restore([structuredClone(m)])
+  const healed=restored.get(m.identity.session_id);assert.equal(healed.identity.status,'active');assert.equal(healed.authority.human_decision.status,'RESOLVED')
+  const unrelated=new MissionStore(),u=startAssessedMission(unrelated,'semantic-admission-unrelated','fix a local bug',{continuation_required:false})
+  openHumanDecision(u,{semantic_type:'operational_action',reason_code:'precondition-blocked',summary:'precondition:gate-verification:targeted-tests',response_schema:{kind:'external-action'}})
+  const restoredUnrelated=new MissionStore();restoredUnrelated.restore([structuredClone(u)])
+  const kept=restoredUnrelated.get(u.identity.session_id);assert.equal(kept.identity.status,'waiting-user');assert.equal(kept.authority.human_decision.status,'OPEN')
+})

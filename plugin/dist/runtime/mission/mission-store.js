@@ -29,6 +29,16 @@ function outputCapabilityObligations(assessment, pendingText, capability, requir
     return ids.map(id => { const unit = units.get(id); if (!unit)
         throw new Error(`capability_request_units.${capability} contains unknown request unit ${id}`); const unitTargets = technicalTargets(unit.text).filter(target => targetSet.has(target)); return obligation(`${spec.id}-${id}`, spec.kind, `${spec.summary}: [${id}] ${unit.text}`, [], unitTargets, [], [unit]); });
 }
+function reconcileSemanticAssessmentAdmissionDecision(m) {
+    const d = m.authority.human_decision;
+    if (m.identity.semantic_assessment.status !== 'assessed' || m.continuation.awaiting_user_followup || !d || d.status !== 'OPEN' || d.semantic_type !== 'operational_action' || d.reason_code !== 'precondition-blocked' || !d.summary.includes('gate-semantic-assessment:semantic-assessment-pending'))
+        return false;
+    resolveHumanDecision(m, 'internal-semantic-assessment-completed');
+    if (m.identity.status === 'waiting-user')
+        m.identity.status = 'active';
+    appendLedger(m, 'semantic.admission-human-decision-reconciled', { payload: { decision_id: d.decision_id, reason_code: d.reason_code } });
+    return true;
+}
 function ensureRequiredReviewObligation(m) {
     if (!m.execution.verification_policy.requireReview)
         return;
@@ -260,6 +270,7 @@ export class MissionStore {
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
         for (const signal of requiredVerificationMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'verification', reason: signal.reason });
+        reconcileSemanticAssessmentAdmissionDecision(m);
         syncMissionGates(m);
         appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: effectiveAssessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: effectiveAssessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed, technical_targets: m.identity.intent.likelyTargets ?? [], required_material_targets: requiredMaterialTargets, technical_user_verification: explicitUserVerification, technical_verification_ceiling_applied: boundedExplicitVerification, adaptive_verification_policy: verificationResolution.policy } });
         m.identity.updated_at = now;
@@ -582,6 +593,7 @@ export class MissionStore {
                 }
             }
         }
+        reconcileSemanticAssessmentAdmissionDecision(m);
         reconcileSatisfiedTaskArtifacts(m, 'mission-restore');
         syncMissionGates(m);
         m.identity.updated_at = Date.now();
