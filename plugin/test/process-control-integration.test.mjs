@@ -324,6 +324,14 @@ test('native-revert registration fails closed before opening rollback gate when 
   assert.ok(m.execution.ledger.some(e=>e.type==='temporary-mutation.registration-blocked'&&e.payload?.reason==='native-revert-requires-exact-message-id'))
 })
 
+test('native-revert registration binds exact OpenCode ToolContext message identity without model rediscovery',async()=>{
+  const store=new MissionStore(),m=assessed(store,'native-revert-tool-context'),processRuntime={list:()=>[],stopMission:async()=>0}
+  const capabilities=detectOpenCodeCapabilities({session:{revert:async()=>({data:{}})}})
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{revert:async()=>{}},getModels:()=>[],scopedStores:scoped()})
+  const registered=JSON.parse(await toolSurface.hi_temporary_mutation_register.execute({kind:'experiment',description:'temporary edit',native_revert:true},{sessionID:m.identity.session_id,messageID:'msg_host_exact'}))
+  assert.equal(registered.status,'active');assert.equal(registered.session_id,m.identity.session_id);assert.equal(registered.message_id,'msg_host_exact');assert.equal(registered.rollback_command,`native-revert:${m.identity.session_id}:msg_host_exact`)
+})
+
 test('native-revert registration missing session-revert capability is terminal and deduped',async()=>{
   const store=new MissionStore(),m=assessed(store,'no-session-revert'),processRuntime={list:()=>[],stopMission:async()=>0}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:scoped()})
