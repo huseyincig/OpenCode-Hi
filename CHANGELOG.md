@@ -2,6 +2,11 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+### Fixed — explicit deferred-turn Mission continuity
+- Teach the structured semantic assessment gate that `continuation_required=true` when the user explicitly defers named work to a later user turn in the same Mission; ordinary autonomous resume/reconnect remains non-deferred. This prevents a bounded Step 1 from being semantically completed and replaced before its explicitly named Step 2 follow-up.
+- Keep the rule inside the existing host-primary structured assessment contract rather than adding language regexes or a second Mission owner, and preserve the established provider-visible semantic-gate size budget through equivalent prompt compaction.
+- Added regression coverage for the provider-visible continuation rule alongside existing same-Mission deferred-turn and resume lifecycle tests.
+
 ### Fixed — semantic assessment admission deadlock
 - Keep the provisional `gate-semantic-assessment` model-resolvable inside the current assistant turn instead of escalating its expected blocked state into a synthetic `HumanDecision` / `waiting-user` mission.
 - Narrowly reconcile only the exact legacy `precondition-blocked` decision produced by `gate-semantic-assessment:semantic-assessment-pending` after a successful non-deferred initial assessment, including on runtime restore, while preserving all genuine authority, permission, verification, and unrelated user-action decisions.
