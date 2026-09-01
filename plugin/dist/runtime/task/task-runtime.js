@@ -1178,10 +1178,23 @@ export class TaskRuntime {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || !worker.session_id)
                 continue;
+            if (messageKind === 'resume') {
+                worker.generation_at_spawn = m.continuation.generation;
+                worker.parent_mission_id = m.identity.mission_id;
+                const observed = await this.observeWorkerLiveness(m, worker);
+                if (observed.live_status === 'idle' && await this.reconcileIdleAwaitResult(m, worker)) {
+                    worker.semantic_pause_revision = undefined;
+                    appendLedger(m, 'worker.semantic-terminal-result-reconciled', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, session_id: worker.session_id, generation: m.continuation.generation, policy: 'deterministic-host-result-before-model-continuation' } });
+                    resumed++;
+                    continue;
+                }
+            }
             if (task.result && messageKind === 'resume') {
+                worker.generation_at_spawn = m.continuation.generation;
+                worker.parent_mission_id = m.identity.mission_id;
                 worker.semantic_pause_revision = undefined;
                 this.registry.set(worker);
-                appendLedger(m, 'worker.semantic-result-awaits-parent-reconcile', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, result_status: task.result.status, session_id: worker.session_id, policy: 'resume-terminal-result-owner-requires-explicit-parent-reconcile' } });
+                appendLedger(m, 'worker.semantic-result-awaits-parent-reconcile', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, result_status: task.result.status, session_id: worker.session_id, generation: m.continuation.generation, policy: 'resume-terminal-result-owner-requires-explicit-parent-reconcile' } });
                 continue;
             }
             try {

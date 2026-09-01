@@ -8,7 +8,7 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
-import {opencodeChildPort} from './helpers/host-port.mjs'
+import {makeChildSessionPort,opencodeChildPort} from './helpers/host-port.mjs'
 
 function initial(store,id,overrides={}){
   const m=store.start(id,'opaque initial request')
@@ -80,7 +80,30 @@ test('semantic follow-up does not auto-retry a ready child that already returned
   store.applyFollowupSemanticAssessment('terminal-result-parent-reconcile',{material:true,message_kind:'resume',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const resumed=await runtime.resumeAfterSemanticAssessment(m,'resume')
   assert.equal(resumed,0);assert.equal(calls.prompts,0);assert.equal(worker.status,'ready');assert.equal(task.status,'blocked');assert.equal(worker.session_id,'child-existing');assert.equal(task.result.status,'NEEDS_CONTEXT');assert.equal(worker.semantic_pause_revision,undefined)
+  assert.equal(worker.generation_at_spawn,m.continuation.generation)
+  assert.equal(runtime.childCallbackDisposition(m,worker),'accept')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.semantic-result-awaits-parent-reconcile'&&e.task_id===task.id&&e.worker_id===worker.id))
+})
+
+test('semantic resume deterministically reconciles an exact idle child result before model continuation',async()=>{
+  const store=new MissionStore(),m=initial(store,'terminal-result-deterministic-reconcile')
+  const task=createTask(m,{objective:'bounded support task',role:'coder',category:'standard',scope:[],obligationIds:[]})
+  const worker=createWorker(m,task,'p/code');worker.session_id='child-existing';worker.status='ready';task.status='waiting';task.result={status:'NEEDS_CONTEXT',summary:'prior host turn incomplete',changed_files:[],evidence:[],open_issues:[],needs_context:['host result readback pending']}
+  const background=new BackgroundRegistry();background.set(worker)
+  let prompts=0
+  const child=makeChildSessionPort({status:async()=> 'idle',prompt:async()=>{prompts++}})
+  const readAssistantResult=async()=>({text:'',model:{model:'p/code',message_id:'msg-terminal',created_at:Date.now()},structured:{status:'DONE',summary:'exact child completed',changed_files:[],evidence:[],open_issues:[],needs_context:[],context_gap:'none',failure_finding:'none'}})
+  const runtime=new TaskRuntime(child,background,createConcurrencyPolicySource(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,readAssistantResult)
+  await callHook(createChatMessageHook(store),'terminal-result-deterministic-reconcile','continue')
+  worker.semantic_pause_revision=m.identity.semantic_assessment.revision
+  store.applyFollowupSemanticAssessment('terminal-result-deterministic-reconcile',{material:true,message_kind:'resume',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  const resumed=await runtime.resumeAfterSemanticAssessment(m,'resume')
+  assert.equal(resumed,1)
+  assert.equal(prompts,0,'terminal result reconciliation must not send a new child/model prompt')
+  assert.equal(worker.status,'completed');assert.equal(task.status,'completed');assert.equal(task.result.status,'DONE')
+  assert.equal(worker.generation_at_spawn,m.continuation.generation);assert.equal(worker.semantic_pause_revision,undefined)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.await-idle-result-reconciled'&&e.worker_id===worker.id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.semantic-terminal-result-reconciled'&&e.worker_id===worker.id))
 })
 
 test('parent system contract exposes semantic gate while pending and structured constraint after assessment',async()=>{
