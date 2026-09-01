@@ -50,6 +50,30 @@ function admittedVerificationExecution(m, task, tool, args, projectRoot, working
     const command = String(args.command).trim(), targets = m.vcs.changed_files.length ? m.vcs.changed_files : (m.identity.intent.likelyTargets ?? []), required = task.requiredEvidence ?? [];
     return discoverVerificationRoutes(root, targets).some(route => route.command.trim() === command && required.some((kind) => verificationKindSatisfiesRequirement(kind, route.evidenceKind)));
 }
+function rollbackVerificationRecoveryBase(m) {
+    if (m.identity.status !== 'waiting-user' || m.authority.human_decision?.status !== 'OPEN' || m.authority.human_decision.reason_code !== 'precondition-blocked')
+        return false;
+    const open = m.execution.obligations.filter((o) => o.status === 'open');
+    if (!open.length || open.some((o) => o.kind !== 'verification'))
+        return false;
+    if ((m.vcs.temporary_mutations ?? []).some((item) => item.status === 'active' || item.status === 'failed'))
+        return false;
+    const rollbackIndex = m.execution.ledger.findLastIndex((event) => event.type === 'temporary-mutation.rolled-back');
+    if (rollbackIndex < 0)
+        return false;
+    const openIDs = new Set(open.map((o) => o.id));
+    return m.execution.ledger.slice(rollbackIndex).some((event) => event.type === 'obligation.reopened' && event.payload?.owner === 'evidence-freshness' && openIDs.has(event.payload?.obligation));
+}
+function admittedRollbackVerificationRecovery(m, tool, args, projectRoot, workingDirectory) {
+    if (!rollbackVerificationRecoveryBase(m) || tool !== 'bash' || typeof args?.command !== 'string' || !isVerificationCommand(args.command))
+        return false;
+    const root = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
+    if (!root)
+        return false;
+    const required = [...new Set(m.execution.obligations.filter((o) => o.status === 'open' && o.kind === 'verification').flatMap((o) => o.requiredEvidence ?? m.execution.verification_policy.requiredKinds).map((kind) => String(kind)))];
+    const command = String(args.command).trim(), targets = m.vcs.changed_files.length ? m.vcs.changed_files : (m.identity.intent.likelyTargets ?? []);
+    return discoverVerificationRoutes(root, targets).some(route => { const routeCommand = route.command.trim(), exact = routeCommand === command, strongerFullSuite = route.source === 'targeted-test' && routeCommand.startsWith(command + ' -- '); return (exact || strongerFullSuite) && required.some(kind => verificationKindSatisfiesRequirement(String(kind), route.evidenceKind)); });
+}
 function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
     if (role !== 'technical-writer' && role !== 'test-engineer')
         return true;
@@ -80,12 +104,14 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         if (m.identity.status !== 'active' && tool === 'bash' && typeof args?.command === 'string' && (isReleaseCreate(args.command) || isPackagePublish(args.command)))
             assertReleaseChainPrecondition(m, args.command, projectRoot ?? args?.cwd);
         if (m.identity.status !== 'active') {
-            const rollback = tool === 'bash' && typeof args?.command === 'string' ? matchRollback(m, args.command) : undefined, safeInspection = NON_ACTIVE_INSPECTION_TOOLS.has(tool), safeRecovery = NON_ACTIVE_RECOVERY_TOOLS.has(tool) || Boolean(rollback) || exactAuthorityRecovery(m, tool, args);
+            const rollback = tool === 'bash' && typeof args?.command === 'string' ? matchRollback(m, args.command) : undefined, safeInspection = NON_ACTIVE_INSPECTION_TOOLS.has(tool), rollbackVerification = !child && admittedRollbackVerificationRecovery(m, tool, args, projectRoot, workingDirectory), safeRecovery = NON_ACTIVE_RECOVERY_TOOLS.has(tool) || Boolean(rollback) || exactAuthorityRecovery(m, tool, args) || rollbackVerification;
             if (safeInspection)
                 return;
+            if (rollbackVerification)
+                appendLedger(m, 'verification.rollback-recovery-admitted', { payload: { tool, command: String(args?.command ?? '').slice(0, 240), reason: 'resolved-rollback-reopened-verification-only' } });
             if (!safeRecovery) {
                 appendLedger(m, 'tool.lifecycle-admission-blocked', { worker_id: child?.id, payload: { tool, status: m.identity.status, reason: 'mission-non-active', human_decision: m.authority.human_decision?.status === 'OPEN' ? m.authority.human_decision.reason_code : undefined } });
-                throw new Error(`Hi lifecycle guard: mission is ${m.identity.status}; ordinary execution tool '${tool}' is blocked until canonical lifecycle resolution. Only bounded inspection/reconciliation and exact registered rollback/authority recovery are admitted.`);
+                throw new Error(`Hi lifecycle guard: mission is ${m.identity.status}; ordinary execution tool '${tool}' is blocked until canonical lifecycle resolution. Only bounded inspection/reconciliation, exact registered rollback/authority recovery, and exact rollback-reopened verification recovery are admitted.`);
             }
         }
         const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, verificationOnlyChild = Boolean(childTask?.obligation_ids.length && childTask.obligation_ids.every(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification'))), resourceOnlyProcessSupport = isResourceOnlyProcessSupportTask(childTask);

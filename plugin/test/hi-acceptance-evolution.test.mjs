@@ -12,6 +12,7 @@ import { evaluateShellCommand } from '../dist/runtime/process/shell-policy.js'
 import { capabilityProfile } from '../dist/runtime/capabilities/profiles.js'
 import { OPENCODE_REFERENCE_CAPABILITIES,resolveHostCapability } from '../dist/runtime/host/capability-manifest.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
+import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { createTask,createWorker } from '../dist/runtime/worker/worker-runtime.js'
 
 const baseConfig=()=>resolveHiConfigWithReport({},undefined).config
@@ -34,6 +35,31 @@ test('non-active Mission fails closed for ordinary execution while preserving bo
   await hook({sessionID:m.identity.session_id,tool:'hi_temporary_mutation_revert'},{args:{id:'tm-wait'}})
   for(const [tool,args] of [['write',{filePath:'src/a.ts',content:'x'}],['edit',{filePath:'src/a.ts'}],['bash',{command:'printf x > src/a.ts'}],['task',{description:'native bypass'}],['unknown_future_tool',{}]])await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool,args},{args}),/Hi lifecycle guard: mission is waiting-user/)
   assert.ok(m.execution.ledger.filter(e=>e.type==='tool.lifecycle-admission-blocked').length>=5)
+})
+test('resolved rollback admits only bounded verification recovery and completes the same waiting Mission',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-rollback-verify-'));try{
+    mkdirSync(join(root,'src'),{recursive:true});mkdirSync(join(root,'test'),{recursive:true})
+    writeFileSync(join(root,'package.json'),JSON.stringify({name:'rollback-verifier',private:true,type:'module',scripts:{test:'node --test'}}))
+    writeFileSync(join(root,'src','a.js'),'export const a=1\n')
+    writeFileSync(join(root,'test','a.test.mjs'),"import test from 'node:test'; import assert from 'node:assert/strict'; import {a} from '../src/a.js'; test('a',()=>assert.equal(a,1))\n")
+    const store=new MissionStore(root),m=startAssessedMission(store,'rollback-verification-recovery','fix src/a.js and verify',{task_kind:'bug-fix',scope:'local',required_capabilities:['implementation','verification'],likely_targets:['src/a.js'],likely_verification:['targeted-tests']})
+    const {openHumanDecision}=await import('../dist/runtime/human-decision/runtime.js'),{appendLedger}=await import('../dist/runtime/ledger/ledger.js')
+    for(const o of m.execution.obligations){if(o.kind!=='verification'){o.status='closed';o.closedAt=Date.now()}else{o.status='open';o.closedAt=undefined}}
+    m.vcs.changed_files=['src/a.js'];m.execution.evidence.fresh=false
+    m.vcs.temporary_mutations=[{id:'tm-resolved',kind:'experiment',description:'resolved experiment',rollback_command:'true',rollback_hash:'resolved',rollback_mode:'native-revert',status:'rolled-back',created_at:Date.now()-100,resolved_at:Date.now()-50}]
+    appendLedger(m,'temporary-mutation.rolled-back',{payload:{id:'tm-resolved',rollback_mode:'native-revert'}})
+    appendLedger(m,'obligation.reopened',{payload:{obligation:m.execution.obligations.find(o=>o.kind==='verification').id,owner:'evidence-freshness',reason:'claim-linked-evidence-invalidated'}})
+    openHumanDecision(m,{semantic_type:'operational_action',reason_code:'precondition-blocked',summary:'verification must be refreshed after rollback',response_schema:{kind:'external-action'}})
+    const before=createToolBeforeHook(store,undefined,root,root),after=createToolAfterHook(store,undefined,undefined,root,root)
+    await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'npm test'}},{args:{command:'npm test'}})
+    await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'python3 -m pytest'}},{args:{command:'python3 -m pytest'}}),/lifecycle guard/i)
+    await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'write',args:{filePath:'src/a.js',content:'x'}},{args:{filePath:'src/a.js',content:'x'}}),/lifecycle guard/i)
+    await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'npm test'}},{stdout:'1..1\n# pass 1\n# fail 0',metadata:{exit:0}})
+    assert.equal(m.identity.status,'completed')
+    assert.equal(m.execution.obligations.find(o=>o.kind==='verification').status,'closed')
+    assert.equal(m.authority.human_decision?.status,'RESOLVED')
+    assert.ok(m.execution.ledger.some(e=>e.type==='verification.rollback-recovery-completed'))
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 test('stopped and completed Missions reject ordinary mutation at the generic tool boundary',async()=>{
   for(const status of ['stopped','completed']){const store=new MissionStore(),m=startAssessedMission(store,`lifecycle-${status}`,'bounded task',{task_kind:'implementation',scope:'local',required_capabilities:['implementation']});m.identity.status=status;const hook=createToolBeforeHook(store);await hook({sessionID:m.identity.session_id,tool:'hi_status'},{args:{}});await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'write'},{args:{filePath:'src/a.ts',content:'x'}}),new RegExp(`mission is ${status}`))}

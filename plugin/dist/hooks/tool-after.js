@@ -12,6 +12,7 @@ import { assessChangedFileOwnership, assessRequiredTargetCoverage } from '../run
 import { primaryRoleCanDirectImplementation } from '../runtime/roles/catalog.js';
 import { evaluateCompletion } from '../runtime/completion/evaluator.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
+import { resolveHumanDecision } from '../runtime/human-decision/runtime.js';
 import { evidenceProducerAttemptForWorker } from '../runtime/evidence/applicability.js';
 import { captureEvidenceScopeState } from '../runtime/evidence/scope-state.js';
 import { recordToolOperationProgress } from '../runtime/liveness/assessment.js';
@@ -42,6 +43,23 @@ function numericExit(output) { for (const v of [output?.metadata?.exit, output?.
 export function authorityOutcome(output, text) { const exit = numericExit(output); if (exit !== undefined)
     return exit === 0 ? 'success' : 'failure'; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]|timed?\s*out|timeout|transport|connection\s+(?:reset|lost|closed)|econn|socket\s+hang/i.test(text))
     return 'failure'; return 'unknown'; }
+function reconcileRollbackVerificationRecovery(m, store, sid) {
+    if (m.identity.status !== 'waiting-user' || m.authority.human_decision?.status !== 'OPEN' || m.authority.human_decision.reason_code !== 'precondition-blocked')
+        return false;
+    if (!m.execution.ledger.some(event => event.type === 'verification.rollback-recovery-admitted'))
+        return false;
+    if (m.execution.obligations.some(o => o.status === 'open'))
+        return false;
+    if ((m.vcs.temporary_mutations ?? []).some(item => item.status === 'active' || item.status === 'failed'))
+        return false;
+    if (m.execution.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)) || m.execution.processes.some(p => p.status === 'RUNNING'))
+        return false;
+    if (m.execution.blockers.length)
+        return false;
+    resolveHumanDecision(m, 'rollback-verification-recovered');
+    appendLedger(m, 'verification.rollback-recovery-completed', { payload: { reason: 'fresh-verification-restored-after-resolved-rollback' } });
+    return store.complete(sid);
+}
 function reconcileDeterministicDirectImplementation(m, projectRoot) {
     if (m.identity.status !== 'active' || m.execution.adaptive_execution?.path !== 'DIRECT' || m.identity.intent.scope !== 'local' || !['low', 'medium'].includes(m.identity.risk) || !primaryRoleCanDirectImplementation(m.execution.primary_mode))
         return false;
@@ -143,9 +161,10 @@ export function createToolAfterHook(store, background, events, projectRoot, work
         const directReconciled = !child && reconcileDeterministicDirectImplementation(m, evidenceRoot);
         reconcileMethodologyExits(m, evidenceRoot);
         syncMissionGates(m, evidenceRoot);
-        if (directReconciled && evaluateCompletion(m, evidenceRoot).complete)
+        const rollbackVerificationCompleted = !child && reconcileRollbackVerificationRecovery(m, store, String(sid));
+        if (directReconciled && !rollbackVerificationCompleted && evaluateCompletion(m, evidenceRoot).complete)
             store.complete(sid);
         store.updateProgress(m);
-        void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length, direct_reconciled: directReconciled } }));
+        void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length, direct_reconciled: directReconciled, rollback_verification_completed: rollbackVerificationCompleted } }));
     };
 }
