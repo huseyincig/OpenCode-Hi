@@ -519,7 +519,8 @@ export function createHiToolSurface(input) {
                 appendLedger(m, 'verification.worker-admission-blocked', { payload: { reason: 'no-admissible-repo-native-verifier', requested_evidence: requestedTechnical, requested_role: String(input.role ?? ''), routes: control.verification_routes } });
                 return JSON.stringify({ status: 'BLOCKED', reason: 'no-admissible-repo-native-verifier', required_evidence: requestedTechnical, retry_same_start: false, control, instruction: 'No deterministic repo-native verifier is available for the requested technical evidence. Do not invent a test file, verifier command, or generic verifier child. Report the verifier gap; test-source creation requires an explicit test-authoring obligation.' });
             }
-            if (m.execution.adaptive_execution?.path === 'DIRECT' && !m.execution.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')))
+            const explicitTechnicalVerificationOwner = requestedTechnical.length > 0 && (input.obligationIds ?? []).some((id) => m.execution.obligations.some(o => o.id === id && o.kind === 'verification' && o.status === 'open'));
+            if (m.execution.adaptive_execution?.path === 'DIRECT' && !m.execution.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')) && !explicitTechnicalVerificationOwner)
                 return JSON.stringify({ status: 'SKIPPED', reason: 'minimum-sufficient-direct-path: independent reviewer is not required' });
             const started = await tasks.start(m, input);
             return JSON.stringify({ ...started, control: projectControlDecision(m, missionRoot) });
