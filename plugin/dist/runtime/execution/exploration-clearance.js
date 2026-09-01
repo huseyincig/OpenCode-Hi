@@ -34,7 +34,7 @@ export function assessExplorationClearance(projectRoot, m, task, worker, result)
     const base = { applicable: worker.role === 'repository-explorer' && ambiguity !== 'none', ambiguity, source_scope: [], decision_scope: [] };
     if (!base.applicable)
         return { ...base, admitted: false, reason: 'not-applicable' };
-    if (result.status !== 'DONE')
+    if (!['DONE', 'FIX_REQUIRED'].includes(result.status))
         return { ...base, admitted: false, reason: 'result-not-done' };
     if (result.context_gap !== 'none')
         return { ...base, admitted: false, reason: 'context-gap-not-explicitly-resolved' };

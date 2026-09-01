@@ -475,6 +475,10 @@ export class TaskResultReconciler {
         if (effectiveResult.findings?.length)
             materializeReviewFindingRework(m, task, worker, effectiveResult.findings);
         const explorationClearance = assessExplorationClearance(this.projectRoot, m, task, worker, effectiveResult);
+        if (explorationClearance.admitted && worker.role === 'repository-explorer' && effectiveResult.status === 'FIX_REQUIRED') {
+            appendLedger(m, 'exploration.result-normalized', { task_id: task.id, worker_id: worker.id, payload: { from: 'FIX_REQUIRED', to: 'DONE', reason: 'structurally-complete-read-only-exploration', ambiguity: explorationClearance.ambiguity, source_scope: explorationClearance.source_scope.slice(0, 40) } });
+            effectiveResult = { ...effectiveResult, status: 'DONE' };
+        }
         if (explorationClearance.applicable && !explorationClearance.admitted && effectiveResult.status === 'DONE') {
             const marker = `exploration-clearance-unsatisfied:${task.id}:${explorationClearance.reason}`;
             effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', summary: `Repository exploration cannot clear ${explorationClearance.ambiguity} ambiguity yet: ${explorationClearance.reason}.`, open_issues: [...new Set([...effectiveResult.open_issues, marker])], needs_context: [...new Set([...effectiveResult.needs_context, 'exploration-clearance: return DONE only when context_gap=none, no unresolved context/issues remain, and passed source-provenance-evidence names the exact bounded source files inspected and references same-attempt OpenCode read receipts for those files; contract-critical ambiguity also requires passed decision-evidence on that same source-bound scope'])] };

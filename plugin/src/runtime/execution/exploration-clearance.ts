@@ -65,7 +65,7 @@ export function assessExplorationClearance(projectRoot:string,m:MissionState,tas
   const ambiguity:ExplorationClearanceAssessment['ambiguity']=m.identity.intent.ambiguity!=='none'?m.identity.intent.ambiguity:(!freshness.current&&freshness.ambiguity?freshness.ambiguity:'none')
   const base:Pick<ExplorationClearanceAssessment,'applicable'|'ambiguity'|'source_scope'|'decision_scope'>={applicable:worker.role==='repository-explorer'&&ambiguity!=='none',ambiguity,source_scope:[],decision_scope:[]}
   if(!base.applicable)return{...base,admitted:false,reason:'not-applicable'}
-  if(result.status!=='DONE')return{...base,admitted:false,reason:'result-not-done'}
+  if(!['DONE','FIX_REQUIRED'].includes(result.status))return{...base,admitted:false,reason:'result-not-done'}
   if(result.context_gap!=='none')return{...base,admitted:false,reason:'context-gap-not-explicitly-resolved'}
   if(result.needs_context.length)return{...base,admitted:false,reason:'open-context-remains'}
   const sourceClaims=passed(result,'source-provenance-evidence')

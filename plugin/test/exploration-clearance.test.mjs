@@ -53,6 +53,38 @@ test('downstream implementation issue notes do not veto otherwise complete repos
   }finally{rmSync(r,{recursive:true,force:true})}
 })
 
+test('structurally complete repository-explorer FIX_REQUIRED is normalized to DONE when only downstream writer work remains',()=>{
+  const r=root();try{
+    const m=mission(r,'fix-required-handoff'),{task,worker,analysis}=explorer(m),source=sourceClaimWithReceipt(r,m,task,worker)
+    runtime(r).applyResult(m,worker.id,result({
+      status:'FIX_REQUIRED',
+      summary:'Repository analysis is complete; implementation belongs to a write-capable worker.',
+      evidence:[source],
+      open_issues:['bounded implementation remains writer-owned'],
+      needs_context:[],
+      context_gap:'none',
+      failure_finding:'none'
+    }))
+    assert.equal(task.result.status,'DONE')
+    assert.deepEqual(task.result.open_issues,['bounded implementation remains writer-owned'])
+    assert.equal(m.identity.intent.ambiguity,'none')
+    assert.equal(analysis.status,'closed')
+    assert.equal(explorationClearanceFreshness(r,m).current,true)
+    assert.ok(m.execution.ledger.some(e=>e.type==='exploration.result-normalized'&&e.payload?.from==='FIX_REQUIRED'&&e.payload?.to==='DONE'))
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
+test('repository-explorer FIX_REQUIRED remains fail-closed when bounded context is unresolved',()=>{
+  const r=root();try{
+    const m=mission(r,'fix-required-unresolved'),{task,worker,analysis}=explorer(m),source=sourceClaimWithReceipt(r,m,task,worker)
+    runtime(r).applyResult(m,worker.id,result({status:'FIX_REQUIRED',evidence:[source],needs_context:['exact contract branch still unresolved'],context_gap:'iterative'}))
+    assert.equal(task.result.status,'FIX_REQUIRED')
+    assert.notEqual(m.identity.intent.ambiguity,'none')
+    assert.equal(analysis.status,'open')
+    assert.equal(explorationClearanceFreshness(r,m).required,false)
+  }finally{rmSync(r,{recursive:true,force:true})}
+})
+
 test('contract-critical ambiguity requires a scoped decision claim in addition to current source provenance',()=>{
   const r=root();try{const m=mission(r,'critical-missing','contract-critical'),{task,worker}=explorer(m);runtime(r).applyResult(m,worker.id,result({evidence:[sourceClaimWithReceipt(r,m,task,worker)]}));assert.equal(task.result.status,'FIX_REQUIRED');assert.equal(m.identity.intent.ambiguity,'contract-critical');assert.ok(task.result.open_issues.some(x=>x.includes('decision-claim-missing')))}finally{rmSync(r,{recursive:true,force:true})}
 })
