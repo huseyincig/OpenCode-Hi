@@ -12,9 +12,10 @@ import { effectiveExecutionSurface,HI_PROCESS_EXECUTION_TOOL_IDS,promptToolOverr
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
-function client(created=[],prompts=[]){let n=0;return{session:{
+function client(created=[],prompts=[],statusAfterPrompt){let n=0;return{session:{
   create:async req=>{const id=`child-${++n}`;created.push({id,req});return{data:{id}}},
   promptAsync:async req=>{prompts.push(req);return{data:{}}},
+  status:async()=>({data:statusAfterPrompt&&prompts.length?{'child-1':{type:statusAfterPrompt}}:{}}),
   abort:async()=>({data:true}),diff:async()=>({data:[]}),
 }}}
 const host={agent:PACKAGED_HI_AGENTS}
@@ -426,7 +427,7 @@ test('non-process corrective resume does not leak unrelated ProcessContracts',as
 })
 
 test('same-session corrective resume preserves the original execution tool surface and does not spawn a new child',async()=>{
-  const created=[],prompts=[],c=client(created,prompts)
+  const created=[],prompts=[],c=client(created,prompts,'busy')
   const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('s','fix parser bug')
   assess(store,'s',{task_kind:'bug-fix',likely_targets:['src/parser.ts'],likely_verification:['targeted-tests']})

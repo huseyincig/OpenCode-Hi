@@ -988,6 +988,31 @@ export class TaskRuntime {
                 beginWorkerAttempt(oldTask, existing);
                 this.recordModelProjection(existing, nextModel, resumeVariant);
                 await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `TASK REQUIRED EVIDENCE: ${oldTask.requiredEvidence.join(', ') || 'none'}.`, reviewVerdictContract, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT TASK-OWNED FRESH EVIDENCE: ${freshEvidence || 'none'}.`, visualResumeFreshness, sourceRevalidation, processResumeContext, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, isHiReadOnlyChildRole(existing.role) ? (isHiReviewerRole(existing.role) ? (correctionLevel === 1 ? 'Resume from current session context as a read-only verifier/reviewer. Do not mutate repository state. Re-observe or re-verify only; if implementation is required, return the exact blocking ReviewFinding/FIX_REQUIRED claim so a canonical writer can own the correction. Return the structured WorkerResult again; finding ids MUST use rf-* and finding evidence_refs MUST name evidence.kind values from this same result.' : 'Resume the SAME read-only task/session with a materially different verification or observation hypothesis. Do not mutate repository state and do not repeat the failed observation strategy. If implementation is required, return the exact blocking ReviewFinding/FIX_REQUIRED claim for a canonical writer. Return the structured WorkerResult again; finding ids MUST use rf-* and finding evidence_refs MUST name evidence.kind values from this same result.') : (correctionLevel === 1 ? 'Resume from current session context as a read-only analyzer/explorer. Do not mutate repository state. Re-observe or re-read only the bounded task scope. Do not claim reviewer authority or reviewer-only remediation contracts. Return DONE once the bounded analysis/provenance is complete, preserving any required source-provenance-evidence/context_gap contract. For repository exploration, source-provenance scope and cited read receipts must stay inside the canonical task scope; ancillary reads are context only. open_issues/needs_context are only unresolved blockers or missing context for this analysis task—downstream implementation/verification recommendations belong in summary and must not keep analysis open. Return NEEDS_CONTEXT/FIX_REQUIRED only for a genuine unresolved context or contract issue.' : 'Resume the SAME read-only analyzer/explorer task/session with a materially different bounded observation hypothesis. Do not mutate repository state or repeat the failed observation strategy. Do not claim reviewer authority or reviewer-only remediation contracts. Return DONE once the bounded analysis/provenance is complete, preserving any required source-provenance-evidence/context_gap contract. For repository exploration, source-provenance scope and cited read receipts must stay inside the canonical task scope; ancillary reads are context only. open_issues/needs_context are only unresolved blockers or missing context for this analysis task—downstream implementation/verification recommendations belong in summary and must not keep analysis open. Return NEEDS_CONTEXT/FIX_REQUIRED only for a genuine unresolved context or contract issue.')) : (correctionLevel === 1 ? 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again; every evidence claim MUST be nested under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}], never as its own top-level key.' : 'Resume the SAME task/session, but use a materially different corrective hypothesis or action from the prior correction. Do not repeat the failed strategy, restart planning, or create sub-orchestrators. Return the structured WorkerResult again; every evidence claim MUST be nested under evidence:[{kind,summary,scope?,evidence_refs?,pass?,outcome?,reason?}], never as its own top-level key.')].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, taskPromptToolOverrides(oldTask.execution_profile?.tools ?? [], this.getHostConfig(), oldTask.execution_profile?.mcp_servers ?? []), existing.attempt_prompt_message_id);
+                const dispatchEstablished = await this.establishSameSessionDispatch(m, existing, oldTask);
+                if (dispatchEstablished === 'NOT_ESTABLISHED') {
+                    const stopped = await this.abortNativeSession(m, existing.session_id, 'resume-dispatch-not-established', existing.id, oldTask.id);
+                    if (stopped) {
+                        releaseTaskRuntimeReservation(m, existing.id, 'RELEASE');
+                        existing.status = 'ready';
+                        oldTask.status = 'waiting';
+                        existing.restart_reconcile_pending = false;
+                        this.registry.set(existing);
+                        appendLedger(m, 'worker.resume-dispatch-not-established', { task_id: oldTask.id, worker_id: existing.id, payload: { session_id: existing.session_id, attempt: existing.attempt, policy: 'prompt-ack-does-not-prove-native-execution' } });
+                        return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['same-session worker reuse', 'native-dispatch-not-established'], readiness: 'WAIT', preconditions: preflight.items };
+                    }
+                    existing.restart_reconcile_pending = true;
+                    appendLedger(m, 'worker.resume-dispatch-quarantined', { task_id: oldTask.id, worker_id: existing.id, payload: { session_id: existing.session_id, attempt: existing.attempt, reason: 'idle-dispatch-abort-unavailable' } });
+                    return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['same-session worker reuse', 'native-dispatch-quarantined'], readiness: 'WAIT', preconditions: preflight.items };
+                }
+                if (dispatchEstablished === 'UNKNOWN') {
+                    existing.restart_reconcile_pending = true;
+                    appendLedger(m, 'worker.resume-dispatch-quarantined', { task_id: oldTask.id, worker_id: existing.id, payload: { session_id: existing.session_id, attempt: existing.attempt, reason: 'native-liveness-unverified' } });
+                    return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['same-session worker reuse', 'native-dispatch-liveness-unverified'], readiness: 'WAIT', preconditions: preflight.items };
+                }
+                if (dispatchEstablished === 'SETTLED') {
+                    existing.restart_reconcile_pending = false;
+                    return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['same-session worker reuse', 'native-dispatch-terminal-reconciled'], readiness: 'READY', preconditions: preflight.items };
+                }
                 recordRecoveryStrategy(m, { level: correctionLevel, action: 'same-worker-resume' }, 'started', Date.now(), { task_id: oldTask.id, worker_id: existing.id, model: nextModel, failure_signature: hazardBeforeResume.failure_signature });
                 existing.model_variant = resumeVariant;
                 existing.restart_reconcile_pending = false;
@@ -1408,6 +1433,39 @@ export class TaskRuntime {
             }
             catch { }
         return { live_status, progress_observed };
+    }
+    async establishSameSessionDispatch(m, worker, task, graceMs = 500) {
+        if (!worker.session_id)
+            return 'UNKNOWN';
+        const deadline = Date.now() + Math.max(0, Math.min(graceMs, 2_000));
+        let lastStatus = 'unknown';
+        do {
+            try {
+                lastStatus = await this.#child.status(worker.session_id);
+            }
+            catch {
+                lastStatus = 'unknown';
+            }
+            if (lastStatus === 'busy' || lastStatus === 'retry')
+                return 'ACTIVE';
+            if (lastStatus === 'idle' && this.readAssistantResult) {
+                try {
+                    const assistant = await this.readAssistantResult(worker.session_id), expectedParent = worker.attempt_prompt_message_id, observedParent = assistant.model?.parent_id, createdAt = assistant.model?.created_at, currentAttempt = Boolean(expectedParent && observedParent === expectedParent && worker.started_at !== undefined && Number.isFinite(createdAt) && Number(createdAt) >= worker.started_at);
+                    if (currentAttempt) {
+                        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant);
+                        if (settled.applied) {
+                            appendLedger(m, 'worker.resume-dispatch-terminal-reconciled', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, result: settled.wakeResult ?? settled.result?.status ?? 'UNKNOWN' } });
+                            return 'SETTLED';
+                        }
+                    }
+                }
+                catch { }
+            }
+            if (Date.now() >= deadline)
+                break;
+            await new Promise(resolve => setTimeout(resolve, 50));
+        } while (true);
+        return lastStatus === 'idle' ? 'NOT_ESTABLISHED' : 'UNKNOWN';
     }
     async reconcileIdleAwaitResult(m, worker) {
         if (!worker.session_id || worker.generation_at_spawn !== m.continuation.generation || ['completed', 'failed', 'cancelled'].includes(worker.status))

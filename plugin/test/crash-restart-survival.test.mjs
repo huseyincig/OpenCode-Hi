@@ -35,13 +35,13 @@ function persistedBusyWithReservation({session=true}={}){
   return m
 }
 
-function restartHarness(m,{status='unknown',assistant}={}){
-  const calls={aborts:[],prompts:[],reads:0}
-  const statusMap=status==='idle'?{}:{'child-old':{type:status==='unknown'?'mystery':status}}
+function restartHarness(m,{status='unknown',statusAfterPrompt,assistant}={}){
+  const calls={aborts:[],prompts:[],reads:0};let prompted=false
+  const statusMap=value=>value==='idle'?{}:{'child-old':{type:value==='unknown'?'mystery':value}}
   const client={session:{
-    status:async()=>({data:statusMap}),
+    status:async()=>({data:statusMap(prompted&&statusAfterPrompt?statusAfterPrompt:status)}),
     abort:async req=>{calls.aborts.push(req);return{data:true}},
-    promptAsync:async req=>{calls.prompts.push(req);return{data:{}}},
+    promptAsync:async req=>{calls.prompts.push(req);prompted=true;return{data:{}}},
     diff:async()=>({data:[]}),
   }}
   const registry=new BackgroundRegistry();for(const w of m.execution.workers)registry.set(w)
@@ -127,13 +127,25 @@ test('restart opens attempt 2 only after an idle FIX_REQUIRED result is ingested
   const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
   const m=restored.get('parent-1');assert.ok(m)
   const assistant={text:JSON.stringify({status:'FIX_REQUIRED',summary:'one correction remains',changed_files:[],evidence:[],open_issues:['fix-one'],needs_context:[]})}
-  const {runtime,calls}=restartHarness(m,{status:'idle',assistant}),old=m.execution.workers[0]
+  const {runtime,calls}=restartHarness(m,{status:'idle',statusAfterPrompt:'busy',assistant}),old=m.execution.workers[0]
   const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
   assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,1)
   assert.equal(old.attempt,2);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running');assert.equal(m.execution.tasks[0].result?.summary,'one correction remains')
   assert.equal(m.execution.scheduler.reservations.length,1);const reservation=m.execution.scheduler.reservations[0];assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,2);assert.equal(reservation.hostExecutionId,'child-old')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-result-recovered'&&e.payload?.result==='FIX_REQUIRED'))
   assert.match(JSON.stringify(calls.prompts[0]),/corrective resume|one correction remains/i)
+})
+
+test('restart corrective resume does not commit busy/running when prompt_async is acknowledged but native child stays idle',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m)
+  const assistant={text:JSON.stringify({status:'FIX_REQUIRED',summary:'one correction remains',changed_files:[],evidence:[],open_issues:['fix-one'],needs_context:[]})}
+  const {runtime,calls}=restartHarness(m,{status:'idle',statusAfterPrompt:'idle',assistant}),old=m.execution.workers[0],task=m.execution.tasks[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:['src/a.ts'],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:task.obligation_ids})
+  assert.equal(out.worker_id,old.id);assert.equal(out.session_id,'child-old');assert.equal(out.readiness,'WAIT');assert.deepEqual(out.selection_reason,['same-session worker reuse','native-dispatch-not-established'])
+  assert.equal(calls.prompts.length,1);assert.equal(calls.aborts.length,1);assert.equal(old.attempt,2);assert.equal(old.status,'ready');assert.equal(task.status,'waiting');assert.equal(old.restart_reconcile_pending,false)
+  assert.equal(m.execution.scheduler.reservations.length,0,'unestablished async dispatch must not retain false runtime capacity')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.resume-dispatch-not-established'&&e.payload?.session_id==='child-old'&&e.payload?.attempt===2))
 })
 
 test('restart with unverified host status stays quarantined without abort or prompt replay',async()=>{

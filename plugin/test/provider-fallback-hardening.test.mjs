@@ -11,9 +11,9 @@ import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-governor.js'
 import {appendLedger} from '../dist/runtime/ledger/ledger.js'
 
-function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader,hostStatus='busy'){
-  const calls=[],aborts=[]
-  let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]}),status:async()=>({data:{child1:{type:hostStatus}}})};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
+function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader,hostStatus='busy',statusAfterPrompt){
+  const calls=[],aborts=[];let statusReads=0
+  let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]}),status:async()=>{const post=Array.isArray(statusAfterPrompt)?statusAfterPrompt[Math.min(statusReads++,statusAfterPrompt.length-1)]:statusAfterPrompt;return{data:{child1:{type:calls.length&&post?post:hostStatus}}}}};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
   const scheduler=createConcurrencyPolicySource(()=>({global:4,providers:{},models:{}}))
   const activityReader=assistantResultReader===null?undefined:(assistantResultReader??(async()=>({text:''})))
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>models,()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,activityReader)
@@ -357,7 +357,7 @@ test('normal task_id correction switches to a fresh recovery-only model when the
     {id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced']},
     {id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']},
   ]
-  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle')
+  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle',['busy','idle'])
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
   worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.requested_model=undefined
   task.result={status:'FIX_REQUIRED',summary:'contract correction required',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']}
@@ -378,7 +378,7 @@ test('normal task_id correction switches to a fresh recovery-only model when the
 
 test('same failure with no authorized recovery model refuses a second same-model corrective prompt',async()=>{
   const models=[{id:'p/primary',provider:'p',writeCapable:true,tags:['coding']}]
-  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle')
+  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle','busy')
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
   worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=[];worker.requested_model=undefined
   task.result={status:'FIX_REQUIRED',summary:'contract correction required',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']}
