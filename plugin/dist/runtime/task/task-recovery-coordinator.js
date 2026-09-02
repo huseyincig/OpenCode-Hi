@@ -361,6 +361,18 @@ export class TaskRecoveryCoordinator {
         worker.last_runtime_failure_kind = failure.kind;
         worker.runtime_fallback_exhausted = false;
         appendLedger(m, 'worker.failure.classified', { task_id: task?.id, worker_id: worker.id, payload: { kind: failure.kind, stagnation: failure.stagnation, retryable: failure.retryable, reason: failure.reason } });
+        if (failure.kind === 'host-interruption' && worker.session_id && task && taskOwnsUnresolvedRecoveryWork(m, worker)) {
+            releaseTaskRuntimeReservation(m, worker.id);
+            worker.runtime_recovery_pending = false;
+            worker.runtime_fallback_exhausted = false;
+            worker.restart_reconcile_pending = true;
+            worker.status = 'ready';
+            task.status = 'waiting';
+            task.updated_at = Date.now();
+            this.registry.set(worker);
+            appendLedger(m, 'worker.host-interruption.recoverable', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, generation: worker.generation_at_spawn ?? m.continuation.generation, reason: failure.reason, policy: 'preserve-exact-owner-and-reconcile-native-session-before-resume' } });
+            return 'RECOVERED';
+        }
         if (failure.kind === 'provider-transport' && failure.reason === 'opencode-required-tool-choice-compatibility-fallback-eligible' && worker.session_id && task) {
             const model = worker.model ?? 'host-default', alreadyTried = (worker.text_transport_fallback_models ?? []).includes(model);
             if (!alreadyTried) {

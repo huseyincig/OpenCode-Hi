@@ -432,3 +432,21 @@ test('canonical STALLED assessment on quiescent exact session unlocks bounded sa
   const recovery=await runtime.recoverStalledExecution(m,assessment)
   assert.equal(recovery.disposition,'RECOVERED');assert.equal(recovery.reason,'canonical-stall-quiescent-resume');assert.equal(worker.session_id,'child1');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(aborts.length,0);assert.equal(calls.length,1)
 })
+
+test('parent-host MessageAbortedError preserves exact owner for restart reconciliation instead of terminal failure',async()=>{
+  const models=[{id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle','idle')
+  const task=m.execution.tasks[0],worker=m.execution.workers[0]
+  const taskID=task.id,workerID=worker.id,sessionID=worker.session_id
+  const settled=await runtime.settleHostIdleRuntimeError(m,worker,{name:'MessageAbortedError',message:'Aborted'})
+  assert.equal(settled.wakeResult,'HOST_INTERRUPTION')
+  assert.equal(settled.failureKind,'host-interruption')
+  assert.equal(task.id,taskID);assert.equal(worker.id,workerID);assert.equal(worker.session_id,sessionID)
+  assert.equal(task.status,'waiting');assert.equal(worker.status,'ready');assert.equal(worker.restart_reconcile_pending,true)
+  assert.notEqual(task.result?.status,'FAILED');assert.equal(worker.runtime_recovery_attempt??0,0)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.host-interruption.recoverable'&&e.worker_id===workerID&&e.payload?.session_id===sessionID))
+  const resumed=await runtime.resume(m,taskID)
+  assert.equal(resumed.task_id,taskID);assert.equal(resumed.worker_id,workerID);assert.equal(resumed.session_id,sessionID)
+  assert.notEqual(m.execution.tasks[0].status,'failed');assert.notEqual(m.execution.workers[0].status,'failed')
+  assert.ok(calls.length<=1,'host interruption recovery must not create provider/model fallback execution')
+})

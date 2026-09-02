@@ -1,4 +1,4 @@
-export type WorkerFailureClass = 'provider-transport' | 'permission' | 'environment' | 'tool-incompatibility' | 'context-overflow' | 'reasoning-task' | 'unknown';
+export type WorkerFailureClass = 'provider-transport' | 'host-interruption' | 'permission' | 'environment' | 'tool-incompatibility' | 'context-overflow' | 'reasoning-task' | 'unknown';
 export interface ClassifiedWorkerFailure {
     kind: WorkerFailureClass;
     stagnation: boolean;

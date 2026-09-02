@@ -9,7 +9,7 @@ export function classifyWorkerFailure(error) {
     if (name === 'ContextOverflowError' || /context.*(limit|overflow|length)|too many tokens|maximum context/.test(text))
         return { kind: 'context-overflow', stagnation: false, retryable: true, reason: name === 'ContextOverflowError' ? 'opencode-terminal-context-overflow' : 'context-capacity-failure' };
     if (name === 'MessageAbortedError')
-        return { kind: 'unknown', stagnation: false, retryable: false, reason: 'opencode-message-aborted' };
+        return { kind: 'host-interruption', stagnation: false, retryable: true, reason: 'opencode-message-aborted' };
     if (name === 'APIError') {
         // OpenCode's native json_schema WorkerResult transport requires tool_choice=required.
         // Provider inventory exposes generic tool-call capability but not supported tool-choice

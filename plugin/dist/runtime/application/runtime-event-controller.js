@@ -168,7 +168,7 @@ export class RuntimeEventController {
             const m = childMission;
             if (!m)
                 return;
-            const afterChildWake = async (result, source, detail, failureKind) => { appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result, event: ev.rawType } }); if (result === 'RUNTIME_FALLBACK')
+            const afterChildWake = async (result, source, detail, failureKind) => { appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result, event: ev.rawType } }); if (result === 'RUNTIME_FALLBACK' || result === 'HOST_INTERRUPTION')
                 return; const siblingPending = tasks.pendingExecutionWorkers(m, child.id); if (failureKind === 'permission') {
                 m.continuation.stagnation_count = 0;
                 openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${(detail ?? '').slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });

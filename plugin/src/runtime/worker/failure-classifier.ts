@@ -1,4 +1,4 @@
-export type WorkerFailureClass='provider-transport'|'permission'|'environment'|'tool-incompatibility'|'context-overflow'|'reasoning-task'|'unknown'
+export type WorkerFailureClass='provider-transport'|'host-interruption'|'permission'|'environment'|'tool-incompatibility'|'context-overflow'|'reasoning-task'|'unknown'
 export interface ClassifiedWorkerFailure{kind:WorkerFailureClass;stagnation:boolean;retryable:boolean;reason:string}
 
 function structured(error:unknown):{name:string;text:string;isRetryable?:boolean;statusCode?:number}{
@@ -10,7 +10,7 @@ export function classifyWorkerFailure(error:unknown):ClassifiedWorkerFailure{
   const observed=structured(error),name=observed.name,text=observed.text
   if(name==='ProviderAuthError'||/permission|denied|forbidden|unauthori[sz]ed|approval|oauth|mfa/.test(text))return{kind:'permission',stagnation:false,retryable:false,reason:name==='ProviderAuthError'?'opencode-provider-auth-error':'permission-or-authority-boundary'}
   if(name==='ContextOverflowError'||/context.*(limit|overflow|length)|too many tokens|maximum context/.test(text))return{kind:'context-overflow',stagnation:false,retryable:true,reason:name==='ContextOverflowError'?'opencode-terminal-context-overflow':'context-capacity-failure'}
-  if(name==='MessageAbortedError')return{kind:'unknown',stagnation:false,retryable:false,reason:'opencode-message-aborted'}
+  if(name==='MessageAbortedError')return{kind:'host-interruption',stagnation:false,retryable:true,reason:'opencode-message-aborted'}
   if(name==='APIError'){
     // OpenCode's native json_schema WorkerResult transport requires tool_choice=required.
     // Provider inventory exposes generic tool-call capability but not supported tool-choice
