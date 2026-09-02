@@ -525,13 +525,15 @@ export class MissionStore {
             for (const w of m.execution.workers) {
                 const t = m.execution.tasks.find(x => x.id === w.task_id), legacyAbortText = [t?.result?.summary, ...(t?.result?.open_issues ?? [])].filter(Boolean).join(' '), legacyHostAbort = w.status === 'failed' && t?.status === 'failed' && t.result?.status === 'FAILED' && Boolean(w.session_id) && (w.last_runtime_failure_kind === 'unknown' || w.last_runtime_failure_kind === 'host-interruption') && /MessageAbortedError\s*:\s*Aborted/i.test(legacyAbortText);
                 if (legacyHostAbort) {
+                    const historicalResult = t.result;
                     w.status = 'ready';
                     w.completed_at = undefined;
                     w.last_runtime_failure_kind = 'host-interruption';
                     w.restart_reconcile_pending = true;
                     w.generation_at_spawn = m.continuation.generation;
                     t.status = 'waiting';
-                    appendLedger(m, 'worker.host-interruption.legacy-restored', { task_id: t.id, worker_id: w.id, payload: { session_id: w.session_id, attempt: w.attempt, generation: w.generation_at_spawn, policy: 'reopen-exact-pre-fix-abort-owner-for-native-reconciliation' } });
+                    t.result = { status: 'NEEDS_CONTEXT', summary: 'A legacy parent-host interruption was previously persisted as terminal failure; reconcile the existing child session before continuing.', changed_files: historicalResult.changed_files ?? [], evidence: historicalResult.evidence ?? [], open_issues: historicalResult.open_issues ?? [], needs_context: ['runtime-host-interruption-reconcile'] };
+                    appendLedger(m, 'worker.host-interruption.legacy-restored', { task_id: t.id, worker_id: w.id, payload: { session_id: w.session_id, attempt: w.attempt, generation: w.generation_at_spawn, policy: 'reopen-exact-pre-fix-abort-owner-for-native-reconciliation', historical_result_status: historicalResult.status, historical_result_summary: historicalResult.summary, historical_open_issues: historicalResult.open_issues } });
                 }
             }
             for (const w of m.execution.workers) {

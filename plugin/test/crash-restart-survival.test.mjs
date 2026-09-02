@@ -62,8 +62,13 @@ test('restore reopens only the exact legacy MessageAbortedError owner poisoned b
   const rw=m.execution.workers.find(x=>x.id===workerID),rt=m.execution.tasks.find(x=>x.id===taskID);assert.ok(rw&&rt)
   assert.equal(rw.status,'ready');assert.equal(rt.status,'waiting');assert.equal(rw.session_id,sessionID);assert.equal(rw.attempt,6)
   assert.equal(rw.last_runtime_failure_kind,'host-interruption');assert.equal(rw.restart_reconcile_pending,true);assert.equal(rw.completed_at,undefined)
-  assert.equal(rt.result?.status,'FAILED','historical terminal result is preserved as provenance until native reconciliation settles it')
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.host-interruption.legacy-restored'&&e.worker_id===workerID&&e.task_id===taskID))
+  assert.equal(rt.result?.status,'NEEDS_CONTEXT','legacy terminal poison is normalized so the exact task remains resumable after native reconciliation')
+  assert.deepEqual(rt.result?.needs_context,['runtime-host-interruption-reconcile'])
+  assert.deepEqual(rt.result?.open_issues,['MessageAbortedError: Aborted'])
+  const restoredEvent=m.execution.ledger.find(e=>e.type==='worker.host-interruption.legacy-restored'&&e.worker_id===workerID&&e.task_id===taskID)
+  assert.ok(restoredEvent)
+  assert.equal(restoredEvent.payload?.historical_result_status,'FAILED')
+  assert.equal(restoredEvent.payload?.historical_result_summary,'MessageAbortedError: Aborted')
 })
 
 test('unclean restart quarantines in-flight child, resets ephemeral permission wait, and invalidates evidence',()=>{
