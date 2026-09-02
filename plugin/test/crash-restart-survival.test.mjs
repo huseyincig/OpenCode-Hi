@@ -51,6 +51,21 @@ function restartHarness(m,{status='unknown',statusAfterPrompt,assistant}={}){
   return{runtime,registry,scheduler,calls}
 }
 
+
+test('restore reopens only the exact legacy MessageAbortedError owner poisoned by pre-fix terminal semantics',()=>{
+  const legacy=persistedBusy(),worker=legacy.execution.workers[0],task=legacy.execution.tasks[0]
+  worker.status='failed';worker.completed_at=Date.now();worker.last_runtime_failure_kind='unknown';worker.attempt=6
+  task.status='failed';task.result={status:'FAILED',summary:'MessageAbortedError: Aborted',changed_files:[],evidence:[],open_issues:['MessageAbortedError: Aborted'],needs_context:[]}
+  const taskID=task.id,workerID=worker.id,sessionID=worker.session_id
+  const restored=new MissionStore();restored.restore([legacy],false)
+  const m=restored.get('parent-1');assert.ok(m)
+  const rw=m.execution.workers.find(x=>x.id===workerID),rt=m.execution.tasks.find(x=>x.id===taskID);assert.ok(rw&&rt)
+  assert.equal(rw.status,'ready');assert.equal(rt.status,'waiting');assert.equal(rw.session_id,sessionID);assert.equal(rw.attempt,6)
+  assert.equal(rw.last_runtime_failure_kind,'host-interruption');assert.equal(rw.restart_reconcile_pending,true);assert.equal(rw.completed_at,undefined)
+  assert.equal(rt.result?.status,'FAILED','historical terminal result is preserved as provenance until native reconciliation settles it')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.host-interruption.legacy-restored'&&e.worker_id===workerID&&e.task_id===taskID))
+})
+
 test('unclean restart quarantines in-flight child, resets ephemeral permission wait, and invalidates evidence',()=>{
   const restored=new MissionStore(); restored.restore([persistedBusy()],true)
   const m=restored.get('parent-1'); assert.ok(m)
