@@ -602,6 +602,12 @@ export class MissionStore {
                 }
             }
         }
+        const reopenableReviews = m.execution.obligations.filter(o => o.kind === 'review' && o.status === 'closed' && (o.requiredEvidence ?? []).length > 0 && (o.requiredEvidence ?? []).some(kind => !m.execution.evidence.items.some(e => !e.invalidated_at && e.kind === kind && (e.obligation_ids ?? []).includes(o.id))));
+        for (const o of reopenableReviews) {
+            o.status = 'open';
+            o.closedAt = undefined;
+            appendLedger(m, 'obligation.restore-reopened', { payload: { obligation_id: o.id, kind: o.kind, reason: 'closed review obligation lacks current bound required evidence' } });
+        }
         reconcileSemanticAssessmentAdmissionDecision(m);
         reconcileSatisfiedTaskArtifacts(m, 'mission-restore');
         syncMissionGates(m);

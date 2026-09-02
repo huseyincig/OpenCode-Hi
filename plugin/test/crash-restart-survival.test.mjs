@@ -228,3 +228,14 @@ test('unclean restart reopens a closed review obligation when its required revie
   assert.ok(m.execution.evidence.items.find(e=>e.id==='e-review')?.invalidated_at)
   assert.ok(m.execution.ledger.some(e=>e.type==='obligation.crash-reopened'&&e.payload?.obligation_id==='o-high-assurance'))
 })
+
+test('restore repairs a previously persisted closed review obligation whose bound evidence was already invalidated',()=>{
+  const persisted=persistedBusy()
+  persisted.execution.obligations.push({id:'o-high-assurance',kind:'review',summary:'Fresh independent review',status:'closed',requiredEvidence:['review-evidence'],closedAt:Date.now()-1000})
+  persisted.execution.evidence.items.push({id:'e-review-old',kind:'review-evidence',summary:'old invalid review',scope:['src/a.ts'],source:'qa-reviewer',observed_at:Date.now()-500,invalidated_at:Date.now()-100,pass:true,outcome:'passed',obligation_ids:['o-high-assurance']})
+  const restored=new MissionStore();restored.restore([persisted],false)
+  const m=restored.get('parent-1');assert.ok(m)
+  const review=m.execution.obligations.find(o=>o.id==='o-high-assurance');assert.ok(review)
+  assert.equal(review.status,'open');assert.equal(review.closedAt,undefined)
+  assert.ok(m.execution.ledger.some(e=>e.type==='obligation.restore-reopened'&&e.payload?.obligation_id==='o-high-assurance'))
+})
