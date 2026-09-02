@@ -27,6 +27,11 @@ function clientWithProviderShape(raw){
   }
 }
 
+test('provider lifecycle refresh wakes durable queued work after inventory becomes available',()=>{
+  const source=readFileSync(new URL('../src/runtime/application/runtime-event-controller.ts',import.meta.url),'utf8')
+  assert.match(source,/refreshRuntimeInventory=async\(reason:string\)=>\{await host\.refreshRuntimeInventory\(reason\);tasks\.wakeQueued\(\);await host\.log/)
+})
+
 test('runtime inventory exposes only models from OpenCode connected providers when connected set is present',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-connected-provider-'))
   const raw={

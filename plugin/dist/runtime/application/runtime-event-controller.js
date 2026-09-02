@@ -37,7 +37,7 @@ export class RuntimeEventController {
     async handle(ev) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
         const { store, persistence, tasks, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
-        const refreshRuntimeInventory = async (reason) => { await host.refreshRuntimeInventory(reason); await host.log('debug', 'Hi refreshed OpenCode-owned runtime model inventory', { reason, models: host.getModels().length, persisted_inferred_role_models: false }); };
+        const refreshRuntimeInventory = async (reason) => { await host.refreshRuntimeInventory(reason); tasks.wakeQueued(); await host.log('debug', 'Hi refreshed OpenCode-owned runtime model inventory', { reason, models: host.getModels().length, persisted_inferred_role_models: false }); };
         const executeTaskRecovery = async (m, reasonCode, reason) => { const directive = taskRecoveryDirective(reasonCode, reason); if (!directive)
             return false; if (!await tasks.recoverStagnation(m, directive.level, directive.action))
             return false; store.updateProgress(m); return true; };
