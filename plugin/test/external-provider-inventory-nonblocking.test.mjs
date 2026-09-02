@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {mkdtempSync,rmSync} from 'node:fs'
+import {mkdtempSync,rmSync,readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import HiPlugin from '../dist/plugin.js'
@@ -29,4 +29,11 @@ test('chat.message does not block on unresolved native provider inventory', asyn
   assert.match(String(status),/Hi:/)
   await hooks.dispose?.()
   rmSync(root,{recursive:true,force:true})
+})
+
+
+test('provider inventory refresh completion schedules a second durable queue wake without blocking chat.message', async()=>{
+  const source=readFileSync(new URL('../src/opencode/open-code-hooks.ts',import.meta.url),'utf8')
+  assert.match(source,/refreshRuntimeInventory\('chat-message'\)\.then\(\(\)=>tasks\.wakeQueued\(\)\)\.catch\(\(\)=>\{\}\)/)
+  assert.match(source,/createChatMessageHook[\s\S]*tasks\.wakeQueued\(\)/)
 })

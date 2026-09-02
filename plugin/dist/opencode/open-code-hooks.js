@@ -39,7 +39,7 @@ export function createOpenCodeHooks(input) {
                 return;
             }
             if (!host.getModels().length)
-                void host.refreshRuntimeInventory('chat-message');
+                void host.refreshRuntimeInventory('chat-message').then(() => tasks.wakeQueued()).catch(() => { });
             await createChatMessageHook(store, async (sid, text) => { const m = store.get(sid); if (!m)
                 return; const workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, preview: text.slice(0, 180) } }); }, humanDecisionTransport)(input, output);
             tasks.wakeQueued();
