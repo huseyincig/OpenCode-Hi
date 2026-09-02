@@ -88,6 +88,9 @@ function canonicalRoleForTask(m, routedRole, explicit = [], requestedRole = '') 
     if (owners.length === 1)
         return owners[0];
     if (requestedRole && isHiChildRole(requestedRole)) {
+        const explicitOwnerAmbiguous = obligations.length > 0 && owners.length === 0 && obligations.every(o => roleCanOwnObligation(requestedRole, o.kind));
+        if (explicitOwnerAmbiguous)
+            return requestedRole;
         const exactOpenOwner = m.execution.obligations.some(o => o.status === 'open' && ownerForObligation(m, o.kind) === requestedRole);
         if (exactOpenOwner)
             return requestedRole;
@@ -1084,6 +1087,11 @@ export class TaskRuntime {
             appendLedger(m, 'task.resume.evidence-owner-migrated', { task_id: task.id, worker_id: worker.id, payload: { role: task.role, removed_evidence: removedEvidence, authoritative_evidence: [], policy: 'legacy-implicit-mission-verification-role-default-reconciled' } });
         }
         if (!worker.session_id) {
+            if (worker.status === 'queued' && task.status === 'queued') {
+                this.rehydrateQueued(m);
+                this.drainQueue();
+                return { task_id: task.id, worker_id: worker.id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: ['accepted-sessionless-queued-task:exact-identity-rehydrated'], readiness: 'WAIT', preconditions: [] };
+            }
             const recovered = await this.#recovery.resumeBlockedProviderFailure(m, worker.id);
             if (recovered)
                 return { task_id: task.id, worker_id: worker.id, session_id: worker.session_id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: ['provider-terminal-recovery:bounded-automatic-candidate'], readiness: 'READY', preconditions: [] };

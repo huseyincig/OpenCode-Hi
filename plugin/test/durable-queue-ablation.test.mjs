@@ -123,3 +123,29 @@ test('safety: material verification follow-up still invalidates a sessionless qu
   assert.equal(queuedTask.status,'cancelled');assert.equal(queuedWorker.status,'cancelled');assert.equal(rt.queueDepth(),0);assert.equal(created.length,1)
   assert.equal(m.execution.workers.find(w=>w.id===first.worker_id)?.status,'busy')
 })
+
+
+test('exact task_id resume preserves an accepted sessionless queued Task/Worker instead of requiring a host session or replacement',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-exact-resume','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
+  m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
+  const created=[],rt=runtime(created),first=await rt.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
+  assert.equal(first.readiness,'READY');assert.equal(second.readiness,'WAIT');assert.deepEqual(created,['child-1'])
+  const task=m.execution.tasks.find(t=>t.id===second.task_id),worker=m.execution.workers.find(w=>w.id===second.worker_id);assert.ok(task&&worker);assert.equal(worker.session_id,undefined)
+  const resumed=await rt.resume(m,second.task_id)
+  assert.equal(resumed.task_id,second.task_id);assert.equal(resumed.worker_id,second.worker_id);assert.equal(resumed.readiness,'WAIT');assert.match(resumed.selection_reason.join(' '),/exact-identity-rehydrated/)
+  assert.equal(m.execution.tasks.filter(t=>t.id===second.task_id).length,1);assert.equal(m.execution.workers.filter(w=>w.id===second.worker_id).length,1)
+  rt.applyResult(m,first.worker_id,{status:'DONE',summary:'first done',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  await new Promise(resolve=>setImmediate(resolve))
+  assert.equal(task.status,'running');assert.equal(worker.status,'busy');assert.equal(worker.session_id,'child-2');assert.deepEqual(created,['child-1','child-2'])
+})
+
+test('explicit compatible role owns an owner-ambiguous verification obligation and preserves obligation evidence',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'verification-role-owner','fix bounded bug',{scope:'multi-file',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['changed-surface-sanity']})
+  for(const o of m.execution.obligations)if(o.kind!=='verification'){o.status='closed';o.closedAt=Date.now()}
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);verification.status='open';verification.requiredEvidence=['changed-surface-sanity']
+  const created=[],rt=runtime(created)
+  const started=await rt.start(m,{objective:'run existing verification only',role:'test-engineer',scope:['src/a.ts'],requiredEvidence:['changed-surface-sanity'],obligationIds:[verification.id]})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id);assert.ok(task)
+  assert.equal(task.role,'test-engineer');assert.deepEqual(task.obligation_ids,[verification.id]);assert.deepEqual(task.requiredEvidence,['changed-surface-sanity']);assert.equal(task.requiredEvidenceOrigin,'explicit')
+  assert.notEqual(task.role,'repository-explorer')
+})

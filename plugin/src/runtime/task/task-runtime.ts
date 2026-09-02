@@ -85,6 +85,8 @@ function canonicalRoleForTask(m:MissionState,routedRole:string,explicit:string[]
   if(owners.length>1)throw new Error(`Task spans multiple canonical role owners (${owners.join(', ')}); decompose the obligations into separate hi_task_start calls.`)
   if(owners.length===1)return owners[0]
   if(requestedRole&&isHiChildRole(requestedRole)){
+    const explicitOwnerAmbiguous=obligations.length>0&&owners.length===0&&obligations.every(o=>roleCanOwnObligation(requestedRole,o.kind))
+    if(explicitOwnerAmbiguous)return requestedRole
     const exactOpenOwner=m.execution.obligations.some(o=>o.status==='open'&&ownerForObligation(m,o.kind)===requestedRole)
     if(exactOpenOwner)return requestedRole
     const hardVisual=m.identity.intent.requiredCapabilities.includes('visual-qa')||m.identity.intent.requiredCapabilities.includes('visual-review')
@@ -445,7 +447,13 @@ export class TaskRuntime{
     if(legacyImplicitExplorerEvidence){
       const removedEvidence=[...task.requiredEvidence];task.requiredEvidence=[];if(task.execution_profile)task.execution_profile.task.required_evidence=[];task.requiredEvidenceOrigin='role-default';task.updated_at=Date.now();worker.fingerprint=workerFingerprint(task.role,task.category,worker.model,m.identity.intent.taskKind,task.objective,{scope:task.scope,constraints:task.constraints,dependencies:task.dependencies,requiredEvidence:task.requiredEvidence,obligationIds:task.obligation_ids});worker.updated_at=task.updated_at;appendLedger(m,'task.resume.evidence-owner-migrated',{task_id:task.id,worker_id:worker.id,payload:{role:task.role,removed_evidence:removedEvidence,authoritative_evidence:[],policy:'legacy-implicit-mission-verification-role-default-reconciled'}})
     }
-    if(!worker.session_id){const recovered=await this.#recovery.resumeBlockedProviderFailure(m,worker.id);if(recovered)return{task_id:task.id,worker_id:worker.id,session_id:worker.session_id,model:worker.model,methodologies:worker.selected_methodologies,selection_reason:['provider-terminal-recovery:bounded-automatic-candidate'],readiness:'READY',preconditions:[]};throw new Error(`Hi task ${taskID} has no reusable child session`)}
+    if(!worker.session_id){
+      if(worker.status==='queued'&&task.status==='queued'){
+        this.rehydrateQueued(m);this.drainQueue()
+        return{task_id:task.id,worker_id:worker.id,model:worker.model,methodologies:worker.selected_methodologies,selection_reason:['accepted-sessionless-queued-task:exact-identity-rehydrated'],readiness:'WAIT',preconditions:[]}
+      }
+      const recovered=await this.#recovery.resumeBlockedProviderFailure(m,worker.id);if(recovered)return{task_id:task.id,worker_id:worker.id,session_id:worker.session_id,model:worker.model,methodologies:worker.selected_methodologies,selection_reason:['provider-terminal-recovery:bounded-automatic-candidate'],readiness:'READY',preconditions:[]};throw new Error(`Hi task ${taskID} has no reusable child session`)
+    }
     if(worker.status!=='ready'||!task.result||!['FIX_REQUIRED','NEEDS_CONTEXT','BLOCKED'].includes(task.result.status))throw new Error(`Hi task ${taskID} is not resumable from status ${task.status}/${task.result?.status??'none'}`)
     return this.start(m,{objective:task.objective,role:task.role,category:task.category,scope:[...task.scope],dependencies:[...task.dependencies],requiredEvidence:[...task.requiredEvidence],obligationIds:[...task.obligation_ids],model:worker.model,modelVariant:worker.model_variant,constraints:[...task.constraints],mcpServers:[...(task.execution_profile?.mcp_servers??[])],browserBackend:task.execution_profile?.browser_backend,browserAllowedOrigins:[...(task.execution_profile?.browser_allowed_origins??[])],processLifecycle:task.execution_profile?.process_lifecycle===true,resumeTaskId:task.id})
   }
