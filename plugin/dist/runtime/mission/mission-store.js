@@ -581,15 +581,24 @@ export class MissionStore {
                 if (pendingBefore > 0)
                     appendLedger(m, 'permission.crash-reset', { payload: { cleared: pendingBefore, reason: 'permission requests are process-ephemeral and must be re-established' } });
                 let invalidated = 0;
+                const invalidatedKinds = new Set();
                 for (const e of m.execution.evidence.items) {
                     if (!e.invalidated_at) {
                         e.invalidated_at = now;
                         invalidated++;
+                        invalidatedKinds.add(e.kind);
                     }
                 }
                 if (invalidated) {
                     m.execution.evidence.fresh = false;
                     appendLedger(m, 'evidence.crash-invalidated', { payload: { count: invalidated, reason: 'source/runtime state identity must be revalidated after unclean restart' } });
+                    for (const o of m.execution.obligations) {
+                        if (o.kind !== 'review' || o.status !== 'closed' || !(o.requiredEvidence ?? []).some(kind => invalidatedKinds.has(kind)))
+                            continue;
+                        o.status = 'open';
+                        o.closedAt = undefined;
+                        appendLedger(m, 'obligation.crash-reopened', { payload: { obligation_id: o.id, kind: o.kind, reason: 'required review evidence was invalidated by unclean restart', invalidated_evidence: (o.requiredEvidence ?? []).filter(kind => invalidatedKinds.has(kind)) } });
+                    }
                 }
             }
         }

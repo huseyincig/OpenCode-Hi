@@ -215,3 +215,16 @@ test('semantic follow-up after unclean restart quarantines the exact restored ch
   assert.equal(calls.prompts.length,1)
   assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].attempt.generation,m.continuation.generation)
 })
+
+
+test('unclean restart reopens a closed review obligation when its required review evidence is invalidated',()=>{
+  const persisted=persistedBusy()
+  persisted.execution.obligations.push({id:'o-high-assurance',kind:'review',summary:'Fresh independent review',status:'closed',requiredEvidence:['review-evidence'],closedAt:Date.now()-1000})
+  persisted.execution.evidence.items.push({id:'e-review',kind:'review-evidence',summary:'approved before crash',scope:['src/a.ts'],source:'qa-reviewer',observed_at:Date.now()-500,pass:true,outcome:'passed',obligation_ids:['o-high-assurance']})
+  const restored=new MissionStore();restored.restore([persisted],true)
+  const m=restored.get('parent-1');assert.ok(m)
+  const review=m.execution.obligations.find(o=>o.id==='o-high-assurance');assert.ok(review)
+  assert.equal(review.status,'open');assert.equal(review.closedAt,undefined)
+  assert.ok(m.execution.evidence.items.find(e=>e.id==='e-review')?.invalidated_at)
+  assert.ok(m.execution.ledger.some(e=>e.type==='obligation.crash-reopened'&&e.payload?.obligation_id==='o-high-assurance'))
+})
