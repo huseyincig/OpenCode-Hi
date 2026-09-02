@@ -523,7 +523,7 @@ export class MissionStore {
             }
             const now = Date.now();
             for (const w of m.execution.workers) {
-                const t = m.execution.tasks.find(x => x.id === w.task_id), legacyAbortText = [t?.result?.summary, ...(t?.result?.open_issues ?? [])].filter(Boolean).join(' '), legacyHostAbort = w.status === 'failed' && t?.status === 'failed' && t.result?.status === 'FAILED' && Boolean(w.session_id) && (w.last_runtime_failure_kind === 'unknown' || w.last_runtime_failure_kind === 'host-interruption') && /MessageAbortedError\s*:\s*Aborted/i.test(legacyAbortText);
+                const t = m.execution.tasks.find(x => x.id === w.task_id), legacyAbortText = [t?.result?.summary, ...(t?.result?.open_issues ?? [])].filter(Boolean).join(' '), legacyHostAbort = Boolean(t) && t.result?.status === 'FAILED' && Boolean(w.session_id) && (w.last_runtime_failure_kind === 'unknown' || w.last_runtime_failure_kind === 'host-interruption') && ((w.status === 'failed' && t.status === 'failed') || (w.status === 'ready' && t.status === 'waiting' && w.last_runtime_failure_kind === 'host-interruption')) && /MessageAbortedError\s*:\s*Aborted/i.test(legacyAbortText);
                 if (legacyHostAbort) {
                     const historicalResult = t.result;
                     w.status = 'ready';

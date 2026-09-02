@@ -271,3 +271,19 @@ test('restore repairs a previously persisted closed review obligation whose boun
   assert.equal(review.status,'open');assert.equal(review.closedAt,undefined)
   assert.ok(m.execution.ledger.some(e=>e.type==='obligation.restore-reopened'&&e.payload?.obligation_id==='o-high-assurance'))
 })
+
+
+test('restore normalizes a persisted half-recovered legacy host abort after native idle reconciliation consumed the restart marker',()=>{
+  const legacy=persistedBusy(),worker=legacy.execution.workers[0],task=legacy.execution.tasks[0]
+  worker.status='ready';worker.completed_at=undefined;worker.last_runtime_failure_kind='host-interruption';worker.restart_reconcile_pending=false;worker.attempt=6
+  task.status='waiting';task.result={status:'FAILED',summary:'MessageAbortedError: Aborted',changed_files:[],evidence:[],open_issues:['MessageAbortedError: Aborted'],needs_context:[]}
+  const taskID=task.id,workerID=worker.id,sessionID=worker.session_id
+  const restored=new MissionStore();restored.restore([legacy],false)
+  const m=restored.get('parent-1');assert.ok(m)
+  const rw=m.execution.workers.find(x=>x.id===workerID),rt=m.execution.tasks.find(x=>x.id===taskID);assert.ok(rw&&rt)
+  assert.equal(rw.status,'ready');assert.equal(rt.status,'waiting');assert.equal(rw.session_id,sessionID);assert.equal(rw.attempt,6)
+  assert.equal(rw.last_runtime_failure_kind,'host-interruption');assert.equal(rw.restart_reconcile_pending,true)
+  assert.equal(rt.result?.status,'NEEDS_CONTEXT')
+  assert.deepEqual(rt.result?.needs_context,['runtime-host-interruption-reconcile'])
+  assert.deepEqual(rt.result?.open_issues,['MessageAbortedError: Aborted'])
+})
