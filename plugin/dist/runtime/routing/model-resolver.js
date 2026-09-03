@@ -100,7 +100,7 @@ function hostAgentModel(hostConfig, role) {
     const variant = typeof agent.variant === 'string' && agent.variant.trim() ? agent.variant.trim() : undefined;
     return model || variant ? { model, variant } : undefined;
 }
-function automaticCandidateRank(category, model, index) {
+function automaticCandidateRank(category, model, index, policyOrder) {
     const wanted = AUTOMATIC_CAPABILITY_PREFERENCE[category], tags = new Set([...(model.tags ?? []), ...(model.visionCapable === true ? ['vision'] : [])]), capabilities = wanted.map(tag => tags.has(tag) ? 1 : 0), variants = new Set(model.variants ?? []), variantPreferences = VARIANT_PREFERENCE[category];
     let variantRank = variantPreferences.length + 1, variantFit;
     for (let i = 0; i < variantPreferences.length; i++)
@@ -109,7 +109,7 @@ function automaticCandidateRank(category, model, index) {
             variantFit = variantPreferences[i];
             break;
         }
-    return { model, index, capabilities, variantRank, matched: wanted.filter(tag => tags.has(tag)), variantFit };
+    return { model, index, policyRank: policyOrder.get(model.id) ?? Number.MAX_SAFE_INTEGER, capabilities, variantRank, matched: wanted.filter(tag => tags.has(tag)), variantFit };
 }
 function compareAutomaticCandidate(a, b) {
     for (let i = 0; i < Math.max(a.capabilities.length, b.capabilities.length); i++) {
@@ -119,12 +119,14 @@ function compareAutomaticCandidate(a, b) {
     }
     if (a.variantRank !== b.variantRank)
         return a.variantRank - b.variantRank;
+    if (a.policyRank !== b.policyRank)
+        return a.policyRank - b.policyRank;
     return a.index - b.index;
 }
-function automaticRecommendation(category, available) {
-    const ranked = available.map((model, index) => automaticCandidateRank(category, model, index)).sort(compareAutomaticCandidate), top = ranked[0];
-    const explanation = top?.matched.length ? `capability-priority:${top.matched.join('>')}` : 'capability-priority:inventory-order';
-    return { ordered: ranked.map(x => x.model), reason: [`${category} capability recommendation`, 'ephemeral automatic selection', explanation, ...(top?.variantFit ? [`variant-fit:${top.variantFit}`] : []), 'cost/quality/feedback are not routing authority', 'not persisted as user preference'] };
+function automaticRecommendation(category, available, allowedModels) {
+    const policyOrder = new Map(allowedModels.map((id, index) => [id, index])), ranked = available.map((model, index) => automaticCandidateRank(category, model, index, policyOrder)).sort(compareAutomaticCandidate), top = ranked[0];
+    const explanation = top?.matched.length ? `capability-priority:${top.matched.join('>')}` : allowedModels.length ? 'capability-priority:policy-order' : 'capability-priority:inventory-order';
+    return { ordered: ranked.map(x => x.model), reason: [`${category} capability recommendation`, 'ephemeral automatic selection', explanation, ...(allowedModels.length ? ['policy-order:allowedModels'] : []), ...(top?.variantFit ? [`variant-fit:${top.variantFit}`] : []), 'cost/quality/feedback are not routing authority', 'not persisted as user preference'] };
 }
 function resolution(primary, category, available, config, role, reason, rejected, fallbacks = [], hostVariant, nativePolicySources = [], recoveryCandidates = []) {
     const byId = new Map(available.map(m => [m.id, m])), primaryModel = primary ? byId.get(primary) : undefined, primaryVariant = primary ? chooseVariant(category, primaryModel, config, role, hostVariant) : undefined, fallbackVariants = {};
@@ -183,7 +185,7 @@ export function resolveModel(category, availableInput, config, explicit, role, h
         reason.push(`OpenCode agent explicit model unavailable-or-policy-rejected:${host.model}`);
         return resolution(undefined, category, available, config, role, reason, rejected, [], host.variant, nativePolicySources);
     }
-    const automatic = automaticRecommendation(category, available), primary = automatic.ordered[0]?.id;
+    const automatic = automaticRecommendation(category, available, config.routing.allowedModels ?? []), primary = automatic.ordered[0]?.id;
     reason.push(...automatic.reason);
     const recoveryCandidates = automatic.ordered.slice(1, 1 + config.routing.maxFallbacks).map(model => model.id);
     return resolution(primary, category, available, config, role, reason, rejected, [], undefined, nativePolicySources, recoveryCandidates);

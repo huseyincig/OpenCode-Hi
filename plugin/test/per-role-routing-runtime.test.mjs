@@ -82,6 +82,19 @@ test('automatic recommendation uses ordered capability priorities, not quality o
   assert.ok(r.reason.includes('not persisted as user preference'))
 })
 
+test('automatic recommendation uses explicit allowedModels order as the final tie-break after equal capability and variant fit',()=>{
+  const inventory=[
+    {id:'p/lower',provider:'p',writeCapable:true,tags:['coding','balanced'],variants:['medium']},
+    {id:'p/preferred',provider:'p',writeCapable:true,tags:['coding','balanced'],variants:['medium']},
+    {id:'p/third',provider:'p',writeCapable:true,tags:['coding','balanced'],variants:['medium']},
+  ]
+  const cfg=resolveHiConfig({routing:{allowedModels:['p/preferred','p/third','p/lower']}})
+  const r=resolveModel('standard',inventory,cfg,undefined,'coder',{})
+  assert.equal(r.primary,'p/preferred')
+  assert.deepEqual(r.recoveryCandidates,['p/third','p/lower'])
+  assert.ok(r.reason.includes('policy-order:allowedModels'))
+})
+
 test('automatic recommendation uses category-compatible variant fit as deterministic tie-break',()=>{
   const inventory=[
     {id:'p/a',provider:'p',tags:['reasoning','coding'],variants:['low']},

@@ -15,7 +15,7 @@ OpenCode plugin registration and Hi runtime configuration are different concerns
 
 ## Current development: one Settings control plane
 
-Current `dev` presents three normal-user Work Modes: `Adaptive`, `Single`, and `Multi`. OpenCode still owns provider authentication and the primary session model. `Single` is a one-agent topology, so its effective primary behavior is `working-manager`; a persisted `manager` preference is preserved and becomes effective again after leaving Single. Child roles remain Automatic unless the user persists a strict global model allowlist or a per-role model/fallback list. `hi_settings apply` accepts `allowed_models`, and the current source command `node scripts/opencode-hi.mjs config <project> --model-pool MODEL[,MODEL...]` writes the same canonical project setting.
+Current `dev` presents three normal-user Work Modes: `Adaptive`, `Single`, and `Multi`. OpenCode still owns provider authentication and the primary session model. `Single` is a one-agent topology, so its effective primary behavior is `working-manager`; a persisted `manager` preference is preserved and becomes effective again after leaving Single. Child roles remain Automatic unless the user persists a strict global model allowlist or a per-role model/fallback list. In Automatic routing, capability and variant fit remain primary; explicit allowlist order is only the deterministic tie-break among otherwise equally ranked eligible models. `hi_settings apply` accepts `allowed_models`, and the current source command `node scripts/opencode-hi.mjs config <project> --model-pool MODEL[,MODEL...]` writes the same canonical project setting.
 
 Use runtime `hi_settings show` / `hi_settings apply` for live connected-inventory-aware settings. One `apply` transaction can change mode, limits, and multiple role mappings together; the whole patch is validated before persistence. In the current source checkout, use `node scripts/opencode-hi.mjs config <project>` for the same project preference model when a deterministic CLI is preferable. The immutable published `0.2.4` package does not expose the dev-only `config` command, and the source CLI does not invent or validate live provider availability outside OpenCode runtime.
 
@@ -347,7 +347,7 @@ If you want no fallback entries to be returned after a selected primary, also se
 "routing": { "maxFallbacks": 0 }
 ```
 
-Current `dev` uses `routing.allowedModels` for an explicit strict child-model allowlist, alongside provider allowlisting and exact model denylisting. The allowlist is a Hi constraint over OpenCode runtime inventory; its array order is not Adaptive routing priority; it does not create a second model catalog and does not control the OpenCode-owned primary session model.
+Current `dev` uses `routing.allowedModels` for an explicit strict child-model allowlist, alongside provider allowlisting and exact model denylisting. The allowlist is a Hi constraint over OpenCode runtime inventory; capability and variant fit remain stronger Automatic-routing criteria, and its array order is used only as the deterministic tie-break among otherwise equally ranked eligible models. It does not create a second model catalog and does not control the OpenCode-owned primary session model.
 
 ### Use the same model for the primary session and every Hi child
 
@@ -971,7 +971,7 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
-| `routing.allowedModels` | runtime | `[]` | constraint | strictly constrains Hi child routing membership to explicitly allowed runtime models; selection among eligible allowed models remains role/capability/routing driven |
+| `routing.allowedModels` | runtime | `[]` | constraint | strictly constrains Hi child routing membership to explicitly allowed runtime models; capability/variant fit remain primary and explicit list order breaks only otherwise-equal Automatic-routing ties |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
 | `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |
 | `parallel.enabled` | runtime | `true` | capacity | sets global scheduler capacity to one when disabled |

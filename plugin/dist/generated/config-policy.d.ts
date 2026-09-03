@@ -181,7 +181,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly safetySemantics: "constraint";
     readonly behavioralAcceptanceRefs: readonly ["project-settings-control-plane.test.mjs", "provider-connected-inventory.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.policyFilter/resolveModel";
-    readonly executorEffect: "strictly constrains Hi child routing membership to explicitly allowed runtime models; selection among eligible allowed models remains role/capability/routing driven";
+    readonly executorEffect: "strictly constrains Hi child routing membership to explicitly allowed runtime models; capability/variant fit remain primary and explicit list order breaks only otherwise-equal Automatic-routing ties";
 }, {
     readonly id: "config.routing-allowed-providers";
     readonly path: "routing.allowedProviders";

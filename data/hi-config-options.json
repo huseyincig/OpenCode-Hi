@@ -306,7 +306,7 @@
       "validator": "bounded-model-list",
       "safety_semantics": "constraint",
       "runtime_consumer": "runtime/routing/model-resolver.policyFilter/resolveModel",
-      "executor_effect": "strictly constrains Hi child routing membership to explicitly allowed runtime models; selection among eligible allowed models remains role/capability/routing driven",
+      "executor_effect": "strictly constrains Hi child routing membership to explicitly allowed runtime models; capability/variant fit remain primary and explicit list order breaks only otherwise-equal Automatic-routing ties",
       "behavioral_acceptance_refs": [
         "project-settings-control-plane.test.mjs",
         "provider-connected-inventory.test.mjs"

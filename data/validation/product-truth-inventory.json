@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "c9db2032ae3b4b9c6f80aa8ddfd8d09d2f87e1140c0e61eff42f273f2aa5e0c5",
+      "owner_sha256": "bf692a8fa0d8cb5946abdb0680d8816c4c8f41d770cc51aced188ce3de1055cc",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "069d99a8af66bb2c268c22256e6401a3589b9ac9b852b92b9f4faeb8066e3c5c",
+      "owner_sha256": "54e7ef1aa7c607c8d70f6e8bde57d731f1ee19090493f268beab9aa57c8eadb9",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -46,7 +46,7 @@
       "area": "worker",
       "canonical_owner": "WorkerRuntime",
       "owner_path": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "58bb735af669d8f732988542a855e1378dbe49f21fafc65a940f6a2d29f56ca8",
+      "owner_sha256": "4c0eccb28253434232638586eb0ca3368f592e2babb240fa5a0e22f38455d208",
       "producer_or_contract_paths": [
         "plugin/src/contracts/worker.ts",
         "plugin/src/contracts/worker-result.ts"
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "b32dd19e3c40e43c4495adfe7ce664c4bb9a93e0958bfff6716b3f0b1804106e",
+      "owner_sha256": "1970efb230a2da01838fd85995bbba8b6ea24adcad9cf82f1eb104b6e28e8003",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts"
@@ -183,7 +183,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "14c57f75a2ccba35c226d7997b5307f1fdd01dfa950576951b5731e9a3eb7271",
+      "owner_sha256": "7bf79c87ee43536bd54a853f837154ed38173e5efa0949f4e0634ff6406166ec",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"

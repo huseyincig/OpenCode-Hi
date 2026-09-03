@@ -62,6 +62,10 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
 
+### Fixed — explicit child-model policy ordering
+- Preserve `routing.allowedModels` declaration order as a deterministic Automatic-routing tie-break only after hard eligibility, capability priority, and variant fit. Live OpenCode inventory still owns availability, and absent allowlists retain inventory-order fallback; Stage 3’s U-016 pool is not hardcoded into product routing.
+- Added regression coverage proving an explicit ordered allowlist wins an otherwise-equal inventory-order tie while existing capability-first selection remains intact, and updated configuration/installation docs plus generated config truth.
+
 - Adds an optional provider-neutral `ProjectMemoryProvider` boundary under Project Intelligence. Broad project memory is disabled by default and remains provider-owned, scoped, freshness/provenance/budget bounded and advisory-only; Hi does not persist returned memory as Mission, Evidence, Context, routing, completion or external-action authority, and existing methodology/task-outcome memory owners are unchanged.
 - Completes the Stage-2 user-facing product projection without reopening semantic-core ownership: current-dev `hi_status` preserves its compact compatibility line and adds bounded Goal / Now / Control / Verification / Authority / Blockers derived from canonical Mission/control state; no UI cache, ledger-payload exposure, routing authority, or completion authority is introduced.
 - Extends current-dev `hi_metrics` with a bounded `product_summary` over canonical Worker usage and existing budget state: exact complete token/context/cache volume, exact provider-billed money when available, separately labeled OpenCode-derived money otherwise, repeat-compute attribution, bounded role/model contribution, and hard/observed/unavailable budget counts. Partial or derived money is never promoted to a hard budget.
