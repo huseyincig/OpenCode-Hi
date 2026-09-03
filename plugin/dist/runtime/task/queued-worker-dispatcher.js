@@ -19,6 +19,7 @@ import { verificationEconomyInstruction } from '../verification/policy.js';
 import { isHiReviewerRole } from '../roles/catalog.js';
 import { taskPromptToolOverrides } from '../routing/execution-profile.js';
 import { isResourceOnlyProcessSupportTask } from '../worker/worker-runtime.js';
+import { classifyWorkerFailure } from '../worker/failure-classifier.js';
 /**
  * Stateless post-admission dispatcher. Durable Task/Worker/ExecutionProfile state is the
  * dispatch recipe; process-local queue entries only schedule when that recipe may run.
@@ -196,7 +197,22 @@ export class QueuedWorkerDispatcher {
                     worker.status = 'created';
                     task.status = 'created';
                     if (hostExecutionStarted) {
-                        appendLedger(m, 'worker.start.post-child-failure', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error), fallback_allowed: false } });
+                        const failure = classifyWorkerFailure(error);
+                        worker.last_runtime_failure_kind = failure.kind;
+                        if (failure.kind === 'provider-transport' && failure.retryable) {
+                            const blocker = `provider-failure:provider-transport:${model}`;
+                            worker.status = 'ready';
+                            worker.runtime_recovery_pending = false;
+                            worker.runtime_fallback_exhausted = true;
+                            task.status = 'blocked';
+                            task.updated_at = Date.now();
+                            task.result = { status: 'BLOCKED', summary: 'Child dispatch acknowledgement failed after the exact host session started and was mechanically stopped; preserve this Task/Worker and reconcile the effect before exact provider recovery.', changed_files: [], evidence: [], open_issues: [blocker], needs_context: ['reconcile exact prior child effect before retry; if NOT_APPLIED, resume this exact task through bounded provider recovery'] };
+                            m.execution.blockers = [...new Set([...m.execution.blockers, blocker])];
+                            this.registry.set(worker);
+                            appendLedger(m, 'worker.start.post-child-failure', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error), failure_class: failure.kind, retryable: failure.retryable, fallback_allowed: false, recovery: 'exact-task-sessionless-provider-terminal' } });
+                            throw error;
+                        }
+                        appendLedger(m, 'worker.start.post-child-failure', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error), failure_class: failure.kind, retryable: failure.retryable, fallback_allowed: false } });
                         break;
                     }
                     appendLedger(m, 'model.fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error) } });

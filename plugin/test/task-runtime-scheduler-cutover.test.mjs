@@ -11,12 +11,12 @@ import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 import { taskRuntimeUnitDecision } from '../dist/runtime/scheduler/task-runtime-adapter.js'
 
 function workerResult(status='DONE'){return{status,summary:'done',changed_files:[],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]}}
-function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,onCreate,processCustody}={}){
+function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,onCreate,processCustody,models=[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']},{id:'p/recovery',provider:'p',quality:8,cost:1,tags:['coding','balanced']}]}={}){
   let seq=0
   const session={create:async()=>{onCreate?.();return{data:{id:`child-${++seq}`}}},promptAsync:prompt,diff:async()=>({data:[]})}
   if(withAbort)session.abort=abort
   const scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
-  const runtime=new TaskRuntime(opencodeChildPort({session}),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,undefined,undefined,()=>[],processCustody)
+  const runtime=new TaskRuntime(opencodeChildPort({session}),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>models,()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,undefined,undefined,()=>[],processCustody)
   const m=startAssessedMission(new MissionStore(),'cutover-parent','implement bounded change',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_verification:[]})
   return{runtime,scheduler,m}
 }
@@ -182,4 +182,18 @@ test('TaskRuntime cancellation fails closed when exact process custody cleanup f
   assert.equal(m.execution.workers.find(w=>w.id===started.worker_id).status,'busy')
   assert.equal(m.execution.scheduler.reservations.length,1,'reservation stays owned because cancellation did not settle')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.blocked'&&e.payload?.reason==='process-cleanup-failed'))
+})
+
+test('post-child uncertain dispatch failure preserves exact Task/Worker for sessionless provider recovery',async()=>{
+  let promptCalls=0
+  const {runtime,m}=setup({prompt:async()=>{promptCalls++;if(promptCalls===1)throw new Error('OpenCode session.prompt_async:child-1 acknowledgement timed out after 15000ms')}})
+  await assert.rejects(()=>runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']}),/acknowledgement timed out/)
+  assert.equal(m.execution.tasks.length,1);assert.equal(m.execution.workers.length,1)
+  const task=m.execution.tasks[0],worker=m.execution.workers[0],taskID=task.id,workerID=worker.id
+  assert.equal(worker.session_id,undefined);assert.equal(worker.status,'ready');assert.equal(worker.last_runtime_failure_kind,'provider-transport');assert.equal(worker.runtime_fallback_exhausted,true)
+  assert.equal(task.status,'blocked');assert.equal(task.result.status,'BLOCKED');assert.ok(task.result.open_issues.includes('provider-failure:provider-transport:p/code'))
+  const resumed=await runtime.resume(m,taskID)
+  assert.equal(resumed.task_id,taskID);assert.equal(resumed.worker_id,workerID);assert.equal(m.execution.tasks.length,1);assert.equal(m.execution.workers.length,1)
+  assert.equal(resumed.session_id,'child-2');assert.equal(worker.status,'busy');assert.equal(task.status,'running')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.start.post-child-failure'&&e.payload?.recovery==='exact-task-sessionless-provider-terminal'))
 })
