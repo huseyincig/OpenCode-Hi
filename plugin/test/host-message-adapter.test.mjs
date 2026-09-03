@@ -108,6 +108,21 @@ test('legacy structured-format message decoder failure falls back read-only to c
   }finally{globalThis.fetch=originalFetch}
 })
 
+test('structured-message V2 fallback preserves the injected in-process OpenCode fetch transport',async()=>{
+  const originalFetch=globalThis.fetch,transportCalls=[];let globalFetches=0
+  const structured={status:'DONE',summary:'in-process transport survived schema upgrade',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  try{
+    globalThis.fetch=async()=>{globalFetches++;throw new Error('localhost transport must not be used for in-process plugin client')}
+    const inProcessFetch=async input=>{const request=input instanceof Request?input:new Request(input);transportCalls.push(request.url);return new Response(JSON.stringify({data:[{info:{id:'msg-v2-internal',role:'assistant',providerID:'p',modelID:'m',parentID:'msg-user',structured,time:{created:20,completed:30},tokens:{input:1,output:2,reasoning:0,cache:{read:0,write:0}},cost:0},parts:[]}],cursor:{}}),{status:200,headers:{'content-type':'application/json'}})}
+    const client={_client:{getConfig:()=>({baseUrl:'http://localhost:4096',fetch:inProcessFetch})},session:{messages:async()=>({error:{name:'BadRequest',data:{message:'Expected OutputFormatJsonSchema'}}})}}
+    const result=await listMessages(client,'child-in-process',20,{serverUrl:'http://localhost:4096',directory:'/repo'})
+    assert.equal(globalFetches,0)
+    assert.equal(transportCalls.length,1)
+    const url=new URL(transportCalls[0]);assert.equal(url.pathname,'/api/session/child-in-process/message');assert.equal(url.searchParams.get('directory'),'/repo')
+    assert.deepEqual(result[0].info.structured,structured)
+  }finally{globalThis.fetch=originalFetch}
+})
+
 test('unrelated legacy message-read errors remain fail-closed and do not widen into V2 fallback',async()=>{
   const originalFetch=globalThis.fetch;let fetches=0
   try{

@@ -53,20 +53,30 @@ function messageReadError(value:any):Error|undefined{
 }
 function structuredMessageCompatibilityError(error:Error):boolean{return /Expected\s+OutputFormatJsonSchema|OutputFormatJsonSchema.*(?:expected|decode|schema)|structured.*output.*format/i.test(error.message)}
 function normalizeMessageList(response:any):any[]{const payload=dataOf<any>(response);if(Array.isArray(payload))return payload;return Array.isArray(payload?.data)?payload.data:[]}
-async function listMessagesV2(sessionID:string,limit:number,endpoint:OpenCodeLifecycleEndpoint):Promise<any[]>{
-  if(!endpoint.serverUrl)throw new Error('OpenCode V2 message-read endpoint unavailable')
-  const client=createOpenCodeV2Client({baseUrl:endpoint.serverUrl,directory:endpoint.directory,headers:lifecycleHeaders(endpoint.directory)}),session=client?.v2?.session
+function injectedClientTransport(client:OpenCodeClient):{baseUrl?:string;fetch?:typeof globalThis.fetch}{
+  const transport=(client as any)?._client,config=typeof transport?.getConfig==='function'?transport.getConfig():undefined
+  if(!config||typeof config!=='object')return{}
+  return{...(typeof config.baseUrl==='string'&&config.baseUrl?{baseUrl:config.baseUrl}:{}),...(typeof config.fetch==='function'?{fetch:config.fetch}: {})}
+}
+async function listMessagesV2(client:OpenCodeClient,sessionID:string,limit:number,endpoint:OpenCodeLifecycleEndpoint):Promise<any[]>{
+  const inherited=injectedClientTransport(client),baseUrl=endpoint.serverUrl??inherited.baseUrl
+  if(!baseUrl)throw new Error('OpenCode V2 message-read endpoint unavailable')
+  // Local `opencode run` can be fully in-process: PluginInput.serverUrl then names a
+  // compatibility URL while the injected SDK owns a custom Server.app.fetch transport.
+  // Preserve that exact read-only transport when crossing from the legacy message schema
+  // to the current V2 projection; otherwise a valid in-process host becomes localhost I/O.
+  const current=createOpenCodeV2Client({baseUrl,directory:endpoint.directory,headers:lifecycleHeaders(endpoint.directory),...(inherited.fetch?{fetch:inherited.fetch}: {})}),session=current?.v2?.session
   if(!session||typeof session.messages!=='function')throw new Error('OpenCode canonical V2 session.messages unavailable')
   const response=await session.messages({sessionID,limit})
   const error=messageReadError(response);if(error)throw error
   return normalizeMessageList(response)
 }
 export async function listMessages(client:OpenCodeClient,sessionID:string,limit=20,endpoint:OpenCodeLifecycleEndpoint={}):Promise<any[]>{
-  const edge=client as any
-  if(typeof edge?.session?.messages!=='function')return endpoint.serverUrl?listMessagesV2(sessionID,limit,endpoint):[]
+  const edge=client as any,inherited=injectedClientTransport(client),hasCurrentTransport=Boolean(endpoint.serverUrl||inherited.baseUrl)
+  if(typeof edge?.session?.messages!=='function')return hasCurrentTransport?listMessagesV2(client,sessionID,limit,endpoint):[]
   const response=await edge.session.messages({path:{id:sessionID},query:{limit}})
   const error=messageReadError(response)
-  if(error){if(endpoint.serverUrl&&structuredMessageCompatibilityError(error))return listMessagesV2(sessionID,limit,endpoint);throw error}
+  if(error){if(hasCurrentTransport&&structuredMessageCompatibilityError(error))return listMessagesV2(client,sessionID,limit,endpoint);throw error}
   return normalizeMessageList(response)
 }
 

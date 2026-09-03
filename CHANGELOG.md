@@ -64,8 +64,9 @@ All notable changes to OpenCode-Hi are documented here.
 
 ### Fixed — restart readback for structured OpenCode messages
 - Preserve exact Mission/Task/Worker/session ownership across restart when the injected legacy OpenCode message decoder rejects a durable structured-output user message with `Expected OutputFormatJsonSchema`. Hi now keeps the established legacy read path first and uses the current V2 session-message surface only for that mechanically recognized read-only compatibility failure.
+- Preserve the injected OpenCode client's custom transport when that V2 bridge runs. Local `opencode run` may use an in-process `Server.app.fetch` while exposing only a compatibility `localhost:4096` URL; carrying the injected fetch prevents the read-only V2 fallback from turning a valid in-process host into a failed network connection.
 - Keep the bridge narrow and fail-closed: unrelated message-read errors do not fall through, no prompt/abort/task mutation is replayed, directory scoping is preserved, and current V2 response envelopes are normalized without creating replacement semantic work.
-- Added regressions for V2 compatibility recovery and for unrelated legacy errors remaining terminal, alongside the existing restart-survival suite.
+- Added regressions for V2 compatibility recovery, in-process transport preservation, and unrelated legacy errors remaining terminal, alongside the existing restart-survival suite.
 
 ### Fixed — explicit child-model policy ordering
 - Preserve `routing.allowedModels` declaration order as a deterministic Automatic-routing tie-break only after hard eligibility, capability priority, and variant fit. Live OpenCode inventory still owns availability, and absent allowlists retain inventory-order fallback; Stage 3’s U-016 pool is not hardcoded into product routing.
