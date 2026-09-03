@@ -45,15 +45,29 @@ export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,tex
   throw new Error('OpenCode session prompt API unavailable')
 }
 
-export async function listMessages(client:OpenCodeClient,sessionID:string,limit=20):Promise<any[]>{
+function messageReadError(value:any):Error|undefined{
+  const error=value?.error
+  if(!error)return undefined
+  const name=typeof error?.name==='string'?error.name:'OpenCodeMessageReadError',data=error?.data&&typeof error.data==='object'?error.data:error,detail=String(data?.message??error?.message??name).slice(0,1200)
+  return new Error(`${name}: ${detail}`)
+}
+function structuredMessageCompatibilityError(error:Error):boolean{return /Expected\s+OutputFormatJsonSchema|OutputFormatJsonSchema.*(?:expected|decode|schema)|structured.*output.*format/i.test(error.message)}
+function normalizeMessageList(response:any):any[]{const payload=dataOf<any>(response);if(Array.isArray(payload))return payload;return Array.isArray(payload?.data)?payload.data:[]}
+async function listMessagesV2(sessionID:string,limit:number,endpoint:OpenCodeLifecycleEndpoint):Promise<any[]>{
+  if(!endpoint.serverUrl)throw new Error('OpenCode V2 message-read endpoint unavailable')
+  const client=createOpenCodeV2Client({baseUrl:endpoint.serverUrl,directory:endpoint.directory,headers:lifecycleHeaders(endpoint.directory)}),session=client?.v2?.session
+  if(!session||typeof session.messages!=='function')throw new Error('OpenCode canonical V2 session.messages unavailable')
+  const response=await session.messages({sessionID,limit})
+  const error=messageReadError(response);if(error)throw error
+  return normalizeMessageList(response)
+}
+export async function listMessages(client:OpenCodeClient,sessionID:string,limit=20,endpoint:OpenCodeLifecycleEndpoint={}):Promise<any[]>{
   const edge=client as any
-  if(typeof edge?.session?.messages!=='function')return[]
+  if(typeof edge?.session?.messages!=='function')return endpoint.serverUrl?listMessagesV2(sessionID,limit,endpoint):[]
   const response=await edge.session.messages({path:{id:sessionID},query:{limit}})
-  const error=response?.error
-  if(error){const name=typeof error?.name==='string'?error.name:'OpenCodeMessageReadError',data=error?.data&&typeof error.data==='object'?error.data:error,detail=String(data?.message??error?.message??name).slice(0,1200);throw new Error(`${name}: ${detail}`)}
-  const payload=dataOf<any>(response)
-  if(Array.isArray(payload))return payload
-  return Array.isArray(payload?.data)?payload.data:[]
+  const error=messageReadError(response)
+  if(error){if(endpoint.serverUrl&&structuredMessageCompatibilityError(error))return listMessagesV2(sessionID,limit,endpoint);throw error}
+  return normalizeMessageList(response)
 }
 
 export async function sendSyntheticContinuation(client:OpenCodeClient,sessionID:string,text:string,metadata:Record<string,unknown>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS):Promise<boolean>{

@@ -91,20 +91,40 @@ export async function sendPromptAsync(client, sessionID, text, agent, model, var
     }
     throw new Error('OpenCode session prompt API unavailable');
 }
-export async function listMessages(client, sessionID, limit = 20) {
+function messageReadError(value) {
+    const error = value?.error;
+    if (!error)
+        return undefined;
+    const name = typeof error?.name === 'string' ? error.name : 'OpenCodeMessageReadError', data = error?.data && typeof error.data === 'object' ? error.data : error, detail = String(data?.message ?? error?.message ?? name).slice(0, 1200);
+    return new Error(`${name}: ${detail}`);
+}
+function structuredMessageCompatibilityError(error) { return /Expected\s+OutputFormatJsonSchema|OutputFormatJsonSchema.*(?:expected|decode|schema)|structured.*output.*format/i.test(error.message); }
+function normalizeMessageList(response) { const payload = dataOf(response); if (Array.isArray(payload))
+    return payload; return Array.isArray(payload?.data) ? payload.data : []; }
+async function listMessagesV2(sessionID, limit, endpoint) {
+    if (!endpoint.serverUrl)
+        throw new Error('OpenCode V2 message-read endpoint unavailable');
+    const client = createOpenCodeV2Client({ baseUrl: endpoint.serverUrl, directory: endpoint.directory, headers: lifecycleHeaders(endpoint.directory) }), session = client?.v2?.session;
+    if (!session || typeof session.messages !== 'function')
+        throw new Error('OpenCode canonical V2 session.messages unavailable');
+    const response = await session.messages({ sessionID, limit });
+    const error = messageReadError(response);
+    if (error)
+        throw error;
+    return normalizeMessageList(response);
+}
+export async function listMessages(client, sessionID, limit = 20, endpoint = {}) {
     const edge = client;
     if (typeof edge?.session?.messages !== 'function')
-        return [];
+        return endpoint.serverUrl ? listMessagesV2(sessionID, limit, endpoint) : [];
     const response = await edge.session.messages({ path: { id: sessionID }, query: { limit } });
-    const error = response?.error;
+    const error = messageReadError(response);
     if (error) {
-        const name = typeof error?.name === 'string' ? error.name : 'OpenCodeMessageReadError', data = error?.data && typeof error.data === 'object' ? error.data : error, detail = String(data?.message ?? error?.message ?? name).slice(0, 1200);
-        throw new Error(`${name}: ${detail}`);
+        if (endpoint.serverUrl && structuredMessageCompatibilityError(error))
+            return listMessagesV2(sessionID, limit, endpoint);
+        throw error;
     }
-    const payload = dataOf(response);
-    if (Array.isArray(payload))
-        return payload;
-    return Array.isArray(payload?.data) ? payload.data : [];
+    return normalizeMessageList(response);
 }
 export async function sendSyntheticContinuation(client, sessionID, text, metadata, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS) {
     const edge = client, body = { parts: [{ type: 'text', text, synthetic: true, metadata }], noReply: false };

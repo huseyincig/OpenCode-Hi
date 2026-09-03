@@ -62,6 +62,11 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
 
+### Fixed — restart readback for structured OpenCode messages
+- Preserve exact Mission/Task/Worker/session ownership across restart when the injected legacy OpenCode message decoder rejects a durable structured-output user message with `Expected OutputFormatJsonSchema`. Hi now keeps the established legacy read path first and uses the current V2 session-message surface only for that mechanically recognized read-only compatibility failure.
+- Keep the bridge narrow and fail-closed: unrelated message-read errors do not fall through, no prompt/abort/task mutation is replayed, directory scoping is preserved, and current V2 response envelopes are normalized without creating replacement semantic work.
+- Added regressions for V2 compatibility recovery and for unrelated legacy errors remaining terminal, alongside the existing restart-survival suite.
+
 ### Fixed — explicit child-model policy ordering
 - Preserve `routing.allowedModels` declaration order as a deterministic Automatic-routing tie-break only after hard eligibility, capability priority, and variant fit. Live OpenCode inventory still owns availability, and absent allowlists retain inventory-order fallback; Stage 3’s U-016 pool is not hardcoded into product routing.
 - Added regression coverage proving an explicit ordered allowlist wins an otherwise-equal inventory-order tie while existing capability-first selection remains intact, and updated configuration/installation docs plus generated config truth.

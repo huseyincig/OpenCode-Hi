@@ -91,3 +91,29 @@ test('listMessages surfaces SDK message-read errors instead of converting them t
   const client={session:{messages:async()=>({error:{name:'BadRequest',data:{message:'Expected OutputFormatJsonSchema'}}})}}
   await assert.rejects(()=>listMessages(client,'child-broken-format',20),/BadRequest: Expected OutputFormatJsonSchema/)
 })
+
+
+test('legacy structured-format message decoder failure falls back read-only to canonical V2 session messages',async()=>{
+  const originalFetch=globalThis.fetch,calls=[]
+  const structured={status:'DONE',summary:'recovered after restart',changed_files:['src/value.js'],evidence:[{kind:'targeted-tests',summary:'focused test passed',pass:true}],open_issues:[],needs_context:[]}
+  try{
+    globalThis.fetch=async input=>{const request=input instanceof Request?input:new Request(input);calls.push(request.url);return new Response(JSON.stringify({data:[{info:{id:'msg-v2',role:'assistant',providerID:'p',modelID:'m',parentID:'msg-user',structured,time:{created:20,completed:30},tokens:{input:1,output:2,reasoning:0,cache:{read:0,write:0}},cost:0},parts:[]}],cursor:{}}),{status:200,headers:{'content-type':'application/json'}})}
+    const client={session:{messages:async()=>({error:{name:'BadRequest',data:{message:'Expected OutputFormatJsonSchema, got structured message format'}}})}}
+    const host=createHostPort({directory:'/repo',worktree:'/repo',project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    const result=await host.readAssistantResult('child-structured-restart')
+    assert.deepEqual(result.structured,structured)
+    assert.equal(result.model?.message_id,'msg-v2')
+    assert.equal(calls.length,1)
+    const url=new URL(calls[0]);assert.equal(url.pathname,'/api/session/child-structured-restart/message');assert.equal(url.searchParams.get('limit'),'20');assert.equal(url.searchParams.get('directory'),'/repo')
+  }finally{globalThis.fetch=originalFetch}
+})
+
+test('unrelated legacy message-read errors remain fail-closed and do not widen into V2 fallback',async()=>{
+  const originalFetch=globalThis.fetch;let fetches=0
+  try{
+    globalThis.fetch=async()=>{fetches++;throw new Error('unexpected V2 fallback')}
+    const client={session:{messages:async()=>({error:{name:'PermissionDenied',data:{message:'message history denied'}}})}}
+    await assert.rejects(()=>listMessages(client,'child-denied',20,{serverUrl:'http://opencode.test',directory:'/repo'}),/PermissionDenied: message history denied/)
+    assert.equal(fetches,0)
+  }finally{globalThis.fetch=originalFetch}
+})
