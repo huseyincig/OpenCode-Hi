@@ -192,6 +192,7 @@ export class TaskRuntime{
   resolveChildCallback(sessionID:string):WorkerState|undefined{return this.#child.resolveCallbackWorker(sessionID)}
   forgetChildCallback(sessionID:string):boolean{const worker=this.#child.resolveCallbackWorker(sessionID);if(!worker)return false;this.registry.delete(worker.id);return true}
   admitTerminalEvent(m:MissionState,worker:WorkerState):Promise<HostTerminalEventAdmission>{return admitHostTerminalEvent(m,worker,this.childHost)}
+  dispatchPendingTextTransportRecovery(m:MissionState,worker:WorkerState):Promise<'DISPATCHED'|'QUARANTINED'|'NOOP'>{return this.#recovery.dispatchPendingTextTransportRecovery(m,worker.id)}
   async settleHostIdleRuntimeError(m:MissionState,worker:WorkerState,error:HostAssistantError):Promise<{applied:boolean;reason:string;result?:WorkerResult;wakeResult?:'RUNTIME_FALLBACK'|'HOST_INTERRUPTION'|'QUARANTINED'|'FAILED'|'BLOCKED'|'FIX_REQUIRED';failureKind?:WorkerState['last_runtime_failure_kind']}>{
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return{applied:false,reason:'task-not-found'}
     if(error.name==='StructuredOutputError'){

@@ -89,6 +89,7 @@ export declare class TaskRuntime {
     resolveChildCallback(sessionID: string): WorkerState | undefined;
     forgetChildCallback(sessionID: string): boolean;
     admitTerminalEvent(m: MissionState, worker: WorkerState): Promise<HostTerminalEventAdmission>;
+    dispatchPendingTextTransportRecovery(m: MissionState, worker: WorkerState): Promise<'DISPATCHED' | 'QUARANTINED' | 'NOOP'>;
     settleHostIdleRuntimeError(m: MissionState, worker: WorkerState, error: HostAssistantError): Promise<{
         applied: boolean;
         reason: string;

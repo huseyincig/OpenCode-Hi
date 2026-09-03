@@ -36,6 +36,7 @@ export declare class TaskRecoveryCoordinator {
     private providerRecoveryCandidates;
     private launchProviderRecoveryCandidate;
     resumeBlockedProviderFailure(m: MissionState, workerID: string): Promise<boolean>;
+    dispatchPendingTextTransportRecovery(m: MissionState, workerID: string): Promise<'DISPATCHED' | 'QUARANTINED' | 'NOOP'>;
     recoverHostTerminalFailure(m: MissionState, workerID: string, error: unknown): Promise<HostTerminalRecoveryDisposition>;
     fail(m: MissionState, workerID: string, error: string): void;
 }

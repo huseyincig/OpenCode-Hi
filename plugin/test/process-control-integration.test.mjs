@@ -371,6 +371,30 @@ test('child compaction preserves semantic recovery replay history plus non-stagn
 })
 
 
+test('child admitted idle consumes pending text transport recovery before assistant readback and only once',async()=>{
+  const store=new MissionStore(),m=assessed(store,'text-recovery-idle-parent'),order=[]
+  const child={id:'w-text-idle',task_id:'t-text-idle',role:'coder',category:'standard',session_id:'child-text-idle',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model:'p/model',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f-text-idle',status:'busy',attempt:1,generation_at_spawn:m.continuation.generation,pending_text_transport_recovery:{session_id:'child-text-idle',model:'p/model',source_attempt:1,generation:m.continuation.generation,reason:'tool-choice-compatibility',requested_at:Date.now()}}
+  const task={id:'t-text-idle',objective:'finish bounded work',role:'coder',category:'standard',scope:['src/a.ts'],dependencies:[],requiredEvidence:[],obligation_ids:[],constraints:[],status:'running',worker_id:child.id,created_at:Date.now(),updated_at:Date.now()}
+  m.execution.tasks.push(task);m.execution.workers.push(child)
+  let dispatched=0,readbacks=0
+  const tasks={
+    resolveChildCallback:sid=>sid===child.session_id?child:undefined,
+    childCallbackDisposition:()=> 'current',
+    admitTerminalEvent:async()=>({decision:'ACCEPT',reason:'host-session-idle-confirmed',hostStatus:'idle'}),
+    dispatchPendingTextTransportRecovery:async()=>{dispatched++;delete child.pending_text_transport_recovery;order.push('dispatch');return'DISPATCHED'},
+    pendingExecutionWorkers:()=>[],
+  }
+  const services={store,background:{},persistence:{save:()=>order.push('save')},tasks,processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},readAssistantResult:async()=>{readbacks++;return{text:'must-not-read'}}},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
+  const idle=normalizeOpenCodeEvent({type:'session.idle',properties:{sessionID:child.session_id}})
+  await controller.handle(idle)
+  assert.equal(dispatched,1);assert.equal(readbacks,0);assert.equal(child.pending_text_transport_recovery,undefined)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.output-transport-fallback.idle-disposition'&&e.payload?.disposition==='DISPATCHED'))
+  child.status='completed'
+  await controller.handle(idle)
+  assert.equal(dispatched,1,'repeated idle after consumed recovery cannot duplicate dispatch');assert.equal(readbacks,0)
+})
+
 test('browser cleanup runs when child idle assistant settlement throws before terminal reconciliation',async()=>{
   const store=new MissionStore(),m=assessed(store,'browser-idle-error-parent'),order=[]
   const child={id:'w-browser-error',task_id:'t-browser-error',role:'visual-qa',category:'visual',session_id:'child-browser-error',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:['hi-browser-testing'],loaded_methodologies:['hi-browser-testing'],methodologies:[],fingerprint:'f-browser-error',status:'busy',generation_at_spawn:m.continuation.generation}

@@ -353,6 +353,42 @@ export class TaskRecoveryCoordinator {
         task.status = previousTaskStatus;
         return false;
     }
+    async dispatchPendingTextTransportRecovery(m, workerID) {
+        const worker = m.execution.workers.find(w => w.id === workerID), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined, pending = worker?.pending_text_transport_recovery;
+        if (!worker || !task || !pending)
+            return 'NOOP';
+        const current = Boolean(worker.session_id) && pending.session_id === worker.session_id && pending.model === (worker.model ?? 'host-default') && pending.source_attempt === worker.attempt && pending.generation === (worker.generation_at_spawn ?? m.continuation.generation) && worker.parent_mission_id === m.identity.mission_id && m.identity.status === 'active' && !m.continuation.user_interrupted;
+        if (!current) {
+            delete worker.pending_text_transport_recovery;
+            this.registry.set(worker);
+            appendLedger(m, 'worker.output-transport-fallback.pending-stale', { task_id: task.id, worker_id: worker.id, payload: { receipt_session_id: pending.session_id, worker_session_id: worker.session_id, receipt_model: pending.model, worker_model: worker.model, receipt_attempt: pending.source_attempt, worker_attempt: worker.attempt, receipt_generation: pending.generation, worker_generation: worker.generation_at_spawn } });
+            return 'NOOP';
+        }
+        const sessionID = worker.session_id, model = pending.model, prompt = clipText([`Hi structured-output transport compatibility recovery for existing task ${task.id}.`, `OpenCode's native json_schema transport was rejected because this model/provider does not support tool_choice=required.`, `Continue the SAME task, worker, session, model, and Mission. Do not create replacement work or restart planning.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, ...taskSpecificResultContractInstructions(task, worker.role), 'Return the canonical WorkerResult as JSON in ordinary assistant text. Do not wrap it in markdown and do not add prose before or after the JSON. Hi will parse and validate it fail-closed.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
+        delete worker.pending_text_transport_recovery;
+        worker.text_transport_fallback_models = [...new Set([...(worker.text_transport_fallback_models ?? []), model])];
+        worker.runtime_recovery_pending = true;
+        worker.runtime_recovery_attempt = (worker.runtime_recovery_attempt ?? 0) + 1;
+        worker.status = 'busy';
+        task.status = 'running';
+        beginWorkerAttempt(task, worker);
+        this.child.recordModelProjection(worker, worker.model, worker.model_variant);
+        this.registry.set(worker);
+        try {
+            await this.child.sendProviderPrompt(sessionID, prompt, worker.role, worker.model === 'host-default' ? undefined : worker.model, worker.model_variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []), worker.attempt_prompt_message_id, 'text');
+            appendLedger(m, 'worker.output-transport-fallback', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: sessionID, from: 'opencode-json-schema', to: 'text-compatibility', reason: pending.reason, source_attempt: pending.source_attempt, attempt: worker.attempt, generation: worker.generation_at_spawn, trigger: 'admitted-session-idle' } });
+            return 'DISPATCHED';
+        }
+        catch (transportError) {
+            worker.runtime_recovery_pending = false;
+            worker.restart_reconcile_pending = true;
+            worker.status = 'ready';
+            task.status = 'waiting';
+            this.registry.set(worker);
+            appendLedger(m, 'worker.output-transport-fallback.dispatch-uncertain', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: sessionID, error: String(transportError), reason: pending.reason, attempt: worker.attempt, policy: 'exact-session-effect-reconcile-before-retry' } });
+            return 'QUARANTINED';
+        }
+    }
     async recoverHostTerminalFailure(m, workerID, error) {
         const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker)
@@ -374,29 +410,21 @@ export class TaskRecoveryCoordinator {
             return 'RECOVERED';
         }
         if (failure.kind === 'provider-transport' && failure.reason === 'opencode-required-tool-choice-compatibility-fallback-eligible' && worker.session_id && task) {
-            const model = worker.model ?? 'host-default', alreadyTried = (worker.text_transport_fallback_models ?? []).includes(model);
-            if (!alreadyTried) {
-                worker.text_transport_fallback_models = [...new Set([...(worker.text_transport_fallback_models ?? []), model])];
-                worker.runtime_recovery_pending = true;
-                worker.runtime_recovery_attempt = (worker.runtime_recovery_attempt ?? 0) + 1;
+            const model = worker.model ?? 'host-default', alreadyTried = (worker.text_transport_fallback_models ?? []).includes(model), pending = worker.pending_text_transport_recovery;
+            if (!alreadyTried && !pending) {
+                worker.pending_text_transport_recovery = { session_id: worker.session_id, model, source_attempt: worker.attempt, generation: worker.generation_at_spawn ?? m.continuation.generation, reason: failure.reason, requested_at: Date.now() };
+                worker.runtime_recovery_pending = false;
                 worker.status = 'busy';
                 task.status = 'running';
                 this.registry.set(worker);
-                const prompt = clipText([`Hi structured-output transport compatibility recovery for existing task ${task.id}.`, `OpenCode's native json_schema transport was rejected because this model/provider does not support tool_choice=required.`, `Continue the SAME task, worker, session, model, and Mission. Do not create replacement work or restart planning.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, ...taskSpecificResultContractInstructions(task, worker.role), 'Return the canonical WorkerResult as JSON in ordinary assistant text. Do not wrap it in markdown and do not add prose before or after the JSON. Hi will parse and validate it fail-closed.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
-                try {
-                    beginWorkerAttempt(task, worker);
-                    this.child.recordModelProjection(worker, worker.model, worker.model_variant);
-                    await this.child.sendProviderPrompt(worker.session_id, prompt, worker.role, worker.model === 'host-default' ? undefined : worker.model, worker.model_variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []), worker.attempt_prompt_message_id, 'text');
-                    appendLedger(m, 'worker.output-transport-fallback', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: worker.session_id, from: 'opencode-json-schema', to: 'text-compatibility', reason: failure.reason, attempt: worker.attempt } });
-                    return 'RECOVERED';
-                }
-                catch (transportError) {
-                    worker.runtime_recovery_pending = false;
-                    this.registry.set(worker);
-                    appendLedger(m, 'worker.output-transport-fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: worker.session_id, error: String(transportError), reason: failure.reason } });
-                }
+                appendLedger(m, 'worker.output-transport-fallback.pending', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: worker.session_id, from: 'opencode-json-schema', to: 'text-compatibility', reason: failure.reason, source_attempt: worker.attempt, generation: worker.generation_at_spawn ?? m.continuation.generation, policy: 'dispatch-on-next-admitted-session-idle' } });
+                return 'RECOVERED';
             }
-            else
+            if (pending && pending.session_id === worker.session_id && pending.model === model) {
+                appendLedger(m, 'worker.output-transport-fallback.pending-duplicate-ignored', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: worker.session_id, source_attempt: pending.source_attempt, generation: pending.generation } });
+                return 'RECOVERED';
+            }
+            if (alreadyTried)
                 appendLedger(m, 'worker.output-transport-fallback.exhausted', { task_id: task.id, worker_id: worker.id, payload: { model, session_id: worker.session_id, reason: failure.reason } });
         }
         // OpenCode owns transient provider retry/backoff and context compaction. Hi may only

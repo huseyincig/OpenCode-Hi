@@ -296,6 +296,7 @@ export class TaskRuntime {
     forgetChildCallback(sessionID) { const worker = this.#child.resolveCallbackWorker(sessionID); if (!worker)
         return false; this.registry.delete(worker.id); return true; }
     admitTerminalEvent(m, worker) { return admitHostTerminalEvent(m, worker, this.childHost); }
+    dispatchPendingTextTransportRecovery(m, worker) { return this.#recovery.dispatchPendingTextTransportRecovery(m, worker.id); }
     async settleHostIdleRuntimeError(m, worker, error) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)

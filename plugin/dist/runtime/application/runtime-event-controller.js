@@ -255,6 +255,15 @@ export class RuntimeEventController {
             }
             if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled')
                 return;
+            if (child.pending_text_transport_recovery) {
+                const transport = await tasks.dispatchPendingTextTransportRecovery(m, child);
+                if (transport !== 'NOOP') {
+                    store.updateProgress(m);
+                    appendLedger(m, 'worker.output-transport-fallback.idle-disposition', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, disposition: transport } });
+                    persistence.save(store.all());
+                    return;
+                }
+            }
             try {
                 if (child.pending_native_permission_denial) {
                     const denied = await tasks.settleHostIdlePermissionDenial(m, child);

@@ -4,6 +4,7 @@ export const WORKER_STATUSES=['created','queued','starting','ready','busy','comp
 export type WorkerContractStatus=typeof WORKER_STATUSES[number]
 export interface NativePermissionDenialReceipt { permission_id:string; session_id:string; patterns:string[]; attempt:number; generation:number; observed_at:number }
 export interface PendingHostAssistantResultReceipt { session_id:string; attempt:number; generation:number; observed_at:number; structured_json:string; message_id?:string; parent_id?:string; created_at?:number; model?:string; variant?:string; usage?:HostUsageObservation }
+export interface PendingTextTransportRecoveryReceipt { session_id:string; model:string; source_attempt:number; generation:number; reason:string; requested_at:number }
 
 export interface WorkerContract {
   id:string
@@ -57,11 +58,12 @@ export interface WorkerContract {
   usage_observations?:ExecutionUsageObservation[]
   pending_native_permission_denial?:NativePermissionDenialReceipt
   pending_host_assistant_result?:PendingHostAssistantResultReceipt
+  pending_text_transport_recovery?:PendingTextTransportRecoveryReceipt
 }
 
 const STATUS=new Set<string>(WORKER_STATUSES)
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
-const WORKER_KEYS=new Set(['id','task_id','role','category','session_id','parent_session_id','parent_mission_id','forked_from_session_id','requested_model','requested_model_variant','model','model_variant','projected_model','projected_model_variant','fallbacks','recovery_candidates','selected_methodologies','loaded_methodologies','methodologies','fingerprint','status','attempt','generation_at_spawn','started_at','updated_at','completed_at','last_result_digest','last_result_at','attempt_prompt_message_id','write_set','native_state_hash','native_diff_baseline','native_diff_final','restart_reconcile_pending','runtime_recovery_pending','runtime_recovery_attempt','last_runtime_failure_kind','runtime_fallback_exhausted','text_transport_fallback_models','model_selection_reason','fallback_history','effective_model','effective_model_variant','effective_model_verified','effective_model_variant_verified','effective_model_source','effective_model_observed_at','semantic_pause_revision','usage_observations','pending_native_permission_denial','pending_host_assistant_result'])
+const WORKER_KEYS=new Set(['id','task_id','role','category','session_id','parent_session_id','parent_mission_id','forked_from_session_id','requested_model','requested_model_variant','model','model_variant','projected_model','projected_model_variant','fallbacks','recovery_candidates','selected_methodologies','loaded_methodologies','methodologies','fingerprint','status','attempt','generation_at_spawn','started_at','updated_at','completed_at','last_result_digest','last_result_at','attempt_prompt_message_id','write_set','native_state_hash','native_diff_baseline','native_diff_final','restart_reconcile_pending','runtime_recovery_pending','runtime_recovery_attempt','last_runtime_failure_kind','runtime_fallback_exhausted','text_transport_fallback_models','model_selection_reason','fallback_history','effective_model','effective_model_variant','effective_model_verified','effective_model_variant_verified','effective_model_source','effective_model_observed_at','semantic_pause_revision','usage_observations','pending_native_permission_denial','pending_host_assistant_result','pending_text_transport_recovery'])
 function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
 function strings(v:unknown):v is string[]{return Array.isArray(v)&&v.every(x=>typeof x==='string')}
 function finite(v:unknown):v is number{return typeof v==='number'&&Number.isFinite(v)}
@@ -69,6 +71,7 @@ function stringRecord(v:unknown):boolean{return record(v)&&Object.values(v).ever
 function methodology(v:unknown):boolean{return record(v)&&typeof v.name==='string'&&/^hi-[a-z0-9-]+$/.test(v.name)&&['project','personal','hi'].includes(String(v.provider))&&typeof v.source_path==='string'&&(v.source_sha256===undefined||typeof v.source_sha256==='string')&&['allow','ask','deny'].includes(String(v.permission))&&['native-skill-tool','none'].includes(String(v.injection))&&finite(v.selected_at)}
 function fallback(v:unknown):boolean{return record(v)&&(v.from===undefined||typeof v.from==='string')&&typeof v.to==='string'&&(v.variant===undefined||typeof v.variant==='string')&&typeof v.reason==='string'&&['dispatch','runtime'].includes(String(v.phase))&&finite(v.at)}
 function permissionDenial(v:unknown):boolean{return record(v)&&Object.keys(v).every(k=>['permission_id','session_id','patterns','attempt','generation','observed_at'].includes(k))&&Object.keys(v).length===6&&typeof v.permission_id==='string'&&Boolean(v.permission_id)&&v.permission_id.length<=256&&typeof v.session_id==='string'&&Boolean(v.session_id)&&v.session_id.length<=256&&strings(v.patterns)&&v.patterns.length<=32&&v.patterns.every(x=>x.length<=1000)&&Number.isInteger(v.attempt)&&Number(v.attempt)>=0&&Number.isInteger(v.generation)&&Number(v.generation)>=1&&finite(v.observed_at)}
+function pendingTextTransportRecovery(v:unknown):boolean{return record(v)&&Object.keys(v).length===6&&Object.keys(v).every(k=>['session_id','model','source_attempt','generation','reason','requested_at'].includes(k))&&typeof v.session_id==='string'&&Boolean(v.session_id)&&v.session_id.length<=256&&typeof v.model==='string'&&Boolean(v.model)&&v.model.length<=512&&Number.isInteger(v.source_attempt)&&Number(v.source_attempt)>=0&&Number.isInteger(v.generation)&&Number(v.generation)>=1&&typeof v.reason==='string'&&Boolean(v.reason)&&v.reason.length<=1000&&finite(v.requested_at)}
 function pendingAssistantResult(v:unknown):boolean{
   if(!record(v)||Object.keys(v).some(k=>!['session_id','attempt','generation','observed_at','structured_json','message_id','parent_id','created_at','model','variant','usage'].includes(k)))return false
   if(typeof v.session_id!=='string'||!v.session_id||v.session_id.length>256||!Number.isInteger(v.attempt)||Number(v.attempt)<1||!Number.isInteger(v.generation)||Number(v.generation)<1||!finite(v.observed_at)||typeof v.structured_json!=='string'||!v.structured_json||v.structured_json.length>262144)return false
@@ -93,6 +96,7 @@ export function isWorkerContract(v:unknown):v is WorkerContract{
   if(v.usage_observations!==undefined&&(!Array.isArray(v.usage_observations)||!v.usage_observations.every(isExecutionUsageObservation)))return false
   if(v.pending_native_permission_denial!==undefined&&!permissionDenial(v.pending_native_permission_denial))return false
   if(v.pending_host_assistant_result!==undefined&&!pendingAssistantResult(v.pending_host_assistant_result))return false
+  if(v.pending_text_transport_recovery!==undefined&&!pendingTextTransportRecovery(v.pending_text_transport_recovery))return false
   if(v.projected_model_variant!==undefined&&v.projected_model===undefined)return false
   return true
 }

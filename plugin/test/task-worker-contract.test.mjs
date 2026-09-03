@@ -50,7 +50,8 @@ test('WorkerContract starts at attempt zero and beginWorkerAttempt preserves ide
   worker.last_result_digest='attempt-1-result';worker.last_result_at=before+15
   worker.pending_native_permission_denial={permission_id:'perm-1',session_id:'child-1',patterns:['pip install -r requirements.txt'],attempt:worker.attempt,generation:worker.generation_at_spawn,observed_at:before+16}
   worker.pending_host_assistant_result={session_id:'child-1',attempt:worker.attempt,generation:worker.generation_at_spawn,observed_at:before+17,structured_json:JSON.stringify({status:'DONE'})}
-  assert.equal(isWorkerContract(worker),true,'schema-bound pending assistant receipt is durable worker state')
+  worker.pending_text_transport_recovery={session_id:'child-1',model:'host-default',source_attempt:worker.attempt,generation:worker.generation_at_spawn,reason:'tool-choice-compatibility',requested_at:before+18}
+  assert.equal(isWorkerContract(worker),true,'schema-bound pending assistant/text recovery receipts are durable worker state')
   beginWorkerAttempt(task,worker,before+20)
   assert.equal(worker.attempt,2)
   assert.equal(worker.id,id)
@@ -58,6 +59,7 @@ test('WorkerContract starts at attempt zero and beginWorkerAttempt preserves ide
   assert.equal(worker.last_result_at,undefined)
   assert.equal(worker.pending_native_permission_denial,undefined,'new attempt must never inherit a prior native permission denial')
   assert.equal(worker.pending_host_assistant_result,undefined,'new attempt must never inherit a prior structured assistant receipt')
+  assert.equal(worker.pending_text_transport_recovery,undefined,'new attempt must never inherit a prior text transport recovery receipt')
 })
 
 test('WorkerContract rejects malformed recovery/effective-model state instead of persistence ignoring it',()=>{
@@ -74,6 +76,8 @@ test('WorkerContract rejects malformed recovery/effective-model state instead of
   assert.equal(isWorkerContract({...worker,fallback_history:[{to:'p/other',reason:'x',phase:'invalid',at:Date.now()}]}),false)
   assert.equal(isWorkerContract({...worker,pending_native_permission_denial:{permission_id:'perm',session_id:'child',patterns:['x'],attempt:-1,generation:1,observed_at:Date.now()}}),false)
   assert.equal(isWorkerContract({...worker,pending_native_permission_denial:{permission_id:'perm',session_id:'child',patterns:['x'.repeat(1001)],attempt:0,generation:1,observed_at:Date.now()}}),false)
+  assert.equal(isWorkerContract({...worker,pending_text_transport_recovery:{session_id:'child',model:'p/model',source_attempt:-1,generation:1,reason:'compat',requested_at:Date.now()}}),false)
+  assert.equal(isWorkerContract({...worker,pending_text_transport_recovery:{session_id:'child',model:'p/model',source_attempt:0,generation:1,reason:'',requested_at:Date.now()}}),false)
   assert.equal(isWorkerContract({...worker,unexpected:true}),false)
 })
 
@@ -85,11 +89,13 @@ test('RuntimePersistence consumes canonical Task/Worker contracts and fails clos
     const worker=createWorker(m,task,'host-default')
     worker.requested_model='p/requested';worker.model='p/selected';worker.projected_model='p/selected';worker.effective_model='p/selected';worker.effective_model_verified=true
     worker.pending_native_permission_denial={permission_id:'perm-persist',session_id:'child-persist',patterns:['pip install -r requirements.txt'],attempt:worker.attempt,generation:worker.generation_at_spawn,observed_at:Date.now()}
+    worker.pending_text_transport_recovery={session_id:'child-persist',model:'p/selected',source_attempt:worker.attempt,generation:worker.generation_at_spawn,reason:'tool-choice-compatibility',requested_at:Date.now()}
     const persistence=new RuntimePersistence(root)
     persistence.save(store.all(),true)
     const loaded=persistence.load();assert.equal(loaded.length,1)
     assert.equal(loaded[0].execution.workers[0].requested_model,'p/requested');assert.equal(loaded[0].execution.workers[0].projected_model,'p/selected')
     assert.deepEqual(loaded[0].execution.workers[0].pending_native_permission_denial,worker.pending_native_permission_denial,'native permission denial receipt must survive restart until terminal idle settlement')
+    assert.deepEqual(loaded[0].execution.workers[0].pending_text_transport_recovery,worker.pending_text_transport_recovery,'text transport recovery receipt must survive restart until exact admitted idle dispatch')
     const raw=JSON.parse(readFileSync(persistence.path,'utf8'));raw.missions[0].execution.workers[0].attempt=-1;writeFileSync(persistence.path,JSON.stringify(raw))
     assert.equal(persistence.load().length,0)
     assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)

@@ -22,6 +22,14 @@ export interface PendingHostAssistantResultReceipt {
     variant?: string;
     usage?: HostUsageObservation;
 }
+export interface PendingTextTransportRecoveryReceipt {
+    session_id: string;
+    model: string;
+    source_attempt: number;
+    generation: number;
+    reason: string;
+    requested_at: number;
+}
 export interface WorkerContract {
     id: string;
     task_id: string;
@@ -81,5 +89,6 @@ export interface WorkerContract {
     usage_observations?: ExecutionUsageObservation[];
     pending_native_permission_denial?: NativePermissionDenialReceipt;
     pending_host_assistant_result?: PendingHostAssistantResultReceipt;
+    pending_text_transport_recovery?: PendingTextTransportRecoveryReceipt;
 }
 export declare function isWorkerContract(v: unknown): v is WorkerContract;

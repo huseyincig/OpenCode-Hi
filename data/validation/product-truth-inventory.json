@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "54e7ef1aa7c607c8d70f6e8bde57d731f1ee19090493f268beab9aa57c8eadb9",
+      "owner_sha256": "8838ce086a5f8bd173531b81f7ce334f6c46142d6359f52ce72f6612ce1b1f78",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -46,7 +46,7 @@
       "area": "worker",
       "canonical_owner": "WorkerRuntime",
       "owner_path": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "4c0eccb28253434232638586eb0ca3368f592e2babb240fa5a0e22f38455d208",
+      "owner_sha256": "591a204c9385d3a399a21e40042ea4b8a12b7ed536161bc2846ed9c5f610100f",
       "producer_or_contract_paths": [
         "plugin/src/contracts/worker.ts",
         "plugin/src/contracts/worker-result.ts"
