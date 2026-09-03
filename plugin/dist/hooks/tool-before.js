@@ -169,11 +169,12 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             appendLedger(m, 'orchestration.native-task-blocked', { worker_id: child?.id, payload: { owner: child ? 'child' : 'parent', required_tool: 'hi_task_start' } });
             throw new Error(child ? 'Hi ownership guard: child workers cannot invoke the native OpenCode task runtime; parent Hi must delegate through hi_task_start.' : 'Hi ownership guard: native OpenCode task delegation is disabled while Hi owns the active mission; use hi_task_start.');
         }
-        if (!child && m.identity.status === 'active' && m.execution.execution_mode === 'parallel' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
+        const parentPrivilegedExternal = !child && tool === 'bash' && typeof args?.command === 'string' && privilegedAction(args.command);
+        if (!child && m.identity.status === 'active' && m.execution.execution_mode === 'parallel' && toolMayMutate(tool, args) && !parentPrivilegedExternal && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
             appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'parallel-topology-requires-hi-task-owner', required_tool: 'hi_task_start' } });
             throw new Error(`Hi topology guard: parent direct mutation via '${tool}' is disabled for parallel execution; create bounded disjoint work units with hi_task_start.`);
         }
-        if (!child && m.identity.status === 'active' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
+        if (!child && m.identity.status === 'active' && toolMayMutate(tool, args) && !parentPrivilegedExternal && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
             const decision = projectDirectMutationDecision(m, store.all(), exactParentMutationSurface(args, projectRoot, workingDirectory));
             if (!decision.applicable) {
                 appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'no-canonical-direct-write-owner', required_tool: 'hi_task_start' } });

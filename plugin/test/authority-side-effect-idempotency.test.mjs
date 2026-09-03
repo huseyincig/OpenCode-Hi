@@ -12,6 +12,17 @@ function authorize(m,command,cwd){
   assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
 }
 
+test('parent privileged external effect reaches exact authority through real tool-before admission', async()=>{
+  const store=new MissionStore(); const m=startAssessedMission(store,'s','push current branch',{task_kind:'implementation',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
+  const before=createToolBeforeHook(store)
+  await assert.rejects(()=>before({sessionID:'s',tool:'bash',callID:'first',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}}),/explicit approval required/)
+  assert.ok(m.authority.authority?.pending,'real hook path must retain the exact pending authority request')
+  assert.equal(m.authority.authority?.executing,undefined,'effect must not begin before exact approval')
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
+  await before({sessionID:'s',tool:'bash',callID:'approved',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
+  assert.ok(m.authority.authority?.executing,'same exact action is admitted after structured approval')
+})
+
 test('privileged bash success requires explicit exit=0 metadata', async()=>{
   const store=new MissionStore(); const m=startAssessedMission(store,'s','opaque push',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)

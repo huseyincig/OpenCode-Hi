@@ -7,6 +7,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {AUTHORITY_APPROVAL_TTL_MS,approvePendingAuthority,beginAuthorizedAction,claimAuthorizedAction,requireAuthority} from '../dist/runtime/safety/authority.js'
 import {ProjectAuthorityStore,applyProjectAuthorityPermissions} from '../dist/runtime/safety/project-authority.js'
 import {authorityProtocolResponse} from './helpers/authority.mjs'
+import {startAssessedMission} from './helpers/semantic.mjs'
 
 function mission(id){return new MissionStore().start(id,'authority hardening probe')}
 
@@ -53,4 +54,30 @@ test('malformed persistent native-always authority state fails closed',()=>{
     const cfg={permission:{bash:{'*':'allow'}}};applyProjectAuthorityPermissions(cfg,store)
     assert.equal(cfg.permission.bash['git push *'],'ask')
   } finally {rmSync(root,{recursive:true,force:true})}
+})
+
+test('unclean restore preserves executing authority and opens one stable exact reconciliation decision',()=>{
+  const source=new MissionStore(),command='git push origin main',cwd='/repo'
+  const m=startAssessedMission(source,'authority-unclean-reconcile','publish current main',{task_kind:'implementation',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
+  assert.throws(()=>requireAuthority(m,command,cwd),/approval required/i)
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
+  beginAuthorizedAction(m,command,cwd)
+  const hash=m.authority.authority.executing.hash
+  const restored=new MissionStore();restored.restore([structuredClone(m)],true)
+  const r=restored.get(m.identity.session_id)
+  assert.equal(r.authority.authority.executing.hash,hash)
+  assert.equal(r.identity.status,'waiting-user')
+  assert.equal(r.authority.human_decision.status,'OPEN')
+  assert.equal(r.authority.human_decision.semantic_type,'authority_request')
+  assert.equal(r.authority.human_decision.response_schema.kind,'authority-protocol')
+  assert.equal(r.authority.human_decision.response_schema.protocol,'reconcile-action-outcome')
+  assert.equal(r.authority.human_decision.authority_ref,hash)
+  assert.equal(claimAuthorizedAction(r,command,cwd),'duplicate')
+  assert.ok(r.execution.ledger.some(e=>e.type==='authority.execution.uncertain'&&e.payload?.hash===hash))
+  const decisionID=r.authority.human_decision.decision_id,uncertainCount=r.execution.ledger.filter(e=>e.type==='authority.execution.uncertain').length
+  const twice=new MissionStore();twice.restore([structuredClone(r)],true);const rr=twice.get(m.identity.session_id)
+  assert.equal(rr.authority.authority.executing.hash,hash)
+  assert.equal(rr.authority.human_decision.decision_id,decisionID)
+  assert.equal(rr.execution.ledger.filter(e=>e.type==='authority.execution.uncertain').length,uncertainCount)
+  assert.equal(claimAuthorizedAction(rr,command,cwd),'duplicate')
 })

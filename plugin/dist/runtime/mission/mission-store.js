@@ -9,6 +9,7 @@ import { activateMethodologySignal, suppressIntentMethodologySignals } from '../
 import { architectureMethodologySignals, requiredVerificationMethodologySignals } from '../methodology/signals.js';
 import { applyConstraintAtomDrafts, constraintAtomProjection } from '../constraint/constraint-atoms.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
+import { completeAuthorizedActionByHash } from '../safety/authority.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { existsSync, realpathSync } from 'node:fs';
@@ -594,6 +595,9 @@ export class MissionStore {
                 m.authority.pending_permission_ids = [];
                 if (pendingBefore > 0)
                     appendLedger(m, 'permission.crash-reset', { payload: { cleared: pendingBefore, reason: 'permission requests are process-ephemeral and must be re-established' } });
+                const executing = m.authority.authority?.executing, reconcileDecision = m.authority.human_decision;
+                if (executing && !(reconcileDecision?.status === 'OPEN' && reconcileDecision.semantic_type === 'authority_request' && reconcileDecision.response_schema.kind === 'authority-protocol' && reconcileDecision.response_schema.protocol === 'reconcile-action-outcome' && reconcileDecision.authority_ref === executing.hash))
+                    completeAuthorizedActionByHash(m, executing.hash, 'unknown', 'Runtime ended uncleanly after the exact privileged action entered execution; reconcile exact current external state before any retry.');
                 let invalidated = 0;
                 const invalidatedKinds = new Set();
                 for (const e of m.execution.evidence.items) {
